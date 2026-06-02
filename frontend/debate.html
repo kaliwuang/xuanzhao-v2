@@ -41,6 +41,17 @@
                     <input type="text" id="question" placeholder="此人事业如何？" value="此人事业如何？">
                 </div>
             </div>
+
+            <!-- 人物选择 -->
+            <div class="figure-select" id="figureSelect" style="margin-top:1.5rem;">
+                <div style="color:var(--accent-gold); margin-bottom:0.8rem; font-size:0.95rem;">
+                    选择参与辩论的人物（留空则全部参与）
+                </div>
+                <div class="figure-grid" id="figureGrid">
+                    <div style="color:var(--text-muted); font-size:0.85rem;">正在加载人物...</div>
+                </div>
+            </div>
+
             <div>
                 <button class="btn btn-primary" onclick="startDebate()">开始辩论</button>
             </div>
@@ -104,6 +115,51 @@
         if (params.get('location')) document.getElementById('location').value = params.get('location');
         if (params.get('gender')) document.getElementById('gender').value = params.get('gender');
 
+        let figureData = {};
+        let selectedFigures = new Set();
+
+        // 加载人物列表
+        async function loadFigures() {
+            try {
+                const data = await api.getFigures();
+                figureData = data;
+                renderFigureGrid(data);
+            } catch (e) {
+                document.getElementById('figureGrid').innerHTML =
+                    '<div style="color:var(--text-muted);">加载人物失败：' + e.message + '</div>';
+            }
+        }
+
+        function renderFigureGrid(figures) {
+            const grid = document.getElementById('figureGrid');
+            grid.innerHTML = '';
+            grid.className = 'figure-grid';
+
+            Object.entries(figures).forEach(([id, f]) => {
+                const card = document.createElement('div');
+                card.className = 'figure-card' + (selectedFigures.has(id) ? ' selected' : '');
+                card.dataset.id = id;
+                card.onclick = () => toggleFigure(id, card);
+
+                card.innerHTML = `
+                    <div class="figure-card-name">${f.name}</div>
+                    <div class="figure-card-title">${f.title || ''}</div>
+                    <div class="figure-card-method">${f.primary_method || ''}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleFigure(id, card) {
+            if (selectedFigures.has(id)) {
+                selectedFigures.delete(id);
+                card.classList.remove('selected');
+            } else {
+                selectedFigures.add(id);
+                card.classList.add('selected');
+            }
+        }
+
         async function startDebate() {
             const birth = document.getElementById('birth').value;
             const location = document.getElementById('location').value;
@@ -118,8 +174,10 @@
             showLoading(true);
             hideError();
 
+            const figures = selectedFigures.size > 0 ? Array.from(selectedFigures).join(',') : null;
+
             try {
-                const data = await api.getDebate(birth, location, gender, question);
+                const data = await api.getDebate(birth, location, gender, question, figures);
                 renderDebate(data);
                 showLoading(false);
                 document.getElementById('debateResult').style.display = 'block';
@@ -207,6 +265,9 @@
         function hideError() {
             document.getElementById('error').style.display = 'none';
         }
+
+        // 页面加载时获取人物列表
+        loadFigures();
     </script>
 </body>
 </html>

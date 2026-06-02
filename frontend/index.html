@@ -302,21 +302,62 @@
         }
 
         function renderZiwei(ziwei) {
-            document.getElementById('ziweiInfo').textContent =
-                `命宫：${ziwei.ming_gong} | 五行局：${JSON.stringify(ziwei.wuxing_ju)}`;
+            const wh = ziwei.wuxing_ju || {};
+            document.getElementById('ziweiInfo').innerHTML = `
+                <div class="ziwei-info-bar">
+                    <span>命宫：${ziwei.ming_gong || ''}</span>
+                    <span>命宫干支：${ziwei.ming_ganzhi || ''}</span>
+                    <span>五行局：${wh.wuxing || ''}${wh.ju_shu || ''}局</span>
+                    <span>四化：禄${ziwei.sihua?.禄 || ''} 权${ziwei.sihua?.权 || ''} 科${ziwei.sihua?.科 || ''} 忌${ziwei.sihua?.忌 || ''}</span>
+                </div>
+            `;
+
+            // 4x4盘面格子顺序（索引 → 地支）
+            const cellZhi = {0:'巳',1:'午',2:'未',3:'申',4:'辰',7:'酉',8:'卯',11:'戌',12:'寅',13:'丑',14:'子',15:'亥'};
+            const zhiMap = {};
+            (ziwei.palaces || []).forEach(p => { zhiMap[p.zhi] = p; });
 
             const container = document.getElementById('ziweiPalaces');
             container.innerHTML = '';
-            (ziwei.palaces || []).forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'palace';
-                div.innerHTML = `
-                    <div class="palace-name">${p.name}宫</div>
-                    <div style="color:var(--text-muted); font-size:0.8rem;">${p.zhi}</div>
-                    <div class="palace-stars">${p.stars?.join(' ') || ''}</div>
-                `;
-                container.appendChild(div);
-            });
+            container.className = 'ziwei-board';
+
+            const mainStars = ['紫微','天机','太阳','武曲','天同','廉贞','天府','太阴','贪狼','巨门','天相','天梁','七杀','破军'];
+
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                if (!cellZhi[i]) {
+                    cell.className = 'ziwei-cell empty';
+                } else {
+                    const zhi = cellZhi[i];
+                    const palace = zhiMap[zhi];
+                    const isMing = palace && palace.name === '命宫';
+                    cell.className = 'ziwei-cell' + (isMing ? ' ming-gong' : '');
+
+                    let starsHtml = '';
+                    if (palace && palace.stars) {
+                        palace.stars.forEach(star => {
+                            let sihua = '';
+                            if (ziwei.sihua) {
+                                if (ziwei.sihua.禄 === star) sihua = ' ziwei-star-sihua-lu';
+                                else if (ziwei.sihua.权 === star) sihua = ' ziwei-star-sihua-quan';
+                                else if (ziwei.sihua.科 === star) sihua = ' ziwei-star-sihua-ke';
+                                else if (ziwei.sihua.忌 === star) sihua = ' ziwei-star-sihua-ji';
+                            }
+                            const cls = mainStars.includes(star) ? 'ziwei-star-main' : 'ziwei-star-aux';
+                            starsHtml += `<span class="${cls}${sihua}">${star}</span>`;
+                        });
+                    }
+
+                    cell.innerHTML = `
+                        <div class="ziwei-cell-header">
+                            <span class="ziwei-cell-zhi">${zhi}</span>
+                            <span class="ziwei-cell-name">${palace ? palace.name : ''}</span>
+                        </div>
+                        <div class="ziwei-cell-stars">${starsHtml}</div>
+                    `;
+                }
+                container.appendChild(cell);
+            }
         }
 
         function renderAstro(astro) {
