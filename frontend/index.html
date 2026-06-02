@@ -131,6 +131,17 @@
                 </div>
             </div>
 
+            <!-- 七术综合判断 -->
+            <div class="comprehensive-result" id="comprehensiveResult" style="display:none;">
+                <div class="card" style="border-color:var(--accent-gold);">
+                    <div class="card-title" style="color:var(--accent-gold);">
+                        七术综合判断
+                        <span class="confidence-badge" id="compBadge" style="margin-left:1rem;"></span>
+                    </div>
+                    <div id="comprehensiveContent"></div>
+                </div>
+            </div>
+
             <!-- 交叉验证 -->
             <div class="validation-result" id="validationResult" style="display:none;">
                 <div class="card">
@@ -434,6 +445,68 @@
 
             // 可用术法
             document.getElementById('availableMethods').textContent = data.available_methods?.join('、') || '';
+
+            // 七术综合判断
+            const compResult = document.getElementById('comprehensiveResult');
+            const compContent = document.getElementById('comprehensiveContent');
+            const compBadge = document.getElementById('compBadge');
+
+            if (data.comprehensive_judgment) {
+                compResult.style.display = 'block';
+                const cj = data.comprehensive_judgment;
+
+                // 综合判断徽章
+                const luckColors = { '吉': 'confidence-HIGH', '中': 'confidence-MEDIUM', '凶': 'confidence-LOW' };
+
+                let html = '';
+
+                // 命格总评
+                html += `<div style="margin-bottom:1.2rem; padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
+                html += `<div style="color:var(--accent-gold); font-weight:bold; margin-bottom:0.5rem;">命格总评</div>`;
+                html += `<div>${cj.命格总评}</div>`;
+                html += `</div>`;
+
+                // 各方面判断
+                const aspects = ['事业', '财运', '感情', '健康'];
+                html += `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:0.8rem; margin-bottom:1.2rem;">`;
+                aspects.forEach(aspect => {
+                    const item = cj[aspect];
+                    if (item) {
+                        const luckClass = luckColors[item.吉凶] || 'confidence-MEDIUM';
+                        html += `<div style="padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
+                        html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">`;
+                        html += `<span style="font-weight:bold;">${aspect}</span>`;
+                        html += `<span class="confidence-badge ${luckClass}">${item.吉凶}</span>`;
+                        html += `</div>`;
+                        html += `<div style="font-size:0.9rem; margin-bottom:0.3rem;">${item.趋势}</div>`;
+                        html += `<div style="font-size:0.85rem; color:var(--text-muted);">建议：${item.建议}</div>`;
+                        html += `</div>`;
+                    }
+                });
+                html += `</div>`;
+
+                // 性格
+                if (cj.性格) {
+                    html += `<div style="margin-bottom:1.2rem; padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
+                    html += `<div style="color:var(--accent-gold); font-weight:bold; margin-bottom:0.5rem;">性格分析</div>`;
+                    html += `<div style="margin-bottom:0.3rem;"><strong style="color:var(--success);">优势：</strong>${cj.性格.优势}</div>`;
+                    html += `<div style="margin-bottom:0.3rem;"><strong style="color:var(--danger);">劣势：</strong>${cj.性格.劣势}</div>`;
+                    html += `<div style="font-size:0.9rem; color:var(--text-muted);">${cj.性格.建议}</div>`;
+                    html += `</div>`;
+                }
+
+                // 大运提示
+                if (cj.大运提示) {
+                    html += `<div style="padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
+                    html += `<div style="color:var(--accent-gold); font-weight:bold; margin-bottom:0.5rem;">大运提示</div>`;
+                    html += `<div>${cj.大运提示}</div>`;
+                    html += `</div>`;
+                }
+
+                compContent.innerHTML = html;
+            } else {
+                compResult.style.display = 'none';
+            }
 
             // 共识
             const consensusContainer = document.getElementById('consensusList');

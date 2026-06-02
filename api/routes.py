@@ -171,12 +171,14 @@ def cross_validate(
 
         validator = CrossValidator(udm)
         result = validator.validate()
+        comprehensive = validator.generate_comprehensive_judgment()
 
         # 序列化
         return {
             "method_count": result["method_count"],
             "available_methods": result["available_methods"],
             "overall_confidence": result["overall_confidence"].value,
+            "comprehensive_judgment": comprehensive,
             "consensus": [
                 {
                     "aspect": c.aspect,
