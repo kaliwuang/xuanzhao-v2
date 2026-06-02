@@ -409,6 +409,27 @@ class PerspectiveEngine:
                 data["planets"] = udm.astro_chart.get("planets", {})
                 data["aspects"] = udm.astro_chart.get("aspects", [])
 
+        elif method == "综合":
+            # 玄照视角：提取所有术法数据
+            data["available_methods"] = udm.get_available_methods()
+            data["bazi"] = {
+                "day_master": udm.day_master,
+                "day_master_wuxing": udm.day_master_wuxing,
+                "features": udm.features,
+                "tiaohou": udm.tiaohou,
+            } if udm.bazi_year else {}
+            data["ziwei"] = {
+                "ming_gong": udm.ziwei_chart.get("ming_gong", ""),
+                "star_placements": udm.ziwei_chart.get("star_placements", {}),
+            } if udm.ziwei_chart else {}
+            data["astro"] = {
+                "sun_sign": udm.astro_chart.get("sun_sign", ""),
+                "moon_sign": udm.astro_chart.get("moon_sign", ""),
+            } if udm.astro_chart else {}
+            data["qimen"] = {
+                "ju_name": udm.qimen_chart.get("ju_name", ""),
+            } if udm.qimen_chart else {}
+
         return data
 
     def _apply_thinking_model(self, figure: Figure, method_data: Dict, question: str) -> Dict:
@@ -520,6 +541,64 @@ class PerspectiveEngine:
             key_points.append(f"月亮{moon}")
 
             stance = "星象显示，内在与外在需要平衡"
+
+        elif figure.primary_method == "综合":
+            # 玄照视角：综合分析所有术法
+            methods = method_data.get("available_methods", [])
+            bazi = method_data.get("bazi", {})
+            ziwei = method_data.get("ziwei", {})
+            astro = method_data.get("astro", {})
+            qimen = method_data.get("qimen", {})
+
+            reasoning_parts.append(f"本次综合{len(methods)}种术法分析：{'、'.join(methods)}。")
+            key_points.append(f"综合{len(methods)}术")
+
+            # 八字信息
+            dm = bazi.get("day_master", "")
+            wx = bazi.get("day_master_wuxing", "")
+            if dm:
+                reasoning_parts.append(f"八字日主{dm}属{wx}。")
+                key_points.append(f"日主{dm}")
+
+            features = bazi.get("features", [])
+            if features:
+                reasoning_parts.append(f"命局特征：{features[0]}。")
+                key_points.append(features[0])
+
+            # 紫微信息
+            ming = ziwei.get("ming_gong", "")
+            stars = ziwei.get("star_placements", {})
+            if ming:
+                reasoning_parts.append(f"紫微命宫在{ming}。")
+                key_points.append(f"命宫{ming}")
+            if "紫微" in stars:
+                reasoning_parts.append(f"紫微在{stars['紫微']}。")
+                key_points.append(f"紫微在{stars['紫微']}")
+
+            # 占星信息
+            sun = astro.get("sun_sign", "")
+            moon = astro.get("moon_sign", "")
+            if sun:
+                reasoning_parts.append(f"占星太阳{sun}，月亮{moon}。")
+                key_points.append(f"太阳{sun}")
+
+            # 奇门信息
+            ju = qimen.get("ju_name", "")
+            if ju:
+                reasoning_parts.append(f"奇门{ju}。")
+                key_points.append(ju)
+
+            # 基于问题类型给出综合立场
+            if question_type == "事业":
+                stance = "多术印证，事业方向已明，宜借势而行"
+            elif question_type == "感情":
+                stance = "各术共识，感情需顺势而为，不可强求"
+            elif question_type == "财运":
+                stance = "财路已现，但需谨慎把握时机"
+            elif question_type == "健康":
+                stance = "多术警示，养生为先，防患于未然"
+            else:
+                stance = "七术照见，万法归一，顺势而为"
 
         else:
             stance = "天机不可泄露，但趋势可见"

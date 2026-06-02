@@ -99,9 +99,15 @@
                 </div>
             </div>
 
+            <!-- 玄照视角 -->
+            <div class="card" id="xuanzhaoCard" style="display:none; border-color:var(--accent-gold);">
+                <div class="card-title" style="color:var(--accent-gold);">玄照视角 · 七术照见</div>
+                <div id="xuanzhaoPerspective" style="line-height:1.8;"></div>
+            </div>
+
             <!-- 总结 -->
             <div class="card">
-                <div class="card-title">总结</div>
+                <div class="card-title">&#x603B;&#x7ED3;</div>
                 <div id="summary" style="line-height:1.8;"></div>
             </div>
         </div>
@@ -247,6 +253,30 @@
                 div.innerHTML = `${d.between?.join(' vs ')}：${d.stance_a} / ${d.stance_b}`;
                 disagreementsContainer.appendChild(div);
             });
+
+            // 玄照视角
+            const xuanzhaoCard = document.getElementById('xuanzhaoCard');
+            const xuanzhaoContainer = document.getElementById('xuanzhaoPerspective');
+            if (data.xuanzhao_perspective) {
+                xuanzhaoCard.style.display = 'block';
+                const xz = data.xuanzhao_perspective;
+                let xzHtml = '';
+                xzHtml += `<div style="font-size:1.1rem; color:var(--accent-gold); margin-bottom:0.5rem;">${xz.figure_name} · ${xz.figure_title}</div>`;
+                xzHtml += `<div style="font-size:1rem; margin-bottom:0.8rem;"><strong>立场：</strong>${xz.stance}</div>`;
+                xzHtml += `<div style="margin-bottom:0.5rem;"><strong>置信度：</strong>${(xz.confidence * 100).toFixed(0)}%</div>`;
+                if (xz.key_points?.length) {
+                    xzHtml += `<div style="margin-bottom:0.5rem;"><strong>关键要点：</strong>${xz.key_points.join(' · ')}</div>`;
+                }
+                if (xz.reasoning?.methods?.length) {
+                    xzHtml += `<div style="color:var(--text-muted); font-size:0.9rem;">综合分析${xz.reasoning.participants}位人物 · ${xz.reasoning.methods.length}种术法</div>`;
+                }
+                if (xz.quotes?.length) {
+                    xzHtml += `<div style="margin-top:0.8rem; color:var(--accent-gold); font-style:italic;">「${xz.quotes[0]}」</div>`;
+                }
+                xuanzhaoContainer.innerHTML = xzHtml;
+            } else {
+                xuanzhaoCard.style.display = 'none';
+            }
 
             // 总结
             document.getElementById('summary').textContent = data.summary || '';

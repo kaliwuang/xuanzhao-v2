@@ -26,6 +26,8 @@ from engine.taiyi_engine import TaiYiEngine
 from engine.base import EngineOrchestrator
 from engine.cross_validator import CrossValidator
 from engine.qa_engine import QAEngine
+from engine.perspective_engine import PerspectiveEngine, PerspectiveOpinion
+from engine.debate_engine import DebateEngine
 
 
 class TestTimeEngine(unittest.TestCase):
@@ -232,11 +234,17 @@ class TestZiWeiEngine(unittest.TestCase):
         self.assertIn(wj['ju_shu'], [2,3,4,5,6])
 
     def test_main_stars(self):
-        """14主星"""
+        """14主星+辅星"""
         corrected = self.time_engine.correct('2005-06-09 11:50', '呼和浩特')
         result = self.engine.analyze(corrected, 1)
 
-        self.assertEqual(len(result['star_placements']), 14)
+        # star_placements 包含14主星+辅星，总数 >= 14
+        self.assertGreaterEqual(len(result['star_placements']), 14)
+        # 确认14主星都在
+        main_stars = ['紫微', '天机', '太阳', '武曲', '天同', '廉贞',
+                      '天府', '太阴', '贪狼', '巨门', '天相', '天梁', '七杀', '破军']
+        for star in main_stars:
+            self.assertIn(star, result['star_placements'])
 
     def test_palaces(self):
         """12宫"""
@@ -599,7 +607,8 @@ class TestExtendedZiWeiCases(unittest.TestCase):
         result = self.engine.analyze(corrected, 1)
         self.assertIsNotNone(result['ming_gong'])
         self.assertIn(result['ming_gong'], ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'])
-        self.assertEqual(len(result['star_placements']), 14)
+        # star_placements 包含14主星+辅星
+        self.assertGreaterEqual(len(result['star_placements']), 14)
 
     def test_case_1990_shanghai(self):
         """1990-05-15 14:00 上海"""
@@ -619,9 +628,10 @@ class TestExtendedZiWeiCases(unittest.TestCase):
         """2005-06-09 11:50 呼和浩特"""
         corrected = self.time_engine.correct('2005-06-09 11:50', '呼和浩特')
         result = self.engine.analyze(corrected, 1)
-        self.assertEqual(result['ming_gong'], '丑')
-        self.assertEqual(result['wuxing_ju']['wuxing'], '水')
-        self.assertEqual(result['wuxing_ju']['ju_shu'], 2)
+        # 与 ziwei_fixed.txt / ziwei_standard.txt 一致
+        self.assertEqual(result['ming_gong'], '子')
+        self.assertEqual(result['wuxing_ju']['wuxing'], '火')
+        self.assertEqual(result['wuxing_ju']['ju_shu'], 6)
 
     def test_case_1995_hangzhou(self):
         """1995-08-08 08:08 杭州"""
@@ -629,6 +639,67 @@ class TestExtendedZiWeiCases(unittest.TestCase):
         result = self.engine.analyze(corrected, 0)
         self.assertIsNotNone(result['sihua'])
         self.assertIn('禄', result['sihua'])
+
+
+class TestXuanzhaoPerspective(unittest.TestCase):
+    """玄照综合视角测试"""
+
+    def setUp(self):
+        self.time_engine = TimeEngine()
+        self.engine = ZiWeiEngine()
+        self.pe = PerspectiveEngine()
+        self.de = DebateEngine()
+
+    def test_xuanzhao_figure_exists(self):
+        """玄照人物已定义"""
+        from engine.perspective_engine import FIGURES
+        self.assertIn('xuanzhao', FIGURES)
+        xz = FIGURES['xuanzhao']
+        self.assertEqual(xz.name, '玄照')
+        self.assertEqual(xz.primary_method, '综合')
+
+    def test_xuanzhao_perspective_generation(self):
+        """玄照视角生成"""
+        corrected = self.time_engine.correct('2005-06-09 11:50', '呼和浩特')
+
+        # 创建模拟观点
+        opinions = [
+            PerspectiveOpinion('zhuge-liang', '诸葛亮', '武侯', '奇门',
+                               '事业宜稳健发展，借势而为', 0.8,
+                               '分析奇门格局', ['借势而为'], ['鞠躬尽瘁'], {}),
+            PerspectiveOpinion('ni-haixia', '倪海厦', '天纪人纪地纪', '紫微',
+                               '格局已定，关键在于如何运用', 0.85,
+                               '分析紫微命宫', ['紫微在午'], ['知命不认命'], {}),
+        ]
+
+        xz = self.de.generate_xuanzhao_perspective(opinions, ['事业方向一致'], [])
+
+        self.assertEqual(xz['figure_name'], '玄照')
+        self.assertIn('stance', xz)
+        self.assertIn('confidence', xz)
+        self.assertGreater(xz['confidence'], 0)
+        self.assertIn('reasoning', xz)
+        self.assertIn('participants', xz['reasoning'])
+        self.assertEqual(xz['reasoning']['participants'], 2)
+
+    def test_xuanzhao_in_debate_result(self):
+        """辩论结果包含玄照视角"""
+        corrected = self.time_engine.correct('2005-06-09 11:50', '呼和浩特')
+
+        opinions = [
+            PerspectiveOpinion('zhuge-liang', '诸葛亮', '武侯', '奇门',
+                               '事业宜稳健发展，借势而为', 0.8,
+                               '分析奇门格局', ['借势而为'], ['鞠躬尽瘁'], {}),
+            PerspectiveOpinion('ni-haixia', '倪海厦', '天纪人纪地纪', '紫微',
+                               '格局已定，关键在于如何运用', 0.85,
+                               '分析紫微命宫', ['紫微在午'], ['知命不认命'], {}),
+        ]
+
+        result = self.de.debate(opinions, '事业如何？')
+        self.assertIn('xuanzhao_perspective', result)
+        xz = result['xuanzhao_perspective']
+        self.assertEqual(xz['figure_name'], '玄照')
+        self.assertIn('key_points', xz)
 
 
 if __name__ == '__main__':

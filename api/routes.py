@@ -285,3 +285,41 @@ def get_figures():
         }
         for fid, f in FIGURES.items()
     }
+
+
+@router.get("/api/xuanzhao")
+def get_xuanzhao_perspective(
+    birth: str = Query(..., description="出生时间"),
+    location: str = Query("北京", description="出生地点"),
+    gender: str = Query("男", description="性别"),
+    question: str = Query("此人命运如何？", description="问题"),
+    figures: Optional[str] = Query(None, description="人物ID，逗号分隔，默认全部"),
+):
+    """获取玄照综合视角"""
+    try:
+        time_engine = get_time_engine()
+        corrected = time_engine.correct(birth, location)
+        gender_code = 1 if gender in ("男", "male", "m") else 0
+
+        orch = get_orchestrator()
+        udm = orch.run_all(corrected, gender_code)
+
+        # 视角推理（包含玄照）
+        pe = PerspectiveEngine()
+        figure_ids = figures.split(",") if figures else None
+        opinions = pe.analyze(udm, question, figure_ids)
+
+        # 辩论（获取玄照视角）
+        de = DebateEngine()
+        debate_result = de.debate(opinions, question)
+
+        return {
+            "question": question,
+            "xuanzhao": debate_result.get("xuanzhao_perspective", {}),
+            "participants": debate_result.get("participants", []),
+            "consensus": debate_result.get("consensus", []),
+            "disagreements": debate_result.get("disagreements", []),
+        }
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})

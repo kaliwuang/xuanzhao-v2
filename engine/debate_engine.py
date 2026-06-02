@@ -53,6 +53,9 @@ class DebateEngine:
         # 5. 分歧总结
         disagreements = self._extract_disagreements(opinions, exchanges)
 
+        # 6. 玄照视角
+        xuanzhao = self.generate_xuanzhao_perspective(opinions, consensus, disagreements)
+
         return {
             "participants": [{
                 "id": o.figure_id,
@@ -67,6 +70,7 @@ class DebateEngine:
             "consensus": consensus,
             "disagreements": disagreements,
             "summary": self._generate_summary(opinions, consensus, disagreements),
+            "xuanzhao_perspective": xuanzhao,
         }
 
     def _cluster_opinions(self, opinions: List[PerspectiveOpinion]) -> Dict[str, List[str]]:
@@ -251,3 +255,67 @@ class DebateEngine:
         summary += "最终判断需综合各方观点，结合命主实际情况。"
 
         return summary
+
+    def generate_xuanzhao_perspective(self, opinions: List[PerspectiveOpinion],
+                                       consensus: List[str],
+                                       disagreements: List[Dict]) -> Dict:
+        """生成玄照视角——综合所有人物观点的深度分析"""
+        # 统计
+        methods_used = list(set(o.primary_method for o in opinions))
+        factions = {}
+        for o in opinions:
+            fig = FIGURES.get(o.figure_id)
+            if fig:
+                factions[fig.faction] = factions.get(fig.faction, 0) + 1
+
+        # 立场分布
+        stances = {}
+        for o in opinions:
+            # 简单分类立场
+            if any(k in o.stance for k in ["稳健", "保守", "谨慎", "等待"]):
+                stances["谨慎保守"] = stances.get("谨慎保守", 0) + 1
+            elif any(k in o.stance for k in ["积极", "突破", "变革", "行动"]):
+                stances["积极进取"] = stances.get("积极进取", 0) + 1
+            elif any(k in o.stance for k in ["顺势", "自然", "无为", "顺应"]):
+                stances["顺其自然"] = stances.get("顺其自然", 0) + 1
+            else:
+                stances["综合平衡"] = stances.get("综合平衡", 0) + 1
+
+        # 收集所有关键点
+        all_key_points = []
+        for o in opinions:
+            all_key_points.extend(o.key_points)
+
+        # 玄照判断
+        xuanzhao_stance = ""
+        if stances:
+            dominant = max(stances, key=stances.get)
+            if dominant == "积极进取":
+                xuanzhao_stance = "大势向好，宜积极进取，但不可冒进"
+            elif dominant == "谨慎保守":
+                xuanzhao_stance = "时机未到，宜稳扎稳打，等待良机"
+            elif dominant == "顺其自然":
+                xuanzhao_stance = "顺势而为，不强求，不执着，水到渠成"
+            else:
+                xuanzhao_stance = "各方观点均衡，需审时度势，灵活应变"
+
+        # 构建玄照视角
+        perspective = {
+            "figure_name": "玄照",
+            "figure_title": "照见者",
+            "primary_method": "综合",
+            "stance": xuanzhao_stance,
+            "confidence": 0.75 + (len(consensus) * 0.05) - (len(disagreements) * 0.05),
+            "reasoning": {
+                "participants": len(opinions),
+                "methods": methods_used,
+                "factions": factions,
+                "stance_distribution": stances,
+            },
+            "key_points": list(set(all_key_points))[:8],
+            "consensus": consensus[:3],
+            "disagreements": disagreements[:2],
+            "quotes": ["七术照见，万法归一"],
+        }
+
+        return perspective
