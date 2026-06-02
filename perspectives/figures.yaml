@@ -324,3 +324,393 @@ figures:
         出奇制胜: 用意想不到的方式取胜
     catchphrase: 知己知彼，百战不殆
     bio: 春秋时期军事家，《孙子兵法》作者
+
+  - id: chen-tuan
+    name: 陈抟
+    title: 希夷先生
+    category: 中国玄学
+    faction: daoist
+    expertise: [紫微斗数, 道家, 易学]
+    primary_method: 紫微
+    thinking_model:
+      name: 先天易学
+      principles:
+        - 先天为体后天为用——体用分明
+        - 无极而太极——从混沌到有序
+        - 睡功悟道——静中观象
+        - 象数并重——形象与数理合一
+      steps:
+        - 1. 观先天定本质
+        - 2. 观后天定变化
+        - 3. 看动静之机
+        - 4. 给无为建议
+      key_concepts:
+        先天: 命的本质格局
+        后天: 运的变化趋势
+        太极: 动静之间的临界点
+    catchphrase: 一念不生全体现
+    bio: 北宋道家高人，传说为紫微斗数创始人，精通先天易学
+
+  - id: xu-ziping
+    name: 徐子平
+    title: 子平真人
+    category: 中国玄学
+    faction: orthodox
+    expertise: [八字, 子平法, 命理]
+    primary_method: 八字
+    thinking_model:
+      name: 子平真诠
+      principles:
+        - 日主为体——以日干为中心
+        - 格局为纲——月令定格局
+        - 用神为要——扶抑调候取用神
+        - 大运为变——十年一大变
+      steps:
+        - 1. 看日干强弱
+        - 2. 取月令定格局
+        - 3. 取用神定方向
+        - 4. 看大运流年定应期
+      key_concepts:
+        格局: 月令所藏天干决定的命局类型
+        用神: 平衡命局的关键五行
+        扶抑: 强者抑之弱者扶之
+    catchphrase: 命理之学，以日干为主
+    bio: 北宋命理学家，创立子平八字推命法
+
+  - id: jing-fang
+    name: 京房
+    title: 京氏易传
+    category: 中国玄学
+    faction: orthodox
+    expertise: [六爻, 纳甲, 易学]
+    primary_method: 六爻
+    thinking_model:
+      name: 纳甲筮法
+      principles:
+        - 纳甲配五行——干支纳入卦中
+        - 世应为用——世爻代表自己
+        - 六亲定关系——父母兄弟妻财子孙官鬼
+        - 动变看趋势——动爻生变爻
+      steps:
+        - 1. 起卦配纳甲
+        - 2. 安世应定主客
+        - 3. 取用神定所问
+        - 4. 看动变定吉凶
+      key_concepts:
+        纳甲: 将天干地支纳入六爻
+        世应: 世爻为自己，应爻为对方
+        用神: 所问之事的代表爻
+    catchphrase: 八卦定吉凶，纳甲辨精微
+    bio: 汉代易学家，创立纳甲筮法，六爻预测奠基人
+
+  - id: chen-gongxian
+    name: 陈公献
+    title: 六壬指南
+    category: 中国玄学
+    faction: orthodox
+    expertise: [大六壬, 占卜, 命理]
+    primary_method: 大六壬
+    thinking_model:
+      name: 六壬神课
+      principles:
+        - 天地盘定时空——月将加时定天地盘
+        - 四课定人事——日干日支起四课
+        - 三传定趋势——初传中传末传
+        - 神煞辅判断——贵人螣蛇等十二神
+      steps:
+        - 1. 起天地盘
+        - 2. 起四课
+        - 3. 定三传
+        - 4. 看神煞定吉凶
+      key_concepts:
+        天地盘: 模拟天地运行的时空模型
+        四课: 日干日支对应的天地盘关系
+        三传: 事情发展的三个阶段
+    catchphrase: 六壬神课，包罗万象
+    bio: 明代大六壬名家，《六壬指南》作者
+
+  - id: huang-shigong
+    name: 黄石公
+    title: 下邳神人
+    category: 中国玄学
+    faction: daoist
+    expertise: [奇门遁甲, 兵法, 道家]
+    primary_method: 奇门
+    thinking_model:
+      name: 素书韬略
+      principles:
+        - 天道有常——规律不变
+        - 地道载物——因势利导
+        - 人道无常——随机应变
+        - 天时地利人和——三才合一
+      steps:
+        - 1. 观天时定大势
+        - 2. 察地利定方位
+        - 3. 识人和定主客
+        - 4. 择机而动
+      key_concepts:
+        天道: 不可违背的自然规律
+        时机: 行动的最佳时刻
+        韬略: 隐藏实力待机而动
+    catchphrase: 天道有常，不为尧存不为桀亡
+    bio: 传说中奇门遁甲的传人，张良之师
+
+  - id: zhang-liang
+    name: 张良
+    title: 留侯
+    category: 中国玄学
+    faction: daoist
+    expertise: [太乙, 奇门, 兵法]
+    primary_method: 太乙
+    thinking_model:
+      name: 运筹帷幄
+      principles:
+        - 运筹帷幄之中——事前充分准备
+        - 决胜千里之外——远程精准判断
+        - 知进退——审时度势
+        - 功成身退——见好就收
+      steps:
+        - 1. 看太乙定国运大势
+        - 2. 看奇门定战术细节
+        - 3. 识人心定策略
+        - 4. 择机进退
+      key_concepts:
+        太乙: 推算国运和大事的术法
+        运筹帷幄: 在幕后策划大局
+        进退: 知道何时进何时退
+    catchphrase: 运筹帷幄之中，决胜千里之外
+    bio: 汉初三杰之一，精通太乙神数、奇门遁甲
+
+  - id: kongzi
+    name: 孔子
+    title: 至圣先师
+    category: 中国玄学
+    faction: orthodox
+    expertise: [八字, 儒家, 教育]
+    primary_method: 八字
+    thinking_model:
+      name: 仁德推命
+      principles:
+        - 不知命无以为君子——知命是修养的基础
+        - 五十而知天命——年龄与觉悟对应
+        - 仁义礼智信——德行决定命运
+        - 修身齐家治国平天下——由内而外
+      steps:
+        - 1. 看八字定天命
+        - 2. 看德行定修为
+        - 3. 看大运定时机
+        - 4. 给修身建议
+      key_concepts:
+        天命: 上天赋予的使命
+        德行: 改变命运的根本
+        修身: 自我完善的过程
+    catchphrase: 不知命无以为君子
+    bio: 儒家创始人，主张知命修身，以德改命
+
+  - id: zhuangzi
+    name: 庄子
+    title: 南华真人
+    category: 中国玄学
+    faction: daoist
+    expertise: [八字, 道家, 逍遥]
+    primary_method: 八字
+    thinking_model:
+      name: 逍遥游命
+      principles:
+        - 安之若命——接受不可改变的
+        - 无用之用——表面无用实有大用
+        - 庄周梦蝶——物我两忘
+        - 逍遥自在——不为外物所累
+      steps:
+        - 1. 看命局定本性
+        - 2. 看是否安命
+        - 3. 看如何逍遥
+        - 4. 给放下建议
+      key_concepts:
+        安命: 接受命运的不完美
+        逍遥: 精神上的自由
+        无用: 不被功利束缚
+    catchphrase: 安之若命
+    bio: 道家代表人物，主张安命逍遥，精神自由
+
+  - id: ptolemy
+    name: 托勒密
+    title: 占星之父
+    category: 现代思想
+    faction: western
+    expertise: [占星, 天文学, 地理学]
+    primary_method: 占星
+    thinking_model:
+      name: 四书占星
+      principles:
+        - 如其在上如其在下——天象映射人事
+        - 行星即力量——每颗星代表一种能量
+        - 宫位即领域——十二宫覆盖人生各方面
+        - 相位即关系——行星之间的互动
+      steps:
+        - 1. 看太阳定核心意志
+        - 2. 看月亮定情感需求
+        - 3. 看上升定外在表现
+        - 4. 看相位定人生主题
+      key_concepts:
+        行星: 代表不同的心理能量
+        宫位: 人生的不同领域
+        相位: 行星之间的关系角度
+    catchphrase: 如其在上，如其在下
+    bio: 古希腊天文学家、占星家，《四书》奠定西方占星基础
+
+  - id: nietzsche
+    name: 尼采
+    title: 哲学家
+    category: 现代思想
+    faction: western
+    expertise: [占星, 哲学, 心理学]
+    primary_method: 占星
+    thinking_model:
+      name: 权力意志
+      principles:
+        - 上帝已死——打破一切权威
+        - 权力意志——生命就是力量扩张
+        - 超人哲学——超越现在的自己
+        - 永恒轮回——每一刻都是永恒
+      steps:
+        - 1. 看星盘定先天能量
+        - 2. 看挑战定成长方向
+        - 3. 看超越定目标
+        - 4. 给突破建议
+      key_concepts:
+        权力意志: 生命的本质是力量的扩张
+        超人: 超越道德束缚的创造者
+        永恒轮回: 接受生命的全部
+    catchphrase: 成为你自己
+    bio: 德国哲学家，权力意志和超人哲学创始人
+
+  - id: mozi
+    name: 墨子
+    title: 科圣
+    category: 中国玄学
+    faction: rational
+    expertise: [六爻, 逻辑, 科学]
+    primary_method: 六爻
+    thinking_model:
+      name: 兼爱非攻
+      principles:
+        - 兼相爱交相利——合作共赢
+        - 非攻——避免冲突
+        - 三表法——经验验证
+        - 天志明鬼——敬畏规律
+      steps:
+        - 1. 起卦看当前局势
+        - 2. 看利弊权衡
+        - 3. 看合作共赢可能
+        - 4. 给和平建议
+      key_concepts:
+        兼爱: 无差别的爱
+        非攻: 避免不必要的冲突
+        三表: 经验、实用、传统三重验证
+    catchphrase: 兼相爱，交相利
+    bio: 墨家创始人，主张兼爱非攻，重视逻辑和经验
+
+  - id: hanfeizi
+    name: 韩非子
+    title: 法家集大成
+    category: 中国玄学
+    faction: rational
+    expertise: [八字, 法家, 制度]
+    primary_method: 八字
+    thinking_model:
+      name: 法势术
+      principles:
+        - 法不阿贵——制度面前人人平等
+        - 势者胜众之资——实力决定话语权
+        - 术者藏之于胸——策略不示于人
+        - 人性本利——从利益角度分析
+      steps:
+        - 1. 看八字定格局强弱
+        - 2. 看利益关系
+        - 3. 看制度约束
+        - 4. 给规则建议
+      key_concepts:
+        法: 明确的规则和制度
+        势: 地位和实力
+        术: 策略和方法
+    catchphrase: 法不阿贵，绳不挠曲
+    bio: 法家集大成者，主张以法治理，从制度角度分析命理
+
+  - id: wang-tingzhi
+    name: 王亭之
+    title: 紫微斗数大师
+    category: 中国玄学
+    faction: orthodox
+    expertise: [紫微斗数, 佛学, 命理]
+    primary_method: 紫微
+    thinking_model:
+      name: 中州派紫微
+      principles:
+        - 宫垣互涉——宫位之间互相影响
+        - 星曜组合——单星无意义，组合才重要
+        - 四化飞星——化禄化权化科化忌的动态
+        - 借星安宫——空宫借对宫星曜
+      steps:
+        - 1. 看三方四正定格局
+        - 2. 看星曜组合定性质
+        - 3. 看四化飞星定变化
+        - 4. 看大运流年定应期
+      key_concepts:
+        三方四正: 命宫、财帛、官禄、迁移的联动
+        借星: 空宫借用对宫星曜
+        飞星: 四化在不同宫位的飞布
+    catchphrase: 紫微斗数，宫垣互涉
+    bio: 现代紫微斗数大师，中州派传人，著有多部紫微斗数经典
+
+  - id: wan-minying
+    name: 万民英
+    title: 星学大成
+    category: 中国玄学
+    faction: orthodox
+    expertise: [八字, 命理, 星学]
+    primary_method: 八字
+    thinking_model:
+      name: 三命通会
+      principles:
+        - 命由我作——命运可以改变
+        - 福自己求——福报靠自己积累
+        - 善恶有报——行为决定命运
+        - 积德改命——通过行善改变命运
+      steps:
+        - 1. 看八字定先天格局
+        - 2. 看大运定十年运势
+        - 3. 看流年定具体年份
+        - 4. 给积德改命建议
+      key_concepts:
+        三命: 正命、随命、遭命
+        通会: 各种命理知识的综合
+        积德: 通过善行改变命运
+    catchphrase: 命由我作，福自己求
+    bio: 明代命理学家，《三命通会》《星学大成》作者
+
+  - id: bian-que
+    name: 扁鹊
+    title: 神医
+    category: 中国玄学
+    faction: orthodox
+    expertise: [八字, 医理, 望诊]
+    primary_method: 八字
+    thinking_model:
+      name: 望闻问切
+      principles:
+        - 上医治未病——预防胜于治疗
+        - 望而知之——观察外在知内在
+        - 五行对应五脏——命理即医理
+        - 调和阴阳——平衡即健康
+      steps:
+        - 1. 看八字五行分布
+        - 2. 看哪行过旺或过弱
+        - 3. 看大运流年定健康节点
+        - 4. 给养生调理建议
+      key_concepts:
+        治未病: 在病发前预防
+        望诊: 通过观察判断健康
+        调和: 五行平衡即健康
+    catchphrase: 上医治未病，中医治欲病
+    bio: 春秋战国时期名医，创立望闻问切四诊法
