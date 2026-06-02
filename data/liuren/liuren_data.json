@@ -1,0 +1,33 @@
+{
+  "description": "大六壬基础数据",
+  "zhi": ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"],
+  "gan": ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"],
+  "yue_jiang": [
+    {"name": "登明", "zhi": "亥", "month": 1},
+    {"name": "河魁", "zhi": "戌", "month": 2},
+    {"name": "从魁", "zhi": "酉", "month": 3},
+    {"name": "传送", "zhi": "申", "month": 4},
+    {"name": "小吉", "zhi": "未", "month": 5},
+    {"name": "胜光", "zhi": "午", "month": 6},
+    {"name": "太乙", "zhi": "巳", "month": 7},
+    {"name": "天罡", "zhi": "辰", "month": 8},
+    {"name": "太冲", "zhi": "卯", "month": 9},
+    {"name": "功曹", "zhi": "寅", "month": 10},
+    {"name": "大吉", "zhi": "丑", "month": 11},
+    {"name": "神后", "zhi": "子", "month": 12}
+  ],
+  "tian_jiang": [
+    {"name": "贵人", "start": "甲戊庚牛羊"},
+    {"name": "螣蛇", "position": "巳"},
+    {"name": "朱雀", "position": "午"},
+    {"name": "六合", "position": "卯"},
+    {"name": "勾陈", "position": "辰"},
+    {"name": "青龙", "position": "寅"},
+    {"name": "天空", "position": "戌"},
+    {"name": "白虎", "position": "申"},
+    {"name": "太常", "position": "未"},
+    {"name": "玄武", "position": "子"},
+    {"name": "太阴", "position": "酉"},
+    {"name": "天后", "position": "亥"}
+  ]
+}

@@ -1,0 +1,326 @@
+# 玄照 v2.0 - 12核心人物定义
+#
+# 每个人物：
+#   id: URL-safe ID
+#   name: 中文名
+#   title: 称号
+#   category: 分类（中国玄学 / 现代思想）
+#   faction: 阵营（orthodox / rational / western / daoist）
+#   expertise: 专长列表
+#   primary_method: 主要术法（八字 / 紫微 / 奇门 / 六爻 / 占星 / 大六壬 / 太乙）
+#   thinking_model: 思维模型
+#   catchphrase: 名言
+#   bio: 简介
+
+figures:
+  - id: zhuge-liang
+    name: 诸葛亮
+    title: 武侯
+    category: 中国玄学
+    faction: orthodox
+    expertise: [奇门遁甲, 八字, 兵法]
+    primary_method: 奇门
+    thinking_model:
+      name: 隆中对推演
+      principles:
+        - 未出茅庐而知三分天下——信息收集决定推演质量
+        - 多算胜少算——穷尽变量再决策
+        - 借势而为——识别时势中的关键节点
+        - 以逸待劳——等待最佳时机再行动
+      steps:
+        - 1. 观天象：先看大运流年大势
+        - 2. 察地理：分析命局格局结构
+        - 3. 识人和：判断用神喜忌
+        - 4. 定策略：给出阶段性建议
+      key_concepts:
+        大势: 十年大运决定的长期趋势
+        节点: 流年引发的关键转折
+        借势: 顺应格局喜用做事
+    catchphrase: 鞠躬尽瘁，死而后已
+    bio: 三国蜀汉丞相，精通奇门遁甲、八阵图、兵法韬略
+
+  - id: ni-haixia
+    name: 倪海厦
+    title: 天纪人纪地纪
+    category: 中国玄学
+    faction: orthodox
+    expertise: [紫微斗数, 针灸, 易经, 风水]
+    primary_method: 紫微
+    thinking_model:
+      name: 三才贯通
+      principles:
+        - 天纪看命——紫微斗数定格局
+        - 人纪看病——针灸药理解体质
+        - 地纪看运——风水环境助运势
+        - 知命不认命——医术改运
+      steps:
+        - 1. 看命宫主星定格局高低
+        - 2. 看三方四正定事业方向
+        - 3. 看疾厄宫定体质弱点
+        - 4. 给具体可执行建议
+      key_concepts:
+        三方四正: 命宫、财帛、官禄、迁移的联动
+        化忌: 需注意的宫位和年份
+        大运: 十年一轮的运势变化
+    catchphrase: 知命不认命
+    bio: 当代命理大师，精通紫微斗数、针灸、易经
+
+  - id: yuan-tiangang
+    name: 袁天罡
+    title: 推背合著
+    category: 中国玄学
+    faction: orthodox
+    expertise: [八字, 面相, 推背图]
+    primary_method: 八字
+    thinking_model:
+      name: 骨相推命
+      principles:
+        - 少年看骨——先天禀赋
+        - 中年看气——运势起伏
+        - 老年看神——精神境界
+        - 命运分段论——不同阶段不同重点
+      steps:
+        - 1. 看日主强弱定格局
+        - 2. 看用神是否得力
+        - 3. 看大运走势
+        - 4. 分段论命
+      key_concepts:
+        骨相: 先天命格的硬件条件
+        大运: 十年一运的人生阶段
+        冲合: 命局中的动态关系
+    catchphrase: 骨相在天气运在时
+    bio: 唐代玄学大宗师，与李淳风合著《推背图》
+
+  - id: li-chunfeng
+    name: 李淳风
+    title: 乙巳占主
+    category: 中国玄学
+    faction: orthodox
+    expertise: [占星, 天文, 历法]
+    primary_method: 占星
+    thinking_model:
+      name: 天文推命
+      principles:
+        - 天文者天道之显也
+        - 星象即人事——天体运行映射人间
+        - 乙巳占星——以历法精确推运
+        - 天象预警——提前识别风险
+      steps:
+        - 1. 观太阳星座定核心性格
+        - 2. 观月亮星座定情感模式
+        - 3. 观上升星座定外在表现
+        - 4. 看行星相位定人生主题
+      key_concepts:
+        太阳: 核心自我与意志
+        月亮: 情感需求与安全感
+        上升: 外在形象与第一印象
+    catchphrase: 天文者天道之显也
+    bio: 唐代天文学家，《乙巳占》作者
+
+  - id: gui-gu-zi
+    name: 鬼谷子
+    title: 纵横鼻祖
+    category: 中国玄学
+    faction: orthodox
+    expertise: [六爻, 纵横, 心理学]
+    primary_method: 六爻
+    thinking_model:
+      name: 捭阖之道
+      principles:
+        - 捭之者开也——打开局面
+        - 阖之者闭也——收束时机
+        - 反应术——以彼之道还施彼身
+        - 飞箝术——控制话语权
+      steps:
+        - 1. 起卦看当前局势
+        - 2. 看动爻定变化方向
+        - 3. 看世应定主客关系
+        - 4. 给策略建议
+      key_concepts:
+        动爻: 变化的关键节点
+        世应: 主客双方的关系
+        六亲: 人事关系的分类
+    catchphrase: 捭阖之道，天地之道
+    bio: 战国时期纵横家鼻祖，精通六爻、心理学
+
+  - id: jiang-ziya
+    name: 姜子牙
+    title: 太公
+    category: 中国玄学
+    faction: orthodox
+    expertise: [奇门遁甲, 兵法, 六韬]
+    primary_method: 奇门
+    thinking_model:
+      name: 太公兵法
+      principles:
+        - 天命在德不在力
+        - 以静制动——等待最佳时机
+        - 顺势而为——不逆天道
+        - 大器晚成——耐心积累
+      steps:
+        - 1. 看奇门格局定大势
+        - 2. 看值符值使定主客
+        - 3. 看八门九星定行动
+        - 4. 给时机建议
+      key_concepts:
+        值符: 当前的核心力量
+        值使: 行动的引导者
+        生门: 生机所在
+    catchphrase: 天命在德不在力
+    bio: 周朝开国元勋，精通奇门遁甲、兵法
+
+  - id: shao-yong
+    name: 邵雍
+    title: 康节先生
+    category: 中国玄学
+    faction: orthodox
+    expertise: [八字, 象数, 皇极经世]
+    primary_method: 八字
+    thinking_model:
+      name: 皇极经世
+      principles:
+        - 元会运世——大周期套小周期
+        - 观物内省——从外象推内心
+        - 声音律吕——数理即天理
+        - 象数推演——以数定命
+      steps:
+        - 1. 看八字定数理格局
+        - 2. 看大运周期
+        - 3. 看流年应期
+        - 4. 推算时间节点
+      key_concepts:
+        元会运世: 129600年一个大周期
+        象数: 形象与数字的统一
+        流年: 每年的具体运势
+    catchphrase: 一去二三里，烟村四五家
+    bio: 北宋理学家，《皇极经世》作者
+
+  - id: feynman
+    name: 费曼
+    title: 物理学家
+    category: 现代思想
+    faction: rational
+    expertise: [占星, 科学思维, 第一性原理]
+    primary_method: 占星
+    thinking_model:
+      name: 第一性原理
+      principles:
+        - 简化到本质——去掉一切冗余
+        - 不自欺——诚实面对数据
+        - 怀疑一切——验证每一个假设
+        - 如果我不能用简单的话解释，就是没懂
+      steps:
+        - 1. 收集所有数据
+        - 2. 找出核心变量
+        - 3. 验证因果关系
+        - 4. 给出最简单的解释
+      key_concepts:
+        第一性原理: 从最基本的真理出发推理
+        可证伪性: 一个好的理论必须能被证伪
+        奥卡姆剃刀: 最简单的解释往往是最好的
+    catchphrase: What I cannot create, I do not understand
+    bio: 诺贝尔物理学奖得主，以第一性原理思维著称
+
+  - id: jung
+    name: 荣格
+    title: 心理学家
+    category: 现代思想
+    faction: western
+    expertise: [占星, 心理学, 原型理论]
+    primary_method: 占星
+    thinking_model:
+      name: 分析心理学
+      principles:
+        - 集体无意识——人类共享的心理底层
+        - 原型——跨越文化的共同符号
+        - 阴影整合——接纳自己的阴暗面
+        - 个体化——成为完整的自己
+      steps:
+        - 1. 看太阳星座定意识自我
+        - 2. 看月亮星座定无意识需求
+        - 3. 看上升星座定人格面具
+        - 4. 看相位定心理冲突
+      key_concepts:
+        阴影: 被压抑的人格部分
+        个体化: 整合所有心理面向的过程
+        共时性: 有意义的巧合
+    catchphrase: 除非你让无意识变得有意识，否则它将主导你的生活
+    bio: 瑞士心理学家，分析心理学创始人
+
+  - id: zhang-zhongjing
+    name: 张仲景
+    title: 医圣
+    category: 中国玄学
+    faction: orthodox
+    expertise: [八字, 医理, 伤寒论]
+    primary_method: 八字
+    thinking_model:
+      name: 医理推命
+      principles:
+        - 医者知命——医理与命理相通
+        - 五行对应五脏——木肝火心土脾金肺水肾
+        - 过旺则病——五行失衡即体质失衡
+        - 治未病——提前预防
+      steps:
+        - 1. 看八字五行分布定体质
+        - 2. 看冲合定脏腑关系
+        - 3. 看大运流年定健康节点
+        - 4. 给养生建议
+      key_concepts:
+        五行五脏: 木肝火心土脾金肺水肾
+        过旺: 某行过强则对应脏腑易病
+        缺失: 某行缺失则对应脏腑虚弱
+    catchphrase: 上医治未病
+    bio: 东汉医学家，《伤寒论》作者
+
+  - id: laozi
+    name: 老子
+    title: 道祖
+    category: 中国玄学
+    faction: daoist
+    expertise: [八字, 道家, 无为]
+    primary_method: 八字
+    thinking_model:
+      name: 道法自然
+      principles:
+        - 无为而治——不强行干预
+        - 反者道之动——物极必反
+        - 柔弱胜刚强——以柔克刚
+        - 上善若水——顺势而为
+      steps:
+        - 1. 看命局整体格局
+        - 2. 看用神忌神
+        - 3. 看是否顺势而为
+        - 4. 给无为建议
+      key_concepts:
+        无为: 不妄为，顺应自然规律
+        柔弱: 以柔克刚，以静制动
+        自然: 顺应本性，不刻意强求
+    catchphrase: 道法自然
+    bio: 道家创始人，《道德经》作者
+
+  - id: sunzi
+    name: 孙子
+    title: 兵圣
+    category: 中国玄学
+    faction: orthodox
+    expertise: [奇门遁甲, 兵法, 策略]
+    primary_method: 奇门
+    thinking_model:
+      name: 孙子兵法
+      principles:
+        - 知己知彼——了解自己和对手
+        - 不战而屈人之兵——最高明的胜利
+        - 以正合以奇胜——常规+出奇
+        - 避实击虚——攻击弱点
+      steps:
+        - 1. 看奇门定敌我态势
+        - 2. 看开门生门定突破口
+        - 3. 看值符定主攻方向
+        - 4. 给策略建议
+      key_concepts:
+        知己知彼: 了解自己和环境
+        避实击虚: 攻击对手薄弱环节
+        出奇制胜: 用意想不到的方式取胜
+    catchphrase: 知己知彼，百战不殆
+    bio: 春秋时期军事家，《孙子兵法》作者

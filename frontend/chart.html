@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄照 v2.0 - 命盘展示</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .chart-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .chart-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .chart-section h3 {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .mini-pillar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.3rem;
+            text-align: center;
+            margin-bottom: 0.8rem;
+        }
+        .mini-pillar-item {
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .mini-pillar-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .mini-pillar-gan {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+        .mini-pillar-zhi {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+        .info-line {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+        .info-line .label {
+            color: var(--accent-gold);
+        }
+        .planet-mini {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.3rem;
+            font-size: 0.8rem;
+        }
+        .planet-mini-item {
+            background: var(--bg-card);
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+        }
+        .gua-info {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+        }
+        .gua-name {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+        .dong-yao {
+            color: var(--text-primary);
+        }
+        .qimen-mini {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.3rem;
+            font-size: 0.75rem;
+        }
+        .qimen-mini-cell {
+            background: var(--bg-card);
+            padding: 0.4rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .qimen-mini-gong {
+            color: var(--text-muted);
+            font-size: 0.65rem;
+        }
+        .qimen-mini-gan {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+        .qimen-mini-men {
+            color: var(--text-primary);
+        }
+        .liuren-ke {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .liuren-ke-item {
+            background: var(--bg-card);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+        }
+        .taiyi-info {
+            text-align: center;
+            padding: 1rem;
+        }
+        .taiyi-gong {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+        }
+        .qa-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        .qa-section h3 {
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+        .qa-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .qa-input input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-family: inherit;
+        }
+        .qa-result {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            display: none;
+        }
+        .qa-result.active {
+            display: block;
+        }
+        .qa-answer {
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        .qa-confidence {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-left: 1rem;
+        }
+        .qa-keypoints {
+            margin-top: 1rem;
+        }
+        .qa-keypoint {
+            background: rgba(212, 165, 116, 0.1);
+            border-left: 3px solid var(--accent-gold);
+            padding: 0.5rem 0.8rem;
+            margin-bottom: 0.3rem;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.85rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .back-link:hover {
+            color: var(--accent-gold);
+        }
+        @media (max-width: 1024px) {
+            .chart-layout {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .chart-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">玄照 <span>v2.0</span></a>
+        <div class="nav-links">
+            <a href="/">排盘</a>
+            <a href="/chart" class="active">命盘</a>
+            <a href="/debate">辩论台</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="/" class="back-link">&larr; 返回输入</a>
+
+        <div id="loading" class="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>正在排盘，请稍候...</p>
+        </div>
+
+        <div id="error" class="error-message" style="display:none;"></div>
+
+        <div id="chartContent">
+            <div class="chart-layout" id="chartLayout"></div>
+
+            <!-- 问答 -->
+            <div class="qa-section" id="qaSection" style="display:none;">
+                <h3>向命盘提问</h3>
+                <div class="qa-input">
+                    <input type="text" id="qaQuestion" placeholder="例如：此人事业如何？感情运势怎样？健康状况？">
+                    <button class="btn btn-primary" onclick="askQuestion()">提问</button>
+                </div>
+                <div class="qa-result" id="qaResult">
+                    <div style="display:flex; align-items:center; margin-bottom:0.5rem;">
+                        <span id="qaType" style="color:var(--accent-gold);"></span>
+                        <span class="qa-confidence" id="qaConfidence"></span>
+                    </div>
+                    <div class="qa-answer" id="qaAnswer"></div>
+                    <div class="qa-keypoints" id="qaKeypoints"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        // 解析URL参数
+        const params = new URLSearchParams(window.location.search);
+        const birth = params.get('birth') || '2005-06-09 11:50';
+        const location = params.get('location') || '呼和浩特';
+        const gender = params.get('gender') || '男';
+
+        let chartData = null;
+
+        async function loadChart() {
+            showLoading(true);
+            try {
+                const data = await api.getChart(birth, location, gender);
+                chartData = data;
+                renderChart(data);
+                document.getElementById('qaSection').style.display = 'block';
+                showLoading(false);
+            } catch (e) {
+                showLoading(false);
+                showError(e.message);
+            }
+        }
+
+        function renderChart(data) {
+            const layout = document.getElementById('chartLayout');
+            layout.innerHTML = '';
+
+            // 八字
+            if (data.bazi) {
+                layout.appendChild(createBaziSection(data.bazi));
+            }
+
+            // 紫微
+            if (data.ziwei) {
+                layout.appendChild(createZiweiSection(data.ziwei));
+            }
+
+            // 占星
+            if (data.astro) {
+                layout.appendChild(createAstroSection(data.astro));
+            }
+
+            // 六爻
+            if (data.liuyao) {
+                layout.appendChild(createLiuyaoSection(data.liuyao));
+            }
+
+            // 奇门
+            if (data.qimen) {
+                layout.appendChild(createQimenSection(data.qimen));
+            }
+
+            // 大六壬
+            if (data.liuren) {
+                layout.appendChild(createLiurenSection(data.liuren));
+            }
+
+            // 太乙
+            if (data.taiyi) {
+                layout.appendChild(createTaiyiSection(data.taiyi));
+            }
+        }
+
+        function createSection(title) {
+            const section = document.createElement('div');
+            section.className = 'chart-section';
+            const h3 = document.createElement('h3');
+            h3.textContent = title;
+            section.appendChild(h3);
+            return section;
+        }
+
+        function createBaziSection(bazi) {
+            const section = createSection('八字');
+            const pillars = ['year', 'month', 'day', 'time'];
+            const labels = ['年', '月', '日', '时'];
+
+            const grid = document.createElement('div');
+            grid.className = 'mini-pillar';
+            pillars.forEach((p, i) => {
+                const gz = bazi[p];
+                if (gz) {
+                    grid.innerHTML += `
+                        <div class="mini-pillar-item">
+                            <div class="mini-pillar-label">${labels[i]}柱</div>
+                            <div class="mini-pillar-gan">${gz[0]}</div>
+                            <div class="mini-pillar-zhi">${gz[1]}</div>
+                        </div>
+                    `;
+                }
+            });
+            section.appendChild(grid);
+
+            section.innerHTML += `
+                <div class="info-line"><span class="label">日主：</span>${bazi.day_master || ''}（${bazi.day_master_wuxing || ''}）</div>
+                <div class="info-line"><span class="label">调候：</span>${bazi.tiaohou || ''}</div>
+                <div class="info-line"><span class="label">十神：</span>${Object.values(bazi.shishen || {}).join(' ')}</div>
+            `;
+            return section;
+        }
+
+        function createZiweiSection(ziwei) {
+            const section = createSection('紫微斗数');
+            section.innerHTML += `
+                <div class="info-line"><span class="label">命宫：</span>${ziwei.ming_gong || ''}</div>
+                <div class="info-line"><span class="label">五行局：</span>${ziwei.wuxing_ju ? ziwei.wuxing_ju.wuxing + ziwei.wuxing_ju.ju_shu + '局' : ''}</div>
+                <div class="info-line"><span class="label">四化：</span>禄-${ziwei.sihua?.禄 || ''} 权-${ziwei.sihua?.权 || ''} 科-${ziwei.sihua?.科 || ''} 忌-${ziwei.sihua?.忌 || ''}</div>
+            `;
+            // 主星
+            const starList = document.createElement('div');
+            starList.style.cssText = 'font-size:0.8rem; margin-top:0.5rem;';
+            const mainStars = ['紫微', '天机', '太阳', '武曲', '天同', '廉贞', '天府', '太阴', '贪狼', '巨门', '天相', '天梁', '七杀', '破军'];
+            mainStars.forEach(star => {
+                if (ziwei.star_placements && ziwei.star_placements[star]) {
+                    starList.innerHTML += `<span style="display:inline-block; background:var(--bg-card); padding:0.2rem 0.5rem; margin:0.1rem; border-radius:4px;">${star}&rarr;${ziwei.star_placements[star]}</span>`;
+                }
+            });
+            section.appendChild(starList);
+            return section;
+        }
+
+        function createAstroSection(astro) {
+            const section = createSection('西洋占星');
+            section.innerHTML += `
+                <div class="info-line"><span class="label">太阳：</span>${astro.sun_sign || ''}（${astro.sun_element || ''}）</div>
+                <div class="info-line"><span class="label">月亮：</span>${astro.moon_sign || ''}（${astro.moon_element || ''}）</div>
+                <div class="info-line"><span class="label">上升：</span>${astro.ascendant_sign || ''}</div>
+                <div class="info-line"><span class="label">中天：</span>${astro.mc || ''}°</div>
+            `;
+            const planets = document.createElement('div');
+            planets.className = 'planet-mini';
+            for (const [name, info] of Object.entries(astro.planets || {})) {
+                planets.innerHTML += `
+                    <div class="planet-mini-item">
+                        ${name} ${info.sign || ''} ${info.degree || ''}°
+                    </div>
+                `;
+            }
+            section.appendChild(planets);
+            return section;
+        }
+
+        function createLiuyaoSection(liuyao) {
+            const section = createSection('六爻');
+            section.innerHTML += `
+                <div class="gua-info">
+                    <div class="gua-name">${liuyao.ben_gua?.name || ''}</div>
+                    <div class="dong-yao">动爻：第${liuyao.dong_yao || 0}爻</div>
+                </div>
+            `;
+            return section;
+        }
+
+        function createQimenSection(qimen) {
+            const section = createSection('奇门遁甲');
+            section.innerHTML += `<div class="info-line" style="text-align:center; font-size:1rem;"><span class="label">${qimen.ju_name || ''}</span></div>`;
+
+            const grid = document.createElement('div');
+            grid.className = 'qimen-mini';
+            const order = ['巽四', '离九', '坤二', '震三', '中五', '兑七', '艮八', '坎一', '乾六'];
+            order.forEach(gong => {
+                grid.innerHTML += `
+                    <div class="qimen-mini-cell">
+                        <div class="qimen-mini-gong">${gong}</div>
+                        <div class="qimen-mini-gan">${qimen.di_pan?.[gong] || ''}</div>
+                        <div class="qimen-mini-men">${qimen.ba_men?.[gong] || ''}</div>
+                    </div>
+                `;
+            });
+            section.appendChild(grid);
+            return section;
+        }
+
+        function createLiurenSection(liuren) {
+            const section = createSection('大六壬');
+            section.innerHTML += `<div class="info-line"><span class="label">月将：</span>${liuren.yue_jiang || ''}</div>`;
+
+            const keDiv = document.createElement('div');
+            keDiv.className = 'liuren-ke';
+            (liuren.si_ke || []).forEach(k => {
+                keDiv.innerHTML += `<div class="liuren-ke-item">${k.ke || ''}</div>`;
+            });
+            section.appendChild(keDiv);
+
+            section.innerHTML += `<div class="info-line"><span class="label">三传：</span>${(liuren.san_chuan || []).map(c => c.name).join(' &rarr; ')}</div>`;
+            return section;
+        }
+
+        function createTaiyiSection(taiyi) {
+            const section = createSection('太乙神数');
+            section.innerHTML += `
+                <div class="taiyi-info">
+                    <div class="taiyi-gong">${taiyi.taiyi_gong || ''}</div>
+                    <div class="info-line" style="margin-top:0.5rem;"><span class="label">积年数：</span>${taiyi.ji_nian || 0}</div>
+                    <div class="info-line"><span class="label">阴阳遁：</span>${taiyi.yin_yang || ''}</div>
+                </div>
+            `;
+            return section;
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById('qaQuestion').value;
+            if (!question) return;
+
+            const resultDiv = document.getElementById('qaResult');
+            resultDiv.classList.remove('active');
+
+            try {
+                // 调用问答API
+                const res = await fetch(`/api/ask?birth=${encodeURIComponent(birth)}&location=${encodeURIComponent(location)}&gender=${encodeURIComponent(gender)}&question=${encodeURIComponent(question)}`);
+                const data = await res.json();
+
+                document.getElementById('qaType').textContent = data.question_type || '';
+                const confBadge = document.getElementById('qaConfidence');
+                confBadge.textContent = (data.confidence || '') + '置信度';
+                confBadge.className = 'qa-confidence confidence-' + (data.confidence || 'low').toLowerCase();
+
+                document.getElementById('qaAnswer').textContent = data.answer || '';
+
+                const kpDiv = document.getElementById('qaKeypoints');
+                kpDiv.innerHTML = '';
+                (data.key_points || []).forEach(p => {
+                    kpDiv.innerHTML += `<div class="qa-keypoint">${p}</div>`;
+                });
+
+                resultDiv.classList.add('active');
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        // 加载
+        loadChart();
+    </script>
+</body>
+</html>

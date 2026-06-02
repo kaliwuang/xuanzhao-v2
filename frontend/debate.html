@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄照 v2.0 - 辩论台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">玄照 <span>v2.0</span></a>
+        <div class="nav-links">
+            <a href="/">排盘</a>
+            <a href="/debate" class="active">辩论台</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- 输入面板 -->
+        <div class="input-panel">
+            <h2>辩论问题</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>出生时间</label>
+                    <input type="text" id="birth" placeholder="2005-06-09 11:50">
+                </div>
+                <div class="form-group">
+                    <label>出生地点</label>
+                    <input type="text" id="location" placeholder="呼和浩特" value="呼和浩特">
+                </div>
+                <div class="form-group">
+                    <label>性别</label>
+                    <select id="gender">
+                        <option value="男" selected>男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>问题</label>
+                    <input type="text" id="question" placeholder="此人事业如何？" value="此人事业如何？">
+                </div>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="startDebate()">开始辩论</button>
+            </div>
+        </div>
+
+        <!-- 加载 -->
+        <div id="loading" class="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>正在召集人物，准备辩论...</p>
+        </div>
+
+        <!-- 错误 -->
+        <div id="error" class="error-message" style="display:none;"></div>
+
+        <!-- 辩论结果 -->
+        <div id="debateResult" style="display:none;">
+            <!-- 参与者 -->
+            <div class="card">
+                <div class="card-title">参与者</div>
+                <div class="debate-participants" id="participants"></div>
+            </div>
+
+            <!-- 第一轮：独白 -->
+            <div class="card">
+                <div class="card-title">第一轮：各抒己见</div>
+                <div id="round1"></div>
+            </div>
+
+            <!-- 第二轮：交锋 -->
+            <div class="card">
+                <div class="card-title">第二轮：交锋辩论</div>
+                <div id="round2"></div>
+            </div>
+
+            <!-- 共识与分歧 -->
+            <div class="card">
+                <div class="card-title">共识与分歧</div>
+                <div style="margin-bottom:1rem;">
+                    <strong style="color:var(--success);">共识：</strong>
+                    <div id="consensus"></div>
+                </div>
+                <div>
+                    <strong style="color:var(--danger);">分歧：</strong>
+                    <div id="disagreements"></div>
+                </div>
+            </div>
+
+            <!-- 总结 -->
+            <div class="card">
+                <div class="card-title">总结</div>
+                <div id="summary" style="line-height:1.8;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        // 从URL参数读取
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('birth')) document.getElementById('birth').value = params.get('birth');
+        if (params.get('location')) document.getElementById('location').value = params.get('location');
+        if (params.get('gender')) document.getElementById('gender').value = params.get('gender');
+
+        async function startDebate() {
+            const birth = document.getElementById('birth').value;
+            const location = document.getElementById('location').value;
+            const gender = document.getElementById('gender').value;
+            const question = document.getElementById('question').value;
+
+            if (!birth || !question) {
+                showError('请输入出生时间和问题');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const data = await api.getDebate(birth, location, gender, question);
+                renderDebate(data);
+                showLoading(false);
+                document.getElementById('debateResult').style.display = 'block';
+            } catch (e) {
+                showLoading(false);
+                showError(e.message);
+            }
+        }
+
+        function renderDebate(data) {
+            // 参与者
+            const partContainer = document.getElementById('participants');
+            partContainer.innerHTML = '';
+            data.participants?.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'participant';
+                div.innerHTML = `
+                    <div class="participant-name">${p.name}</div>
+                    <div class="participant-method">${p.method}</div>
+                    <div class="participant-stance">${p.stance}</div>
+                `;
+                partContainer.appendChild(div);
+            });
+
+            // 第一轮
+            const round1Container = document.getElementById('round1');
+            round1Container.innerHTML = '';
+            data.participants?.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'exchange';
+                div.innerHTML = `
+                    <div><span class="exchange-speaker">${p.name}</span>（${p.method}）</div>
+                    <div class="exchange-text">${p.stance}</div>
+                `;
+                round1Container.appendChild(div);
+            });
+
+            // 第二轮
+            const round2Container = document.getElementById('round2');
+            round2Container.innerHTML = '';
+            data.exchanges?.forEach(e => {
+                const div = document.createElement('div');
+                div.className = 'exchange';
+                div.innerHTML = `
+                    <div><span class="exchange-speaker">${e.speaker}</span>（${e.speaker_method}）→ <span class="exchange-target">${e.target}</span>（${e.target_method}）</div>
+                    <div class="exchange-text">${e.argument}</div>
+                `;
+                round2Container.appendChild(div);
+            });
+
+            // 共识
+            const consensusContainer = document.getElementById('consensus');
+            consensusContainer.innerHTML = '';
+            data.consensus?.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'consensus-item';
+                div.textContent = c;
+                consensusContainer.appendChild(div);
+            });
+
+            // 分歧
+            const disagreementsContainer = document.getElementById('disagreements');
+            disagreementsContainer.innerHTML = '';
+            data.disagreements?.forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'conflict-item';
+                div.innerHTML = `${d.between?.join(' vs ')}：${d.stance_a} / ${d.stance_b}`;
+                disagreementsContainer.appendChild(div);
+            });
+
+            // 总结
+            document.getElementById('summary').textContent = data.summary || '';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
