@@ -412,15 +412,33 @@ class PerspectiveEngine:
         return data
 
     def _apply_thinking_model(self, figure: Figure, method_data: Dict, question: str) -> Dict:
-        """应用思维模型生成推理"""
+        """应用思维模型生成推理，注入知识库"""
 
         # 基于问题类型和术法数据生成推理
         question_type = self._classify_question(question)
+
+        # === 知识库检索注入 ===
+        knowledge_snippets = []
+        try:
+            from knowledge.search import KnowledgeSearch
+            ks = KnowledgeSearch()
+            # 构建查询：人物 + 问题主题 + 术法
+            query = f"{figure.name} {figure.primary_method} {question}"
+            knowledge_snippets = ks.search_by_query(query, top_n=2)
+        except Exception:
+            pass
 
         # 构造推理文本
         reasoning_parts = []
         key_points = []
         quotes = []
+
+        # 注入知识库片段
+        if knowledge_snippets:
+            reasoning_parts.append(f"【{figure.name}知识库参考】")
+            for s in knowledge_snippets:
+                reasoning_parts.append(f"  {s['category']} · {s['title']}")
+                reasoning_parts.append(f"  {s.get('snippet', '')[:100]}...")
 
         # 引用思维模型原则
         for principle in figure.thinking_model.principles[:2]:

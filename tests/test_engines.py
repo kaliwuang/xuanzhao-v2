@@ -434,5 +434,202 @@ class TestKnownCases(unittest.TestCase):
         self.assertIsNotNone(result['day'])
 
 
+class TestKnowledgeBase(unittest.TestCase):
+    """知识库测试"""
+
+    def test_index_build(self):
+        """知识库索引构建"""
+        from knowledge.index import build_index
+        idx = build_index(force=True)
+        self.assertGreater(idx['stats']['total_docs'], 0)
+        self.assertIn('inverted_index', idx)
+
+    def test_search_by_bazi(self):
+        """八字特征搜索"""
+        from knowledge.index import search_by_bazi
+        results = search_by_bazi(day_master="甲", wuxing="木")
+        self.assertIsInstance(results, list)
+
+    def test_search_by_query(self):
+        """自然语言搜索"""
+        from knowledge.index import search_by_query
+        results = search_by_query("事业", top_n=3)
+        self.assertIsInstance(results, list)
+
+
+class TestContentChecker(unittest.TestCase):
+    """内容质量检查测试"""
+
+    def test_good_text(self):
+        """合格文本"""
+        from engine.content_checker import check_text
+        text = "水是生命之源。山不在高，有仙则名。君子自强不息。"
+        result = check_text(text)
+        self.assertIsInstance(result, dict)
+        self.assertIn('score', result)
+
+    def test_banned_words(self):
+        """禁用词检测"""
+        from engine.content_checker import ContentChecker
+        checker = ContentChecker()
+        result = checker.check("首先，这是一个测试。其次，我们来看一下。")
+        banned = [i for i in result['issues'] if i['type'] == '禁用词']
+        self.assertTrue(len(banned) > 0)
+
+
+class TestDataFiles(unittest.TestCase):
+    """数据文件测试"""
+
+    def test_cities_json(self):
+        """城市数据库"""
+        import json
+        from pathlib import Path
+        path = Path(__file__).parent.parent / "data" / "cities.json"
+        self.assertTrue(path.exists())
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn("北京", data)
+        self.assertIn("lat", data["北京"])
+        self.assertIn("lon", data["北京"])
+
+    def test_tiaohou_json(self):
+        """调候用神表"""
+        import json
+        from pathlib import Path
+        path = Path(__file__).parent.parent / "data" / "tiaohou.json"
+        self.assertTrue(path.exists())
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn("甲", data)
+        self.assertIn("寅", data["甲"])
+
+    def test_shensha_json(self):
+        """神煞表"""
+        import json
+        from pathlib import Path
+        path = Path(__file__).parent.parent / "data" / "shensha.json"
+        self.assertTrue(path.exists())
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn("shensha", data)
+        self.assertIn("天乙贵人", data["shensha"])
+
+
+class TestExtendedBaziCases(unittest.TestCase):
+    """扩展八字已知案例验证"""
+
+    def setUp(self):
+        self.time_engine = TimeEngine()
+        self.engine = BaziEngine()
+
+    def test_case_2000_beijing_male(self):
+        """2000-01-01 00:30 北京 男"""
+        corrected = self.time_engine.correct('2000-01-01 00:30', '北京')
+        result = self.engine.analyze(corrected, 1)
+        self.assertEqual(result['year'].ganzhi, '己卯')
+
+    def test_case_1990_shanghai_female(self):
+        """1990-05-15 14:00 上海 女"""
+        corrected = self.time_engine.correct('1990-05-15 14:00', '上海')
+        result = self.engine.analyze(corrected, 0)
+        self.assertEqual(result['year'].ganzhi, '庚午')
+        self.assertEqual(result['month'].ganzhi, '辛巳')
+
+    def test_case_1985_guangzhou_male(self):
+        """1985-12-25 23:45 广州 男"""
+        corrected = self.time_engine.correct('1985-12-25 23:45', '广州')
+        self.assertTrue(corrected.is_late_zi)
+        result = self.engine.analyze(corrected, 1)
+        self.assertIsNotNone(result['day'])
+
+    def test_case_1995_hangzhou_female(self):
+        """1995-08-08 08:08 杭州 女"""
+        corrected = self.time_engine.correct('1995-08-08 08:08', '杭州')
+        result = self.engine.analyze(corrected, 0)
+        self.assertEqual(result['year'].ganzhi, '乙亥')
+
+    def test_case_1988_chengdu_male(self):
+        """1988-03-15 10:30 成都 男"""
+        corrected = self.time_engine.correct('1988-03-15 10:30', '成都')
+        result = self.engine.analyze(corrected, 1)
+        self.assertEqual(result['year'].ganzhi, '戊辰')
+
+    def test_case_1976_wuhan_female(self):
+        """1976-07-28 16:00 武汉 女"""
+        corrected = self.time_engine.correct('1976-07-28 16:00', '武汉')
+        result = self.engine.analyze(corrected, 0)
+        self.assertEqual(result['year'].ganzhi, '丙辰')
+
+    def test_case_2005_hohhot_male(self):
+        """2005-06-09 11:50 呼和浩特 男"""
+        corrected = self.time_engine.correct('2005-06-09 11:50', '呼和浩特')
+        result = self.engine.analyze(corrected, 1)
+        self.assertEqual(result['day'].ganzhi, '甲子')
+        self.assertEqual(result['day_master'], '甲')
+
+    def test_case_2010_shenzhen_female(self):
+        """2010-11-11 11:11 深圳 女"""
+        corrected = self.time_engine.correct('2010-11-11 11:11', '深圳')
+        result = self.engine.analyze(corrected, 0)
+        self.assertEqual(result['year'].ganzhi, '庚寅')
+
+    def test_case_1992_xian_male(self):
+        """1992-02-04 06:00 西安 男"""
+        corrected = self.time_engine.correct('1992-02-04 06:00', '西安')
+        result = self.engine.analyze(corrected, 1)
+        self.assertEqual(result['year'].ganzhi, '辛未')
+
+    def test_case_1980_nanjing_female(self):
+        """1980-09-09 09:09 南京 女"""
+        corrected = self.time_engine.correct('1980-09-09 09:09', '南京')
+        result = self.engine.analyze(corrected, 0)
+        self.assertEqual(result['year'].ganzhi, '庚申')
+
+
+class TestExtendedZiWeiCases(unittest.TestCase):
+    """扩展紫微已知案例验证"""
+
+    def setUp(self):
+        self.time_engine = TimeEngine()
+        self.engine = ZiWeiEngine()
+
+    def test_case_2000_beijing(self):
+        """2000-01-01 00:30 北京"""
+        corrected = self.time_engine.correct('2000-01-01 00:30', '北京')
+        result = self.engine.analyze(corrected, 1)
+        self.assertIsNotNone(result['ming_gong'])
+        self.assertIn(result['ming_gong'], ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'])
+        self.assertEqual(len(result['star_placements']), 14)
+
+    def test_case_1990_shanghai(self):
+        """1990-05-15 14:00 上海"""
+        corrected = self.time_engine.correct('1990-05-15 14:00', '上海')
+        result = self.engine.analyze(corrected, 0)
+        self.assertIsNotNone(result['ming_gong'])
+        self.assertEqual(len(result['palaces']), 12)
+
+    def test_case_1985_guangzhou(self):
+        """1985-12-25 23:45 广州"""
+        corrected = self.time_engine.correct('1985-12-25 23:45', '广州')
+        result = self.engine.analyze(corrected, 1)
+        self.assertIsNotNone(result['wuxing_ju'])
+        self.assertIn(result['wuxing_ju']['wuxing'], ['水','木','金','土','火'])
+
+    def test_case_2005_hohhot(self):
+        """2005-06-09 11:50 呼和浩特"""
+        corrected = self.time_engine.correct('2005-06-09 11:50', '呼和浩特')
+        result = self.engine.analyze(corrected, 1)
+        self.assertEqual(result['ming_gong'], '丑')
+        self.assertEqual(result['wuxing_ju']['wuxing'], '水')
+        self.assertEqual(result['wuxing_ju']['ju_shu'], 2)
+
+    def test_case_1995_hangzhou(self):
+        """1995-08-08 08:08 杭州"""
+        corrected = self.time_engine.correct('1995-08-08 08:08', '杭州')
+        result = self.engine.analyze(corrected, 0)
+        self.assertIsNotNone(result['sihua'])
+        self.assertIn('禄', result['sihua'])
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

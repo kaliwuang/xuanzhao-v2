@@ -161,7 +161,19 @@ class BaziEngine(DivinationEngine):
         return True, None
 
     def _calc_tiaohou(self, day_gan: str, month_zhi: str) -> str:
-        """调候用神计算"""
+        """调候用神计算，优先从 data/tiaohou.json 读取"""
+        import json
+        from pathlib import Path
+        tiaohou_file = Path(__file__).parent.parent / "data" / "tiaohou.json"
+        if tiaohou_file.exists():
+            try:
+                with open(tiaohou_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                return data.get(day_gan, {}).get(month_zhi, "")
+            except Exception:
+                pass
+
+        # 回退：硬编码
         table = {
             ("甲", "寅"): "丙癸", ("甲", "卯"): "庚丙戊", ("甲", "辰"): "庚丁壬",
             ("甲", "巳"): "癸庚丁", ("甲", "午"): "癸庚丁", ("甲", "未"): "癸庚丁",
