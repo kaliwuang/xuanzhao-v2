@@ -713,6 +713,7 @@ class CrossValidator:
     def _detect_conflicts(self) -> List[ConflictItem]:
         conflicts = []
         chong = self.udm.get_chong()
+        he = self.udm.get_he()
         features = self.udm.features or []
         shishen = self.udm.shishen_gan or {}
 
