@@ -3,21 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>玄照 v2.0 - 七术排盘 x 交叉验证 x 108视角</title>
+    <title>玄照 v2.0 — 七术排盘 × 108视角 × 群体智能</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="nav">
         <a href="/" class="nav-brand">玄照 <span>v2.0</span></a>
         <div class="nav-links">
             <a href="/" class="active">排盘</a>
+            <a href="/perspectives">108视角</a>
             <a href="/debate">辩论台</a>
         </div>
     </nav>
-
     <div class="container">
-        <!-- 输入面板 -->
+        <div class="hero">
+            <h1 class="hero-title">玄 照</h1>
+            <p class="hero-subtitle">七术排盘 · 交叉验证 · 108视角群体智能</p>
+            <div class="hero-divider"></div>
+        </div>
         <div class="input-panel">
             <h2>出生信息</h2>
             <div class="form-grid">
@@ -41,536 +44,137 @@
                     <input type="text" id="name" placeholder="">
                 </div>
             </div>
-            <div>
+            <div class="btn-row">
                 <button class="btn btn-primary" onclick="analyze()">七术排盘</button>
+                <button class="btn btn-secondary" onclick="goDetail()">命盘详情</button>
                 <button class="btn btn-secondary" onclick="debate()">开启辩论</button>
             </div>
         </div>
-
-        <!-- 加载 -->
-        <div id="loading" class="loading" style="display:none;">
-            <div class="spinner"></div>
-            <p>正在排盘，请稍候...</p>
-        </div>
-
-        <!-- 错误 -->
+        <div id="loading" class="loading" style="display:none;"><div class="spinner"></div><p>正在排盘，请稍候...</p></div>
         <div id="error" class="error-message" style="display:none;"></div>
-
-        <!-- 排盘结果 -->
         <div id="chartResult" class="chart-result">
-            <!-- 术法标签 -->
             <div class="method-tabs" id="methodTabs"></div>
-
-            <!-- 八字 -->
-            <div id="baziPanel" class="method-panel" style="display:none;">
-                <div class="card">
-                    <div class="card-title">八字四柱</div>
-                    <div class="bazi-pillars" id="baziPillars"></div>
-                    <div class="shishen-grid" id="baziShishen"></div>
-                    <div style="margin-top:1rem; text-align:center; color:var(--accent-gold);">
-                        日主：<span id="dayMaster"></span>
-                        <span id="dayMasterWuxing" style="margin-left:1rem;"></span>
-                        <span id="tiaohou" style="margin-left:1rem; color:var(--text-muted);"></span>
-                    </div>
-                    <div class="feature-tags" id="baziFeatures"></div>
-                </div>
-            </div>
-
-            <!-- 紫微 -->
-            <div id="ziweiPanel" class="method-panel" style="display:none;">
-                <div class="card">
-                    <div class="card-title">紫微斗数</div>
-                    <div id="ziweiInfo" style="margin-bottom:1rem; color:var(--text-muted);"></div>
-                    <div class="ziwei-palaces" id="ziweiPalaces"></div>
-                </div>
-            </div>
-
-            <!-- 占星 -->
-            <div id="astroPanel" class="method-panel" style="display:none;">
-                <div class="card">
-                    <div class="card-title">西洋占星</div>
-                    <div style="margin-bottom:1rem; text-align:center;">
-                        <span style="color:var(--accent-gold); margin-right:2rem;">太阳：<span id="sunSign"></span></span>
-                        <span style="color:var(--text-primary); margin-right:2rem;">月亮：<span id="moonSign"></span></span>
-                        <span style="color:var(--text-muted);">上升：<span id="ascSign"></span></span>
-                    </div>
-                    <div class="astro-planets" id="astroPlanets"></div>
-                </div>
-            </div>
-
-            <!-- 六爻 -->
-            <div id="liuyaoPanel" class="method-panel" style="display:none;">
-                <div class="card">
-                    <div class="card-title">六爻</div>
-                    <div id="liuyaoContent"></div>
-                </div>
-            </div>
-
-            <!-- 奇门 -->
-            <div id="qimenPanel" class="method-panel" style="display:none;">
-                <div class="card">
-                    <div class="card-title">奇门遁甲</div>
-                    <div style="text-align:center; margin-bottom:1rem; color:var(--accent-gold);" id="qimenJu"></div>
-                    <div class="qimen-grid" id="qimenGrid"></div>
-                </div>
-            </div>
-
-            <!-- 大六壬 -->
-            <div id="liurenPanel" class="method-panel" style="display:none;">
-                <div class="card">
-                    <div class="card-title">大六壬</div>
-                    <div id="liurenContent"></div>
-                </div>
-            </div>
-
-            <!-- 太乙 -->
-            <div id="taiyiPanel" class="method-panel" style="display:none;">
-                <div class="card">
-                    <div class="card-title">太乙神数</div>
-                    <div id="taiyiContent"></div>
-                </div>
-            </div>
-
-            <!-- 七术综合判断 -->
-            <div class="comprehensive-result" id="comprehensiveResult" style="display:none;">
-                <div class="card" style="border-color:var(--accent-gold);">
-                    <div class="card-title" style="color:var(--accent-gold);">
-                        七术综合判断
-                        <span class="confidence-badge" id="compBadge" style="margin-left:1rem;"></span>
-                    </div>
-                    <div id="comprehensiveContent"></div>
-                </div>
-            </div>
-
-            <!-- 交叉验证 -->
-            <div class="validation-result" id="validationResult" style="display:none;">
-                <div class="card">
-                    <div class="card-title">
-                        七术交叉验证
-                        <span class="confidence-badge" id="confidenceBadge" style="margin-left:1rem;"></span>
-                    </div>
-                    <div style="color:var(--text-muted); margin-bottom:1rem;">
-                        可用术法：<span id="availableMethods"></span>
-                    </div>
-                    <div class="consensus-list" id="consensusList"></div>
-                </div>
+            <div id="baziPanel" class="method-panel" style="display:none;"><div class="card"><div class="card-title">八字四柱</div><div class="bazi-pillars" id="baziPillars"></div><div class="shishen-grid" id="baziShishen"></div><div style="margin-top:1rem;text-align:center;color:var(--accent-gold);">日主：<span id="dayMaster"></span><span id="dayMasterWuxing" style="margin-left:1rem;"></span><span id="tiaohou" style="margin-left:1rem;color:var(--text-muted);"></span></div><div class="feature-tags" id="baziFeatures"></div></div></div>
+            <div id="ziweiPanel" class="method-panel" style="display:none;"><div class="card"><div class="card-title">紫微斗数</div><div id="ziweiInfo" style="margin-bottom:1rem;"></div><div id="ziweiPalaces"></div></div></div>
+            <div id="astroPanel" class="method-panel" style="display:none;"><div class="card"><div class="card-title">西洋占星</div><div style="margin-bottom:1rem;text-align:center;"><span style="color:var(--accent-gold);margin-right:2rem;">太阳：<span id="sunSign"></span></span><span style="color:var(--text-primary);margin-right:2rem;">月亮：<span id="moonSign"></span></span><span style="color:var(--text-muted);">上升：<span id="ascSign"></span></span></div><div class="astro-planets" id="astroPlanets"></div></div></div>
+            <div id="liuyaoPanel" class="method-panel" style="display:none;"><div class="card"><div class="card-title">六爻</div><div id="liuyaoContent"></div></div></div>
+            <div id="qimenPanel" class="method-panel" style="display:none;"><div class="card"><div class="card-title">奇门遁甲</div><div style="text-align:center;margin-bottom:1rem;color:var(--accent-gold);" id="qimenJu"></div><div class="qimen-grid" id="qimenGrid"></div></div></div>
+            <div id="liurenPanel" class="method-panel" style="display:none;"><div class="card"><div class="card-title">大六壬</div><div id="liurenContent"></div></div></div>
+            <div id="taiyiPanel" class="method-panel" style="display:none;"><div class="card"><div class="card-title">太乙神数</div><div id="taiyiContent"></div></div></div>
+            <div class="validation-result" id="validationResult" style="display:none;"><div class="card"><div class="card-title">七术交叉验证 <span class="confidence-badge" id="confidenceBadge" style="margin-left:1rem;"></span></div><div style="color:var(--text-muted);margin-bottom:1rem;">可用术法：<span id="availableMethods"></span></div><div class="consensus-list" id="consensusList"></div></div></div>
+        </div>
+        <div id="perspectivesPreview" style="margin-top:2rem;">
+            <div class="card">
+                <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">108视角 <a href="/perspectives" class="btn btn-ghost">查看全部 →</a></div>
+                <div class="perspectives-gallery" id="previewGallery"></div>
             </div>
         </div>
     </div>
-
     <script src="/static/js/api.js"></script>
     <script>
-        let currentData = null;
+        function showLoading(v){document.getElementById("loading").style.display=v?"block":"none"}
+        function showError(m){var e=document.getElementById("error");e.textContent=m;e.style.display="block"}
+        function hideError(){document.getElementById("error").style.display="none"}
+        function goDetail(){var b=document.getElementById("birth").value,l=document.getElementById("location").value,g=document.getElementById("gender").value;window.location="/chart?birth="+b+"&location="+l+"&gender="+g}
+        function debate(){var b=document.getElementById("birth").value,l=document.getElementById("location").value,g=document.getElementById("gender").value;window.location="/debate?birth="+b+"&location="+l+"&gender="+g}
 
-        async function analyze() {
-            const birth = document.getElementById('birth').value;
-            const location = document.getElementById('location').value;
-            const gender = document.getElementById('gender').value;
-
-            if (!birth) {
-                showError('请输入出生时间');
-                return;
-            }
-
-            showLoading(true);
-            hideError();
-
-            try {
-                // 排盘
-                const chartData = await api.getChart(birth, location, gender);
-                currentData = chartData;
-                renderChart(chartData);
-
-                // 交叉验证
-                const validateData = await api.crossValidate(birth, location, gender);
-                renderValidation(validateData);
-
-                showLoading(false);
-                document.getElementById('chartResult').classList.add('active');
-            } catch (e) {
-                showLoading(false);
-                showError(e.message);
-            }
+        async function analyze(){
+            var birth=document.getElementById("birth").value,location=document.getElementById("location").value,gender=document.getElementById("gender").value;
+            if(!birth){showError("请输入出生时间");return}
+            showLoading(true);hideError();
+            try{
+                var d=await api.getChart(birth,location,gender);renderChart(d);
+                var v=await api.crossValidate(birth,location,gender);renderValidation(v);
+                showLoading(false);document.getElementById("chartResult").classList.add("active");
+            }catch(e){showLoading(false);showError(e.message)}
         }
 
-        function renderChart(data) {
-            // 术法标签
-            const methods = data.methods || [];
-            const tabsContainer = document.getElementById('methodTabs');
-            tabsContainer.innerHTML = '';
+        function switchPanel(n,el){document.querySelectorAll(".method-panel").forEach(function(p){p.style.display="none"});var p=document.getElementById(n+"Panel");if(p)p.style.display="block";document.querySelectorAll(".method-tab").forEach(function(t){t.classList.remove("active")});if(el)el.classList.add("active")}
 
-            const methodNames = {
-                '八字': 'bazi', '紫微': 'ziwei', '占星': 'astro',
-                '六爻': 'liuyao', '奇门': 'qimen', '大六壬': 'liuren', '太乙': 'taiyi'
-            };
-
-            methods.forEach((m, i) => {
-                const tab = document.createElement('div');
-                tab.className = 'method-tab' + (i === 0 ? ' active' : '');
-                tab.textContent = m;
-                tab.onclick = () => switchPanel(methodNames[m]);
-                tabsContainer.appendChild(tab);
-            });
-
-            // 默认显示第一个面板
-            if (methods.length > 0 && methodNames[methods[0]]) {
-                switchPanel(methodNames[methods[0]]);
-            }
-
-            // 八字
-            if (data.bazi) {
-                document.getElementById('baziPanel').style.display = 'block';
-                renderBazi(data.bazi);
-            }
-
-            // 紫微
-            if (data.ziwei) {
-                document.getElementById('ziweiPanel').style.display = 'block';
-                renderZiwei(data.ziwei);
-            }
-
-            // 占星
-            if (data.astro) {
-                document.getElementById('astroPanel').style.display = 'block';
-                renderAstro(data.astro);
-            }
-
-            // 六爻
-            if (data.liuyao) {
-                document.getElementById('liuyaoPanel').style.display = 'block';
-                renderLiuyao(data.liuyao);
-            }
-
-            // 奇门
-            if (data.qimen) {
-                document.getElementById('qimenPanel').style.display = 'block';
-                renderQimen(data.qimen);
-            }
-
-            // 大六壬
-            if (data.liuren) {
-                document.getElementById('liurenPanel').style.display = 'block';
-                renderLiuren(data.liuren);
-            }
-
-            // 太乙
-            if (data.taiyi) {
-                document.getElementById('taiyiPanel').style.display = 'block';
-                renderTaiyi(data.taiyi);
-            }
+        function renderChart(data){
+            var methods=data.methods||[];var tc=document.getElementById("methodTabs");tc.innerHTML="";
+            var mn={"八字":"bazi","紫微":"ziwei","占星":"astro","六爻":"liuyao","奇门":"qimen","大六壬":"liuren","太乙":"taiyi"};
+            methods.forEach(function(m,i){var t=document.createElement("div");t.className="method-tab"+(i===0?" active":"");t.textContent=m;t.onclick=function(){switchPanel(mn[m],this)};tc.appendChild(t)});
+            if(methods.length>0&&mn[methods[0]])switchPanel(mn[methods[0]],tc.firstChild);
+            if(data.bazi){document.getElementById("baziPanel").style.display="block";renderBazi(data.bazi)}
+            if(data.ziwei){document.getElementById("ziweiPanel").style.display="block";renderZiwei(data.ziwei)}
+            if(data.astro){document.getElementById("astroPanel").style.display="block";renderAstro(data.astro)}
+            if(data.liuyao){document.getElementById("liuyaoPanel").style.display="block";renderLiuyao(data.liuyao)}
+            if(data.qimen){document.getElementById("qimenPanel").style.display="block";renderQimen(data.qimen)}
+            if(data.liuren){document.getElementById("liurenPanel").style.display="block";renderLiuren(data.liuren)}
+            if(data.taiyi){document.getElementById("taiyiPanel").style.display="block";renderTaiyi(data.taiyi)}
         }
 
-        function switchPanel(panelName) {
-            document.querySelectorAll('.method-panel').forEach(p => p.style.display = 'none');
-            const panel = document.getElementById(panelName + 'Panel');
-            if (panel) panel.style.display = 'block';
-            document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
-            if (event && event.target) event.target.classList.add('active');
+        function renderBazi(bazi){
+            var ps=["year","month","day","time"],ls=["年柱","月柱","日柱","时柱"],c=document.getElementById("baziPillars");c.innerHTML="";
+            ps.forEach(function(p,i){var gz=bazi[p];if(gz){var d=document.createElement("div");d.className="pillar";d.innerHTML="<div class=\"pillar-label\">"+ls[i]+"</div><div class=\"pillar-gan\">"+gz[0]+"</div><div class=\"pillar-zhi\">"+gz[1]+"</div><div class=\"pillar-nayin\">"+(bazi.nayin&&bazi.nayin[p]||"")+"</div>";c.appendChild(d)}});
+            var sc=document.getElementById("baziShishen");sc.innerHTML="";var sm=bazi.shishen_gan||{};
+            ps.forEach(function(p,i){var ss=sm[p];if(ss){var d=document.createElement("div");d.className="shishen-item";d.textContent=ls[i]+": "+ss;sc.appendChild(d)}});
+            document.getElementById("dayMaster").textContent=bazi.day_master||"";
+            document.getElementById("dayMasterWuxing").textContent=bazi.day_master_wuxing||"";
+            document.getElementById("tiaohou").textContent=bazi.tiaohou?"调候用神："+bazi.tiaohou:"";
+            var fc=document.getElementById("baziFeatures");fc.innerHTML="";
+            (bazi.features||[]).forEach(function(f){var t=document.createElement("span");t.className="feature-tag"+(f.indexOf("冲")>=0?" highlight":"");t.textContent=f;fc.appendChild(t)})
         }
 
-        function renderBazi(bazi) {
-            const pillars = ['year', 'month', 'day', 'time'];
-            const labels = ['年柱', '月柱', '日柱', '时柱'];
-            const container = document.getElementById('baziPillars');
-            container.innerHTML = '';
-
-            pillars.forEach((p, i) => {
-                const gz = bazi[p];
-                if (gz) {
-                    const div = document.createElement('div');
-                    div.className = 'pillar';
-                    div.innerHTML = `
-                        <div class="pillar-label">${labels[i]}</div>
-                        <div class="pillar-gan">${gz[0]}</div>
-                        <div class="pillar-zhi">${gz[1]}</div>
-                        <div class="pillar-nayin">${bazi.nayin?.[p] || ''}</div>
-                    `;
-                    container.appendChild(div);
-                }
-            });
-
-            // 十神
-            const ssContainer = document.getElementById('baziShishen');
-            ssContainer.innerHTML = '';
-            const shishenMap = bazi.shishen_gan || {};
-            const labels = ['年柱', '月柱', '日柱', '时柱'];
-            const pillarKeys = ['year', 'month', 'day', 'time'];
-            pillars.forEach((p, i) => {
-                const ss = shishenMap[p];
-                if (ss) {
-                    const div = document.createElement('div');
-                    div.className = 'shishen-item';
-                    div.textContent = `${labels[i]}: ${ss}`;
-                    ssContainer.appendChild(div);
-                }
-            });
-
-            // 日主
-            document.getElementById('dayMaster').textContent = bazi.day_master || '';
-            document.getElementById('dayMasterWuxing').textContent = bazi.day_master_wuxing || '';
-            document.getElementById('tiaohou').textContent = bazi.tiaohou ? `调候用神：${bazi.tiaohou}` : '';
-
-            // 特征
-            const featContainer = document.getElementById('baziFeatures');
-            featContainer.innerHTML = '';
-            (bazi.features || []).forEach(f => {
-                const tag = document.createElement('span');
-                tag.className = 'feature-tag' + (f.includes('冲') ? ' highlight' : '');
-                tag.textContent = f;
-                featContainer.appendChild(tag);
-            });
+        function renderZiwei(z){
+            var wh=z.wuxing_ju||{};var wx=(typeof wh==="string")?wh:(wh.wuxing||"");var js=(typeof wh==="string")?"":(wh.ju_shu||"");
+            document.getElementById("ziweiInfo").innerHTML='<div class="ziwei-info-bar"><span>命宫：'+(z.ming_gong||"")+'</span><span>五行局：'+wx+js+'局</span><span>四化：禄'+(z.sihua&&z.sihua.禄||"")+' 权'+(z.sihua&&z.sihua.权||"")+' 科'+(z.sihua&&z.sihua.科||"")+' 忌'+(z.sihua&&z.sihua.忌||"")+'</span></div>';
+            var cellZhi={0:"巳",1:"午",2:"未",3:"申",4:"辰",7:"酉",8:"卯",11:"戌",12:"寅",13:"丑",14:"子",15:"亥"};
+            var zm={};(z.palaces||[]).forEach(function(p){zm[p.zhi]=p});
+            var c=document.getElementById("ziweiPalaces");c.innerHTML="";c.className="ziwei-board";
+            var ms=["紫微","天机","太阳","武曲","天同","廉贞","天府","太阴","贪狼","巨门","天相","天梁","七杀","破军"];
+            for(var i=0;i<16;i++){var cell=document.createElement("div");
+                if(!cellZhi[i]){cell.className="ziwei-cell empty"}
+                else{var zz=cellZhi[i],pal=zm[zz];cell.className="ziwei-cell"+(pal&&pal.name==="命宫"?" ming-gong":"");
+                    var sh="";if(pal&&pal.stars){pal.stars.forEach(function(star){
+                        var si="";if(z.sihua){if(z.sihua.禄===star)si=" ziwei-star-sihua-lu";else if(z.sihua.权===star)si=" ziwei-star-sihua-quan";else if(z.sihua.科===star)si=" ziwei-star-sihua-ke";else if(z.sihua.忌===star)si=" ziwei-star-sihua-ji"}
+                        sh+='<span class="'+(ms.indexOf(star)>=0?"ziwei-star-main":"ziwei-star-aux")+si+'">'+star+'</span>'})}
+                    cell.innerHTML='<div class="ziwei-cell-header"><span class="ziwei-cell-zhi">'+zz+'</span><span class="ziwei-cell-name">'+(pal?pal.name:"")+'</span></div><div class="ziwei-cell-stars">'+sh+'</div>'}
+                c.appendChild(cell)}
         }
 
-        function renderZiwei(ziwei) {
-            const wh = ziwei.wuxing_ju || {};
-            const wuxing = (typeof wh === 'string') ? wh : (wh.wuxing || '');
-            const juShu = (typeof wh === 'string') ? '' : (wh.ju_shu || '');
-            document.getElementById('ziweiInfo').innerHTML = `
-                <div class="ziwei-info-bar">
-                    <span>命宫：${ziwei.ming_gong || ''}</span>
-                    <span>命宫干支：${ziwei.ming_ganzhi || ''}</span>
-                    <span>五行局：${wuxing}${juShu}局</span>
-                    <span>四化：禄${ziwei.sihua?.禄 || ''} 权${ziwei.sihua?.权 || ''} 科${ziwei.sihua?.科 || ''} 忌${ziwei.sihua?.忌 || ''}</span>
-                </div>
-            `;
-
-            // 4x4盘面格子顺序（索引 → 地支）
-            const cellZhi = {0:'巳',1:'午',2:'未',3:'申',4:'辰',7:'酉',8:'卯',11:'戌',12:'寅',13:'丑',14:'子',15:'亥'};
-            const zhiMap = {};
-            (ziwei.palaces || []).forEach(p => { zhiMap[p.zhi] = p; });
-
-            const container = document.getElementById('ziweiPalaces');
-            container.innerHTML = '';
-            container.className = 'ziwei-board';
-
-            const mainStars = ['紫微','天机','太阳','武曲','天同','廉贞','天府','太阴','贪狼','巨门','天相','天梁','七杀','破军'];
-
-            for (let i = 0; i < 16; i++) {
-                const cell = document.createElement('div');
-                if (!cellZhi[i]) {
-                    cell.className = 'ziwei-cell empty';
-                } else {
-                    const zhi = cellZhi[i];
-                    const palace = zhiMap[zhi];
-                    const isMing = palace && palace.name === '命宫';
-                    cell.className = 'ziwei-cell' + (isMing ? ' ming-gong' : '');
-
-                    let starsHtml = '';
-                    if (palace && palace.stars) {
-                        palace.stars.forEach(star => {
-                            let sihua = '';
-                            if (ziwei.sihua) {
-                                if (ziwei.sihua.禄 === star) sihua = ' ziwei-star-sihua-lu';
-                                else if (ziwei.sihua.权 === star) sihua = ' ziwei-star-sihua-quan';
-                                else if (ziwei.sihua.科 === star) sihua = ' ziwei-star-sihua-ke';
-                                else if (ziwei.sihua.忌 === star) sihua = ' ziwei-star-sihua-ji';
-                            }
-                            const cls = mainStars.includes(star) ? 'ziwei-star-main' : 'ziwei-star-aux';
-                            starsHtml += `<span class="${cls}${sihua}">${star}</span>`;
-                        });
-                    }
-
-                    cell.innerHTML = `
-                        <div class="ziwei-cell-header">
-                            <span class="ziwei-cell-zhi">${zhi}</span>
-                            <span class="ziwei-cell-name">${palace ? palace.name : ''}</span>
-                        </div>
-                        <div class="ziwei-cell-stars">${starsHtml}</div>
-                    `;
-                }
-                container.appendChild(cell);
-            }
+        function renderAstro(a){
+            document.getElementById("sunSign").textContent=a.sun_sign||"";
+            document.getElementById("moonSign").textContent=a.moon_sign||"";
+            document.getElementById("ascSign").textContent=a.ascendant||"";
+            var c=document.getElementById("astroPlanets");c.innerHTML="";
+            Object.entries(a.planets||{}).forEach(function(e){var n=e[0],info=e[1];var d=document.createElement("div");d.className="planet";d.innerHTML='<div class="planet-name">'+n+'</div><div class="planet-sign">'+(info.sign||"")+'</div><div style="color:var(--text-muted);font-size:0.75rem;">'+(info.degree||"")+'°</div>';c.appendChild(d)})
         }
 
-        function renderAstro(astro) {
-            document.getElementById('sunSign').textContent = astro.sun_sign || '';
-            document.getElementById('moonSign').textContent = astro.moon_sign || '';
-            document.getElementById('ascSign').textContent = astro.ascendant || '';
+        function renderLiuyao(l){document.getElementById("liuyaoContent").innerHTML='<div class="gua-info"><div class="gua-name">'+(l.ben_gua&&l.ben_gua.name||"")+'</div><div>动爻：第'+(l.dong_yao||0)+'爻</div></div>'}
 
-            const container = document.getElementById('astroPlanets');
-            container.innerHTML = '';
-            for (const [name, info] of Object.entries(astro.planets || {})) {
-                const div = document.createElement('div');
-                div.className = 'planet';
-                div.innerHTML = `
-                    <div class="planet-name">${name}</div>
-                    <div class="planet-sign">${info.sign || ''}</div>
-                    <div style="color:var(--text-muted); font-size:0.8rem;">${info.degree || ''}°</div>
-                `;
-                container.appendChild(div);
-            }
+        function renderQimen(q){
+            document.getElementById("qimenJu").textContent=q.ju_name||"";
+            var go=["巽四","离九","坤二","震三","中五","兑七","艮八","坎一","乾六"];
+            var c=document.getElementById("qimenGrid");c.innerHTML="";
+            go.forEach(function(g){var d=document.createElement("div");d.className="qimen-cell"+(g==="中五"?" center":"");d.innerHTML='<div class="qimen-gong">'+g+'</div><div class="qimen-di">'+(q.di_pan&&q.di_pan[g]||"")+'</div><div class="qimen-men">'+(q.ba_men&&q.ba_men[g]||"")+'</div>';c.appendChild(d)})
         }
 
-        function renderLiuyao(liuyao) {
-            const container = document.getElementById('liuyaoContent');
-            container.innerHTML = `
-                <p>本卦：${liuyao.ben_gua?.name || ''}</p>
-                <p>动爻：第${liuyao.dong_yao || 0}爻</p>
-            `;
+        function renderLiuren(l){document.getElementById("liurenContent").innerHTML='<p class="info-line"><span class="label">月将：</span>'+(l.yue_jiang||"")+'</p><p class="info-line"><span class="label">四课：</span>'+(l.si_ke||[]).map(function(k){return k.ke}).join("，")+'</p><p class="info-line"><span class="label">三传：</span>'+(l.san_chuan||[]).map(function(c){return c.name}).join(" → ")+'</p>'}
+
+        function renderTaiyi(t){document.getElementById("taiyiContent").innerHTML='<div class="taiyi-info"><div class="taiyi-gong">'+(t.taiyi_gong||"")+'</div><div class="info-line" style="margin-top:0.5rem;"><span class="label">积年数：</span>'+(t.ji_nian||0)+'</div><div class="info-line"><span class="label">阴阳遁：</span>'+(t.yin_yang||"")+'</div></div>'}
+
+        function renderValidation(data){
+            document.getElementById("validationResult").style.display="block";
+            var b=document.getElementById("confidenceBadge");b.textContent=data.overall_confidence;b.className="confidence-badge confidence-"+data.overall_confidence;
+            document.getElementById("availableMethods").textContent=(data.available_methods||[]).join("、");
+            var l=document.getElementById("consensusList");l.innerHTML="";
+            (data.consensus||[]).forEach(function(c){var d=document.createElement("div");d.className="consensus-item";d.innerHTML="<strong>"+c.aspect+"</strong>："+c.finding+' <span class="confidence-badge confidence-'+c.confidence+'" style="margin-left:0.5rem;">'+c.confidence+"</span>";l.appendChild(d)});
+            (data.conflicts||[]).forEach(function(c){var d=document.createElement("div");d.className="conflict-item";d.innerHTML="<strong>"+c.aspect+"</strong>："+c.method_a+"「"+c.finding_a+"」vs "+c.method_b+"「"+c.finding_b+"」<br><small style=\"color:var(--text-muted);\">建议："+c.suggestion+"</small>";l.appendChild(d)})
         }
 
-        function renderQimen(qimen) {
-            document.getElementById('qimenJu').textContent = qimen.ju_name || '';
-
-            const gongOrder = ['巽四', '离九', '坤二', '震三', '中五', '兑七', '艮八', '坎一', '乾六'];
-            const container = document.getElementById('qimenGrid');
-            container.innerHTML = '';
-
-            gongOrder.forEach(gong => {
-                const div = document.createElement('div');
-                div.className = 'qimen-cell' + (gong === '中五' ? ' center' : '');
-                div.innerHTML = `
-                    <div class="qimen-gong">${gong}</div>
-                    <div class="qimen-di">${qimen.di_pan?.[gong] || ''}</div>
-                    <div class="qimen-men">${qimen.ba_men?.[gong] || ''}</div>
-                `;
-                container.appendChild(div);
-            });
+        async function loadPreview(){
+            try{var r=await fetch("/api/perspectives");if(!r.ok)return;var d=await r.json();
+            var fs=d.figures||{};var ids=Object.keys(fs);
+            var sh=ids.sort(function(){return Math.random()-0.5}).slice(0,6);
+            var g=document.getElementById("previewGallery");g.innerHTML="";
+            sh.forEach(function(fid){var f=fs[fid];var c=document.createElement("div");c.className="figure-card";
+                c.innerHTML='<div class="figure-header"><div class="figure-avatar '+f.faction+'">'+f.name[0]+'</div><div class="figure-info"><h4>'+f.name+'</h4><div class="figure-title-text">'+f.title+'</div></div></div><div class="figure-method-badge">'+f.primary_method+'</div>'+(f.soul&&f.soul.essence?'<div class="figure-soul-essence">'+f.soul.essence+'</div>':'');
+                g.appendChild(c)})
+            }catch(e){console.error(e)}
         }
-
-        function renderLiuren(liuren) {
-            const container = document.getElementById('liurenContent');
-            container.innerHTML = `
-                <p>月将：${liuren.yue_jiang || ''}</p>
-                <p>四课：${(liuren.si_ke || []).map(k => k.ke).join('，')}</p>
-                <p>三传：${(liuren.san_chuan || []).map(c => c.name).join(' → ')}</p>
-            `;
-        }
-
-        function renderTaiyi(taiyi) {
-            const container = document.getElementById('taiyiContent');
-            container.innerHTML = `
-                <p>太乙宫位：${taiyi.taiyi_gong || ''}</p>
-                <p>积年数：${taiyi.ji_nian || 0}</p>
-                <p>阴阳遁：${taiyi.yin_yang || ''}</p>
-            `;
-        }
-
-        function renderValidation(data) {
-            document.getElementById('validationResult').style.display = 'block';
-
-            // 置信度
-            const badge = document.getElementById('confidenceBadge');
-            badge.textContent = data.overall_confidence;
-            badge.className = 'confidence-badge confidence-' + data.overall_confidence;
-
-            // 可用术法
-            document.getElementById('availableMethods').textContent = data.available_methods?.join('、') || '';
-
-            // 七术综合判断
-            const compResult = document.getElementById('comprehensiveResult');
-            const compContent = document.getElementById('comprehensiveContent');
-            const compBadge = document.getElementById('compBadge');
-
-            if (data.comprehensive_judgment) {
-                compResult.style.display = 'block';
-                const cj = data.comprehensive_judgment;
-
-                // 综合判断徽章
-                const luckColors = { '吉': 'confidence-HIGH', '中': 'confidence-MEDIUM', '凶': 'confidence-LOW' };
-
-                let html = '';
-
-                // 命格总评
-                html += `<div style="margin-bottom:1.2rem; padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
-                html += `<div style="color:var(--accent-gold); font-weight:bold; margin-bottom:0.5rem;">命格总评</div>`;
-                html += `<div>${cj.命格总评}</div>`;
-                html += `</div>`;
-
-                // 各方面判断
-                const aspects = ['事业', '财运', '感情', '健康'];
-                html += `<div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:0.8rem; margin-bottom:1.2rem;">`;
-                aspects.forEach(aspect => {
-                    const item = cj[aspect];
-                    if (item) {
-                        const luckClass = luckColors[item.吉凶] || 'confidence-MEDIUM';
-                        html += `<div style="padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
-                        html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">`;
-                        html += `<span style="font-weight:bold;">${aspect}</span>`;
-                        html += `<span class="confidence-badge ${luckClass}">${item.吉凶}</span>`;
-                        html += `</div>`;
-                        html += `<div style="font-size:0.9rem; margin-bottom:0.3rem;">${item.趋势}</div>`;
-                        html += `<div style="font-size:0.85rem; color:var(--text-muted);">建议：${item.建议}</div>`;
-                        html += `</div>`;
-                    }
-                });
-                html += `</div>`;
-
-                // 性格
-                if (cj.性格) {
-                    html += `<div style="margin-bottom:1.2rem; padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
-                    html += `<div style="color:var(--accent-gold); font-weight:bold; margin-bottom:0.5rem;">性格分析</div>`;
-                    html += `<div style="margin-bottom:0.3rem;"><strong style="color:var(--success);">优势：</strong>${cj.性格.优势}</div>`;
-                    html += `<div style="margin-bottom:0.3rem;"><strong style="color:var(--danger);">劣势：</strong>${cj.性格.劣势}</div>`;
-                    html += `<div style="font-size:0.9rem; color:var(--text-muted);">${cj.性格.建议}</div>`;
-                    html += `</div>`;
-                }
-
-                // 大运提示
-                if (cj.大运提示) {
-                    html += `<div style="padding:0.8rem; background:var(--bg-card); border-radius:8px;">`;
-                    html += `<div style="color:var(--accent-gold); font-weight:bold; margin-bottom:0.5rem;">大运提示</div>`;
-                    html += `<div>${cj.大运提示}</div>`;
-                    html += `</div>`;
-                }
-
-                compContent.innerHTML = html;
-            } else {
-                compResult.style.display = 'none';
-            }
-
-            // 共识
-            const consensusContainer = document.getElementById('consensusList');
-            consensusContainer.innerHTML = '';
-
-            data.consensus?.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'consensus-item';
-                div.innerHTML = `
-                    <strong>[${c.aspect}]</strong> ${c.finding}
-                    <span style="color:var(--text-muted); margin-left:0.5rem;">(${c.supporting_methods?.join('/')})</span>
-                `;
-                consensusContainer.appendChild(div);
-            });
-
-            // 冲突
-            data.conflicts?.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'conflict-item';
-                div.innerHTML = `
-                    <strong>[${c.aspect}]</strong> ${c.method_a}说"${c.finding_a}"，${c.method_b}说"${c.finding_b}"
-                    <br><span style="color:var(--text-muted);">建议：${c.suggestion}</span>
-                `;
-                consensusContainer.appendChild(div);
-            });
-        }
-
-        function debate() {
-            const birth = document.getElementById('birth').value;
-            const location = document.getElementById('location').value;
-            const gender = document.getElementById('gender').value;
-
-            if (!birth) {
-                showError('请输入出生时间');
-                return;
-            }
-
-            window.location.href = `/debate?birth=${encodeURIComponent(birth)}&location=${encodeURIComponent(location)}&gender=${encodeURIComponent(gender)}`;
-        }
-
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('error');
-            el.textContent = msg;
-            el.style.display = 'block';
-        }
-
-        function hideError() {
-            document.getElementById('error').style.display = 'none';
-        }
+        loadPreview();
     </script>
 </body>
 </html>

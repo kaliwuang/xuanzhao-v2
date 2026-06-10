@@ -79,5 +79,13 @@ def serve_debate():
     return {"error": "debate.html not found"}
 
 
+@app.get("/perspectives")
+def serve_perspectives():
+    perspectives_path = os.path.join(frontend_dir, "perspectives.html")
+    if os.path.exists(perspectives_path):
+        return FileResponse(perspectives_path)
+    return {"error": "perspectives.html not found"}
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

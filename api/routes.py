@@ -39,11 +39,6 @@ def get_orchestrator():
     return _orchestrator
 
 
-@router.get("/")
-def root():
-    return {"message": "玄照 v2.0 API", "version": "2.0.0"}
-
-
 @router.get("/api/chart")
 def get_chart(
     birth: str = Query(..., description="出生时间，如 2005-06-09 11:50"),
@@ -284,8 +279,37 @@ def get_figures():
             "primary_method": f.primary_method,
             "catchphrase": f.catchphrase,
             "bio": f.bio,
+            "soul": f.soul,
         }
         for fid, f in FIGURES.items()
+    }
+
+
+@router.get("/api/perspectives")
+def get_perspectives():
+    """获取所有108视角（含Soul）"""
+    from engine.perspective_engine import FIGURES
+    return {
+        "total": len(FIGURES),
+        "figures": {
+            fid: {
+                "name": f.name,
+                "title": f.title,
+                "category": f.category,
+                "faction": f.faction,
+                "expertise": f.expertise,
+                "primary_method": f.primary_method,
+                "catchphrase": f.catchphrase,
+                "bio": f.bio,
+                "soul": f.soul,
+                "thinking_model": {
+                    "name": f.thinking_model.name,
+                    "principles": f.thinking_model.principles,
+                    "steps": f.thinking_model.steps,
+                },
+            }
+            for fid, f in FIGURES.items()
+        },
     }
 
 

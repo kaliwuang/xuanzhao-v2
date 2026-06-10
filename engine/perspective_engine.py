@@ -32,6 +32,7 @@ class Figure:
     thinking_model: ThinkingModel
     catchphrase: str
     bio: str
+    soul: Optional[Dict] = None
 
 
 @dataclass
@@ -92,6 +93,7 @@ def _load_figures() -> Dict[str, Figure]:
                     ),
                     catchphrase=fig_data.get("catchphrase", ""),
                     bio=fig_data.get("bio", ""),
+                    soul=fig_data.get("soul", None),
                 )
                 # 后出现的同 id 覆盖前面的（去重）
                 figures[fid] = figure

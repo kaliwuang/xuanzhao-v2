@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>108视角 — 玄照 v2.0</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">玄照 <span>v2.0</span></a>
+        <div class="nav-links">
+            <a href="/">排盘</a>
+            <a href="/perspectives" class="active">108视角</a>
+            <a href="/debate">辩论台</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="hero">
+            <h1 class="hero-title" style="font-size:2.5rem;">108 视角</h1>
+            <p class="hero-subtitle">每人一部著作，每人一种灵魂</p>
+            <div class="hero-divider"></div>
+        </div>
+
+        <div class="stats-bar" id="statsBar"></div>
+
+        <div class="filter-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索人物、术法、著作...">
+            <button class="filter-chip active" data-filter="all" onclick="setFilter(this)">全部</button>
+            <button class="filter-chip" data-filter="orthodox" onclick="setFilter(this)">正统</button>
+            <button class="filter-chip" data-filter="daoist" onclick="setFilter(this)">道家</button>
+            <button class="filter-chip" data-filter="rational" onclick="setFilter(this)">理性</button>
+            <button class="filter-chip" data-filter="western" onclick="setFilter(this)">西方</button>
+        </div>
+        <div class="filter-bar">
+            <button class="filter-chip active" data-method="all" onclick="setMethodFilter(this)">全部术法</button>
+            <button class="filter-chip" data-method="八字" onclick="setMethodFilter(this)">八字</button>
+            <button class="filter-chip" data-method="紫微" onclick="setMethodFilter(this)">紫微</button>
+            <button class="filter-chip" data-method="占星" onclick="setMethodFilter(this)">占星</button>
+            <button class="filter-chip" data-method="六爻" onclick="setMethodFilter(this)">六爻</button>
+            <button class="filter-chip" data-method="奇门" onclick="setMethodFilter(this)">奇门</button>
+            <button class="filter-chip" data-method="大六壬" onclick="setMethodFilter(this)">大六壬</button>
+            <button class="filter-chip" data-method="太乙" onclick="setMethodFilter(this)">太乙</button>
+        </div>
+
+        <div class="perspectives-gallery" id="gallery"></div>
+    </div>
+
+    <!-- 模态框 -->
+    <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        var allFigures = {};
+        var currentFilter = "all";
+        var currentMethod = "all";
+
+        async function loadFigures() {
+            try {
+                var res = await fetch("/api/perspectives");
+                if (!res.ok) return;
+                var data = await res.json();
+                allFigures = data.figures || {};
+                renderStats(data.total || 0);
+                renderGallery();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderStats(total) {
+            var bar = document.getElementById("statsBar");
+            var methods = {};
+            var factions = {};
+            Object.values(allFigures).forEach(function(f) {
+                methods[f.primary_method] = (methods[f.primary_method]||0) + 1;
+                factions[f.faction] = (factions[f.faction]||0) + 1;
+            });
+            var html = '<div class="stat-item"><div class="stat-number">' + total + '</div><div class="stat-label">视角总数</div></div>';
+            Object.keys(methods).sort(function(a,b){return methods[b]-methods[a]}).forEach(function(m) {
+                html += '<div class="stat-item"><div class="stat-number">' + methods[m] + '</div><div class="stat-label">' + m + '</div></div>';
+            });
+            bar.innerHTML = html;
+        }
+
+        function renderGallery() {
+            var gallery = document.getElementById("gallery");
+            gallery.innerHTML = "";
+            var search = document.getElementById("searchInput").value.toLowerCase();
+            var ids = Object.keys(allFigures).filter(function(fid) {
+                var f = allFigures[fid];
+                if (currentFilter !== "all" && f.faction !== currentFilter) return false;
+                if (currentMethod !== "all" && f.primary_method !== currentMethod) return false;
+                if (search) {
+                    var text = (f.name + f.title + f.bio + f.primary_method + (f.soul&&f.soul.essence||"") + (f.catchphrase||"")).toLowerCase();
+                    return text.indexOf(search) >= 0;
+                }
+                return true;
+            });
+
+            ids.forEach(function(fid) {
+                var f = allFigures[fid];
+                var card = document.createElement("div");
+                card.className = "figure-card";
+                card.onclick = function() { openModal(fid); };
+                var soulEssence = f.soul && f.soul.essence || "";
+                card.innerHTML =
+                    '<div class="figure-header">' +
+                        '<div class="figure-avatar ' + f.faction + '">' + f.name[0] + '</div>' +
+                        '<div class="figure-info">' +
+                            '<h4>' + f.name + '</h4>' +
+                            '<div class="figure-title-text">' + f.title + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="figure-method-badge">' + f.primary_method + '</div>' +
+                    (soulEssence ? '<div class="figure-soul-essence">' + soulEssence + '</div>' : '') +
+                    '<div class="figure-bio">' + (f.bio||"") + '</div>';
+                gallery.appendChild(card);
+            });
+
+            if (ids.length === 0) {
+                gallery.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:3rem;">没有找到匹配的人物</div>';
+            }
+        }
+
+        function setFilter(el) {
+            document.querySelectorAll('[data-filter]').forEach(function(c) { c.classList.remove("active"); });
+            el.classList.add("active");
+            currentFilter = el.getAttribute("data-filter");
+            renderGallery();
+        }
+
+        function setMethodFilter(el) {
+            document.querySelectorAll('[data-method]').forEach(function(c) { c.classList.remove("active"); });
+            el.classList.add("active");
+            currentMethod = el.getAttribute("data-method");
+            renderGallery();
+        }
+
+        function openModal(fid) {
+            var f = allFigures[fid];
+            if (!f) return;
+            var soul = f.soul || {};
+            var tm = f.thinking_model || {};
+            var html = '<button class="modal-close" onclick="closeModal()">&times;</button>';
+            html += '<div class="figure-header" style="margin-bottom:1.5rem;">';
+            html += '<div class="figure-avatar ' + f.faction + '" style="width:64px;height:64px;font-size:1.8rem;">' + f.name[0] + '</div>';
+            html += '<div class="figure-info"><h4 style="font-size:1.3rem;">' + f.name + '</h4>';
+            html += '<div class="figure-title-text">' + f.title + '</div>';
+            html += '<div class="figure-method-badge" style="margin-top:0.5rem;">' + f.primary_method + '</div></div></div>';
+
+            if (soul.essence) {
+                html += '<div class="figure-soul-essence" style="font-size:1rem;padding:1rem;margin-bottom:1.5rem;">' + soul.essence + '</div>';
+            }
+
+            if (soul.core_works && soul.core_works.length > 0) {
+                html += '<div class="card-title" style="font-size:0.95rem;">著作与洞见</div>';
+                html += '<div class="figure-works">';
+                soul.core_works.forEach(function(w) {
+                    html += '<div class="figure-work-item"><strong>' + w.work + '</strong> — ' + w.insight + '</div>';
+                });
+                html += '</div>';
+            }
+
+            if (soul.thinking_style) {
+                html += '<div style="margin-top:1.2rem;"><div class="card-title" style="font-size:0.95rem;">推理风格</div>';
+                html += '<div class="figure-thinking-style">' + soul.thinking_style + '</div></div>';
+            }
+
+            if (soul.voice) {
+                html += '<div style="margin-top:1rem;"><span style="color:var(--text-muted);font-size:0.8rem;">说话风格：</span><span class="figure-voice">' + soul.voice + '</span></div>';
+            }
+
+            if (soul.signature_quotes && soul.signature_quotes.length > 0) {
+                html += '<div class="figure-quotes" style="margin-top:1rem;">';
+                soul.signature_quotes.forEach(function(q) {
+                    html += '<div class="figure-quote">「' + q + '」</div>';
+                });
+                html += '</div>';
+            }
+
+            if (tm.name) {
+                html += '<div style="margin-top:1.5rem;"><div class="card-title" style="font-size:0.95rem;">思维模型：' + tm.name + '</div>';
+                if (tm.principles) {
+                    html += '<div style="margin-bottom:0.8rem;">';
+                    tm.principles.forEach(function(p) {
+                        html += '<div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.3rem;padding-left:1rem;border-left:2px solid var(--accent-gold-dark);">' + p + '</div>';
+                    });
+                    html += '</div>';
+                }
+                if (tm.steps) {
+                    html += '<div>';
+                    tm.steps.forEach(function(s) {
+                        html += '<div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.2rem;">' + s + '</div>';
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+
+            if (f.catchphrase) {
+                html += '<div style="margin-top:1.5rem;text-align:center;font-family:Noto Serif SC,serif;color:var(--accent-gold);font-size:1.1rem;font-style:italic;">「' + f.catchphrase + '」</div>';
+            }
+
+            html += '<div class="figure-bio" style="margin-top:1rem;text-align:center;">' + (f.bio||"") + '</div>';
+
+            document.getElementById("modalContent").innerHTML = html;
+            document.getElementById("modal").classList.add("active");
+        }
+
+        function closeModal() {
+            document.getElementById("modal").classList.remove("active");
+        }
+
+        document.getElementById("searchInput").addEventListener("input", renderGallery);
+        document.addEventListener("keydown", function(e) { if (e.key === "Escape") closeModal(); });
+
+        loadFigures();
+    </script>
+</body>
+</html>
