@@ -30,17 +30,6 @@ class ContentChecker:
         "恰似", "宛如", "好似", "犹如",
     ]
 
-    # 七段结构标记
-    STRUCTURE_SECTIONS = [
-        "真实场景", "场景", "开场",
-        "概念解析", "概念", "原理",
-        "四层机制", "机制", "层次",
-        "操作", "方法", "步骤",
-        "错误", "误区", "注意",
-        "应用", "案例", "实例",
-        "顿悟", "溟说", "总结",
-    ]
-
     def __init__(self):
         pass
 
@@ -153,21 +142,24 @@ class ContentChecker:
                 long_paragraphs.append(p[:50] + "...")
         return long_paragraphs
 
+    # 七段结构：每段对应的关键词组（任一匹配即算该段存在）
+    STRUCTURE_KEYWORD_GROUPS = [
+        ["真实场景", "场景", "开场", "引子", "开篇"],
+        ["概念解析", "概念", "原理", "本质", "定义"],
+        ["四层机制", "机制", "层次", "逻辑", "推演"],
+        ["操作", "方法", "步骤", "实践", "行动"],
+        ["错误", "误区", "注意", "陷阱", "禁忌"],
+        ["应用", "案例", "实例", "实证", "印证"],
+        ["顿悟", "溟说", "总结", "归真", "结语"],
+    ]
+
     def _check_structure(self, text: str) -> int:
-        """检查七段结构"""
-        found = 0
-        for section in self.STRUCTURE_SECTIONS:
-            if section in text:
-                found += 1
-                # 每个部分只计一次
-                break
-        # 简化：按实际匹配数估算
-        # 更准确的做法是检查七个明确的部分标题
-        sections_found = set()
-        for keyword in ["场景", "概念", "机制", "操作", "错误", "应用", "总结"]:
-            if keyword in text:
-                sections_found.add(keyword)
-        return len(sections_found)
+        """检查七段结构——每段用一组关键词匹配，命中任一即算该段存在"""
+        sections_found = 0
+        for group in self.STRUCTURE_KEYWORD_GROUPS:
+            if any(kw in text for kw in group):
+                sections_found += 1
+        return sections_found
 
     def quick_check(self, text: str) -> Tuple[bool, str]:
         """快速检查，返回 (是否通过, 问题摘要)"""
