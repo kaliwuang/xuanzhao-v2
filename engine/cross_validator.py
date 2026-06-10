@@ -238,6 +238,13 @@ class CrossValidator:
                     supporting_methods=["奇门"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
+            if sheng:
+                items.append(ConsensusItem(
+                    aspect="事业方向",
+                    finding=f"生门在{sheng[0]}，创业求新有增长潜力",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
 
         # 紫微：看官禄宫
         if self.udm.ziwei_chart:
