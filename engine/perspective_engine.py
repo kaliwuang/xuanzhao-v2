@@ -699,7 +699,7 @@ class PerspectiveEngine:
 }}"""
 
     def _fallback_reasoning(self, figure: Figure, method_data: Dict, question: str) -> Dict:
-        """LLM 失败时的模板回退"""
+        """LLM 失败时的模板回退——按术法类型提取对应数据"""
         question_type = self._classify_question(question)
         key_points = []
         reasoning_parts = []
@@ -707,16 +707,144 @@ class PerspectiveEngine:
         for principle in figure.thinking_model.principles[:2]:
             reasoning_parts.append(f"【{figure.name}思维】{principle}")
 
-        dm = method_data.get("day_master", "")
-        wx = method_data.get("day_master_wuxing", "")
-        if dm:
-            reasoning_parts.append(f"日主{dm}属{wx}")
-            key_points.append(f"日主{dm}")
+        method = method_data.get("method", figure.primary_method)
 
-        features = method_data.get("features", [])
-        if features:
-            reasoning_parts.append(f"命局特征：{features[0]}")
-            key_points.append(features[0])
+        if method == "八字":
+            dm = method_data.get("day_master", "")
+            wx = method_data.get("day_master_wuxing", "")
+            if dm:
+                reasoning_parts.append(f"日主{dm}属{wx}")
+                key_points.append(f"日主{dm}")
+            features = method_data.get("features", [])
+            if features:
+                reasoning_parts.append(f"命局特征：{features[0]}")
+                key_points.append(features[0])
+            wuxing = method_data.get("wuxing_count", {})
+            if wuxing:
+                max_wx = max(wuxing, key=wuxing.get)
+                reasoning_parts.append(f"五行中{max_wx}最旺（{wuxing[max_wx]}个）")
+                key_points.append(f"{max_wx}旺")
+
+        elif method == "紫微":
+            ming_gong = method_data.get("ming_gong", "")
+            if ming_gong:
+                reasoning_parts.append(f"命宫在{ming_gong}")
+                key_points.append(f"命宫{ming_gong}")
+            stars = method_data.get("star_placements", {})
+            if stars:
+                main_stars = [s for s in stars if s in (
+                    "紫微", "天机", "太阳", "武曲", "天同", "廉贞",
+                    "天府", "太阴", "贪狼", "巨门", "天相", "天梁",
+                    "七杀", "破军",
+                )]
+                if main_stars:
+                    reasoning_parts.append(f"主星：{'、'.join(main_stars[:3])}")
+                    key_points.append(f"主星{'、'.join(main_stars[:2])}")
+            wj = method_data.get("wuxing_ju", {})
+            if wj:
+                reasoning_parts.append(f"五行局：{wj.get('wuxing', '')}{wj.get('ju_shu', '')}局")
+
+        elif method == "占星":
+            sun = method_data.get("sun_sign", "")
+            moon = method_data.get("moon_sign", "")
+            asc = method_data.get("ascendant", "") or method_data.get("ascendant_sign", "")
+            if sun:
+                reasoning_parts.append(f"太阳{sun}，核心意志")
+                key_points.append(f"太阳{sun}")
+            if moon:
+                reasoning_parts.append(f"月亮{moon}，情感模式")
+                key_points.append(f"月亮{moon}")
+            if asc:
+                reasoning_parts.append(f"上升{asc}，外在表现")
+            aspects = method_data.get("aspects", [])
+            if aspects:
+                asp_desc = f"{aspects[0].get('p1', '')}{aspects[0].get('aspect', '')}{aspects[0].get('p2', '')}"
+                if asp_desc:
+                    reasoning_parts.append(f"主要相位：{asp_desc}")
+
+        elif method == "六爻":
+            ben = method_data.get("ben_gua", {})
+            bian = method_data.get("bian_gua", {})
+            dong = method_data.get("dong_yao", 0)
+            if ben:
+                gua_name = ben.get("name", "")
+                if gua_name:
+                    reasoning_parts.append(f"本卦{gua_name}")
+                    key_points.append(f"本卦{gua_name}")
+            if dong:
+                reasoning_parts.append(f"动爻第{dong}爻，变化节点")
+                key_points.append(f"动爻第{dong}爻")
+            if bian:
+                bian_name = bian.get("name", "")
+                if bian_name:
+                    reasoning_parts.append(f"变卦{bian_name}，事态走向")
+
+        elif method == "奇门":
+            ju = method_data.get("ju_name", "")
+            if ju:
+                reasoning_parts.append(f"格局：{ju}")
+                key_points.append(ju)
+            men = method_data.get("ba_men", {})
+            if men:
+                ji_men = [k for k, v in men.items() if v in ("开门", "生门", "休门")]
+                xiong_men = [k for k, v in men.items() if v in ("死门", "惊门", "伤门")]
+                if ji_men:
+                    reasoning_parts.append(f"吉门在{'、'.join(ji_men)}")
+                    key_points.append(f"吉门{', '.join(ji_men)}")
+                if xiong_men:
+                    reasoning_parts.append(f"凶门在{'、'.join(xiong_men)}")
+            jx = method_data.get("jiu_xing", {})
+            if jx:
+                reasoning_parts.append(f"九星分布已定")
+
+        elif method == "大六壬":
+            yj = method_data.get("yue_jiang", "")
+            if yj:
+                reasoning_parts.append(f"月将：{yj}")
+                key_points.append(f"月将{yj}")
+            sc = method_data.get("san_chuan", [])
+            if sc:
+                chuan_str = "→".join(str(s) for s in sc[:3])
+                reasoning_parts.append(f"三传走势：{chuan_str}")
+                key_points.append(f"三传{chuan_str}")
+            sk = method_data.get("si_ke", [])
+            if sk:
+                reasoning_parts.append(f"四课：{'、'.join(str(s) for s in sk[:4])}")
+
+        elif method == "太乙":
+            tg = method_data.get("taiyi_gong", "")
+            if tg:
+                reasoning_parts.append(f"太乙居{tg}宫")
+                key_points.append(f"太乙{tg}宫")
+            jn = method_data.get("ji_nian", 0)
+            if jn:
+                reasoning_parts.append(f"积年{jn}")
+
+        elif method == "综合":
+            # 综合视角：提取各术法核心数据
+            bazi_data = method_data.get("bazi", {})
+            if bazi_data:
+                dm = bazi_data.get("day_master", "")
+                wx = bazi_data.get("day_master_wuxing", "")
+                if dm:
+                    reasoning_parts.append(f"八字日主{dm}（{wx}）")
+                    key_points.append(f"日主{dm}")
+            ziwei_data = method_data.get("ziwei", {})
+            if ziwei_data:
+                mg = ziwei_data.get("ming_gong", "")
+                if mg:
+                    reasoning_parts.append(f"紫微命宫{mg}")
+                    key_points.append(f"命宫{mg}")
+            astro_data = method_data.get("astro", {})
+            if astro_data:
+                sun = astro_data.get("sun_sign", "")
+                if sun:
+                    reasoning_parts.append(f"占星太阳{sun}")
+                    key_points.append(f"太阳{sun}")
+
+        # 如果所有术法数据都为空，用原则兜底
+        if not key_points:
+            key_points.append(figure.catchphrase)
 
         stance_map = {
             "事业": "事业宜稳健发展，借势而为",
@@ -728,7 +856,7 @@ class PerspectiveEngine:
 
         return {
             "stance": stance,
-            "confidence": 0.6,
+            "confidence": 0.5,
             "reasoning": "\n".join(reasoning_parts),
             "key_points": key_points[:5] or [figure.catchphrase],
             "quotes": [figure.catchphrase],
