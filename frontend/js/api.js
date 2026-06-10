@@ -53,5 +53,13 @@ const api = {
         const res = await fetchWithTimeout(`${API_BASE}/api/figures`);
         if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
         return res.json();
+    },
+
+    async getXuanzhao(birth, location, gender, question, figures) {
+        const params = new URLSearchParams({ birth, location, gender, question });
+        if (figures) params.append('figures', figures);
+        const res = await fetchWithTimeout(`${API_BASE}/api/xuanzhao?${params}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        return res.json();
     }
 };

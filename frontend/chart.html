@@ -500,9 +500,8 @@
             resultDiv.classList.remove('active');
 
             try {
-                // 调用问答API
-                const res = await fetch(`/api/ask?birth=${encodeURIComponent(birth)}&location=${encodeURIComponent(location)}&gender=${encodeURIComponent(gender)}&question=${encodeURIComponent(question)}`);
-                const data = await res.json();
+                // 调用问答API（通过 api.js 封装，带超时处理）
+                const data = await api.ask(birth, location, gender, question);
 
                 document.getElementById('qaType').textContent = data.question_type || '';
                 const confBadge = document.getElementById('qaConfidence');
