@@ -10,7 +10,7 @@
 
 每个人物用自己的术法数据发言，互相反驳。
 """
-from typing import List, Dict
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 from .perspective_engine import PerspectiveOpinion, FIGURES
 import logging
@@ -57,7 +57,7 @@ class DebateEngine:
         disagreements = self._extract_disagreements(opinions, exchanges)
 
         # 6. 玄照视角
-        xuanzhao = self.generate_xuanzhao_perspective(opinions, consensus, disagreements)
+        xuanzhao = self.generate_xuanzhao_perspective(opinions, consensus, disagreements, question)
 
         return {
             "participants": [{
@@ -370,9 +370,11 @@ class DebateEngine:
 
     def generate_xuanzhao_perspective(self, opinions: List[PerspectiveOpinion],
                                        consensus: List[str],
-                                       disagreements: List[Dict]) -> Dict:
-        """生成玄照视角——综合所有人物观点的深度分析"""
-        # 统计
+                                       disagreements: List[Dict],
+                                       question: str = "") -> Dict:
+        """生成玄照视角——综合所有人物观点的深度分析（优先 LLM 合成，回退规则引擎）"""
+
+        # 统计基础数据（始终计算，用于 LLM prompt 和回退）
         methods_used = list(set(o.primary_method for o in opinions))
         factions = {}
         for o in opinions:
@@ -380,10 +382,8 @@ class DebateEngine:
             if fig:
                 factions[fig.faction] = factions.get(fig.faction, 0) + 1
 
-        # 立场分布
         stances = {}
         for o in opinions:
-            # 简单分类立场
             if any(k in o.stance for k in ["稳健", "保守", "谨慎", "等待"]):
                 stances["谨慎保守"] = stances.get("谨慎保守", 0) + 1
             elif any(k in o.stance for k in ["积极", "突破", "变革", "行动"]):
@@ -393,41 +393,171 @@ class DebateEngine:
             else:
                 stances["综合平衡"] = stances.get("综合平衡", 0) + 1
 
-        # 收集所有关键点
         all_key_points = []
         for o in opinions:
             all_key_points.extend(o.key_points)
 
-        # 玄照判断
-        xuanzhao_stance = ""
-        if stances:
-            dominant = max(stances, key=stances.get)
-            if dominant == "积极进取":
-                xuanzhao_stance = "大势向好，宜积极进取，但不可冒进"
-            elif dominant == "谨慎保守":
-                xuanzhao_stance = "时机未到，宜稳扎稳打，等待良机"
-            elif dominant == "顺其自然":
-                xuanzhao_stance = "顺势而为，不强求，不执着，水到渠成"
+        # 尝试 LLM 深度合成
+        llm_reasoning = None
+        llm_stance = None
+        llm_key_points = None
+        llm_confidence = None
+        try:
+            llm_result = self._llm_synthesize_xuanzhao(
+                opinions, consensus, disagreements, question, stances, methods_used
+            )
+            if llm_result:
+                llm_reasoning = llm_result.get("reasoning", "")
+                llm_stance = llm_result.get("stance", "")
+                llm_key_points = llm_result.get("key_points", [])
+                llm_confidence = llm_result.get("confidence", None)
+        except Exception as e:
+            logger.warning(f"LLM 玄照视角合成失败，回退规则引擎: {e}")
+
+        # 玄照判断（LLM 优先，规则回退）
+        if llm_stance:
+            xuanzhao_stance = llm_stance
+        else:
+            if stances:
+                dominant = max(stances, key=stances.get)
+                if dominant == "积极进取":
+                    xuanzhao_stance = "大势向好，宜积极进取，但不可冒进"
+                elif dominant == "谨慎保守":
+                    xuanzhao_stance = "时机未到，宜稳扎稳打，等待良机"
+                elif dominant == "顺其自然":
+                    xuanzhao_stance = "顺势而为，不强求，不执着，水到渠成"
+                else:
+                    xuanzhao_stance = "各方观点均衡，需审时度势，灵活应变"
             else:
-                xuanzhao_stance = "各方观点均衡，需审时度势，灵活应变"
+                xuanzhao_stance = "数据不足，无法给出明确判断"
 
         # 构建玄照视角
+        base_confidence = max(0.3, min(0.95, 0.75 + (len(consensus) * 0.05) - (len(disagreements) * 0.05)))
         perspective = {
             "figure_name": "玄照",
             "figure_title": "照见者",
             "primary_method": "综合",
             "stance": xuanzhao_stance,
-            "confidence": max(0.3, min(0.95, 0.75 + (len(consensus) * 0.05) - (len(disagreements) * 0.05))),
-            "reasoning": {
+            "confidence": llm_confidence if llm_confidence is not None else base_confidence,
+            "reasoning": llm_reasoning if llm_reasoning else {
                 "participants": len(opinions),
                 "methods": methods_used,
                 "factions": factions,
                 "stance_distribution": stances,
             },
-            "key_points": list(set(all_key_points))[:8],
+            "key_points": llm_key_points if llm_key_points else list(set(all_key_points))[:8],
             "consensus": consensus[:3],
             "disagreements": disagreements[:2],
             "quotes": ["七术照见，万法归一"],
+            "synthesis_mode": "llm" if llm_reasoning else "rule",
         }
 
         return perspective
+
+    def _llm_synthesize_xuanzhao(
+        self,
+        opinions: List[PerspectiveOpinion],
+        consensus: List[str],
+        disagreements: List[Dict],
+        question: str,
+        stances: Dict[str, int],
+        methods_used: List[str],
+    ) -> Optional[Dict]:
+        """使用 LLM 综合所有视角，生成玄照深度分析"""
+
+        from engine.llm_client import get_llm_client
+
+        # 构造各视角观点摘要
+        opinions_text = []
+        for o in opinions:
+            fig = FIGURES.get(o.figure_id)
+            faction = fig.faction if fig else "未知"
+            opinions_text.append(
+                f"【{o.figure_name}】（{o.primary_method}视角，{faction}阵营，置信度{o.confidence}）\n"
+                f"  立场：{o.stance}\n"
+                f"  核心论点：{'；'.join(o.key_points[:3]) if o.key_points else '无'}\n"
+                f"  推理摘要：{o.reasoning[:200] if o.reasoning else '无'}"
+            )
+
+        # 构造共识摘要
+        consensus_text = "；".join(consensus[:5]) if consensus else "暂无明显共识"
+
+        # 构造分歧摘要
+        disagreement_texts = []
+        for d in disagreements[:3]:
+            disagreement_texts.append(
+                f"{d['between'][0]}认为「{d['stance_a']}」vs {d['between'][1]}认为「{d['stance_b']}」"
+            )
+        disagreement_text = "；".join(disagreement_texts) if disagreement_texts else "暂无明显分歧"
+
+        system_prompt = """你是「玄照」——七术群体智能预测系统的最高综合视角。
+
+你不是任何一个具体术法的代言人，而是所有视角的整合者。你的任务是：
+
+1. **超越单一术法**：综合八字、紫微、占星、六爻、奇门、大六壬、太乙的数据，给出超越任何单一视角的判断
+2. **识别共识与分歧的本质**：共识为什么成立？分歧的根源是什么（术法维度差异、数据不足、还是真正的矛盾信号）？
+3. **给出可操作的综合判断**：不是模糊的"综合来看"，而是有明确方向和依据的结论
+4. **校准置信度**：多术法一致指向时高置信度，术法间有分歧时降低置信度并说明原因
+
+语言风格：沉稳、博学、超越派系之争，以「照见者」的视角俯瞰全局。"""
+
+        user_prompt = f"""## 用户问题
+{question}
+
+## 各视角观点（共{len(opinions)}位人物，使用{len(methods_used)}种术法：{'、'.join(methods_used)}）
+
+{chr(10).join(opinions_text)}
+
+## 立场分布
+{'，'.join(f'{k}:{v}人' for k, v in stances.items())}
+
+## 已识别的共识
+{consensus_text}
+
+## 已识别的分歧
+{disagreement_text}
+
+请以玄照的视角进行深度综合分析，返回 JSON：
+{{
+  "stance": "一句话核心判断（必须明确方向，不能含糊）",
+  "confidence": 0.0到1.0,
+  "reasoning": "200-400字的深度分析（必须引用各视角的具体论点，说明你如何综合判断）",
+  "key_points": ["综合论断1", "综合论断2", "综合论断3"]
+}}"""
+
+        try:
+            llm = get_llm_client()
+            result = llm.chat_json(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.5,
+                max_tokens=1500,
+            )
+
+            if result.get("parse_error"):
+                raw = result.get("raw_response", "")
+                if raw:
+                    return {
+                        "stance": raw[:100],
+                        "confidence": 0.6,
+                        "reasoning": raw,
+                        "key_points": ["综合判断"],
+                    }
+                return None
+
+            stance = result.get("stance", "")
+            if not stance:
+                return None
+
+            return {
+                "stance": stance,
+                "confidence": float(result.get("confidence", 0.7)),
+                "reasoning": result.get("reasoning", ""),
+                "key_points": result.get("key_points", ["综合判断"]),
+            }
+
+        except Exception as e:
+            logger.warning(f"LLM 玄照视角合成调用失败: {e}")
+            return None
