@@ -1512,6 +1512,15 @@ class CrossValidator:
             elif sun in ["狮子", "白羊"]:
                 strengths.append("自信果断，领导力强")
                 weaknesses.append("冲动，好面子")
+            elif sun in ["巨蟹", "双鱼"]:
+                strengths.append("共情力强，直觉敏锐")
+                weaknesses.append("情绪化，易受外界影响")
+            elif sun in ["处女", "天蝎"]:
+                strengths.append("洞察力强，做事严谨")
+                weaknesses.append("过于挑剔，容易内耗")
+            elif sun in ["天秤", "射手"]:
+                strengths.append("社交能力强，视野开阔")
+                weaknesses.append("优柔寡断或过于随性")
 
         if not strengths:
             strengths.append("性格平和，适应力强")
