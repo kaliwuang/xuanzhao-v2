@@ -226,6 +226,52 @@ class QAEngine:
                 elif qtype == QuestionType.GENERAL and name in ("命宫", "官禄", "财帛", "夫妻"):
                     data["key_points"].append(f"紫微{name}宫：{'、'.join(stars)}")
 
+        # 六爻数据（所有问题类型均纳入，六爻是即时占断法）
+        if udm.liuyao_chart:
+            ben_gua = udm.liuyao_chart.get("ben_gua", {})
+            bian_gua = udm.liuyao_chart.get("bian_gua", {})
+            dong_yao = udm.liuyao_chart.get("dong_yao", 0)
+            if ben_gua:
+                gua_name = ben_gua.get("name", "")
+                if gua_name:
+                    data["key_points"].append(f"六爻本卦{gua_name}，动爻第{dong_yao}爻")
+                # 变卦信息
+                if bian_gua:
+                    bian_name = bian_gua.get("name", "")
+                    if bian_name and bian_name != gua_name:
+                        data["key_points"].append(f"变卦{bian_name}，变化方向已定")
+            # 问题类型相关的六爻解读
+            if dong_yao:
+                # 世爻和应爻关系
+                shi_yao = ben_gua.get("shi_yao", 0)
+                ying_yao = ben_gua.get("ying_yao", 0)
+                if qtype == QuestionType.CAREER:
+                    if shi_yao and ying_yao:
+                        data["key_points"].append(f"六爻世应：世爻第{shi_yao}爻，应爻第{ying_yao}爻")
+                elif qtype == QuestionType.LOVE:
+                    if shi_yao and ying_yao:
+                        data["key_points"].append(f"六爻世应关系反映主客互动")
+
+        # 大六壬数据（所有问题类型均纳入，六壬以三传四课见长）
+        if udm.liuren_chart:
+            yue_jiang = udm.liuren_chart.get("yue_jiang", "")
+            si_ke = udm.liuren_chart.get("si_ke", [])
+            san_chuan = udm.liuren_chart.get("san_chuan", [])
+            if yue_jiang:
+                data["key_points"].append(f"大六壬月将{yue_jiang}")
+            if san_chuan:
+                chuan_str = "→".join(str(s) for s in san_chuan[:3])
+                data["key_points"].append(f"三传走势：{chuan_str}")
+            if si_ke and qtype in (QuestionType.LOVE, QuestionType.INTERPERSONAL, QuestionType.GENERAL):
+                data["key_points"].append(f"四课：{'、'.join(str(s) for s in si_ke[:4])}")
+
+        # 太乙数据（综合分析用，太乙偏宏观/国运视角）
+        if udm.taiyi_chart and qtype == QuestionType.GENERAL:
+            taiyi_gong = udm.taiyi_chart.get("taiyi_gong", "")
+            ji_nian = udm.taiyi_chart.get("ji_nian", 0)
+            if taiyi_gong:
+                data["key_points"].append(f"太乙居{taiyi_gong}宫")
+
         # 冲突
         for conflict in cv_result.get("conflicts", []):
             if qtype == QuestionType.GENERAL or self._conflict_relevant(conflict.aspect, qtype):
