@@ -292,8 +292,35 @@
                 if (xz.key_points?.length) {
                     xzHtml += `<div style="margin-bottom:0.5rem;"><strong>关键要点：</strong>${xz.key_points.join(' · ')}</div>`;
                 }
-                if (xz.reasoning?.methods?.length) {
+                // 深度推理（区分 LLM 模式和规则模式）
+                if (typeof xz.reasoning === 'string' && xz.reasoning.length > 0) {
+                    // LLM 合成模式：reasoning 是深度分析文本
+                    xzHtml += `<div style="margin-top:0.8rem; padding:0.8rem; background:var(--bg-card); border-radius:8px; border-left:3px solid var(--accent-gold);">`;
+                    xzHtml += `<div style="color:var(--accent-gold); font-size:0.85rem; margin-bottom:0.5rem;">深度综合分析</div>`;
+                    xzHtml += `<div style="line-height:1.9; white-space:pre-wrap;">${xz.reasoning}</div>`;
+                    xzHtml += `</div>`;
+                } else if (xz.reasoning?.methods?.length) {
+                    // 规则模式：reasoning 是统计信息对象
                     xzHtml += `<div style="color:var(--text-muted); font-size:0.9rem;">综合分析${xz.reasoning.participants}位人物 · ${xz.reasoning.methods.length}种术法</div>`;
+                }
+                // 合成模式标记
+                if (xz.synthesis_mode) {
+                    const modeLabel = xz.synthesis_mode === 'llm' ? '深度合成' : '规则推理';
+                    const modeColor = xz.synthesis_mode === 'llm' ? 'var(--accent-gold)' : 'var(--text-muted)';
+                    xzHtml += `<div style="margin-top:0.3rem; font-size:0.8rem; color:${modeColor};">合成模式：${modeLabel}</div>`;
+                }
+                // 玄照视角内的共识
+                if (xz.consensus?.length) {
+                    xzHtml += `<div style="margin-top:0.6rem;"><strong style="color:var(--success); font-size:0.85rem;">共识：</strong>`;
+                    xzHtml += `<span style="font-size:0.85rem;">${xz.consensus.join(' · ')}</span></div>`;
+                }
+                // 玄照视角内的分歧
+                if (xz.disagreements?.length) {
+                    xzHtml += `<div style="margin-top:0.3rem;"><strong style="color:var(--danger); font-size:0.85rem;">分歧：</strong>`;
+                    xz.disagreements.forEach(d => {
+                        xzHtml += `<span style="font-size:0.85rem;">${d.between?.join(' vs ')}；</span>`;
+                    });
+                    xzHtml += `</div>`;
                 }
                 if (xz.quotes?.length) {
                     xzHtml += `<div style="margin-top:0.8rem; color:var(--accent-gold); font-style:italic;">「${xz.quotes[0]}」</div>`;
