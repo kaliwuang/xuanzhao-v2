@@ -195,6 +195,51 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
+        # 紫微：看官禄宫
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "官禄":
+                    stars = p.get("stars", [])
+                    if stars:
+                        methods.append("紫微")
+                        auspicious = [s for s in stars if s in ("紫微", "天府", "太阳", "天梁", "天相", "武曲")]
+                        if auspicious:
+                            items.append(ConsensusItem(
+                                aspect="事业方向",
+                                finding=f"官禄宫有{'、'.join(auspicious)}，事业格局较高",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.HIGH if len(auspicious) >= 2 else ConfidenceLevel.MEDIUM
+                            ))
+                        else:
+                            items.append(ConsensusItem(
+                                aspect="事业方向",
+                                finding=f"官禄宫主星{'、'.join(stars[:2])}，事业有特定方向",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.MEDIUM
+                            ))
+
+        # 占星：看中天（MC）星座和太阳星座
+        if self.udm.astro_chart:
+            methods.append("占星")
+            sun_sign = self.udm.astro_chart.get("sun_sign", "")
+            mc = self.udm.astro_chart.get("mc", 0)
+            career_signs = {
+                "摩羯": "适合体制内、管理层、传统行业",
+                "金牛": "适合金融、实业、稳定型行业",
+                "狮子": "适合演艺、管理、需要展示的行业",
+                "天蝎": "适合研究、调查、金融投资",
+                "白羊": "适合创业、运动、开拓型行业",
+                "双子": "适合传媒、教育、沟通型行业",
+            }
+            if sun_sign in career_signs:
+                items.append(ConsensusItem(
+                    aspect="事业方向",
+                    finding=f"太阳{sun_sign}：{career_signs[sun_sign]}",
+                    supporting_methods=["占星"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
         return items
 
     def _validate_relationship(self) -> List[ConsensusItem]:
@@ -233,6 +278,47 @@ class CrossValidator:
                             confidence=ConfidenceLevel.MEDIUM
                         ))
 
+        # 占星：看金星落座和第七宫
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            venus = planets.get("金星", {})
+            if venus.get("sign"):
+                love_styles = {
+                    "金牛": "感情稳定，重视物质安全感",
+                    "天蝎": "感情深沉，占有欲强",
+                    "双鱼": "浪漫多情，容易陷入",
+                    "天秤": "追求平衡和谐，善于经营",
+                    "白羊": "热情直接，来得快去得快",
+                    "巨蟹": "重感情，依赖性强",
+                }
+                venus_sign = venus["sign"]
+                if venus_sign in love_styles:
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"金星{venus_sign}：{love_styles[venus_sign]}",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.MEDIUM
+                    ))
+
+            # 第七宫（下降点）星座
+            asc = self.udm.astro_chart.get("ascendant_sign", "")
+            if asc:
+                # 上升对面就是第七宫头星座
+                opposite_signs = {
+                    "白羊": "天秤", "金牛": "天蝎", "双子": "射手",
+                    "巨蟹": "摩羯", "狮子": "水瓶", "处女": "双鱼",
+                    "天秤": "白羊", "天蝎": "金牛", "射手": "双子",
+                    "摩羯": "巨蟹", "水瓶": "狮子", "双鱼": "处女",
+                }
+                desc_sign = opposite_signs.get(asc, "")
+                if desc_sign:
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"第七宫头{desc_sign}，伴侣类型倾向{desc_sign}特质",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.LOW
+                    ))
+
         return items
 
     def _validate_health(self) -> List[ConsensusItem]:
@@ -270,39 +356,186 @@ class CrossValidator:
                         confidence=ConfidenceLevel.LOW
                     ))
 
+        # 紫微：看疾厄宫
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "疾厄":
+                    stars = p.get("stars", [])
+                    if stars:
+                        # 吉星在疾厄宫有化解力
+                        good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微")]
+                        bad_stars = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
+                        if good_stars:
+                            items.append(ConsensusItem(
+                                aspect="健康体质",
+                                finding=f"疾厄宫有{'、'.join(good_stars)}，有化解之力，病后恢复快",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.MEDIUM
+                            ))
+                        if bad_stars:
+                            items.append(ConsensusItem(
+                                aspect="健康体质",
+                                finding=f"疾厄宫有{'、'.join(bad_stars)}，需注意突发性疾病或手术",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.MEDIUM
+                            ))
+
         return items
 
     def _detect_conflicts(self) -> List[ConflictItem]:
         conflicts = []
+        chong = self.udm.get_chong()
+        features = self.udm.features or []
+        shishen = self.udm.shishen_gan or {}
 
-        # 检测术法间的直接矛盾
-        # 示例：八字说"子午冲不利婚姻" vs 紫微说"夫妻宫稳定"
+        # === 1. 感情婚姻冲突：八字 vs 紫微 ===
+        bazi_love_bad = False
+        bazi_love_reason = ""
+        if any("子午" in c for c in chong):
+            bazi_love_bad = True
+            bazi_love_reason = "子午冲，感情多波折"
+        elif any("卯酉" in c for c in chong):
+            bazi_love_bad = True
+            bazi_love_reason = "卯酉冲，感情易生变"
 
-        # 检查八字和紫微在感情上的冲突
-        bazi_bad = False
-        ziwei_good = False
-
-        if self.udm.bazi_day and self.udm.bazi_time:
-            chong = self.udm.get_chong()
-            if any("子午" in c for c in chong):
-                bazi_bad = True
-
+        ziwei_love_good = False
+        ziwei_love_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
             for p in palaces:
                 if p.get("name") == "夫妻":
                     stars = p.get("stars", [])
                     if "紫微" in stars or "天府" in stars:
-                        ziwei_good = True
+                        ziwei_love_good = True
+                        ziwei_love_reason = f"夫妻宫有{'、'.join([s for s in stars if s in ('紫微','天府')])}，格局稳固"
+                    elif "贪狼" in stars or "廉贞" in stars:
+                        # 贪狼/廉贞在夫妻宫也暗示感情复杂
+                        ziwei_love_good = False
 
-        if bazi_bad and ziwei_good:
+        if bazi_love_bad and ziwei_love_good:
             conflicts.append(ConflictItem(
                 aspect="感情婚姻",
                 method_a="八字",
-                finding_a="子午冲，感情多波折",
+                finding_a=bazi_love_reason,
                 method_b="紫微",
-                finding_b="夫妻宫有紫微/天府，感情稳定",
-                suggestion="八字看内在张力，紫微看整体格局，需结合大运流年综合判断"
+                finding_b=ziwei_love_reason,
+                suggestion="八字看地支冲合的内在张力，紫微看星曜格局的整体气象。冲不代表一定不好，紫微稳也不代表没波折，需结合大运流年看应期。"
+            ))
+
+        # === 2. 事业冲突：八字 vs 奇门 ===
+        bazi_career_good = False
+        bazi_career_reason = ""
+        if any("七杀" in f for f in features):
+            bazi_career_good = True
+            bazi_career_reason = "七杀透干，事业驱动力强"
+        if any("官" in v for v in shishen.values()):
+            bazi_career_good = True
+            if bazi_career_reason:
+                bazi_career_reason += "；正官有力，有管理运"
+            else:
+                bazi_career_reason = "正官有力，有管理运"
+
+        qimen_career_bad = False
+        qimen_career_reason = ""
+        if self.udm.qimen_chart:
+            men = self.udm.qimen_chart.get("ba_men", {})
+            # 门受克或凶门多
+            xiong_men = [k for k, v in men.items() if v in ("死门", "惊门", "伤门")]
+            if len(xiong_men) >= 3:
+                qimen_career_bad = True
+                qimen_career_reason = f"奇门凶门过多（{'、'.join(xiong_men)}），事业格局偏凶"
+
+        if bazi_career_good and qimen_career_bad:
+            conflicts.append(ConflictItem(
+                aspect="事业",
+                method_a="八字",
+                finding_a=bazi_career_reason,
+                method_b="奇门",
+                finding_b=qimen_career_reason,
+                suggestion="八字看先天命格，奇门看当下时势。先天有事业根基但时运不佳，宜韬光养晦等待时机。"
+            ))
+
+        # === 3. 事业冲突：八字 vs 紫微官禄宫 ===
+        ziwei_career_good = False
+        ziwei_career_reason = ""
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "官禄":
+                    stars = p.get("stars", [])
+                    auspicious = [s for s in stars if s in ("紫微", "天府", "太阳", "天梁", "天相")]
+                    if auspicious:
+                        ziwei_career_good = True
+                        ziwei_career_reason = f"官禄宫有{'、'.join(auspicious)}，事业格局高"
+
+        bazi_career_weak = any("身弱" in f for f in features) and not bazi_career_good
+        if bazi_career_weak and ziwei_career_good:
+            conflicts.append(ConflictItem(
+                aspect="事业",
+                method_a="八字",
+                finding_a="身弱无明显官杀，先天事业根基不强",
+                method_b="紫微",
+                finding_b=ziwei_career_reason,
+                suggestion="八字论身强身弱定先天禀赋，紫微论星曜格局看后天造化。格局高但身弱，需借力打力，贵人运重要。"
+            ))
+
+        # === 4. 健康冲突：八字五行 vs 紫微疾厄宫 ===
+        wuxing_count = self.udm.get_wuxing_count()
+        if wuxing_count:
+            max_wx = max(wuxing_count, key=wuxing_count.get)
+            bazi_health_issue = wuxing_count[max_wx] >= 4
+            bazi_health_reason = f"{max_wx}过旺（{wuxing_count[max_wx]}个），注意{max_wx}行相关脏腑"
+
+            ziwei_health_good = False
+            ziwei_health_reason = ""
+            if self.udm.ziwei_chart:
+                palaces = self.udm.ziwei_chart.get("palaces", [])
+                for p in palaces:
+                    if p.get("name") == "疾厄":
+                        stars = p.get("stars", [])
+                        good_stars = [s for s in stars if s in ("天同", "天梁", "天府")]
+                        if good_stars:
+                            ziwei_health_good = True
+                            ziwei_health_reason = f"疾厄宫有{'、'.join(good_stars)}，有化解之力"
+
+            if bazi_health_issue and ziwei_health_good:
+                conflicts.append(ConflictItem(
+                    aspect="健康体质",
+                    method_a="八字",
+                    finding_a=bazi_health_reason,
+                    method_b="紫微",
+                    finding_b=ziwei_health_reason,
+                    suggestion="八字五行偏颇是先天体质，紫微疾厄宫看后天化解。有吉星守护不代表可以忽视，养生仍需注意平衡。"
+                ))
+
+        # === 5. 性格冲突：八字 vs 占星 ===
+        bazi_bold = any("七杀" in f or "伤官" in f for f in features)
+        bazi_bold_reason = "七杀/伤官透干，性格刚强冲动" if bazi_bold else ""
+
+        astro_cautious = False
+        astro_cautious_reason = ""
+        if self.udm.astro_chart:
+            sun_sign = self.udm.astro_chart.get("sun_sign", "")
+            if sun_sign in ("金牛", "摩羯", "处女"):
+                astro_cautious = True
+                astro_cautious_reason = f"太阳{sun_sign}，性格偏稳重保守"
+            moon_sign = self.udm.astro_chart.get("moon_sign", "")
+            if moon_sign in ("巨蟹", "双鱼"):
+                astro_cautious = True
+                if astro_cautious_reason:
+                    astro_cautious_reason += f"；月亮{moon_sign}，内在敏感细腻"
+                else:
+                    astro_cautious_reason = f"月亮{moon_sign}，内在敏感细腻"
+
+        if bazi_bold and astro_cautious:
+            conflicts.append(ConflictItem(
+                aspect="性格特质",
+                method_a="八字",
+                finding_a=bazi_bold_reason,
+                method_b="占星",
+                finding_b=astro_cautious_reason,
+                suggestion="八字看天干透出的外在行为模式，占星看星座元素的内在气质。外刚内柔是常见组合，表面强势内心细腻。"
             ))
 
         return conflicts
