@@ -424,25 +424,55 @@ class PerspectiveEngine:
                 data["aspects"] = udm.astro_chart.get("aspects", [])
 
         elif method == "综合":
-            # 玄照视角：提取所有术法数据
+            # 玄照视角：提取所有术法数据（7术全覆盖）
             data["available_methods"] = udm.get_available_methods()
             data["bazi"] = {
                 "day_master": udm.day_master,
                 "day_master_wuxing": udm.day_master_wuxing,
                 "features": udm.features,
                 "tiaohou": udm.tiaohou,
+                "shishen": udm.shishen_gan,
+                "pillars": {
+                    "year": udm.bazi_year.ganzhi if udm.bazi_year else "",
+                    "month": udm.bazi_month.ganzhi if udm.bazi_month else "",
+                    "day": udm.bazi_day.ganzhi if udm.bazi_day else "",
+                    "time": udm.bazi_time.ganzhi if udm.bazi_time else "",
+                },
+                "chong": udm.get_chong(),
+                "he": udm.get_he(),
+                "wuxing_count": udm.get_wuxing_count(),
             } if udm.bazi_year else {}
             data["ziwei"] = {
                 "ming_gong": udm.ziwei_chart.get("ming_gong", ""),
+                "wuxing_ju": udm.ziwei_chart.get("wuxing_ju", {}),
                 "star_placements": udm.ziwei_chart.get("star_placements", {}),
+                "sihua": udm.ziwei_chart.get("sihua", {}),
             } if udm.ziwei_chart else {}
             data["astro"] = {
                 "sun_sign": udm.astro_chart.get("sun_sign", ""),
                 "moon_sign": udm.astro_chart.get("moon_sign", ""),
+                "ascendant_sign": udm.astro_chart.get("ascendant_sign", ""),
+                "planets": udm.astro_chart.get("planets", {}),
             } if udm.astro_chart else {}
             data["qimen"] = {
                 "ju_name": udm.qimen_chart.get("ju_name", ""),
+                "ba_men": udm.qimen_chart.get("ba_men", {}),
+                "jiu_xing": udm.qimen_chart.get("jiu_xing", {}),
             } if udm.qimen_chart else {}
+            data["liuyao"] = {
+                "ben_gua": udm.liuyao_chart.get("ben_gua", {}),
+                "bian_gua": udm.liuyao_chart.get("bian_gua", {}),
+                "dong_yao": udm.liuyao_chart.get("dong_yao", 0),
+            } if udm.liuyao_chart else {}
+            data["liuren"] = {
+                "yue_jiang": udm.liuren_chart.get("yue_jiang", ""),
+                "si_ke": udm.liuren_chart.get("si_ke", []),
+                "san_chuan": udm.liuren_chart.get("san_chuan", []),
+            } if udm.liuren_chart else {}
+            data["taiyi"] = {
+                "taiyi_gong": udm.taiyi_chart.get("taiyi_gong", ""),
+                "ji_nian": udm.taiyi_chart.get("ji_nian", 0),
+            } if udm.taiyi_chart else {}
 
         return data
 
@@ -544,7 +574,7 @@ class PerspectiveEngine:
             "奇门": "重点分析：格局吉凶、值符值使、八门九星组合、天盘地盘关系。需引用具体宫位和门星。",
             "大六壬": "重点分析：天地盘关系、四课含义、三传走势、神煞吉凶。需引用具体课传和神将。",
             "太乙": "重点分析：太乙宫位、积年推演、阴阳遁、国运大势。需引用具体宫位和数据。",
-            "综合": "综合分析所有已排术法的数据，交叉比对各术法结论，找出共识与冲突。",
+            "综合": "综合分析所有已排术法（八字/紫微/占星/六爻/奇门/大六壬/太乙）的数据，交叉比对各术法结论，找出共识与冲突。重点：1）各术法在命主核心问题上是否指向一致；2）不同术法角度的互补性；3）综合置信度评估。",
         }
         hint = method_hints.get(figure.primary_method, "基于命盘数据进行分析。")
 
