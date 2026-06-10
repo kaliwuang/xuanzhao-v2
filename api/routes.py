@@ -83,6 +83,7 @@ def get_chart(
                 "day_master": udm.day_master,
                 "day_master_wuxing": udm.day_master_wuxing,
                 "shishen": udm.shishen_gan,
+                "shishen_gan": udm.shishen_gan,
                 "nayin": udm.nayin,
                 "features": udm.features,
                 "tiaohou": udm.tiaohou,
@@ -117,23 +118,43 @@ def get_chart(
         if udm.liuyao_chart:
             result["liuyao"] = {
                 "ben_gua": udm.liuyao_chart.get("ben_gua"),
+                "bian_gua": udm.liuyao_chart.get("bian_gua"),
                 "dong_yao": udm.liuyao_chart.get("dong_yao"),
+                "shi": udm.liuyao_chart.get("shi"),
+                "ying": udm.liuyao_chart.get("ying"),
+                "lines": udm.liuyao_chart.get("lines"),
+                "bian_lines": udm.liuyao_chart.get("bian_lines"),
+                "liu_shen": udm.liuyao_chart.get("liu_shen"),
+                "gua_gong_wuxing": udm.liuyao_chart.get("gua_gong_wuxing"),
             }
 
         # 奇门
         if udm.qimen_chart:
             result["qimen"] = {
                 "ju_name": udm.qimen_chart.get("ju_name"),
+                "yin_yang": udm.qimen_chart.get("yin_yang"),
+                "ju_shu": udm.qimen_chart.get("ju_shu"),
+                "jieqi": udm.qimen_chart.get("jieqi"),
                 "di_pan": udm.qimen_chart.get("di_pan"),
+                "tian_pan": udm.qimen_chart.get("tian_pan"),
                 "ba_men": udm.qimen_chart.get("ba_men"),
+                "jiu_xing": udm.qimen_chart.get("jiu_xing"),
+                "ba_shen": udm.qimen_chart.get("ba_shen"),
+                "zhi_fu": udm.qimen_chart.get("zhi_fu"),
             }
 
         # 大六壬
         if udm.liuren_chart:
             result["liuren"] = {
+                "zhan_shi": udm.liuren_chart.get("zhan_shi"),
                 "yue_jiang": udm.liuren_chart.get("yue_jiang"),
+                "yue_jiang_zhi": udm.liuren_chart.get("yue_jiang_zhi"),
+                "jieqi": udm.liuren_chart.get("jieqi"),
+                "tian_pan": udm.liuren_chart.get("tian_pan"),
+                "gan_ji": udm.liuren_chart.get("gan_ji"),
                 "si_ke": udm.liuren_chart.get("si_ke"),
                 "san_chuan": udm.liuren_chart.get("san_chuan"),
+                "tian_jiang": udm.liuren_chart.get("tian_jiang"),
             }
 
         # 太乙
@@ -141,6 +162,10 @@ def get_chart(
             result["taiyi"] = {
                 "taiyi_gong": udm.taiyi_chart.get("taiyi_gong"),
                 "ji_nian": udm.taiyi_chart.get("ji_nian"),
+                "yin_yang": udm.taiyi_chart.get("yin_yang"),
+                "san_ji": udm.taiyi_chart.get("san_ji"),
+                "wu_fu": udm.taiyi_chart.get("wu_fu"),
+                "year_ganzhi": udm.taiyi_chart.get("year_ganzhi"),
             }
 
         return result

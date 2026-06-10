@@ -87,5 +87,13 @@ def serve_perspectives():
     return {"error": "perspectives.html not found"}
 
 
+@app.get("/chart_result")
+def serve_chart_result():
+    p = os.path.join(frontend_dir, "chart_result.html")
+    if os.path.exists(p):
+        return FileResponse(p)
+    return {"error": "not found"}
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
