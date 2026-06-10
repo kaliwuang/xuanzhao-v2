@@ -490,44 +490,81 @@ class PerspectiveEngine:
 
     def _build_system_prompt(self, figure: Figure) -> str:
         """构造人物 system prompt"""
-        principles = "、".join(figure.thinking_model.principles)
-        steps = "、".join(figure.thinking_model.steps)
-        concepts = "; ".join(f"{k}={v}" for k, v in figure.thinking_model.key_concepts.items())
+
+        # 构造推理步骤的具体指引
+        step_guides = []
+        for i, step in enumerate(figure.thinking_model.steps, 1):
+            step_guides.append(f"  {step}")
+        steps_detail = "\n".join(step_guides)
+
+        # 构造概念的使用指引
+        concept_guides = []
+        for k, v in figure.thinking_model.key_concepts.items():
+            concept_guides.append(f"  · {k}：{v}——在分析中必须引用此概念")
+        concepts_detail = "\n".join(concept_guides)
 
         return f"""你是{figure.name}（{figure.title}），{figure.bio}。
 你擅长的术法：{", ".join(figure.expertise)}。
 你主要使用【{figure.primary_method}】来分析。
 
 你的思维模型「{figure.thinking_model.name}」：
-- 核心原则：{principles}
-- 推理步骤：{steps}
-- 关键概念：{concepts}
+核心原则：
+{chr(10).join(f'  · {p}' for p in figure.thinking_model.principles)}
+
+推理步骤（必须按此顺序逐步分析）：
+{steps_detail}
+
+关键概念（分析时必须运用）：
+{concepts_detail}
 
 你的名言：「{figure.catchphrase}」
 
-要求：
-1. 用你自己的思维方式分析命盘数据，不要套模板
-2. 引用具体的术法数据来支撑你的观点
-3. 语言风格要符合你的人物身份
-4. 给出明确的立场和判断，不要模棱两可"""
+## 分析规范
+
+1. **数据驱动**：每一个判断都必须引用命盘中的具体数据（如天干地支、星曜、宫位、门星等），不允许凭空推测
+2. **思维模型一致性**：严格按照你的推理步骤逐步展开，每个步骤对应一段分析
+3. **人物一致性**：语言风格、思维角度、引用典故必须符合你的人物身份和学术传统
+4. **置信度校准**：
+   - 0.8-1.0：命盘数据强烈支持你的判断（多个数据点一致指向同一结论）
+   - 0.5-0.7：数据有一定支持但存在不确定性
+   - 0.3-0.4：数据支持较弱，主要基于经验推测
+5. **具体而非笼统**：不要说"运势不错"，要说"日主甲木坐寅月得令，又有壬水生扶，身强有力"
+6. **key_points 必须是具体的术法论断**，如「日主壬水身强，喜火土金」而非「命格不错」"""
 
     def _build_prompt(self, figure: Figure, method_data: Dict, question: str) -> str:
         """构造用户 prompt"""
         data_str = json.dumps(method_data, ensure_ascii=False, indent=2)
 
+        # 根据术法类型给出数据解读指引
+        method_hints = {
+            "八字": "重点分析：日主强弱、十神配置、五行喜忌、冲合关系、调候用神。每项判断需引用具体干支。",
+            "紫微": "重点分析：命宫主星、三方四正星曜组合、四化飞星走向、各宫吉凶。需引用具体星曜和宫位。",
+            "占星": "重点分析：太阳/月亮/上升三重人格、行星落座与相位、宫位主题。需引用具体星座和相位角度。",
+            "六爻": "重点分析：本卦变卦含义、动爻变化方向、世应主客关系、用神旺衰。需引用具体爻位和六亲。",
+            "奇门": "重点分析：格局吉凶、值符值使、八门九星组合、天盘地盘关系。需引用具体宫位和门星。",
+            "大六壬": "重点分析：天地盘关系、四课含义、三传走势、神煞吉凶。需引用具体课传和神将。",
+            "太乙": "重点分析：太乙宫位、积年推演、阴阳遁、国运大势。需引用具体宫位和数据。",
+            "综合": "综合分析所有已排术法的数据，交叉比对各术法结论，找出共识与冲突。",
+        }
+        hint = method_hints.get(figure.primary_method, "基于命盘数据进行分析。")
+
         return f"""以下是用【{figure.primary_method}】排盘得到的命盘数据：
 
+```json
 {data_str}
+```
+
+**数据解读指引**：{hint}
 
 用户的问题：{question}
 
-请以 JSON 格式返回你的分析：
+请严格按照你的思维模型和推理步骤进行分析，以 JSON 格式返回：
 {{
-  "stance": "你的一句话核心立场",
-  "confidence": 0.0到1.0的置信度,
-  "reasoning": "你的完整推理过程（200-500字）",
-  "key_points": ["关键点1", "关键点2", "关键点3"],
-  "quotes": ["你的名言或经典引用"]
+  "stance": "你的一句话核心立场（必须包含具体术法论断）",
+  "confidence": 0.0到1.0的置信度（按分析规范校准）,
+  "reasoning": "你的完整推理过程（200-500字，按推理步骤逐段展开，每段引用具体数据）",
+  "key_points": ["具体术法论断1", "具体术法论断2", "具体术法论断3"],
+  "quotes": ["你的名言或相关经典引用"]
 }}"""
 
     def _fallback_reasoning(self, figure: Figure, method_data: Dict, question: str) -> Dict:
