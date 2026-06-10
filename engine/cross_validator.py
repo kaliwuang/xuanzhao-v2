@@ -924,14 +924,28 @@ class CrossValidator:
         conflicts = len(results["conflicts"])
         methods = results["method_count"]
 
-        if methods >= 5 and consensus >= 5 and conflicts == 0:
-            return ConfidenceLevel.HIGH
-        elif methods >= 3 and consensus >= 3:
-            return ConfidenceLevel.MEDIUM
-        elif conflicts > 0:
+        # 七术系统中，少量冲突是正常的（不同术法维度不同），
+        # 关键看共识与冲突的比例，而非有无冲突。
+        # 共识远多于冲突 → 整体可信；冲突反超共识 → 矛盾；其余 → 中/低。
+
+        # 冲突主导：冲突数 >= 共识数
+        if conflicts > 0 and conflicts >= consensus:
             return ConfidenceLevel.CONTRADICTORY
-        else:
-            return ConfidenceLevel.LOW
+
+        # 高置信：多术法（>=4）+ 多共识（>=5）+ 冲突被共识压制
+        if methods >= 4 and consensus >= 5:
+            return ConfidenceLevel.HIGH
+
+        # 中置信：一定数量的术法和共识
+        if methods >= 3 and consensus >= 3:
+            return ConfidenceLevel.MEDIUM
+
+        # 有冲突但共识仍多于冲突
+        if conflicts > 0 and consensus > conflicts:
+            return ConfidenceLevel.MEDIUM
+
+        # 数据不足
+        return ConfidenceLevel.LOW
 
     def generate_comprehensive_judgment(self) -> dict:
         """生成七术综合判断——包含吉凶、趋势、建议"""
