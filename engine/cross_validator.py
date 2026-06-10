@@ -941,6 +941,8 @@ class CrossValidator:
             "财运": {"趋势": "", "建议": "", "吉凶": ""},
             "感情": {"趋势": "", "建议": "", "吉凶": ""},
             "健康": {"趋势": "", "建议": "", "吉凶": ""},
+            "学业": {"趋势": "", "建议": "", "吉凶": ""},
+            "人际关系": {"趋势": "", "建议": "", "吉凶": ""},
             "性格": {"优势": "", "劣势": "", "建议": ""},
             "大运提示": "",
         }
@@ -1111,6 +1113,110 @@ class CrossValidator:
         judgment["健康"]["趋势"] = "；".join(health_trend)
         judgment["健康"]["建议"] = "；".join(health_suggest) if health_suggest else "规律作息，适度运动"
         judgment["健康"]["吉凶"] = health_luck
+
+        # === 学业 ===
+        academic_trend = []
+        academic_suggest = []
+        academic_luck = "中"
+
+        # 八字：看印星（学习能力）
+        if self.udm.shishen_gan:
+            ss = self.udm.shishen_gan
+            has_zhengyin = any("正印" in v for v in ss.values())
+            has_pianyin = any("偏印" in v for v in ss.values())
+            if has_zhengyin:
+                academic_trend.append("正印透干，学习踏实，善得师长助力")
+                academic_luck = "吉"
+            if has_pianyin:
+                academic_trend.append("偏印透干，思维独特，适合偏门学问")
+
+        # 八字：看食伤（聪明才智）
+        if any("食伤" in f for f in bazi_features):
+            academic_trend.append("食伤透干，聪明有创意，表达力强")
+            if academic_luck == "中":
+                academic_luck = "吉"
+
+        # 紫微：看官禄宫
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "官禄":
+                    stars = p.get("stars", [])
+                    study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
+                    if study_stars:
+                        academic_trend.append(f"官禄宫有{'、'.join(study_stars)}，学业运势不错")
+                        academic_luck = "吉"
+
+        # 占星：看水星
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            mercury = planets.get("水星", {})
+            if mercury.get("sign") in ("双子", "处女"):
+                academic_trend.append(f"水星{mercury['sign']}入庙，思维敏捷，学习能力强")
+                academic_luck = "吉"
+
+        if not academic_trend:
+            academic_trend.append("学业运势平稳，无特别突出信号")
+
+        judgment["学业"]["趋势"] = "；".join(academic_trend)
+        judgment["学业"]["建议"] = "；".join(academic_suggest) if academic_suggest else "踏实学习，厚积薄发"
+        judgment["学业"]["吉凶"] = academic_luck
+
+        # === 人际关系 ===
+        inter_trend = []
+        inter_suggest = []
+        inter_luck = "中"
+
+        # 八字：看比劫
+        if self.udm.shishen_gan:
+            ss = self.udm.shishen_gan
+            has_bijie = any("比肩" in v or "劫财" in v for v in ss.values())
+            if has_bijie:
+                inter_trend.append("比劫透干，朋友多、人缘广，但需防合伙纠纷")
+            has_guan = any("正官" in v for v in ss.values())
+            if has_guan:
+                inter_trend.append("正官透干，善于与上级相处，社交层次较高")
+                inter_luck = "吉"
+
+        # 八字：看冲合
+        if chong:
+            inter_trend.append("有冲，人际关系有波折或变动")
+            inter_suggest.append("人际交往中多注意沟通，避免冲突升级")
+        if he:
+            inter_trend.append("有合，人缘好，善于合作")
+            inter_luck = "吉"
+
+        # 紫微：看兄弟宫
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "兄弟":
+                    stars = p.get("stars", [])
+                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
+                    bad_stars = [s for s in stars if s in ("七杀", "破军", "擎羊", "陀罗")]
+                    if good_stars:
+                        inter_trend.append(f"兄弟宫有{'、'.join(good_stars)}，手足助力多")
+                        inter_luck = "吉"
+                    elif bad_stars:
+                        inter_trend.append(f"兄弟宫有{'、'.join(bad_stars)}，需注意朋友间纠纷")
+                        inter_suggest.append("交友需谨慎，少参与利益纠纷")
+
+        # 占星：看水星和金星
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            mercury = planets.get("水星", {})
+            venus = planets.get("金星", {})
+            if mercury.get("sign") in ("双子", "天秤"):
+                inter_trend.append(f"水星{mercury['sign']}，沟通能力强")
+            if venus.get("sign") in ("天秤", "金牛", "双鱼"):
+                inter_trend.append(f"金星{venus['sign']}，社交魅力佳")
+
+        if not inter_trend:
+            inter_trend.append("人际关系平稳，无明显吉凶信号")
+
+        judgment["人际关系"]["趋势"] = "；".join(inter_trend)
+        judgment["人际关系"]["建议"] = "；".join(inter_suggest) if inter_suggest else "真诚待人，广结善缘"
+        judgment["人际关系"]["吉凶"] = inter_luck
 
         # === 性格 ===
         strengths = []
