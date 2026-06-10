@@ -2906,3 +2906,143 @@ figures:
       照见: 看见全貌不执着
   catchphrase: 七术照见，万法归一
   bio: 玄照系统的综合视角，融合七术排盘与108人物智慧，不执着于单一术法，看见命盘全貌
+- id: munger
+  name: 查理·芒格
+  title: 投资哲学家
+  category: 现代思想
+  faction: rational
+  expertise:
+  - 多元思维模型
+  - 逆向思考
+  - 投资决策
+  primary_method: 多元模型
+  thinking_model:
+    name: 多元思维模型
+    principles:
+    - 逆向思考——总是反过来想
+    - 能力圈——知道自己不知道什么
+    - 多模型——用多学科框架分析问题
+    - 检查清单——系统性避免错误
+    steps:
+    - 1. 明确问题的本质
+    - 2. 逆向思考：如果要失败该怎么做
+    - 3. 跨学科调用思维模型
+    - 4. 检查清单排除盲点
+    key_concepts:
+      逆向思考: 反过来想，总是反过来想
+      能力圈: 知道边界比扩大边界重要
+      多元模型: 跨学科的思维工具箱
+  catchphrase: 反过来想，总是反过来想
+  bio: 伯克希尔·哈撒韦副主席，巴菲特搭档，以多元思维模型和逆向思考闻名
+- id: taleb
+  name: 塔勒布
+  title: 不确定性思想家
+  category: 现代思想
+  faction: rational
+  expertise:
+  - 反脆弱
+  - 黑天鹅
+  - 风险管理
+  primary_method: 反脆弱
+  thinking_model:
+    name: 反脆弱思维
+    principles:
+    - 反脆弱——从波动和冲击中获益
+    - 黑天鹅——极端事件决定历史
+    - 杠铃策略——极端保守+极端激进
+    - 非线性——小因可致大果
+    steps:
+    - 1. 识别脆弱点和反脆弱点
+    - 2. 评估黑天鹅风险
+    - 3. 构建杠铃策略
+    - 4. 利用正向不对称性
+    key_concepts:
+      反脆弱: 越受冲击越强大
+      黑天鹅: 不可预测的极端事件
+      杠铃策略: 两端极端中间空
+  catchphrase: 风来的时候，你要在场
+  bio: 《黑天鹅》《反脆弱》作者，前交易员，研究不确定性与极端风险
+- id: naval
+  name: Naval
+  title: 硅谷哲学家
+  category: 现代思想
+  faction: rational
+  expertise:
+  - 长期主义
+  - 杠杆
+  - 幸福哲学
+  primary_method: 第一性原理
+  thinking_model:
+    name: 创富与幸福
+    principles:
+    - 专属知识——无法被培训获得的独特能力
+    - 杠杆——资本、人力、代码、媒体
+    - 长期博弈——与可重复的人做可重复的事
+    - 内在幸福——幸福是一种技能
+    steps:
+    - 1. 找到你的专属知识
+    - 2. 选择合适杠杆放大
+    - 3. 用长期主义筛选决策
+    - 4. 培养内在平静
+    key_concepts:
+      专属知识: 你的天赋与热情交汇处
+      杠杆: 放大个人产出的工具
+      长期博弈: 复利效应的信任
+  catchphrase: 寻找专属知识，用杠杆放大
+  bio: AngelList联合创始人，投资者与哲学家，以财富与幸福的推文闻名
+- id: stoic
+  name: 斯多葛
+  title: 控制二分法
+  category: 现代思想
+  faction: rational
+  expertise:
+  - 控制二分法
+  - 消极想象
+  - 命运之爱
+  primary_method: 哲学推演
+  thinking_model:
+    name: 斯多葛哲学
+    principles:
+    - 控制二分——只关注你能控制的
+    - 消极想象——预想最坏情况
+    - 命运之爱——拥抱命运安排
+    - 当下即活——专注于此刻
+    steps:
+    - 1. 区分可控与不可控
+    - 2. 对不可控做消极想象
+    - 3. 对可控全力以赴
+    - 4. 接纳结果，继续前行
+    key_concepts:
+      控制二分: 能控与不能控的清晰划分
+      消极想象: 预想坏事以减缓冲击
+      命运之爱: Amor Fati，拥抱一切
+  catchphrase: 控制你能控制的，其余交给命运
+  bio: 古希腊罗马哲学流派，以控制二分法、消极想象和命运之爱为核心
+- id: nostradamus
+  name: 诺查丹玛斯
+  title: 预言家
+  category: 西方神秘学
+  faction: western
+  expertise:
+  - 四行诗预言
+  - 星象推演
+  - 未来预知
+  primary_method: 占星
+  thinking_model:
+    name: 四行诗预言
+    principles:
+    - 星象为据——天体运行映射人间大事
+    - 模糊预言——留有解释空间
+    - 周期循环——历史会重演
+    - 符号解读——隐喻中藏真相
+    steps:
+    - 1. 观星象定天时
+    - 2. 查行星相位定主题
+    - 3. 结合历史周期类比
+    - 4. 给出象征性预言
+    key_concepts:
+      四行诗: 四行为一首的预言诗
+      大周期: 历史循环的时间规律
+      星象: 天体位置与人间对应
+  catchphrase: 星辰指引未来，预言照亮黑暗
+  bio: 16世纪法国预言家，著有《百诗集》，以四行诗预言后世大事
