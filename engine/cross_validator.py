@@ -73,7 +73,10 @@ class CrossValidator:
         # 7. 学业交叉验证
         results["consensus"].extend(self._validate_academic())
 
-        # 8. 冲突检测
+        # 8. 人际关系交叉验证
+        results["consensus"].extend(self._validate_interpersonal())
+
+        # 9. 冲突检测
         results["conflicts"].extend(self._detect_conflicts())
 
         # 9. 综合置信度
@@ -544,6 +547,128 @@ class CrossValidator:
                     items.append(ConsensusItem(
                         aspect="学业",
                         finding=f"水星{mercury_sign}：{study_styles[mercury_sign]}",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
+        return items
+
+    def _validate_interpersonal(self) -> List[ConsensusItem]:
+        """人际关系交叉验证——八字比劫/正官/冲合、紫微兄弟宫/仆役宫、占星水星/金星"""
+        items = []
+
+        # 八字：看比劫（兄弟朋友关系）
+        if self.udm.shishen_gan:
+            ss = self.udm.shishen_gan
+            has_bijie = any("比肩" in v or "劫财" in v for v in ss.values())
+            if has_bijie:
+                items.append(ConsensusItem(
+                    aspect="人际关系",
+                    finding="比劫透干，朋友多、人缘广，但也需防合伙纠纷",
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+        # 八字：看正官（社交圈层、上级关系）
+        if self.udm.shishen_gan:
+            ss = self.udm.shishen_gan
+            has_guan = any("正官" in v for v in ss.values())
+            if has_guan:
+                items.append(ConsensusItem(
+                    aspect="人际关系",
+                    finding="正官透干，善于与上级相处，社交层次较高",
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+        # 八字：看冲合（人际动态）
+        chong = self.udm.get_chong()
+        he = self.udm.get_he()
+        if chong:
+            items.append(ConsensusItem(
+                aspect="人际关系",
+                finding=f"有冲（{'、'.join(chong[:2])}），人际关系有波折或变动",
+                supporting_methods=["八字"],
+                confidence=ConfidenceLevel.LOW,
+            ))
+        if he:
+            items.append(ConsensusItem(
+                aspect="人际关系",
+                finding=f"有合（{'、'.join(he[:2])}），人缘好，善于合作",
+                supporting_methods=["八字"],
+                confidence=ConfidenceLevel.MEDIUM,
+            ))
+
+        # 紫微：看兄弟宫
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "兄弟":
+                    stars = p.get("stars", [])
+                    if stars:
+                        good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
+                        bad_stars = [s for s in stars if s in ("七杀", "破军", "擎羊", "陀罗", "火星", "铃星")]
+                        if good_stars:
+                            items.append(ConsensusItem(
+                                aspect="人际关系",
+                                finding=f"兄弟宫有{'、'.join(good_stars)}，手足助力多，朋友圈质量高",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.HIGH if len(good_stars) >= 2 else ConfidenceLevel.MEDIUM,
+                            ))
+                        elif bad_stars:
+                            items.append(ConsensusItem(
+                                aspect="人际关系",
+                                finding=f"兄弟宫有{'、'.join(bad_stars)}，需注意手足或朋友间纠纷",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.MEDIUM,
+                            ))
+
+        # 紫微：看仆役宫（交友宫）
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "仆役":
+                    stars = p.get("stars", [])
+                    if stars:
+                        items.append(ConsensusItem(
+                            aspect="人际关系",
+                            finding=f"仆役宫有{'、'.join(stars[:3])}，下属或合作伙伴类型已定",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.LOW,
+                        ))
+
+        # 占星：看水星（沟通能力）和金星（社交魅力）
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            mercury = planets.get("水星", {})
+            venus = planets.get("金星", {})
+            if mercury.get("sign"):
+                comm_styles = {
+                    "双子": "水星入庙，口才佳，善于社交沟通",
+                    "天秤": "水星旺相，善于协调，人际关系和谐",
+                    "处女": "水星入庙，分析型沟通，交友谨慎",
+                    "射手": "直率坦诚，朋友圈广泛但不深",
+                }
+                merc_sign = mercury["sign"]
+                if merc_sign in comm_styles:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"水星{merc_sign}：{comm_styles[merc_sign]}",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+            if venus.get("sign"):
+                social_styles = {
+                    "天秤": "金星入庙，天生社交高手，人缘极佳",
+                    "金牛": "金星入庙，交友稳定，重视忠诚",
+                    "双鱼": "金星旺相，共情力强，容易获得好感",
+                    "狮子": "热情大方，社交场合亮眼",
+                }
+                venus_sign = venus["sign"]
+                if venus_sign in social_styles:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"金星{venus_sign}：{social_styles[venus_sign]}",
                         supporting_methods=["占星"],
                         confidence=ConfidenceLevel.MEDIUM,
                     ))
