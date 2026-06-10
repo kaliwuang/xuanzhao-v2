@@ -141,6 +141,41 @@ class CrossValidator:
                 elif "比劫" in f:
                     traits.append("重情义，竞争意识强")
 
+        # 紫微命宫主星（紫微斗数最核心的性格指标）
+        if self.udm.ziwei_chart:
+            star_placements = self.udm.ziwei_chart.get("star_placements", {})
+            ming_gong = self.udm.ziwei_chart.get("ming_gong", "")
+            # 找命宫内的主星
+            ming_stars = []
+            for star, palace in star_placements.items():
+                if palace == ming_gong and star in (
+                    "紫微", "天机", "太阳", "武曲", "天同", "廉贞",
+                    "天府", "太阴", "贪狼", "巨门", "天相", "天梁",
+                    "七杀", "破军",
+                ):
+                    ming_stars.append(star)
+            if ming_stars:
+                methods.append("紫微")
+                ziwei_traits = {
+                    "紫微": "领导力强，有王者气质，自信从容",
+                    "天机": "聪明灵活，善于分析谋略，思维敏捷",
+                    "太阳": "热情大方，光明磊落，乐于助人",
+                    "武曲": "刚毅果断，重视效率和结果，执行力强",
+                    "天同": "温和善良，随遇而安，人缘好",
+                    "廉贞": "多才多艺，感情丰富，社交能力强",
+                    "天府": "稳重踏实，有包容心，善于理财",
+                    "太阴": "敏感细腻，有艺术气质，内心丰富",
+                    "贪狼": "多才多艺，魅力十足，兴趣广泛",
+                    "巨门": "口才好，善于表达和分析，观察力强",
+                    "天相": "正直公正，善于协调，人缘佳",
+                    "天梁": "有正义感，善于照顾人，有长者风范",
+                    "七杀": "果断刚强，有魄力和行动力，敢闯敢拼",
+                    "破军": "有开创力，不畏挑战，勇于革新",
+                }
+                for star in ming_stars[:2]:  # 最多取两颗主星
+                    if star in ziwei_traits:
+                        traits.append(f"命宫{star}：{ziwei_traits[star]}")
+
         # 占星特征
         if self.udm.astro_chart:
             methods.append("占星")
