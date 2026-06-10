@@ -208,9 +208,14 @@
                 partContainer.appendChild(div);
             });
 
-            // 第一轮
+            // 按轮次分组辩论交锋
+            const round1Exchanges = (data.exchanges || []).filter(e => e.round_num === 1);
+            const round2Exchanges = (data.exchanges || []).filter(e => e.round_num === 2);
+
+            // 第一轮：各抒己见（参与者的初始立场 + 第一轮交锋）
             const round1Container = document.getElementById('round1');
             round1Container.innerHTML = '';
+            // 先展示各人立场
             data.participants?.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'exchange';
@@ -220,19 +225,39 @@
                 `;
                 round1Container.appendChild(div);
             });
+            // 再展示第一轮交锋
+            if (round1Exchanges.length > 0) {
+                const divider = document.createElement('div');
+                divider.style.cssText = 'margin:1rem 0; padding:0.5rem; color:var(--accent-gold); font-size:0.9rem; border-top:1px dashed var(--border-color);';
+                divider.textContent = '—— 第一轮交锋 ——';
+                round1Container.appendChild(divider);
+                round1Exchanges.forEach(e => {
+                    const div = document.createElement('div');
+                    div.className = 'exchange';
+                    div.innerHTML = `
+                        <div><span class="exchange-speaker">${e.speaker}</span>（${e.speaker_method}）→ <span class="exchange-target">${e.target}</span>（${e.target_method}）</div>
+                        <div class="exchange-text">${e.argument}</div>
+                    `;
+                    round1Container.appendChild(div);
+                });
+            }
 
-            // 第二轮
+            // 第二轮：深度交锋
             const round2Container = document.getElementById('round2');
             round2Container.innerHTML = '';
-            data.exchanges?.forEach(e => {
-                const div = document.createElement('div');
-                div.className = 'exchange';
-                div.innerHTML = `
-                    <div><span class="exchange-speaker">${e.speaker}</span>（${e.speaker_method}）→ <span class="exchange-target">${e.target}</span>（${e.target_method}）</div>
-                    <div class="exchange-text">${e.argument}</div>
-                `;
-                round2Container.appendChild(div);
-            });
+            if (round2Exchanges.length > 0) {
+                round2Exchanges.forEach(e => {
+                    const div = document.createElement('div');
+                    div.className = 'exchange';
+                    div.innerHTML = `
+                        <div><span class="exchange-speaker">${e.speaker}</span>（${e.speaker_method}）→ <span class="exchange-target">${e.target}</span>（${e.target_method}）</div>
+                        <div class="exchange-text">${e.argument}</div>
+                    `;
+                    round2Container.appendChild(div);
+                });
+            } else {
+                round2Container.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">本轮无深度交锋</div>';
+            }
 
             // 共识
             const consensusContainer = document.getElementById('consensus');
