@@ -290,21 +290,129 @@ class DebateEngine:
 
     def _extract_consensus(self, opinions: List[PerspectiveOpinion],
                            exchanges: List[Exchange]) -> List[str]:
-        """提取共识"""
+        """提取共识——支持模糊语义匹配，不依赖精确字符串相同"""
         consensus = []
 
-        # 找所有观点中重复的关键词
         all_points = []
         for o in opinions:
             all_points.extend(o.key_points)
 
+        if not all_points:
+            # 无 key_points 时取最高置信度立场
+            best = max(opinions, key=lambda o: o.confidence)
+            return [best.stance]
+
+        # === 1. 精确匹配（原有逻辑） ===
         from collections import Counter
         counts = Counter(all_points)
         for point, count in counts.most_common(3):
             if count >= 2:
                 consensus.append(point)
 
-        # 如果没有共识，提取最高置信度的观点
+        # === 2. 关键词语义聚类（核心改进） ===
+        # 提取命理关键词，找不同人物观点中共同提及的核心概念
+        THEME_KEYWORDS = {
+            "身强": ["身强", "日主强", "身旺", "有力"],
+            "身弱": ["身弱", "日主弱", "身衰", "无力"],
+            "七杀透干": ["七杀", "偏官"],
+            "正官有力": ["正官", "官星"],
+            "财星": ["财星", "偏财", "正财", "财"],
+            "印星": ["印", "偏印", "正印", "印星"],
+            "食伤": ["食神", "伤官", "食伤"],
+            "比劫": ["比肩", "劫财", "比劫"],
+            "冲": ["冲", "六冲", "相冲"],
+            "合": ["合", "六合", "三合", "相合"],
+            "五行平衡": ["五行平衡", "五行调和", "五行均匀"],
+            "五行偏颇": ["五行偏", "过旺", "缺失", "不足"],
+            "桃花": ["桃花", "红鸾", "天喜"],
+            "贵人": ["贵人", "天乙贵人", "天德"],
+            "事业格局高": ["格局高", "格局不错", "事业格局"],
+            "稳健发展": ["稳健", "稳扎稳打", "稳步"],
+            "积极进取": ["进取", "突破", "发展"],
+            "顺势而为": ["顺势", "顺应", "无为"],
+            "调候用神": ["调候", "用神"],
+            "大运": ["大运", "十年"],
+            "流年": ["流年", "年运"],
+            "命宫": ["命宫"],
+            "官禄宫": ["官禄", "事业宫"],
+            "夫妻宫": ["夫妻", "婚姻宫"],
+            "疾厄宫": ["疾厄", "健康宫"],
+            "财帛宫": ["财帛", "财宫"],
+        }
+
+        # 统计每个主题被多少个不同人物提及
+        theme_persons = {}  # theme -> set of figure_ids
+        for o in opinions:
+            combined_text = " ".join(o.key_points) + " " + o.stance + " " + o.reasoning[:200]
+            for theme, keywords in THEME_KEYWORDS.items():
+                if any(kw in combined_text for kw in keywords):
+                    theme_persons.setdefault(theme, set()).add(o.figure_id)
+
+        # 多人（≥2）共同提及的主题 = 语义共识
+        semantic_consensus = []
+        for theme, persons in theme_persons.items():
+            if len(persons) >= 2:
+                semantic_consensus.append((theme, len(persons)))
+
+        # 按提及人数降序
+        semantic_consensus.sort(key=lambda x: x[1], reverse=True)
+
+        # 将语义共识转为可读描述
+        THEME_DESCRIPTIONS = {
+            "身强": "多位视角一致认为日主身强，命局根基扎实",
+            "身弱": "多位视角一致认为日主身弱，需借力打力",
+            "七杀透干": "多位视角均关注到七杀透干，性格刚强有魄力",
+            "正官有力": "多位视角均认为正官有力，有管理运和责任心",
+            "财星": "多位视角均关注财星配置，财运是重要议题",
+            "印星": "多位视角均关注印星，学习和贵人运是共同焦点",
+            "食伤": "多位视角均关注食伤，表达力和创造力是共同特征",
+            "比劫": "多位视角均关注比劫，人际关系和竞争是共同主题",
+            "冲": "多位视角均关注冲的关系，变动是命局主旋律",
+            "合": "多位视角均关注合的关系，缘分和合作是主旋律",
+            "五行平衡": "多位视角一致认为五行较为平衡，体质尚可",
+            "五行偏颇": "多位视角均指出五行有偏，需注意平衡调理",
+            "桃花": "多位视角均关注桃花信息，感情生活是重点",
+            "贵人": "多位视角均认为贵人运不差，有外部助力",
+            "事业格局高": "多位视角一致认为事业格局较高",
+            "稳健发展": "多位视角均建议稳健发展，不宜冒进",
+            "积极进取": "多位视角均认为可以积极进取",
+            "顺势而为": "多位视角均建议顺势而为",
+            "调候用神": "多位视角均关注调候用神",
+            "大运": "多位视角均关注大运走势",
+            "流年": "多位视角均关注流年变化",
+            "命宫": "多位视角均关注命宫配置",
+            "官禄宫": "多位视角均关注官禄宫（事业宫）",
+            "夫妻宫": "多位视角均关注夫妻宫（感情宫）",
+            "疾厄宫": "多位视角均关注疾厄宫（健康宫）",
+            "财帛宫": "多位视角均关注财帛宫（财运宫）",
+        }
+
+        for theme, count in semantic_consensus[:3]:
+            desc = THEME_DESCRIPTIONS.get(theme, f"多位视角共同关注「{theme}」")
+            if desc not in consensus:
+                consensus.append(desc)
+
+        # === 3. 立场方向一致性的共识 ===
+        # 如果大多数人物立场方向相同，也是一种共识
+        stance_keywords = {
+            "积极": ["进", "动", "突破", "拼", "冲", "果断"],
+            "保守": ["稳", "守", "防", "静", "谨慎"],
+            "顺势": ["顺", "自然", "无为", "随缘"],
+        }
+        stance_group_counts = {}
+        for group, kws in stance_keywords.items():
+            count = sum(1 for o in opinions if any(kw in o.stance for kw in kws))
+            stance_group_counts[group] = count
+
+        majority = len(opinions) * 0.6
+        for group, count in stance_group_counts.items():
+            if count >= majority and count >= 2:
+                desc = f"多数视角（{count}/{len(opinions)}）倾向{group}立场"
+                if desc not in consensus:
+                    consensus.append(desc)
+                break
+
+        # 兜底
         if not consensus:
             best = max(opinions, key=lambda o: o.confidence)
             consensus.append(best.stance)
