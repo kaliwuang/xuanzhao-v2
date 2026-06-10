@@ -44,10 +44,12 @@ class DebateEngine:
         # 2. 识别冲突对
         conflict_pairs = self._find_conflicts(opinions)
 
-        # 3. 生成交锋
+        # 3. 生成交锋（多轮递进：后轮携带前轮上下文）
         exchanges = []
         for r in range(1, rounds + 1):
-            round_exchanges = self._generate_round(r, conflict_pairs, opinions, question)
+            # 第二轮起，将前轮交锋作为上下文传入
+            prev = exchanges if r > 1 else None
+            round_exchanges = self._generate_round(r, conflict_pairs, opinions, question, prev)
             exchanges.extend(round_exchanges)
 
         # 4. 共识总结
@@ -172,13 +174,14 @@ class DebateEngine:
         return conflicts
 
     def _generate_round(self, round_num: int, conflict_pairs: List[tuple],
-                        opinions: List[PerspectiveOpinion], question: str) -> List[Exchange]:
-        """生成一轮交锋"""
+                        opinions: List[PerspectiveOpinion], question: str,
+                        previous_exchanges: List[Exchange] = None) -> List[Exchange]:
+        """生成一轮交锋（第二轮起携带前轮交锋上下文，形成真正的辩论递进）"""
         exchanges = []
 
         for (p1, p2) in conflict_pairs:
             # A 反驳 B
-            arg = self._generate_argument(p1, p2, question)
+            arg = self._generate_argument(p1, p2, question, previous_exchanges)
             exchanges.append(Exchange(
                 round_num=round_num,
                 speaker=p1.figure_name,
@@ -186,11 +189,11 @@ class DebateEngine:
                 target=p2.figure_name,
                 target_method=p2.primary_method,
                 argument=arg,
-                rebuttal_type="逻辑反驳"
+                rebuttal_type="深化反驳" if round_num > 1 and previous_exchanges else "逻辑反驳"
             ))
 
             # B 回应
-            arg2 = self._generate_argument(p2, p1, question)
+            arg2 = self._generate_argument(p2, p1, question, previous_exchanges)
             exchanges.append(Exchange(
                 round_num=round_num,
                 speaker=p2.figure_name,
@@ -198,30 +201,48 @@ class DebateEngine:
                 target=p1.figure_name,
                 target_method=p1.primary_method,
                 argument=arg2,
-                rebuttal_type="逻辑反驳"
+                rebuttal_type="深化反驳" if round_num > 1 and previous_exchanges else "逻辑反驳"
             ))
 
         return exchanges
 
     def _generate_argument(self, speaker: PerspectiveOpinion,
-                           target: PerspectiveOpinion, question: str) -> str:
-        """生成反驳论据"""
+                           target: PerspectiveOpinion, question: str,
+                           previous_exchanges: List[Exchange] = None) -> str:
+        """生成反驳论据（支持多轮递进上下文）"""
 
         # 优先使用 LLM 生成有深度的辩论论据
         try:
-            return self._llm_generate_argument(speaker, target, question)
+            return self._llm_generate_argument(speaker, target, question, previous_exchanges)
         except Exception as e:
             logger.warning(f"LLM 辩论生成失败，回退模板: {e}")
             return self._template_argument(speaker, target)
 
     def _llm_generate_argument(self, speaker: PerspectiveOpinion,
-                               target: PerspectiveOpinion, question: str) -> str:
-        """使用 LLM 生成辩论论据"""
+                               target: PerspectiveOpinion, question: str,
+                               previous_exchanges: List[Exchange] = None) -> str:
+        """使用 LLM 生成辩论论据（第二轮起携带前轮交锋上下文）"""
         from engine.llm_client import get_llm_client
 
         speaker_fig = FIGURES.get(speaker.figure_id)
         speaker_name = speaker_fig.name if speaker_fig else speaker.figure_name
         speaker_catchphrase = speaker_fig.catchphrase if speaker_fig else ""
+
+        # 构造前轮交锋摘要（仅保留与当前 speaker/target 相关的交锋）
+        prev_context = ""
+        if previous_exchanges:
+            relevant = [
+                ex for ex in previous_exchanges
+                if ex.speaker in (speaker_name, target.figure_name)
+                   or ex.target in (speaker_name, target.figure_name)
+            ]
+            if relevant:
+                prev_lines = []
+                for ex in relevant[-4:]:  # 最多取最近4条
+                    prev_lines.append(
+                        f"[第{ex.round_num}轮] {ex.speaker}（{ex.speaker_method}）对{ex.target}说：{ex.argument[-120:]}"
+                    )
+                prev_context = f"\n\n## 前轮交锋记录（你需要针对这些论点做出回应和深化）\n" + "\n".join(prev_lines)
 
         prompt = f"""你正在参加一场关于命理的辩论。
 
@@ -235,17 +256,18 @@ class DebateEngine:
 - 核心理由：{'; '.join(target.key_points[:3]) if target.key_points else '未明确'}
 
 用户问题：{question}
+{prev_context}
 
 请以{speaker_name}的身份，用{speaker.primary_method}的逻辑反驳对方。
 要求：
-1. 用你擅长的术法具体数据来反驳，指出对方分析的不足
+1. {'针对前轮对方的论点进行逐一回应，指出其不足和漏洞' if previous_exchanges else '用你擅长的术法具体数据来反驳，指出对方分析的不足'}
 2. 引用自己的推理依据来强化论点
-3. 语言风格符合{speaker_name}的身份
+3. {'在前轮基础上深化论点，提出新的论据或角度，不要重复之前说过的话' if previous_exchanges else '语言风格符合' + speaker_name + '的身份'}
 4. 控制在150字以内，只返回反驳文字，不要返回JSON"""
         llm = get_llm_client()
         result = llm.chat(
             messages=[
-                {"role": "system", "content": f"你是{speaker_name}，{speaker_catchphrase}。用你的术法逻辑进行辩论反驳。"},
+                {"role": "system", "content": f"你是{speaker_name}，{speaker_catchphrase}。用你的术法逻辑进行辩论反驳。{'你正在回应对方的反驳，需要针对性地回应并深化你的论点。' if previous_exchanges else ''}"},
                 {"role": "user", "content": prompt},
             ],
             temperature=0.8,
