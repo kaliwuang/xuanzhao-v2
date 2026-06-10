@@ -740,6 +740,13 @@ class CrossValidator:
                         # 贪狼/廉贞在夫妻宫也暗示感情复杂
                         ziwei_love_good = False
 
+        # 八字感情正面信号（有合）
+        bazi_love_good = False
+        bazi_love_good_reason = ""
+        if any("午未" in h or "寅亥" in h or "卯戌" in h for h in he):
+            bazi_love_good = True
+            bazi_love_good_reason = f"八字有合（{'、'.join(he[:2])}），感情缘分佳"
+
         if bazi_love_bad and ziwei_love_good:
             conflicts.append(ConflictItem(
                 aspect="感情婚姻",
@@ -748,6 +755,29 @@ class CrossValidator:
                 method_b="紫微",
                 finding_b=ziwei_love_reason,
                 suggestion="八字看地支冲合的内在张力，紫微看星曜格局的整体气象。冲不代表一定不好，紫微稳也不代表没波折，需结合大运流年看应期。"
+            ))
+
+        # 反向：八字感情好但紫微夫妻宫凶
+        ziwei_love_bad = False
+        ziwei_love_bad_reason = ""
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "夫妻":
+                    stars = p.get("stars", [])
+                    bad_love = [s for s in stars if s in ("贪狼", "廉贞", "七杀", "破军", "擎羊", "陀罗", "火星", "铃星")]
+                    if bad_love:
+                        ziwei_love_bad = True
+                        ziwei_love_bad_reason = f"夫妻宫有{'、'.join(bad_love)}，感情格局偏凶"
+
+        if bazi_love_good and ziwei_love_bad:
+            conflicts.append(ConflictItem(
+                aspect="感情婚姻",
+                method_a="八字",
+                finding_a=bazi_love_good_reason,
+                method_b="紫微",
+                finding_b=ziwei_love_bad_reason,
+                suggestion="八字有合代表缘分基础好，紫微夫妻宫凶代表感情模式有挑战。先天缘分佳但需注意相处方式，避免星曜暗示的负面模式。"
             ))
 
         # === 2. 事业冲突：八字 vs 奇门 ===
@@ -781,6 +811,27 @@ class CrossValidator:
                 method_b="奇门",
                 finding_b=qimen_career_reason,
                 suggestion="八字看先天命格，奇门看当下时势。先天有事业根基但时运不佳，宜韬光养晦等待时机。"
+            ))
+
+        # 反向：八字事业弱但奇门格局好
+        qimen_career_good = False
+        qimen_career_good_reason = ""
+        if self.udm.qimen_chart:
+            men = self.udm.qimen_chart.get("ba_men", {})
+            ji_men = [k for k, v in men.items() if v in ("开门", "生门", "休门")]
+            if ji_men:
+                qimen_career_good = True
+                qimen_career_good_reason = f"奇门吉门（{'、'.join(ji_men)}）得位，当下时运不错"
+
+        bazi_career_weak = not bazi_career_good and any("身弱" in f for f in features)
+        if bazi_career_weak and qimen_career_good:
+            conflicts.append(ConflictItem(
+                aspect="事业",
+                method_a="八字",
+                finding_a="身弱无明显官杀，先天事业根基不强",
+                method_b="奇门",
+                finding_b=qimen_career_good_reason,
+                suggestion="八字先天事业根基偏弱，但奇门显示当下时运有利。宜借势而为，把握当前有利时机，借外力推动事业发展。"
             ))
 
         # === 3. 事业冲突：八字 vs 紫微官禄宫 ===
@@ -836,6 +887,30 @@ class CrossValidator:
                     suggestion="八字五行偏颇是先天体质，紫微疾厄宫看后天化解。有吉星守护不代表可以忽视，养生仍需注意平衡。"
                 ))
 
+            # 反向：八字五行平衡但紫微疾厄宫凶
+            bazi_health_balanced = not bazi_health_issue
+            ziwei_health_bad = False
+            ziwei_health_bad_reason = ""
+            if self.udm.ziwei_chart:
+                palaces = self.udm.ziwei_chart.get("palaces", [])
+                for p in palaces:
+                    if p.get("name") == "疾厄":
+                        stars = p.get("stars", [])
+                        bad_stars = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
+                        if bad_stars:
+                            ziwei_health_bad = True
+                            ziwei_health_bad_reason = f"疾厄宫有{'、'.join(bad_stars)}，需注意突发性疾病或手术"
+
+            if bazi_health_balanced and ziwei_health_bad:
+                conflicts.append(ConflictItem(
+                    aspect="健康体质",
+                    method_a="八字",
+                    finding_a="八字五行基本平衡，先天体质尚可",
+                    method_b="紫微",
+                    finding_b=ziwei_health_bad_reason,
+                    suggestion="八字五行平衡代表先天体质底子好，但紫微疾厄宫有凶星暗示特定健康风险。先天底子好不代表可以忽视，需定期体检防范凶星暗示的健康隐患。"
+                ))
+
         # === 5. 性格冲突：八字 vs 占星 ===
         bazi_bold = any("七杀" in f or "伤官" in f for f in features)
         bazi_bold_reason = "七杀/伤官透干，性格刚强冲动" if bazi_bold else ""
@@ -863,6 +938,38 @@ class CrossValidator:
                 method_b="占星",
                 finding_b=astro_cautious_reason,
                 suggestion="八字看天干透出的外在行为模式，占星看星座元素的内在气质。外刚内柔是常见组合，表面强势内心细腻。"
+            ))
+
+        # 反向：八字稳重但占星冲动
+        bazi_cautious = False
+        bazi_cautious_reason = ""
+        if not bazi_bold and any("正官" in f or "印" in f for f in features):
+            bazi_cautious = True
+            bazi_cautious_reason = "正官/印星透干，性格偏稳重内敛"
+
+        astro_bold = False
+        astro_bold_reason = ""
+        if self.udm.astro_chart:
+            sun_sign = self.udm.astro_chart.get("sun_sign", "")
+            if sun_sign in ("白羊", "狮子", "射手"):
+                astro_bold = True
+                astro_bold_reason = f"太阳{sun_sign}，外在表现热情冲动"
+            moon_sign = self.udm.astro_chart.get("moon_sign", "")
+            if moon_sign in ("白羊", "天蝎"):
+                astro_bold = True
+                if astro_bold_reason:
+                    astro_bold_reason += f"；月亮{moon_sign}，内在驱动力强"
+                else:
+                    astro_bold_reason = f"月亮{moon_sign}，内在驱动力强"
+
+        if bazi_cautious and astro_bold:
+            conflicts.append(ConflictItem(
+                aspect="性格特质",
+                method_a="八字",
+                finding_a=bazi_cautious_reason,
+                method_b="占星",
+                finding_b=astro_bold_reason,
+                suggestion="八字看天干格局定外在行为基调，占星看星座元素定内在气质。表面稳重内心有火，是外冷内热的组合，关键时刻会展现出意想不到的行动力。"
             ))
 
         # === 6. 财运冲突：八字财星 vs 紫微财帛宫 ===
@@ -895,6 +1002,33 @@ class CrossValidator:
                 method_b="紫微",
                 finding_b=ziwei_wealth_reason,
                 suggestion="八字看先天财星配置，紫微看后天财运格局。有财星但财帛宫凶，说明赚钱机会多但守财不易，需注意理财和风险控制。"
+            ))
+
+        # 反向：八字财运弱但紫微财帛宫吉
+        ziwei_wealth_good = False
+        ziwei_wealth_good_reason = ""
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "财帛":
+                    stars = p.get("stars", [])
+                    good_wealth = [s for s in stars if s in ("武曲", "天府", "太阴", "紫微", "太阳")]
+                    if good_wealth:
+                        ziwei_wealth_good = True
+                        ziwei_wealth_good_reason = f"财帛宫有{'、'.join(good_wealth)}，后天财运格局高"
+
+        bazi_wealth_weak = not bazi_wealth_good
+        if any("比劫" in f for f in features):
+            bazi_wealth_weak = True
+
+        if bazi_wealth_weak and ziwei_wealth_good:
+            conflicts.append(ConflictItem(
+                aspect="财运",
+                method_a="八字",
+                finding_a="八字无明显财星或有比劫夺财，先天财运根基不强",
+                method_b="紫微",
+                finding_b=ziwei_wealth_good_reason,
+                suggestion="八字先天财运偏弱，但紫微财帛宫有吉星，后天财运有改善空间。宜通过专业能力和社会资源来提升财运，不宜靠投机。"
             ))
 
         # === 7. 财运冲突：八字财星 vs 奇门 ===
@@ -949,6 +1083,28 @@ class CrossValidator:
                 method_b="占星",
                 finding_b=astro_academic_reason,
                 suggestion="八字印星有力代表有学习天赋和贵人助力，占星水星落陷代表思维方式有局限。有天赋但需刻意训练专注力，扬长避短。"
+            ))
+
+        # 反向：八字印星弱但占星水星强
+        bazi_academic_weak = not bazi_academic_good
+        astro_academic_good = False
+        astro_academic_good_reason = ""
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            mercury = planets.get("水星", {})
+            mercury_sign = mercury.get("sign", "")
+            if mercury_sign in ("双子", "处女"):
+                astro_academic_good = True
+                astro_academic_good_reason = f"水星{mercury_sign}入庙，思维敏捷，学习能力强"
+
+        if bazi_academic_weak and astro_academic_good:
+            conflicts.append(ConflictItem(
+                aspect="学业",
+                method_a="八字",
+                finding_a="八字无明显印星，先天学习天赋一般",
+                method_b="占星",
+                finding_b=astro_academic_good_reason,
+                suggestion="八字印星不显代表先天学习根基一般，但占星水星入庙代表思维能力出众。可通过发挥思维优势来弥补学习方法上的不足，适合灵活型学习方式。"
             ))
 
         # === 9. 学业冲突：八字 vs 紫微官禄宫 ===

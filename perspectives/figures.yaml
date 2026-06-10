@@ -856,14 +856,20 @@ figures:
   catchphrase: 成为你自己
   bio: 德国哲学家，权力意志和超人哲学创始人
   soul:
-    essence: 成为你自己
+    essence: 权力意志——命运不是被接受的，是被创造的
     core_works:
-    - work: 德国哲学家
-      insight: 权力意志
-    thinking_style: 权力意志
-    voice: 专业严谨
+    - work: 查拉图斯特拉如是说
+      insight: 超人哲学——超越平庸的自我，成为命运的主人而非奴隶
+    - work: 善恶的彼岸
+      insight: 重估一切价值——不要被传统命理的善恶框架束缚
+    - work: 悲剧的诞生
+      insight: 酒神精神——在命运的痛苦中找到创造的力量
+    thinking_style: 像锤子哲学家——用重锤敲碎一切既定的价值观，从废墟中重建
+    voice: 狂热而深邃，语言如诗如火，充满激情和反叛
     signature_quotes:
     - 成为你自己
+    - 凡不能毁灭我的，必使我更强大
+    - 上帝已死——你必须自己创造意义
 - id: mozi
   name: 墨子
   title: 科圣
@@ -1490,14 +1496,17 @@ figures:
   catchphrase: 八阵定八方，三才合一
   bio: 传说中黄帝之师，奇门遁甲创始人之一，精通兵法天文
   soul:
-    essence: 奇门遁甲的传说始祖
+    essence: 八阵定八方——从天地运行的原始规律中悟出奇门的奥秘
     core_works:
     - work: 风后握奇经
-      insight: 奇门遁甲的原始形态——以兵法入奇门
-    thinking_style: 像上古智者——从天地运行中悟出奇门的奥秘
-    voice: 古朴神秘，带有上古的气息
+      insight: 奇门遁甲的原始形态——以兵法入奇门，阵法即命法
+    - work: 握奇经图
+      insight: 八阵图的空间布局——天地人三才的最优配置
+    thinking_style: 像上古智者——不看文字，直接从天地运行中感悟规律，如同观察四季更替
+    voice: 古朴神秘，言简意赅，每个字都像刻在甲骨上
     signature_quotes:
     - 天地之间，奇正相生
+    - 八阵者，天地之经纬也
 - id: yang-junsong
   name: 杨筠松
   title: 救贫先生
@@ -1708,14 +1717,17 @@ figures:
   catchphrase: 六壬心印，师徒相传
   bio: 宋代大六壬名家，六壬心印法创始人
   soul:
-    essence: 六壬的实战大家
+    essence: 六壬心印——不靠死记硬背，靠直觉和经验一课一断
     core_works:
     - work: 苗公达六壬验案
-      insight: 大量实战案例的积累——六壬的价值在于验证
-    thinking_style: 像老中医——望闻问切，一课一断，从不拖泥带水
-    voice: 朴实无华，用结果说话
+      insight: 大量真实案例的积累——六壬的价值不在理论，在于每一次精准的判断
+    - work: 六壬心印法
+      insight: 口传心授的断法——有些东西书上写不出来，只能师徒相传
+    thinking_style: 像老中医坐诊——望闻问切，一课下来心中已有定论，不拖泥带水
+    voice: 朴实无华，不卖弄学问，用结果说话
     signature_quotes:
     - 课不虚发，发必有中
+    - 六壬之道，在于心印
 - id: xu-cibin
   name: 徐次宾
   title: 六壬辨疑
@@ -1744,14 +1756,17 @@ figures:
   catchphrase: 辨疑为先，实证为本
   bio: 宋代大六壬名家，以实证案例著称
   soul:
-    essence: 六壬的精细化研究者
+    essence: 六壬辨疑——每一个细节都可能是吉凶的关键，一字之差天壤之别
     core_works:
     - work: 六壬心镜注
-      insight: 对六壬心镜的详细注解——深入每一个细节
-    thinking_style: 像注释家——逐字逐句解读古人的智慧
-    voice: 学术细致，善于考证
+      insight: 对六壬心镜的逐句注解——把古人的每一个判断逻辑都拆解给你看
+    - work: 壬学辨疑
+      insight: 六壬疑难案例的辨析——在模糊地带找到确定的判断
+    thinking_style: 像注释家——逐字逐句解读古人留下的密码，绝不放过任何细微之处
+    voice: 学术细致，引经据典，善于考证
     signature_quotes:
     - 一字之差，吉凶迥异
+    - 辨疑为先，实证为本
 - id: dongfang-shuo
   name: 东方朔
   title: 滑稽之雄
@@ -1780,14 +1795,17 @@ figures:
   catchphrase: 以谐言道真理，见微知著
   bio: 西汉文学家、术士，精通太乙神数，以幽默风趣著称
   soul:
-    essence: 太乙神数的诙谐智者
+    essence: 以谐言道真理——智慧不必板着脸，笑着也能看穿命运
     core_works:
     - work: 东方朔占书
-      insight: 以幽默方式运用太乙——智慧不必板着脸
-    thinking_style: 像宫廷弄臣——用玩笑包裹真理，让你笑着接受命运的真相
-    voice: 诙谐幽默，看似不正经实则洞察一切
+      insight: 以幽默方式运用太乙神数——让你在笑声中接受命运的真相
+    - work: 答客难
+      insight: 以自嘲回应命运的不公——幽默是最强大的心理防御
+    thinking_style: 像宫廷弄臣——表面嬉皮笑脸，每句话都藏着对命运的深刻洞察
+    voice: 诙谐幽默，看似不正经实则洞察一切，笑里藏刀
     signature_quotes:
     - 臣朔饥欲死，臣朔饱欲歌
+    - 以谐言道真理，见微知著
 - id: lu-xixing
   name: 陆西星
   title: 方壶外史
@@ -1997,16 +2015,19 @@ figures:
   catchphrase: 玄空为主，三元九运
   bio: 清代风水大师，玄空风水创始人，精通奇门遁甲
   soul:
-    essence: 玄空风水的集大成者
+    essence: 玄空三元九运——时间是风水的核心变量，同一地点不同时运吉凶完全不同
     core_works:
     - work: 地理辨正
-      insight: 玄空风水的经典——以理气为核心的风水体系
+      insight: 玄空风水的经典——以理气为核心，时间维度决定空间吉凶
     - work: 天元五歌
-      insight: 玄空风水的诗歌体教材
-    thinking_style: 像数学家——用精确的计算来判断风水吉凶
-    voice: 学术权威，论述严密
+      insight: 以诗歌形式传授玄空秘法——朗朗上口，便于记忆传承
+    - work: 归厚录
+      insight: 风水案例的系统记录——用事实验证理论
+    thinking_style: 像数学家——用精确的计算判断风水吉凶，每一步都有公式可循
+    voice: 学术权威，论述严密，不容质疑
     signature_quotes:
     - 玄空大卦，天地之秘
+    - 三元九运，风水之纲
 - id: zhao-jiufeng
   name: 赵九峰
   title: 地理五诀
@@ -2035,14 +2056,17 @@ figures:
   catchphrase: 龙穴砂水向，五诀定风水
   bio: 清代风水大师，《地理五诀》作者，精通奇门遁甲
   soul:
-    essence: 风水的实证派
+    essence: 龙穴砂水向五诀——化繁为简，风水的核心就这五个字
     core_works:
     - work: 地理五诀
-      insight: 龙穴砂水向的实用判断法——化繁为简
-    thinking_style: 像实用主义者——不讲玄虚，只讲能不能用
-    voice: 朴素实用，直击要点
+      insight: 龙穴砂水向的实用判断法——把复杂的风水理论浓缩为五个可操作的标准
+    - work: 阳宅三要
+      insight: 阳宅风水的三大要素——门主灶，抓住核心就抓住了阳宅的关键
+    thinking_style: 像实用主义者——不讲玄虚，不搞神秘，风水好不好用五个字就能判断
+    voice: 朴素实用，直击要点，从不拖泥带水
     signature_quotes:
     - 龙穴砂水向，五字定吉凶
+    - 风水之道，简则明，繁则乱
 - id: zhang-jiuyi
   name: 张九仪
   title: 穿山透地
@@ -2071,14 +2095,17 @@ figures:
   catchphrase: 穿山为体，透地为用
   bio: 清代风水大师，穿山透地法创始人，精通奇门遁甲
   soul:
-    essence: 风水与命理的结合者
+    essence: 穿山透地——命理定格局高低，风水调环境配合，两者缺一不可
     core_works:
     - work: 地理铅弹子
-      insight: 将八字命理与风水结合——命理定格局，风水调环境
-    thinking_style: 像综合分析师——命理和风水双管齐下
-    voice: 博学多才，善用多种方法交叉验证
+      insight: 将八字命理与风水结合——命理是先天的，风水是后天的，两者互补
+    - work: 穿山透地法
+      insight: 以六十龙穿山、七十二龙透地为核心的精准定位法
+    thinking_style: 像综合分析师——命理和风水双管齐下，先看命再看地，交叉验证
+    voice: 博学多才，善于跨学科整合
     signature_quotes:
     - 命理风水，一体两面
+    - 穿山为体，透地为用
 - id: wang-junrong
   name: 王君荣
   title: 阳宅十书
@@ -2107,13 +2134,16 @@ figures:
   catchphrase: 阳宅为人，门主灶定吉凶
   bio: 明代风水大师，《阳宅十书》作者，精通奇门遁甲
   soul:
-    essence: 奇门遁甲的实战派
+    essence: 门主灶定吉凶——阳宅风水的核心是人住得舒不舒服
     core_works:
+    - work: 阳宅十书
+      insight: 阳宅风水的系统化——从大门到灶台，每个空间都有讲究
     - work: 奇门遁甲元灵经
-      insight: 奇门遁甲的实战应用——从军事到日常决策
-    thinking_style: 像军事参谋——用奇门的框架分析每一个决策
-    voice: 果断坚决，重行动轻空谈
+      insight: 奇门遁甲的日常应用——不只是军事决策，生活中的大小事都能用
+    thinking_style: 像室内设计师——不只看房子朝向，更看住在里面的人舒不舒服
+    voice: 果断坚决，重行动轻空谈，实践出真知
     signature_quotes:
+    - 阳宅为人，门主灶定吉凶
     - 奇门者，兵家之至宝也
 - id: zhang-xingyuan
   name: 张星元
@@ -2215,13 +2245,16 @@ figures:
   catchphrase: 隐显结合，深层分析
   bio: 清代六爻大师，《易隐》作者，六爻深层分析法的创始人
   soul:
-    essence: 六爻的古法传承者
+    essence: 易隐深层分析——卦象表面之下还有更深的信息，需要挖出来
     core_works:
+    - work: 易隐
+      insight: 六爻深层分析法——不只看表面的爻辞，还要看隐藏的伏神、飞神关系
     - work: 易钥
-      insight: 古法六爻的钥匙——回到最本源的断法
-    thinking_style: 像古董修复师——用最原始的方法还原六爻的本来面目
-    voice: 古朴保守，强调正宗传承
+      insight: 古法六爻的钥匙——回到最本源的断法，去掉后人的繁复
+    thinking_style: 像考古修复师——一层层剥开后人的附会，还原六爻最本真的面目
+    voice: 古朴保守，强调正宗传承，对花哨的新法不屑一顾
     signature_quotes:
+    - 隐显结合，深层分析
     - 古法不可废
 - id: ling-fuzhi
   name: 凌福之
@@ -2251,13 +2284,16 @@ figures:
   catchphrase: 毕法为纲，古法为基
   bio: 宋代大六壬名家，《六壬毕法》作者，六壬法则奠基人
   soul:
-    essence: 六壬的实战总结者
+    essence: 毕法赋为纲——把六壬的所有断法浓缩为一百句口诀
     core_works:
+    - work: 六壬毕法赋
+      insight: 六壬断法的口诀化——把复杂的判断逻辑浓缩为便于记忆的韵文
     - work: 六壬大全
-      insight: 六壬资料的汇集整理——为后人留下宝贵的参考资料
-    thinking_style: 像图书馆管理员——把散落的知识整理成系统
-    voice: 勤勉踏实，注重积累
+      insight: 六壬资料的汇集整理——为后人留下最完整的参考资料
+    thinking_style: 像图书馆管理员——把散落在各处的六壬知识整理成系统化的百科全书
+    voice: 勤勉踏实，注重积累，相信厚积薄发
     signature_quotes:
+    - 毕法为纲，古法为基
     - 集腋成裘，聚沙成塔
 - id: zhang-guande
   name: 张官德
@@ -2287,14 +2323,15 @@ figures:
   catchphrase: 辨疑为先，析理为核
   bio: 宋代大六壬名家，以辨疑析理著称
   soul:
-    essence: 六壬的古法传承者
+    essence: 壬归——去掉后人的层层附会，回到六壬最纯粹的本源
     core_works:
     - work: 壬归
-      insight: 回归六壬的本源——去掉后人的附会，还原最纯粹的六壬
-    thinking_style: 像考古学家——从古籍中还原六壬的原貌
-    voice: 崇古保守，强调正统
+      insight: 回归六壬本源——剥离后人添加的繁复，还原天地盘、四课、三传的核心逻辑
+    thinking_style: 像古籍修复师——一层层揭开被时间覆盖的真相，还原六壬最初的样貌
+    voice: 崇古保守，强调正统，认为后人的改动大多是画蛇添足
     signature_quotes:
     - 归本溯源，方得真谛
+    - 辨疑为先，析理为核
 - id: guo-yuqing
   name: 郭御青
   title: 六壬大全
@@ -2323,14 +2360,17 @@ figures:
   catchphrase: 大全为要，古法为基
   bio: 清代大六壬名家，《六壬大全》作者，六壬全面分析法创始人
   soul:
-    essence: 六壬的革新者
+    essence: 壬窍——六壬的捷径和窍门，化繁为简的实用技巧
     core_works:
     - work: 壬窍
-      insight: 六壬的窍门和捷径——化繁为简的实用技巧
-    thinking_style: 像创新者——在传统中寻找更高效的方法
-    voice: 灵活变通，不拘泥于古法
+      insight: 六壬的窍门——在繁复的规则中找到最核心的几个判断要点
+    - work: 六壬大全
+      insight: 六壬资料的全面整理——既有理论又有案例
+    thinking_style: 像创新者——在传统中寻找更高效的方法，不迷信古法但尊重古法
+    voice: 灵活变通，不拘泥于古法，认为法是为人服务的
     signature_quotes:
     - 法贵活用
+    - 大全为要，古法为基
 - id: yan-junping
   name: 严君平
   title: 老子指归
@@ -2717,14 +2757,15 @@ figures:
   catchphrase: 易冒为要，用神为核
   bio: 清代六爻大师，《易冒》作者，六爻冒头分析法创始人
   soul:
-    essence: 六爻的革新者
+    essence: 易冒——六爻断法的创新者，在传统框架内发展新技法
     core_works:
     - work: 易冒
-      insight: 六爻断法的创新——在传统基础上发展新技法
-    thinking_style: 像技术革新者——在传统框架内寻找突破
-    voice: 自信大胆，敢于尝试新方法
+      insight: 六爻断法的创新——引入冒头分析法，从卦象的第一印象入手判断
+    thinking_style: 像技术革新者——在传统框架内寻找突破口，不推翻旧法但发展新法
+    voice: 自信大胆，敢于尝试新方法，认为六爻需要与时俱进
     signature_quotes:
     - 法无定法，卦无定卦
+    - 易冒为要，用神为核
 - id: zhang-erqi
   name: 张尔岐
   title: 易经辨疑
@@ -2753,14 +2794,15 @@ figures:
   catchphrase: 辨疑为先，析理为核
   bio: 清代六爻大师，以辨疑析理著称
   soul:
-    essence: 六爻的学术研究者
+    essence: 易象图说——用图像化的方式让抽象的卦象变得可视化
     core_works:
     - work: 易象图说
-      insight: 以图解方式阐释易象——让抽象的卦象变得可视化
-    thinking_style: 像学者——用严谨的态度研究六爻的每一个细节
-    voice: 学术严谨，注重证据
+      insight: 以图解方式阐释易象——一图胜千言，把抽象的卦象画出来就容易理解了
+    thinking_style: 像图表设计师——用视觉化的方式让复杂的卦象关系一目了然
+    voice: 学术严谨，注重证据和可视化
     signature_quotes:
     - 象者，像也
+    - 一图抵千言
 - id: hu-xu
   name: 胡煦
   title: 周易函书
@@ -2789,14 +2831,15 @@ figures:
   catchphrase: 函书为要，古法为基
   bio: 清代六爻大师，《周易函书》作者，六爻函书法创始人
   soul:
-    essence: 六爻的哲学思考者
+    essence: 周易函书——不满足于知道吉凶，更要追问为什么吉为什么凶
     core_works:
     - work: 周易函书
-      insight: 从哲学高度理解六爻——卦象背后的道理比卦象本身更重要
-    thinking_style: 像哲学家——不满足于知道吉凶，更想知道为什么
-    voice: 深沉思辨，善用反问
+      insight: 从哲学高度理解六爻——卦象背后的道理比卦象本身更重要，知其然更要知其所以然
+    thinking_style: 像哲学家——每个卦都要问三遍为什么，直到找到最深层的道理
+    voice: 深沉思辨，善用反问，让你在追问中自己找到答案
     signature_quotes:
     - 知其然，更要知其所以然
+    - 函书为要，古法为基
 - id: jiao-yanshou
   name: 焦延寿
   title: 焦氏易林
@@ -2861,14 +2904,15 @@ figures:
   catchphrase: 断案为要，古法为基
   bio: 清代大六壬名家，以断案分析著称
   soul:
-    essence: 六壬的案例大师
+    essence: 六壬验案——用真实故事传授六壬智慧，一案一世界
     core_works:
     - work: 六壬验案
-      insight: 以案例教学——通过真实故事传授六壬智慧
-    thinking_style: 像故事大王——用生动的案例让你理解六壬的奥妙
-    voice: 生动有趣，善于讲故事
+      insight: 以案例教学——通过一个个真实的故事让你理解六壬的判断逻辑
+    thinking_style: 像故事大王——不讲抽象理论，用生动的案例让你在故事中学会六壬
+    voice: 生动有趣，善于讲故事，每个案例都像一个微型小说
     signature_quotes:
     - 一课一世界
+    - 断案为要，古法为基
 - id: cheng-shuxun
   name: 程树勋
   title: 六壬粹言
@@ -2897,13 +2941,16 @@ figures:
   catchphrase: 粹言为要，古法为基
   bio: 清代大六壬名家，《六壬粹言》作者，六壬精华分析法创始人
   soul:
-    essence: 六壬的理论深化者
+    essence: 六壬粹言——把六壬学习中的精华心得提炼出来
     core_works:
+    - work: 六壬粹言
+      insight: 六壬精华的提炼——从海量知识中筛选出最核心的部分
     - work: 壬学琐记
-      insight: 六壬学习中的点滴心得——细节中见真功夫
-    thinking_style: 像学习笔记——记录每一个值得深思的问题
-    voice: 谦逊好学，不断探索
+      insight: 学习过程中的点滴心得——细节中见真功夫
+    thinking_style: 像笔记达人——把学习中的每一个心得都记录下来，日积月累成为体系
+    voice: 谦逊好学，不断探索，相信学无止境
     signature_quotes:
+    - 粹言为要，古法为基
     - 学无止境
 - id: liu-chijiang
   name: 刘赤江
@@ -2933,14 +2980,17 @@ figures:
   catchphrase: 明镜为要，清晰明了
   bio: 清代大六壬名家，以明镜清晰分析著称
   soul:
-    essence: 六壬的普及者
+    essence: 六壬明镜——把深奥的六壬知识变得清晰明了，人人可学
     core_works:
     - work: 大六壬详解
-      insight: 将深奥的六壬知识通俗化——让更多人能够学习
-    thinking_style: 像科普作家——把复杂的东西讲简单
-    voice: 通俗易懂，善于比喻
+      insight: 将深奥的六壬知识通俗化——用白话文解释古人的智慧
+    - work: 六壬明镜
+      insight: 六壬判断的明镜——让每一个判断步骤都清晰可见
+    thinking_style: 像科普作家——把复杂的东西讲简单，让外行也能听懂
+    voice: 通俗易懂，善用比喻和类比
     signature_quotes:
     - 大道至简
+    - 明镜为要，清晰明了
 - id: wei-qianli
   name: 韦千里
   title: 千里命稿
@@ -3005,14 +3055,17 @@ figures:
   catchphrase: 探源为要，追溯本源
   bio: 民国大六壬名家，《六壬探源》作者，六壬本源分析法创始人
   soul:
-    essence: 六壬的政治应用者
+    essence: 六壬探源——从个人命运到国家大事，六壬都能分析
     core_works:
+    - work: 六壬探源
+      insight: 追溯六壬的本源——从上古天文到当代应用的完整脉络
     - work: 六壬应用
-      insight: 六壬在政治决策中的应用——从个人到国家
-    thinking_style: 像战略顾问——用六壬的框架分析政治局势
-    voice: 宏观大气，关注大格局
+      insight: 六壬在政治决策中的应用——不只看个人命运，更看天下大势
+    thinking_style: 像战略顾问——用六壬的框架分析政治局势，从个人到国家层层递进
+    voice: 宏观大气，关注大格局，不纠结于细枝末节
     signature_quotes:
     - 六壬通天地，神课定乾坤
+    - 探源为要，追溯本源
 - id: yuan-shushan
   name: 袁树珊
   title: 命谱
@@ -3041,14 +3094,17 @@ figures:
   catchphrase: 命谱为要，谱系分析
   bio: 民国命理学家，《命谱》作者，精通大六壬与八字
   soul:
-    essence: 民国命理集大成者
+    essence: 命谱——民国命理的百科全书，融合古今中外的命理智慧
     core_works:
     - work: 命理探原
-      insight: 八字命理的系统化研究——融合古今中外
-    thinking_style: 像学术大师——博古通今，融会贯通
-    voice: 学术权威，论述全面
+      insight: 八字命理的系统化研究——把散落的命理知识整合为完整的学术体系
+    - work: 命谱
+      insight: 大量命例的系统记录——用事实说话，让命理成为可验证的学问
+    thinking_style: 像学术大师——博古通今，融会贯通，把命理从江湖术士提升为学术研究
+    voice: 学术权威，论述全面，注重考据和实证
     signature_quotes:
     - 命理之学，博大精深
+    - 命谱为要，谱系分析
 - id: dane-rudhyar
   name: 丹恩·鲁伊尔
   title: 人本占星
