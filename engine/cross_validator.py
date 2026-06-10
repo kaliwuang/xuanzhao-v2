@@ -917,6 +917,94 @@ class CrossValidator:
                 suggestion="八字看先天财运根基，奇门看当下求财时势。有财根但时运不济，宜等待时机，不宜冲动投资或大额支出。"
             ))
 
+        # === 8. 学业冲突：八字印星 vs 占星水星 ===
+        bazi_academic_good = False
+        bazi_academic_reason = ""
+        if any("正印" in v for v in shishen.values()):
+            bazi_academic_good = True
+            bazi_academic_reason = "正印透干，学习踏实，善得师长助力"
+        if any("偏印" in v for v in shishen.values()):
+            bazi_academic_good = True
+            if bazi_academic_reason:
+                bazi_academic_reason += "；偏印透干，思维独特"
+            else:
+                bazi_academic_reason = "偏印透干，思维独特，适合偏门学问"
+
+        astro_academic_bad = False
+        astro_academic_reason = ""
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            mercury = planets.get("水星", {})
+            mercury_sign = mercury.get("sign", "")
+            # 水星落陷的星座：射手（粗心大意）、双鱼（思维散漫）
+            if mercury_sign in ("射手", "双鱼"):
+                astro_academic_bad = True
+                astro_academic_reason = f"水星{mercury_sign}落陷，思维不够专注，学习易分心"
+
+        if bazi_academic_good and astro_academic_bad:
+            conflicts.append(ConflictItem(
+                aspect="学业",
+                method_a="八字",
+                finding_a=bazi_academic_reason,
+                method_b="占星",
+                finding_b=astro_academic_reason,
+                suggestion="八字印星有力代表有学习天赋和贵人助力，占星水星落陷代表思维方式有局限。有天赋但需刻意训练专注力，扬长避短。"
+            ))
+
+        # === 9. 学业冲突：八字 vs 紫微官禄宫 ===
+        ziwei_academic_good = False
+        ziwei_academic_reason = ""
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "官禄":
+                    stars = p.get("stars", [])
+                    study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
+                    if study_stars:
+                        ziwei_academic_good = True
+                        ziwei_academic_reason = f"官禄宫有{'、'.join(study_stars)}，学业运势不错"
+
+        # 食伤旺但印弱 = 聪明但不踏实；紫微有学业星 = 后天有改善空间
+        bazi_academic_weak = not bazi_academic_good and any("食伤" in f for f in features)
+        if bazi_academic_weak and ziwei_academic_good:
+            conflicts.append(ConflictItem(
+                aspect="学业",
+                method_a="八字",
+                finding_a="食伤透干但印星不显，先天学习根基不强",
+                method_b="紫微",
+                finding_b=ziwei_academic_reason,
+                suggestion="八字看先天学习禀赋，紫微看后天学业格局。食伤旺但印弱，说明聪明但不够踏实，紫微有学业星则后天有改善空间。"
+            ))
+
+        # === 10. 人际关系冲突：八字比劫 vs 紫微兄弟宫 ===
+        bazi_interpersonal_bad = False
+        bazi_interpersonal_reason = ""
+        if any("比肩" in v or "劫财" in v for v in shishen.values()):
+            bazi_interpersonal_bad = True
+            bazi_interpersonal_reason = "比劫透干，朋友多但需防合伙纠纷"
+
+        ziwei_interpersonal_good = False
+        ziwei_interpersonal_reason = ""
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "兄弟":
+                    stars = p.get("stars", [])
+                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
+                    if good_stars:
+                        ziwei_interpersonal_good = True
+                        ziwei_interpersonal_reason = f"兄弟宫有{'、'.join(good_stars)}，手足助力多，朋友圈质量高"
+
+        if bazi_interpersonal_bad and ziwei_interpersonal_good:
+            conflicts.append(ConflictItem(
+                aspect="人际关系",
+                method_a="八字",
+                finding_a=bazi_interpersonal_reason,
+                method_b="紫微",
+                finding_b=ziwei_interpersonal_reason,
+                suggestion="八字比劫透干代表人际关系活跃但有竞争，紫微兄弟宫吉代表有贵人助力。活跃社交中需注意利益边界，贵人运可化解比劫之弊。"
+            ))
+
         return conflicts
 
     def _calc_overall_confidence(self, results: dict) -> ConfidenceLevel:
