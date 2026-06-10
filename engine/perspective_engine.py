@@ -10,7 +10,6 @@ from typing import List, Dict, Optional, Any
 import json
 import logging
 import os
-from typing import List, Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 @dataclass
@@ -53,46 +52,59 @@ class PerspectiveOpinion:
 
 
 def _load_figures() -> Dict[str, Figure]:
-    """从 perspectives/figures.yaml 加载人物定义"""
-    import yaml
-
+    """从 perspectives/figures.json 加载人物定义（回退尝试 .yaml）"""
     figures_dir = os.path.join(os.path.dirname(__file__), "..", "perspectives")
+
+    # 优先读 JSON，回退 YAML
+    json_path = os.path.join(figures_dir, "figures.json")
     yaml_path = os.path.join(figures_dir, "figures.yaml")
 
     figures = {}
 
-    if os.path.exists(yaml_path):
+    for fpath, loader in [
+        (json_path, lambda f: json.load(f)),
+        (yaml_path, lambda f: __import__("yaml").safe_load(f)),
+    ]:
+        if not os.path.exists(fpath):
+            continue
         try:
-            with open(yaml_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
+            with open(fpath, "r", encoding="utf-8") as f:
+                data = loader(f)
 
             for fig_data in data.get("figures", []):
+                fid = fig_data.get("id", "")
+                if not fid:
+                    continue
                 tm_data = fig_data.get("thinking_model", {})
                 figure = Figure(
-                    id=fig_data["id"],
-                    name=fig_data["name"],
-                    title=fig_data["title"],
-                    category=fig_data["category"],
-                    faction=fig_data["faction"],
-                    expertise=fig_data["expertise"],
-                    primary_method=fig_data["primary_method"],
+                    id=fid,
+                    name=fig_data.get("name", ""),
+                    title=fig_data.get("title", ""),
+                    category=fig_data.get("category", ""),
+                    faction=fig_data.get("faction", ""),
+                    expertise=fig_data.get("expertise", []),
+                    primary_method=fig_data.get("primary_method", ""),
                     thinking_model=ThinkingModel(
                         name=tm_data.get("name", ""),
                         principles=tm_data.get("principles", []),
                         steps=tm_data.get("steps", []),
                         key_concepts=tm_data.get("key_concepts", {}),
                     ),
-                    catchphrase=fig_data["catchphrase"],
-                    bio=fig_data["bio"],
+                    catchphrase=fig_data.get("catchphrase", ""),
+                    bio=fig_data.get("bio", ""),
                 )
-                figures[figure.id] = figure
+                # 后出现的同 id 覆盖前面的（去重）
+                figures[fid] = figure
 
             if figures:
+                logger.info(f"从 {os.path.basename(fpath)} 加载了 {len(figures)} 个人物")
                 return figures
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"加载 {fpath} 失败: {e}")
+            continue
 
     # 回退：硬编码
+    logger.warning("人物定义文件未找到或加载失败，使用内置 12 人回退")
     return _default_figures()
 
 
