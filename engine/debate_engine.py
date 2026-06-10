@@ -13,6 +13,9 @@
 from typing import List, Dict
 from dataclasses import dataclass
 from .perspective_engine import PerspectiveOpinion, FIGURES
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -160,7 +163,59 @@ class DebateEngine:
                            target: PerspectiveOpinion, question: str) -> str:
         """生成反驳论据"""
 
-        # 根据双方术法差异生成有实质内容的反驳
+        # 优先使用 LLM 生成有深度的辩论论据
+        try:
+            return self._llm_generate_argument(speaker, target, question)
+        except Exception as e:
+            logger.warning(f"LLM 辩论生成失败，回退模板: {e}")
+            return self._template_argument(speaker, target)
+
+    def _llm_generate_argument(self, speaker: PerspectiveOpinion,
+                               target: PerspectiveOpinion, question: str) -> str:
+        """使用 LLM 生成辩论论据"""
+        from engine.llm_client import get_llm_client
+
+        speaker_fig = FIGURES.get(speaker.figure_id)
+        speaker_name = speaker_fig.name if speaker_fig else speaker.figure_name
+        speaker_catchphrase = speaker_fig.catchphrase if speaker_fig else ""
+
+        prompt = f"""你正在参加一场关于命理的辩论。
+
+你方观点（{speaker_name}，{speaker.primary_method}视角）：
+- 立场：{speaker.stance}
+- 置信度：{speaker.confidence}
+- 核心理由：{'; '.join(speaker.key_points[:3])}
+
+对方观点（{target.figure_name}，{target.primary_method}视角）：
+- 立场：{target.stance}
+- 核心理由：{'; '.join(target.key_points[:3]) if target.key_points else '未明确'}
+
+用户问题：{question}
+
+请以{speaker_name}的身份，用{speaker.primary_method}的逻辑反驳对方。
+要求：
+1. 用你擅长的术法具体数据来反驳，指出对方分析的不足
+2. 引用自己的推理依据来强化论点
+3. 语言风格符合{speaker_name}的身份
+4. 控制在150字以内，只返回反驳文字，不要返回JSON"""
+        llm = get_llm_client()
+        result = llm.chat(
+            messages=[
+                {"role": "system", "content": f"你是{speaker_name}，{speaker_catchphrase}。用你的术法逻辑进行辩论反驳。"},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.8,
+            max_tokens=400,
+        )
+
+        if result.startswith("[LLM"):
+            raise RuntimeError(result)
+
+        return f"{speaker_name}（{speaker.primary_method}视角）：{result}"
+
+    def _template_argument(self, speaker: PerspectiveOpinion,
+                           target: PerspectiveOpinion) -> str:
+        """模板回退：生成基础论据"""
         method_strengths = {
             "八字": "格局层次、五行喜忌",
             "紫微": "十二宫位、星曜组合",
