@@ -788,6 +788,87 @@ class CrossValidator:
                 suggestion="八字有合代表缘分基础好，紫微夫妻宫凶代表感情模式有挑战。先天缘分佳但需注意相处方式，避免星曜暗示的负面模式。"
             ))
 
+        # === 1b. 感情婚姻冲突：八字 vs 占星 ===
+        # 占星感情分析：金星落座反映爱情风格和吸引力模式
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            venus = planets.get("金星", {})
+            venus_sign = venus.get("sign", "")
+
+            # 金星旺相的星座（感情面好）
+            venus_strong_signs = {"金牛", "天秤", "双鱼"}
+            # 金星落陷的星座（感情面有挑战）
+            venus_weak_signs = {"天蝎", "白羊", "处女"}
+
+            # 上升 → 第七宫头（伴侣类型）
+            asc = self.udm.astro_chart.get("ascendant_sign", "")
+            opposite_signs = {
+                "白羊": "天秤", "金牛": "天蝎", "双子": "射手",
+                "巨蟹": "摩羯", "狮子": "水瓶", "处女": "双鱼",
+                "天秤": "白羊", "天蝎": "金牛", "射手": "双子",
+                "摩羯": "巨蟹", "水瓶": "狮子", "双鱼": "处女",
+            }
+            desc_sign = opposite_signs.get(asc, "")
+
+            # 八字感情好（有合）vs 占星金星落陷或第七宫头凶
+            astro_love_bad = False
+            astro_love_reason = ""
+            if venus_sign in venus_weak_signs:
+                astro_love_bad = True
+                venus_weak_desc = {
+                    "天蝎": "金星天蝎，感情深沉执着但占有欲强，易陷入极端情感",
+                    "白羊": "金星白羊，感情来得快去得快，冲动型恋爱",
+                    "处女": "金星处女，对伴侣要求高，感情中过于挑剔",
+                }
+                astro_love_reason = venus_weak_desc.get(venus_sign, f"金星{venus_sign}，爱情模式有挑战")
+
+            if bazi_love_good and astro_love_bad:
+                conflicts.append(ConflictItem(
+                    aspect="感情婚姻",
+                    method_a="八字",
+                    finding_a=bazi_love_good_reason,
+                    method_b="占星",
+                    finding_b=astro_love_reason,
+                    suggestion="八字有合代表缘分基础好、人际吸引力强，但占星金星落陷暗示爱情表达方式有盲区。缘分不缺但经营方式需调整，避免金星暗示的情感极端。"
+                ))
+
+            # 八字感情差（有冲）vs 占星金星旺相
+            astro_love_good = False
+            astro_love_reason_good = ""
+            if venus_sign in venus_strong_signs:
+                astro_love_good = True
+                venus_strong_desc = {
+                    "金牛": "金星入庙，感情稳定忠诚，重视长久关系",
+                    "天秤": "金星入庙，善于经营关系，天生的平衡大师",
+                    "双鱼": "金星旺相，浪漫多情，共情力强",
+                }
+                astro_love_reason_good = venus_strong_desc.get(venus_sign, f"金星{venus_sign}，爱情运势佳")
+
+            if bazi_love_bad and astro_love_good:
+                conflicts.append(ConflictItem(
+                    aspect="感情婚姻",
+                    method_a="八字",
+                    finding_a=bazi_love_reason,
+                    method_b="占星",
+                    finding_b=astro_love_reason_good,
+                    suggestion="八字有冲代表感情路上有波折和变动，但占星金星旺相暗示爱情天赋不差。内在冲突多但外在魅力足，关键在于学会处理矛盾而非逃避。"
+                ))
+
+            # 八字有桃花但占星第七宫头不佳
+            has_taohua = any("桃花" in f or "红鸾" in f for f in features)
+            if has_taohua and desc_sign:
+                # 第七宫头如果是变动星座（双子、射手、双鱼、处女），暗示伴侣关系不稳定
+                unstable_desc = {"双子", "射手", "双鱼", "处女"}
+                if desc_sign in unstable_desc:
+                    conflicts.append(ConflictItem(
+                        aspect="感情婚姻",
+                        method_a="八字",
+                        finding_a="八字有桃花星，异性缘佳，感情机会多",
+                        method_b="占星",
+                        finding_b=f"第七宫头{desc_sign}（变动星座），伴侣关系倾向不稳定或多变",
+                        suggestion="桃花旺代表吸引力强、机会多，但第七宫头变动星座暗示长期关系的稳定性是课题。机会多不等于质量高，需在众多缘分中筛选真正适合的对象。"
+                    ))
+
         # === 2. 事业冲突：八字 vs 奇门 ===
         bazi_career_good = False
         bazi_career_reason = ""
