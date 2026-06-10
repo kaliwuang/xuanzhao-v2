@@ -22,6 +22,7 @@ class QuestionType(Enum):
     HEALTH = "健康"
     WEALTH = "财运"
     PERSONALITY = "性格"
+    ACADEMIC = "学业"
     GENERAL = "综合"
 
 
@@ -75,6 +76,10 @@ class QAEngine:
         QuestionType.PERSONALITY: [
             "性格", "脾气", "个性", "为人", "处事", "人际", "社交",
             "内向", "外向", "乐观", "悲观", "优点", "缺点",
+        ],
+        QuestionType.ACADEMIC: [
+            "学业", "考试", "升学", "考研", "高考", "读书", "学习",
+            "成绩", "留学", "毕业", "论文", "证书", "考公", "上岸",
         ],
     }
 
@@ -147,6 +152,8 @@ class QAEngine:
                 data["key_points"].append(c.finding)
             elif qtype == QuestionType.PERSONALITY and "性格" in aspect:
                 data["key_points"].append(c.finding)
+            elif qtype == QuestionType.ACADEMIC and "学业" in aspect:
+                data["key_points"].append(c.finding)
             elif qtype == QuestionType.GENERAL:
                 data["key_points"].append(f"[{c.aspect}] {c.finding}")
 
@@ -158,6 +165,8 @@ class QAEngine:
                 elif qtype == QuestionType.LOVE and any(kw in f for kw in ["冲", "合", "桃花"]):
                     data["key_points"].append(f"八字：{f}")
                 elif qtype == QuestionType.HEALTH and any(kw in f for kw in ["五行", "体质"]):
+                    data["key_points"].append(f"八字：{f}")
+                elif qtype == QuestionType.ACADEMIC and any(kw in f for kw in ["印", "食伤", "文昌"]):
                     data["key_points"].append(f"八字：{f}")
                 elif qtype == QuestionType.GENERAL:
                     data["key_points"].append(f"八字：{f}")
@@ -226,6 +235,7 @@ class QAEngine:
             QuestionType.HEALTH: ["健康", "体质"],
             QuestionType.WEALTH: ["财", "富"],
             QuestionType.PERSONALITY: ["性格", "特质"],
+            QuestionType.ACADEMIC: ["学业", "学习"],
         }
         keywords = mapping.get(qtype, [])
         return any(kw in aspect for kw in keywords)
@@ -431,6 +441,8 @@ class QAEngine:
             parts.append(self._wealth_analysis(points))
         elif qtype == QuestionType.PERSONALITY:
             parts.append(self._personality_analysis(points))
+        elif qtype == QuestionType.ACADEMIC:
+            parts.append(self._academic_analysis(points))
         else:
             parts.append(self._general_analysis(points))
 
@@ -482,6 +494,21 @@ class QAEngine:
         for p in points[:3]:
             parts.append(p)
         return "；".join(parts) + "。"
+
+    def _academic_analysis(self, points: List[str]) -> str:
+        has_yin = any("印" in p for p in points)
+        has_shishang = any("食伤" in p for p in points)
+        has_study_stars = any(kw in p for p in points for kw in ["文昌", "文曲", "天机", "水星"])
+
+        if has_yin and has_study_stars:
+            return "命盘显示学业运势强，印星得力又有文昌星助，学习效率高，考试运佳。"
+        elif has_yin:
+            return "命盘显示印星有力，善于学习吸收，适合系统化知识积累。"
+        elif has_shishang:
+            return "命盘显示食伤透干，思维活跃有创意，适合需要表达和创新的学业方向。"
+        elif has_study_stars:
+            return "命盘有学业相关星曜助力，学习运势不错。"
+        return "学业需结合大运流年具体分析，建议把握印星旺盛的年份集中攻克难关。"
 
     def _general_analysis(self, points: List[str]) -> str:
         return "综合判断：" + "；".join(points[:3]) + "。"

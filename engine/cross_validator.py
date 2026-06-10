@@ -67,10 +67,16 @@ class CrossValidator:
         # 5. 健康体质交叉验证
         results["consensus"].extend(self._validate_health())
 
-        # 6. 冲突检测
+        # 6. 财运交叉验证
+        results["consensus"].extend(self._validate_wealth())
+
+        # 7. 学业交叉验证
+        results["consensus"].extend(self._validate_academic())
+
+        # 8. 冲突检测
         results["conflicts"].extend(self._detect_conflicts())
 
-        # 7. 综合置信度
+        # 9. 综合置信度
         results["overall_confidence"] = self._calc_overall_confidence(results)
 
         return results
@@ -383,6 +389,167 @@ class CrossValidator:
 
         return items
 
+    def _validate_wealth(self) -> List[ConsensusItem]:
+        """财运交叉验证——八字财星、紫微财帛宫、奇门生门、占星金星四维比对"""
+        items = []
+
+        # 八字：看财星透干
+        if self.udm.shishen_gan:
+            ss = self.udm.shishen_gan
+            has_zhengcai = any("正财" in v for v in ss.values())
+            has_piancai = any("偏财" in v for v in ss.values())
+            if has_zhengcai or has_piancai:
+                finding_parts = []
+                if has_zhengcai:
+                    finding_parts.append("正财透干，正当收入有保障")
+                if has_piancai:
+                    finding_parts.append("偏财透干，有意外之财机会")
+                items.append(ConsensusItem(
+                    aspect="财运",
+                    finding="；".join(finding_parts),
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.HIGH if has_zhengcai and has_piancai else ConfidenceLevel.MEDIUM,
+                ))
+
+        # 八字：看财星是否被克（比劫夺财）
+        if self.udm.features:
+            if any("比劫" in f and "财" in f for f in self.udm.features):
+                items.append(ConsensusItem(
+                    aspect="财运",
+                    finding="比劫夺财，需防破财或合伙纠纷",
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+        # 紫微：看财帛宫
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "财帛":
+                    stars = p.get("stars", [])
+                    if stars:
+                        auspicious = [s for s in stars if s in ("武曲", "天府", "太阴", "紫微", "太阳")]
+                        if auspicious:
+                            items.append(ConsensusItem(
+                                aspect="财运",
+                                finding=f"财帛宫有{'、'.join(auspicious)}，财运格局较高",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.HIGH if len(auspicious) >= 2 else ConfidenceLevel.MEDIUM,
+                            ))
+                        else:
+                            items.append(ConsensusItem(
+                                aspect="财运",
+                                finding=f"财帛宫主星{'、'.join(stars[:2])}，财运有特定模式",
+                                supporting_methods=["紫微"],
+                                confidence=ConfidenceLevel.MEDIUM,
+                            ))
+
+        # 奇门：看生门
+        if self.udm.qimen_chart:
+            men = self.udm.qimen_chart.get("ba_men", {})
+            sheng = [k for k, v in men.items() if v == "生门"]
+            if sheng:
+                items.append(ConsensusItem(
+                    aspect="财运",
+                    finding=f"生门在{sheng[0]}，求财有门路",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+        # 占星：看金星落座
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            venus = planets.get("金星", {})
+            if venus.get("sign"):
+                wealth_styles = {
+                    "金牛": "金星入庙，天生财运好，重视物质积累",
+                    "天秤": "金星入庙，社交型理财，善于合作求财",
+                    "双鱼": "金星旺相，直觉型理财，偏财运佳",
+                    "摩羯": "务实理财，长期积累，大器晚成",
+                    "处女": "精打细算，善于管理财务细节",
+                    "天蝎": "投资型理财，善用杠杆和深度研究",
+                }
+                venus_sign = venus["sign"]
+                if venus_sign in wealth_styles:
+                    items.append(ConsensusItem(
+                        aspect="财运",
+                        finding=f"金星{venus_sign}：{wealth_styles[venus_sign]}",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
+        return items
+
+    def _validate_academic(self) -> List[ConsensusItem]:
+        """学业交叉验证——八字印星、紫微父母宫/官禄宫、占星水星"""
+        items = []
+
+        # 八字：看印星（正印/偏印代表学习能力）
+        if self.udm.shishen_gan:
+            ss = self.udm.shishen_gan
+            has_zhengyin = any("正印" in v for v in ss.values())
+            has_pianyin = any("偏印" in v for v in ss.values())
+            if has_zhengyin or has_pianyin:
+                finding_parts = []
+                if has_zhengyin:
+                    finding_parts.append("正印透干，学习踏实，善得师长助力")
+                if has_pianyin:
+                    finding_parts.append("偏印透干，思维独特，适合偏门学问")
+                items.append(ConsensusItem(
+                    aspect="学业",
+                    finding="；".join(finding_parts),
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.HIGH if has_zhengyin and has_pianyin else ConfidenceLevel.MEDIUM,
+                ))
+
+        # 八字：看食伤（代表聪明才智和表达力）
+        if self.udm.features:
+            if any("食伤" in f for f in self.udm.features):
+                items.append(ConsensusItem(
+                    aspect="学业",
+                    finding="食伤透干，聪明有创意，表达力强",
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+        # 紫微：看官禄宫（学业方向）
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "官禄":
+                    stars = p.get("stars", [])
+                    study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
+                    if study_stars:
+                        items.append(ConsensusItem(
+                            aspect="学业",
+                            finding=f"官禄宫有{'、'.join(study_stars)}，学业运势不错",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.HIGH if len(study_stars) >= 2 else ConfidenceLevel.MEDIUM,
+                        ))
+
+        # 占星：看水星（思维和学习能力）
+        if self.udm.astro_chart:
+            planets = self.udm.astro_chart.get("planets", {})
+            mercury = planets.get("水星", {})
+            if mercury.get("sign"):
+                study_styles = {
+                    "双子": "水星入庙，思维敏捷，学习速度快，多才多艺",
+                    "处女": "水星入庙，分析力强，注重细节，善于钻研",
+                    "水瓶": "水星旺相，创新思维，善于跨学科整合",
+                    "天蝎": "深度思维，善于洞察本质，研究型学习",
+                    "摩羯": "系统化学习，目标明确，持之以恒",
+                }
+                mercury_sign = mercury["sign"]
+                if mercury_sign in study_styles:
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding=f"水星{mercury_sign}：{study_styles[mercury_sign]}",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
+        return items
+
     def _detect_conflicts(self) -> List[ConflictItem]:
         conflicts = []
         chong = self.udm.get_chong()
@@ -536,6 +703,58 @@ class CrossValidator:
                 method_b="占星",
                 finding_b=astro_cautious_reason,
                 suggestion="八字看天干透出的外在行为模式，占星看星座元素的内在气质。外刚内柔是常见组合，表面强势内心细腻。"
+            ))
+
+        # === 6. 财运冲突：八字财星 vs 紫微财帛宫 ===
+        bazi_wealth_good = False
+        bazi_wealth_reason = ""
+        if any("财" in v for v in shishen.values()):
+            bazi_wealth_good = True
+            bazi_wealth_reason = "财星透干，有赚钱能力和财运基础"
+        if any("比劫" in f and "财" in f for f in features):
+            bazi_wealth_good = False
+            bazi_wealth_reason = "比劫夺财，财运有损耗风险"
+
+        ziwei_wealth_bad = False
+        ziwei_wealth_reason = ""
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            for p in palaces:
+                if p.get("name") == "财帛":
+                    stars = p.get("stars", [])
+                    bad_wealth = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗", "火星", "铃星")]
+                    if bad_wealth:
+                        ziwei_wealth_bad = True
+                        ziwei_wealth_reason = f"财帛宫有{'、'.join(bad_wealth)}，财运波折或有破财风险"
+
+        if bazi_wealth_good and ziwei_wealth_bad:
+            conflicts.append(ConflictItem(
+                aspect="财运",
+                method_a="八字",
+                finding_a=bazi_wealth_reason,
+                method_b="紫微",
+                finding_b=ziwei_wealth_reason,
+                suggestion="八字看先天财星配置，紫微看后天财运格局。有财星但财帛宫凶，说明赚钱机会多但守财不易，需注意理财和风险控制。"
+            ))
+
+        # === 7. 财运冲突：八字财星 vs 奇门 ===
+        qimen_wealth_bad = False
+        qimen_wealth_reason = ""
+        if self.udm.qimen_chart:
+            men = self.udm.qimen_chart.get("ba_men", {})
+            xiong_for_wealth = [k for k, v in men.items() if v in ("死门", "惊门", "伤门")]
+            if len(xiong_for_wealth) >= 2:
+                qimen_wealth_bad = True
+                qimen_wealth_reason = f"奇门凶门过多（{'、'.join(xiong_for_wealth)}），当下求财时运不佳"
+
+        if bazi_wealth_good and qimen_wealth_bad:
+            conflicts.append(ConflictItem(
+                aspect="财运",
+                method_a="八字",
+                finding_a=bazi_wealth_reason,
+                method_b="奇门",
+                finding_b=qimen_wealth_reason,
+                suggestion="八字看先天财运根基，奇门看当下求财时势。有财根但时运不济，宜等待时机，不宜冲动投资或大额支出。"
             ))
 
         return conflicts
