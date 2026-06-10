@@ -77,53 +77,97 @@ class DebateEngine:
         }
 
     def _cluster_opinions(self, opinions: List[PerspectiveOpinion]) -> Dict[str, List[str]]:
-        """观点聚类"""
+        """观点聚类——按立场关键词加权匹配，支持综合平衡兜底"""
         clusters = {
             "积极进取": [],
             "谨慎保守": [],
             "顺其自然": [],
             "转型突破": [],
+            "综合平衡": [],
+        }
+
+        # 关键词权重：每个词匹配得1分，取最高分的类
+        keyword_scores = {
+            "积极进取": {"动": 1, "进": 1, "突破": 2, "断": 1, "胜": 1, "拼": 1, "冲": 1, "攻": 1},
+            "谨慎保守": {"稳": 1, "守": 1, "防": 1, "静": 1, "韬": 1, "隐": 1, "退": 1, "藏": 1},
+            "顺其自然": {"顺": 1, "自然": 2, "无为": 2, "等": 1, "水到渠成": 2, "随缘": 2},
+            "转型突破": {"转": 1, "变": 1, "破": 1, "革": 1, "新": 1, "换": 1, "改": 1},
         }
 
         for o in opinions:
             stance = o.stance
-            if any(w in stance for w in ["动", "进", "突破", "断", "胜"]):
-                clusters["积极进取"].append(o.figure_name)
-            elif any(w in stance for w in ["稳", "守", "防", "静", "韬"]):
-                clusters["谨慎保守"].append(o.figure_name)
-            elif any(w in stance for w in ["顺", "自然", "无为", "等"]):
-                clusters["顺其自然"].append(o.figure_name)
-            elif any(w in stance for w in ["转", "变", "破", "革"]):
-                clusters["转型突破"].append(o.figure_name)
+            scores = {}
+            for cluster, keywords in keyword_scores.items():
+                score = sum(w for k, w in keywords.items() if k in stance)
+                scores[cluster] = score
+
+            best = max(scores, key=scores.get)
+            if scores[best] > 0:
+                clusters[best].append(o.figure_name)
             else:
-                clusters["积极进取"].append(o.figure_name)
+                clusters["综合平衡"].append(o.figure_name)
 
         # 去掉空集群
         return {k: v for k, v in clusters.items() if v}
 
     def _find_conflicts(self, opinions: List[PerspectiveOpinion]) -> List[tuple]:
-        """基于观点立场找冲突对"""
+        """基于置信度差异和立场对立找冲突对，覆盖更广泛的术法交叉"""
+        if len(opinions) < 2:
+            return []
+
         conflicts = []
+        seen_pairs = set()
 
-        # 分组：积极进取 vs 谨慎保守
-        aggressive = [o for o in opinions if any(w in o.stance for w in ["动", "进", "突破", "断"])]
-        conservative = [o for o in opinions if any(w in o.stance for w in ["稳", "守", "防", "静", "韬"])]
-        passive = [o for o in opinions if any(w in o.stance for w in ["顺", "自然", "无为", "等"])]
+        # 定义对立立场关键词组
+        opposing_groups = [
+            (["动", "进", "突破", "断", "拼", "冲", "攻", "果断"],
+             ["稳", "守", "防", "静", "韬", "隐", "退", "谨慎"]),
+            (["动", "进", "突破", "果断"],
+             ["顺", "自然", "无为", "随缘", "水到渠成"]),
+            (["稳", "守", "防", "静"],
+             ["转", "变", "破", "革", "新"]),
+        ]
 
-        # 积极进取 vs 谨慎保守
-        for a in aggressive[:2]:
-            for c in conservative[:2]:
-                conflicts.append((a, c))
+        def _match_group(stance, keywords):
+            return sum(1 for k in keywords if k in stance)
 
-        # 积极进取 vs 顺其自然
-        for a in aggressive[:1]:
-            for p in passive[:1]:
-                conflicts.append((a, p))
+        # 1. 立场明确对立的人物对
+        for pos_kw, neg_kw in opposing_groups:
+            pos = [o for o in opinions if _match_group(o.stance, pos_kw) > 0]
+            neg = [o for o in opinions if _match_group(o.stance, neg_kw) > 0]
 
-        # 谨慎保守 vs 顺其自然
-        for c in conservative[:1]:
-            for p in passive[:1]:
-                conflicts.append((c, p))
+            for a in pos[:2]:
+                for b in neg[:2]:
+                    pair_key = tuple(sorted([a.figure_id, b.figure_id]))
+                    if pair_key not in seen_pairs:
+                        seen_pairs.add(pair_key)
+                        conflicts.append((a, b))
+
+        # 2. 同术法但置信度差异大的人物对（术法内部异议）
+        method_groups = {}
+        for o in opinions:
+            method_groups.setdefault(o.primary_method, []).append(o)
+        for method, group in method_groups.items():
+            if len(group) >= 2:
+                sorted_by_conf = sorted(group, key=lambda x: x.confidence)
+                low, high = sorted_by_conf[0], sorted_by_conf[-1]
+                if high.confidence - low.confidence >= 0.2:
+                    pair_key = tuple(sorted([low.figure_id, high.figure_id]))
+                    if pair_key not in seen_pairs:
+                        seen_pairs.add(pair_key)
+                        conflicts.append((low, high))
+
+        # 3. 跨术法高置信度差异对（互补验证）
+        methods = list(method_groups.keys())
+        for i in range(len(methods)):
+            for j in range(i + 1, len(methods)):
+                g1, g2 = method_groups[methods[i]], method_groups[methods[j]]
+                for a in g1[:1]:
+                    for b in g2[:1]:
+                        pair_key = tuple(sorted([a.figure_id, b.figure_id]))
+                        if pair_key not in seen_pairs:
+                            seen_pairs.add(pair_key)
+                            conflicts.append((a, b))
 
         return conflicts
 
@@ -373,7 +417,7 @@ class DebateEngine:
             "figure_title": "照见者",
             "primary_method": "综合",
             "stance": xuanzhao_stance,
-            "confidence": 0.75 + (len(consensus) * 0.05) - (len(disagreements) * 0.05),
+            "confidence": max(0.3, min(0.95, 0.75 + (len(consensus) * 0.05) - (len(disagreements) * 0.05))),
             "reasoning": {
                 "participants": len(opinions),
                 "methods": methods_used,
