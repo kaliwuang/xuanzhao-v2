@@ -381,6 +381,15 @@ class PerspectiveEngine:
             data["he"] = udm.get_he()
             data["wuxing_count"] = udm.get_wuxing_count()
             data["tiaohou"] = udm.tiaohou
+            # 大运信息（十年一运的人生阶段，八字分析的核心维度）
+            data["dayun"] = udm.dayun
+            data["dayun_start_age"] = udm.dayun_start_age
+            # 纳音五行（柱的深层属性）
+            data["nayin"] = udm.nayin
+            # 空亡（天干配不到地支的组合）
+            data["xunkong"] = udm.xunkong
+            # 藏干（地支中暗藏的天干，判断十神旺衰的关键）
+            data["hidden_gans"] = udm.hidden_gans
 
         elif method == "紫微":
             if udm.ziwei_chart:
@@ -441,6 +450,11 @@ class PerspectiveEngine:
                 "chong": udm.get_chong(),
                 "he": udm.get_he(),
                 "wuxing_count": udm.get_wuxing_count(),
+                "dayun": udm.dayun,
+                "dayun_start_age": udm.dayun_start_age,
+                "nayin": udm.nayin,
+                "xunkong": udm.xunkong,
+                "hidden_gans": udm.hidden_gans,
             } if udm.bazi_year else {}
             data["ziwei"] = {
                 "ming_gong": udm.ziwei_chart.get("ming_gong", ""),
@@ -567,7 +581,7 @@ class PerspectiveEngine:
 
         # 根据术法类型给出数据解读指引
         method_hints = {
-            "八字": "重点分析：日主强弱、十神配置、五行喜忌、冲合关系、调候用神。每项判断需引用具体干支。",
+            "八字": "重点分析：日主强弱、十神配置、五行喜忌、冲合关系、调候用神、大运走势、藏干暗十神。每项判断需引用具体干支。特别注意：1）大运代表十年一阶段的人生趋势，必须结合当前大运分析；2）藏干决定地支的真实十神力量；3）纳音反映柱的深层属性。",
             "紫微": "重点分析：命宫主星、三方四正星曜组合、四化飞星走向、各宫吉凶。需引用具体星曜和宫位。",
             "占星": "重点分析：太阳/月亮/上升三重人格、行星落座与相位、宫位主题。需引用具体星座和相位角度。",
             "六爻": "重点分析：本卦变卦含义、动爻变化方向、世应主客关系、用神旺衰。需引用具体爻位和六亲。",
