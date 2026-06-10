@@ -8,9 +8,11 @@
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
 import json
+import logging
 import os
+from typing import List, Dict, Optional, Any
 
-
+logger = logging.getLogger(__name__)
 @dataclass
 class ThinkingModel:
     name: str
@@ -433,185 +435,123 @@ class PerspectiveEngine:
         return data
 
     def _apply_thinking_model(self, figure: Figure, method_data: Dict, question: str) -> Dict:
-        """应用思维模型生成推理，注入知识库"""
+        """应用思维模型生成推理 — 通过 LLM 调用"""
 
-        # 基于问题类型和术法数据生成推理
-        question_type = self._classify_question(question)
+        from engine.llm_client import get_llm_client
 
-        # === 知识库检索注入 ===
-        knowledge_snippets = []
+        # 构造 prompt
+        prompt = self._build_prompt(figure, method_data, question)
+
         try:
-            from knowledge.search import KnowledgeSearch
-            ks = KnowledgeSearch()
-            # 构建查询：人物 + 问题主题 + 术法
-            query = f"{figure.name} {figure.primary_method} {question}"
-            knowledge_snippets = ks.search_by_query(query, top_n=2)
-        except Exception:
-            pass
+            llm = get_llm_client()
+            result = llm.chat_json(
+                messages=[
+                    {"role": "system", "content": self._build_system_prompt(figure)},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.7,
+                max_tokens=1500,
+            )
 
-        # 构造推理文本
-        reasoning_parts = []
+            if result.get("parse_error"):
+                # LLM 返回了非 JSON，用原始文本
+                raw = result.get("raw_response", "")
+                return {
+                    "stance": raw[:100] if raw else "暂无明确立场",
+                    "confidence": 0.5,
+                    "reasoning": raw,
+                    "key_points": [figure.catchphrase],
+                    "quotes": [figure.catchphrase],
+                }
+
+            return {
+                "stance": result.get("stance", "暂无明确立场"),
+                "confidence": float(result.get("confidence", 0.7)),
+                "reasoning": result.get("reasoning", ""),
+                "key_points": result.get("key_points", [figure.catchphrase]),
+                "quotes": result.get("quotes", [figure.catchphrase]),
+            }
+
+        except Exception as e:
+            logger.warning(f"LLM 推理失败 ({figure.name}): {e}，回退模板推理")
+            return self._fallback_reasoning(figure, method_data, question)
+
+    def _build_system_prompt(self, figure: Figure) -> str:
+        """构造人物 system prompt"""
+        principles = "、".join(figure.thinking_model.principles)
+        steps = "、".join(figure.thinking_model.steps)
+        concepts = "; ".join(f"{k}={v}" for k, v in figure.thinking_model.key_concepts.items())
+
+        return f"""你是{figure.name}（{figure.title}），{figure.bio}。
+你擅长的术法：{", ".join(figure.expertise)}。
+你主要使用【{figure.primary_method}】来分析。
+
+你的思维模型「{figure.thinking_model.name}」：
+- 核心原则：{principles}
+- 推理步骤：{steps}
+- 关键概念：{concepts}
+
+你的名言：「{figure.catchphrase}」
+
+要求：
+1. 用你自己的思维方式分析命盘数据，不要套模板
+2. 引用具体的术法数据来支撑你的观点
+3. 语言风格要符合你的人物身份
+4. 给出明确的立场和判断，不要模棱两可"""
+
+    def _build_prompt(self, figure: Figure, method_data: Dict, question: str) -> str:
+        """构造用户 prompt"""
+        data_str = json.dumps(method_data, ensure_ascii=False, indent=2)
+
+        return f"""以下是用【{figure.primary_method}】排盘得到的命盘数据：
+
+{data_str}
+
+用户的问题：{question}
+
+请以 JSON 格式返回你的分析：
+{{
+  "stance": "你的一句话核心立场",
+  "confidence": 0.0到1.0的置信度,
+  "reasoning": "你的完整推理过程（200-500字）",
+  "key_points": ["关键点1", "关键点2", "关键点3"],
+  "quotes": ["你的名言或经典引用"]
+}}"""
+
+    def _fallback_reasoning(self, figure: Figure, method_data: Dict, question: str) -> Dict:
+        """LLM 失败时的模板回退"""
+        question_type = self._classify_question(question)
         key_points = []
-        quotes = []
+        reasoning_parts = []
 
-        # 注入知识库片段
-        if knowledge_snippets:
-            reasoning_parts.append(f"【{figure.name}知识库参考】")
-            for s in knowledge_snippets:
-                reasoning_parts.append(f"  {s['category']} · {s['title']}")
-                reasoning_parts.append(f"  {s.get('snippet', '')[:100]}...")
-
-        # 引用思维模型原则
         for principle in figure.thinking_model.principles[:2]:
             reasoning_parts.append(f"【{figure.name}思维】{principle}")
 
-        # 基于术法数据分析
-        if figure.primary_method == "八字":
-            dm = method_data.get("day_master", "")
-            wx = method_data.get("day_master_wuxing", "")
-            features = method_data.get("features", [])
-            chong = method_data.get("chong", [])
+        dm = method_data.get("day_master", "")
+        wx = method_data.get("day_master_wuxing", "")
+        if dm:
+            reasoning_parts.append(f"日主{dm}属{wx}")
+            key_points.append(f"日主{dm}")
 
-            reasoning_parts.append(f"日主{dm}属{wx}，")
+        features = method_data.get("features", [])
+        if features:
+            reasoning_parts.append(f"命局特征：{features[0]}")
+            key_points.append(features[0])
 
-            if features:
-                reasoning_parts.append(f"命局特征：{features[0]}。")
-                key_points.append(features[0])
-
-            if chong:
-                reasoning_parts.append(f"命局有{chong[0]}，需注意变动。")
-                key_points.append(f"有{chong[0]}")
-
-            # 针对问题类型
-            if question_type == "事业":
-                stance = "事业宜稳健发展，借势而为"
-                key_points.append("借势而为")
-            elif question_type == "感情":
-                stance = "感情需耐心经营，不可强求"
-                key_points.append("耐心经营")
-            elif question_type == "健康":
-                stance = "注意五行平衡，防患于未然"
-                key_points.append("五行平衡")
-            else:
-                stance = "顺势而为，知命不认命"
-
-        elif figure.primary_method == "紫微":
-            ming = method_data.get("ming_gong", "")
-            stars = method_data.get("star_placements", {})
-            sihua = method_data.get("sihua", {})
-
-            reasoning_parts.append(f"命宫在{ming}，")
-
-            if "紫微" in stars:
-                reasoning_parts.append(f"紫微在{stars['紫微']}，格局不凡。")
-                key_points.append(f"紫微在{stars['紫微']}")
-
-            if sihua:
-                lu = sihua.get("禄", "")
-                if lu:
-                    reasoning_parts.append(f"{lu}化禄，有福气。")
-                    key_points.append(f"{lu}化禄")
-
-            stance = "格局已定，关键在于如何运用"
-
-        elif figure.primary_method == "奇门":
-            ju = method_data.get("ju_name", "")
-            men = method_data.get("ba_men", {})
-
-            reasoning_parts.append(f"当前{ju}，")
-
-            kai = [k for k, v in men.items() if v == "开门"]
-            sheng = [k for k, v in men.items() if v == "生门"]
-
-            if kai:
-                reasoning_parts.append(f"开门在{kai[0]}，事业可动。")
-                key_points.append(f"开门在{kai[0]}")
-            if sheng:
-                reasoning_parts.append(f"生门在{sheng[0]}，财运有望。")
-                key_points.append(f"生门在{sheng[0]}")
-
-            stance = "时机已至，当断则断"
-
-        elif figure.primary_method == "占星":
-            sun = method_data.get("sun_sign", "")
-            moon = method_data.get("moon_sign", "")
-
-            reasoning_parts.append(f"太阳{sun}，月亮{moon}。")
-            key_points.append(f"太阳{sun}")
-            key_points.append(f"月亮{moon}")
-
-            stance = "星象显示，内在与外在需要平衡"
-
-        elif figure.primary_method == "综合":
-            # 玄照视角：综合分析所有术法
-            methods = method_data.get("available_methods", [])
-            bazi = method_data.get("bazi", {})
-            ziwei = method_data.get("ziwei", {})
-            astro = method_data.get("astro", {})
-            qimen = method_data.get("qimen", {})
-
-            reasoning_parts.append(f"本次综合{len(methods)}种术法分析：{'、'.join(methods)}。")
-            key_points.append(f"综合{len(methods)}术")
-
-            # 八字信息
-            dm = bazi.get("day_master", "")
-            wx = bazi.get("day_master_wuxing", "")
-            if dm:
-                reasoning_parts.append(f"八字日主{dm}属{wx}。")
-                key_points.append(f"日主{dm}")
-
-            features = bazi.get("features", [])
-            if features:
-                reasoning_parts.append(f"命局特征：{features[0]}。")
-                key_points.append(features[0])
-
-            # 紫微信息
-            ming = ziwei.get("ming_gong", "")
-            stars = ziwei.get("star_placements", {})
-            if ming:
-                reasoning_parts.append(f"紫微命宫在{ming}。")
-                key_points.append(f"命宫{ming}")
-            if "紫微" in stars:
-                reasoning_parts.append(f"紫微在{stars['紫微']}。")
-                key_points.append(f"紫微在{stars['紫微']}")
-
-            # 占星信息
-            sun = astro.get("sun_sign", "")
-            moon = astro.get("moon_sign", "")
-            if sun:
-                reasoning_parts.append(f"占星太阳{sun}，月亮{moon}。")
-                key_points.append(f"太阳{sun}")
-
-            # 奇门信息
-            ju = qimen.get("ju_name", "")
-            if ju:
-                reasoning_parts.append(f"奇门{ju}。")
-                key_points.append(ju)
-
-            # 基于问题类型给出综合立场
-            if question_type == "事业":
-                stance = "多术印证，事业方向已明，宜借势而行"
-            elif question_type == "感情":
-                stance = "各术共识，感情需顺势而为，不可强求"
-            elif question_type == "财运":
-                stance = "财路已现，但需谨慎把握时机"
-            elif question_type == "健康":
-                stance = "多术警示，养生为先，防患于未然"
-            else:
-                stance = "七术照见，万法归一，顺势而为"
-
-        else:
-            stance = "天机不可泄露，但趋势可见"
-
-        # 生成引用
-        quotes.append(figure.catchphrase)
+        stance_map = {
+            "事业": "事业宜稳健发展，借势而为",
+            "感情": "感情需耐心经营，不可强求",
+            "财运": "财路已现，需把握时机",
+            "健康": "注意五行平衡，防患于未然",
+        }
+        stance = stance_map.get(question_type, "顺势而为，知命不认命")
 
         return {
             "stance": stance,
-            "confidence": 0.7 + (len(key_points) * 0.05),
+            "confidence": 0.6,
             "reasoning": "\n".join(reasoning_parts),
-            "key_points": key_points[:5],
-            "quotes": quotes,
+            "key_points": key_points[:5] or [figure.catchphrase],
+            "quotes": [figure.catchphrase],
         }
 
     def _classify_question(self, question: str) -> str:

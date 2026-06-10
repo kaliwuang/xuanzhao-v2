@@ -212,6 +212,11 @@
                 tabsContainer.appendChild(tab);
             });
 
+            // 默认显示第一个面板
+            if (methods.length > 0 && methodNames[methods[0]]) {
+                switchPanel(methodNames[methods[0]]);
+            }
+
             // 八字
             if (data.bazi) {
                 document.getElementById('baziPanel').style.display = 'block';
@@ -220,46 +225,47 @@
 
             // 紫微
             if (data.ziwei) {
-                document.getElementById('ziweiPanel').style.display = 'none';
+                document.getElementById('ziweiPanel').style.display = 'block';
                 renderZiwei(data.ziwei);
             }
 
             // 占星
             if (data.astro) {
-                document.getElementById('astroPanel').style.display = 'none';
+                document.getElementById('astroPanel').style.display = 'block';
                 renderAstro(data.astro);
             }
 
             // 六爻
             if (data.liuyao) {
-                document.getElementById('liuyaoPanel').style.display = 'none';
+                document.getElementById('liuyaoPanel').style.display = 'block';
                 renderLiuyao(data.liuyao);
             }
 
             // 奇门
             if (data.qimen) {
-                document.getElementById('qimenPanel').style.display = 'none';
+                document.getElementById('qimenPanel').style.display = 'block';
                 renderQimen(data.qimen);
             }
 
             // 大六壬
             if (data.liuren) {
-                document.getElementById('liurenPanel').style.display = 'none';
+                document.getElementById('liurenPanel').style.display = 'block';
                 renderLiuren(data.liuren);
             }
 
             // 太乙
             if (data.taiyi) {
-                document.getElementById('taiyiPanel').style.display = 'none';
+                document.getElementById('taiyiPanel').style.display = 'block';
                 renderTaiyi(data.taiyi);
             }
         }
 
         function switchPanel(panelName) {
             document.querySelectorAll('.method-panel').forEach(p => p.style.display = 'none');
-            document.getElementById(panelName + 'Panel').style.display = 'block';
+            const panel = document.getElementById(panelName + 'Panel');
+            if (panel) panel.style.display = 'block';
             document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target) event.target.classList.add('active');
         }
 
         function renderBazi(bazi) {
@@ -286,8 +292,11 @@
             // 十神
             const ssContainer = document.getElementById('baziShishen');
             ssContainer.innerHTML = '';
+            const shishenMap = bazi.shishen_gan || {};
+            const labels = ['年柱', '月柱', '日柱', '时柱'];
+            const pillarKeys = ['year', 'month', 'day', 'time'];
             pillars.forEach((p, i) => {
-                const ss = bazi.shishen?.[p];
+                const ss = shishenMap[p];
                 if (ss) {
                     const div = document.createElement('div');
                     div.className = 'shishen-item';
@@ -314,11 +323,13 @@
 
         function renderZiwei(ziwei) {
             const wh = ziwei.wuxing_ju || {};
+            const wuxing = (typeof wh === 'string') ? wh : (wh.wuxing || '');
+            const juShu = (typeof wh === 'string') ? '' : (wh.ju_shu || '');
             document.getElementById('ziweiInfo').innerHTML = `
                 <div class="ziwei-info-bar">
                     <span>命宫：${ziwei.ming_gong || ''}</span>
                     <span>命宫干支：${ziwei.ming_ganzhi || ''}</span>
-                    <span>五行局：${wh.wuxing || ''}${wh.ju_shu || ''}局</span>
+                    <span>五行局：${wuxing}${juShu}局</span>
                     <span>四化：禄${ziwei.sihua?.禄 || ''} 权${ziwei.sihua?.权 || ''} 科${ziwei.sihua?.科 || ''} 忌${ziwei.sihua?.忌 || ''}</span>
                 </div>
             `;

@@ -6,15 +6,19 @@
 """
 import sys
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 确保项目根目录在路径中
 project_root = os.path.dirname(os.path.abspath(__file__))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 import uvicorn
 
 from api.routes import router
@@ -24,6 +28,23 @@ app = FastAPI(
     description="七术排盘 x 交叉验证 x 108视角辩论",
     version="2.0.0",
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"error": "服务器内部错误", "path": str(request.url.path)},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"error": "参数验证失败", "details": str(exc)},
+    )
 
 # API路由
 app.include_router(router)

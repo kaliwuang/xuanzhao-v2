@@ -6,9 +6,11 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent
 
-# Claude API (用于视角推理)
-CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "")
-CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-opus-4-7")
+# LLM API (用于视角推理)
+LLM_API_KEY = os.environ.get("XUANZHAO_API_KEY", "tzzEsWy9cPc7cONb11z296epNJIzfUcxDivW6hMWzOaIkAWk")
+LLM_BASE_URL = os.environ.get("XUANZHAO_API_BASE", "https://agent.uumit.com/v1")
+LLM_MODEL = os.environ.get("XUANZHAO_MODEL", "Doubao-Seed-2.0-Pro")
+LLM_TIMEOUT = int(os.environ.get("XUANZHAO_TIMEOUT", "120"))
 
 # 前端模板路径
 TEMPLATE_DIR = PROJECT_ROOT / "frontend"

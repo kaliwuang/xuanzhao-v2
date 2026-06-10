@@ -206,7 +206,7 @@ class DestinyModel:
     所有术法引擎填充这个模型，视角引擎读取这个模型。
     """
     # === 时空锚点 ===
-    corrected_time: Any  # CorrectedTime 对象
+    corrected_time: Optional[Any] = None
 
     # === 八字数据 ===
     bazi_year: Optional[Pillar] = None

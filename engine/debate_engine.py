@@ -160,20 +160,33 @@ class DebateEngine:
                            target: PerspectiveOpinion, question: str) -> str:
         """生成反驳论据"""
 
-        # 根据双方术法差异生成反驳
+        # 根据双方术法差异生成有实质内容的反驳
+        method_strengths = {
+            "八字": "格局层次、五行喜忌",
+            "紫微": "十二宫位、星曜组合",
+            "占星": "宫位相位、星体落座",
+            "六爻": "动爻变化、用神旺衰",
+            "奇门": "八门九星、格局吉凶",
+            "大六壬": "三传四课、神将关系",
+            "太乙": "太乙宫位、积年推演",
+            "综合": "多术法交叉验证",
+        }
+
         if speaker.primary_method != target.primary_method:
+            speaker_strength = method_strengths.get(speaker.primary_method, "该术法体系")
+            target_strength = method_strengths.get(target.primary_method, "该术法体系")
             return (
                 f"{speaker.figure_name}（{speaker.primary_method}视角）："
-                f"从{speaker.primary_method}来看，{speaker.stance}。"
-                f"{target.figure_name}用{target.primary_method}看到的是局部，"
-                f"我用{speaker.primary_method}看到的是全局。"
-                f"{speaker.key_points[0] if speaker.key_points else ''}"
+                f"从{speaker.primary_method}的{speaker_strength}来看，结论是{speaker.stance}。"
+                f"{target.figure_name}用{target.primary_method}分析的是{target_strength}，"
+                f"角度不同，结论自然有差异。"
+                f"{f'关键依据：{speaker.key_points[0]}。' if speaker.key_points else ''}"
             )
         else:
             return (
-                f"{speaker.figure_name}："
-                f"同为{speaker.primary_method}，但我看{speaker.key_points[0] if speaker.key_points else '重点不同'}。"
-                f"{target.figure_name}忽视了这一点。"
+                f"{speaker.figure_name}（{speaker.primary_method}视角）："
+                f"同为{speaker.primary_method}，但我看{speaker.key_points[0] if speaker.key_points else '重点不同'}，"
+                f"与{target.figure_name}的结论有所出入。"
             )
 
     def _extract_consensus(self, opinions: List[PerspectiveOpinion],
