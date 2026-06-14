@@ -3,12 +3,14 @@
 玄照 v2.0 - FastAPI 路由
 """
 import logging
+import re
 import traceback
 import hashlib
 import time
 from fastapi import APIRouter, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional
+import json as _json
 
 logger = logging.getLogger("xuanzhao.api")
 
@@ -487,6 +489,44 @@ def get_debate(
 
     except Exception as e:
         return _error_response(e)
+
+
+@router.get("/api/debate/stream")
+def debate_stream(
+    birth: str = Query(..., description="出生时间"),
+    location: str = Query("北京", description="出生地点"),
+    gender: str = Query("男", description="性别"),
+    question: str = Query("此人命运如何？", description="问题"),
+    figures: Optional[str] = Query(None, description="人物ID，逗号分隔"),
+):
+    """串行审判辩论SSE流（108人逐个发言+逐人审判）"""
+    def event_generator():
+        try:
+            from engine.sequential_debate import SequentialDebateEngine
+            from engine.perspective_engine import PerspectiveEngine
+
+            corrected, udm = _prepare_udm(birth, location, gender)
+
+            pe = PerspectiveEngine()
+            opinions = pe.analyze(udm, question, _get_figure_ids(figures))
+
+            engine = SequentialDebateEngine()
+            for event in engine.run_debate(opinions, question):
+                yield f"event: {event['event']}\ndata: {_json.dumps(event['data'], ensure_ascii=False)}\n\n"
+
+        except Exception as e:
+            logger.error(f"辩论流错误: {e}\n{traceback.format_exc()}")
+            yield f"event: error\ndata: {_json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get("/api/ask")
