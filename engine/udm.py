@@ -44,8 +44,8 @@ ZHI_WUXING = {
     "寅": (Wuxing.WOOD, Yinyang.YANG),
     "卯": (Wuxing.WOOD, Yinyang.YIN),
     "辰": (Wuxing.EARTH, Yinyang.YANG),
-    "巳": (Wuxing.FIRE, Yinyang.YANG),
-    "午": (Wuxing.FIRE, Yinyang.YIN),
+    "巳": (Wuxing.FIRE, Yinyang.YIN),
+    "午": (Wuxing.FIRE, Yinyang.YANG),
     "未": (Wuxing.EARTH, Yinyang.YIN),
     "申": (Wuxing.METAL, Yinyang.YANG),
     "酉": (Wuxing.METAL, Yinyang.YIN),
@@ -60,7 +60,7 @@ ZHI_CANGGAN = {
     "寅": ["甲", "丙", "戊"],
     "卯": ["乙"],
     "辰": ["戊", "乙", "癸"],
-    "巳": ["丙", "庚", "戊"],
+    "巳": ["丙", "戊", "庚"],
     "午": ["丁", "己"],
     "未": ["己", "丁", "乙"],
     "申": ["庚", "壬", "戊"],
@@ -194,7 +194,7 @@ class Pillar:
     def wuxing(self) -> str:
         """柱的五行（以纳音为主，无纳音用干支五行）"""
         if self.nayin:
-            return self.nayin[-1] if self.nayin else ""
+            return self.nayin[-1]
         gz_wx = GAN_WUXING.get(self.gan, (None, None))[0]
         return gz_wx.value if gz_wx else ""
 
@@ -239,6 +239,19 @@ class DestinyModel:
     # 调候用神
     tiaohou: Optional[str] = None
 
+    # 神煞
+    shensha: List[str] = field(default_factory=list)
+
+    # 每柱神煞（按柱分组）
+    shensha_per_pillar: Dict[str, List[str]] = field(default_factory=dict)
+
+    # 长生十二宫（每柱）
+    changsheng: Dict[str, str] = field(default_factory=dict)
+
+    # 干支关系（天干冲合、地支刑冲合害）
+    gan_relations: List[str] = field(default_factory=list)
+    zhi_relations: List[str] = field(default_factory=list)
+
     # === 紫微数据 ===
     ziwei_chart: Optional[Dict] = None
 
@@ -262,6 +275,29 @@ class DestinyModel:
 
     # === 特征提取（交叉验证用）===
     features: List[str] = field(default_factory=list)
+
+    # === 五行得分 ===
+    wuxing_score: Dict[str, float] = field(default_factory=dict)
+
+    # === 命宫·胎元·身宫 ===
+    ming_gong: Optional[str] = None
+    ming_gong_shishen: Optional[Dict] = None
+    tai_yuan: Optional[str] = None
+    tai_yuan_shishen: Optional[Dict] = None
+    shen_gong: Optional[str] = None
+    shen_gong_shishen: Optional[Dict] = None
+
+    # 喜用神
+    xi_yong: Dict = field(default_factory=dict)
+
+    # 当前流年
+    liunian: Optional[Dict] = None
+
+    # 出生地经纬度
+    location: Optional[Dict] = None
+
+    # 出生公历年份（交叉验证用）
+    birth_year: int = 0
 
     @property
     def bazi_pillars(self) -> List[Optional[Pillar]]:
@@ -305,7 +341,7 @@ class DestinyModel:
         # 三合
         zhi_set = set(zhis)
         for sanhe in ZHI_SANHE:
-            if len(zhi_set & sanhe) >= 2:
+            if len(zhi_set & sanhe) == 2:
                 matched = zhi_set & sanhe
                 result.append(f"{' '.join(matched)}半合")
             if sanhe <= zhi_set:

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-玄照 v2.0 - 辩论引擎
+玄照 v2.0 - 辩论引擎 v2
 
-核心功能：
-1. 观点聚类（相近观点归一组）
-2. 冲突检测（找出立场对立的人物）
-3. 自动生成交锋
-4. 共识提取
+108人全员参与辩论，零LLM调用（仅玄照综合视角用1次LLM）。
 
-每个人物用自己的术法数据发言，互相反驳。
+机制：
+1. 108人按阵营排序轮流发言
+2. 每人发言时可读到前面所有人的发言记录
+3. 关键词冲突检测：如果当前发言与某未发言者立场对立，该人插队发言
+4. 术法交叉验证：同术法内部分歧自动标记
+5. 共识/分歧自动提取
 """
-from typing import List, Dict, Optional
-from dataclasses import dataclass
+from typing import List, Dict, Optional, Tuple
+from dataclasses import dataclass, field
 from .perspective_engine import PerspectiveOpinion, FIGURES
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -29,37 +31,185 @@ class Exchange:
     rebuttal_type: str
 
 
+# 对立立场关键词组
+OPPOSING_GROUPS = [
+    (["动", "进", "突破", "断", "胜", "拼", "冲", "攻", "果断", "积极", "奋起", "勇"],
+     ["稳", "守", "防", "静", "韬", "隐", "退", "藏", "谨慎", "保守", "沉着"]),
+    (["动", "进", "突破", "果断", "拼"],
+     ["顺", "自然", "无为", "随缘", "水到渠成", "随遇"]),
+    (["稳", "守", "防", "静", "藏"],
+     ["转", "变", "破", "革", "新", "换", "改"]),
+    (["利", "财", "富", "贵", "发达"],
+     ["贫", "耗", "散", "败", "衰", "困"]),
+    (["吉", "顺", "亨", "通", "旺"],
+     ["凶", "逆", "阻", "滞", "衰", "败"]),
+]
+
+
+def _keyword_match(text: str, keywords: list) -> int:
+    """计算文本与关键词组的匹配分数"""
+    return sum(1 for k in keywords if k in text)
+
+
+def _find_conflict_target(speaker_stance: str, remaining: List[Tuple[int, PerspectiveOpinion]]) -> Optional[int]:
+    """在未发言者中找到与当前发言立场最对立的人，返回其在remaining中的索引"""
+    best_idx = None
+    best_score = 0
+
+    for pos_kw, neg_kw in OPPOSING_GROUPS:
+        speaker_pos = _keyword_match(speaker_stance, pos_kw)
+        speaker_neg = _keyword_match(speaker_stance, neg_kw)
+
+        # 当前发言者是积极立场
+        if speaker_pos > speaker_neg:
+            target_kw = neg_kw
+        # 当前发言者是保守立场
+        elif speaker_neg > speaker_pos:
+            target_kw = pos_kw
+        else:
+            continue
+
+        for idx, (_, opinion) in enumerate(remaining):
+            score = _keyword_match(opinion.stance, target_kw)
+            if score > best_score:
+                best_score = score
+                best_idx = idx
+
+    return best_idx if best_score >= 2 else None
+
+
+def _detect_rebuttal(speaker: PerspectiveOpinion, previous_exchanges: List[Exchange]) -> Optional[Exchange]:
+    """检测当前发言者是否与前面某人有明显分歧（纯关键词，无LLM）"""
+    if not previous_exchanges:
+        return None
+
+    for pos_kw, neg_kw in OPPOSING_GROUPS:
+        speaker_score = _keyword_match(speaker.stance, pos_kw + neg_kw)
+        if speaker_score < 1:
+            continue
+
+        # 找最近3个发言者中立场对立的
+        for ex in previous_exchanges[-3:]:
+            target_score_pos = _keyword_match(ex.argument, pos_kw)
+            target_score_neg = _keyword_match(ex.argument, neg_kw)
+
+            # 立场相反
+            if (_keyword_match(speaker.stance, pos_kw) > 0 and target_score_neg > 0) or \
+               (_keyword_match(speaker.stance, neg_kw) > 0 and target_score_pos > 0):
+                # 生成反驳
+                rebuttal = f"【{speaker.figure_name}反驳{ex.speaker}】"
+                if _keyword_match(speaker.stance, pos_kw) > 0:
+                    rebuttal += f"我认为应当{pos_kw[0]}，{ex.speaker}过于{neg_kw[0]}。"
+                else:
+                    rebuttal += f"我认为应当{neg_kw[0]}，{ex.speaker}过于{pos_kw[0]}。"
+                rebuttal += f"从{speaker.primary_method}的角度看，{speaker.key_points[0] if speaker.key_points else '形势需要审慎判断'}。"
+
+                return Exchange(
+                    round_num=1,
+                    speaker=speaker.figure_name,
+                    speaker_method=speaker.primary_method,
+                    target=ex.speaker,
+                    target_method=ex.speaker_method,
+                    argument=rebuttal,
+                    rebuttal_type="针对性反驳"
+                )
+
+    return None
+
+
 class DebateEngine:
-    """辩论引擎"""
+    """辩论引擎 v2 — 108人全员参与，零LLM调用"""
 
     def __init__(self):
         pass
 
-    def debate(self, opinions: List[PerspectiveOpinion], question: str, rounds: int = 2) -> dict:
-        """运行辩论"""
+    def debate(self, opinions: List[PerspectiveOpinion], question: str, rounds: int = 1) -> dict:
+        """
+        运行辩论 - 108人全员轮流发言 + 插队反驳机制
+
+        流程：
+        1. 108人按阵营排序，依次发言
+        2. 每人发言读取前面所有发言记录
+        3. 关键词冲突检测：发言后检测未发言者中是否有人立场对立，插队发言
+        4. 术法内部异议：同术法的不同人物自动标记分歧
+        """
 
         # 1. 观点聚类
         clusters = self._cluster_opinions(opinions)
 
-        # 2. 识别冲突对
-        conflict_pairs = self._find_conflicts(opinions)
+        # 2. 构建发言队列：按阵营分组排序
+        faction_order = {"儒家": 0, "道家": 1, "兵家": 2, "法家": 3, "纵横家": 4,
+                         "佛家": 5, "心理学": 6, "投资": 7, "医学": 8, "科学": 9, "其他": 10}
 
-        # 3. 生成交锋（多轮递进：后轮携带前轮上下文）
+        opinion_map = {o.figure_id: o for o in opinions}
+        queue = list(range(len(opinions)))  # 发言队列（opinions的索引）
+        spoken = set()  # 已发言的figure_id
         exchanges = []
-        for r in range(1, rounds + 1):
-            # 第二轮起，将前轮交锋作为上下文传入
-            prev = exchanges if r > 1 else None
-            round_exchanges = self._generate_round(r, conflict_pairs, opinions, question, prev)
-            exchanges.extend(round_exchanges)
+        speech_history = []  # 所有发言记录
 
-        # 4. 共识总结
+        # 3. 轮流发言 + 插队机制
+        turn = 0
+        max_turns = len(opinions) * 2  # 防止无限循环
+
+        while queue and turn < max_turns:
+            turn += 1
+            idx = queue.pop(0)
+            speaker = opinions[idx]
+
+            if speaker.figure_id in spoken:
+                continue
+
+            spoken.add(speaker.figure_id)
+
+            # 构建发言内容：引用前面的发言
+            speech = self._compose_speech(speaker, speech_history, question)
+
+            # 检测是否有反驳
+            rebuttal = _detect_rebuttal(speaker, exchanges)
+
+            # 记录发言
+            exchange = Exchange(
+                round_num=1,
+                speaker=speaker.figure_name,
+                speaker_method=speaker.primary_method,
+                target=rebuttal.target if rebuttal else "",
+                target_method=rebuttal.target_method if rebuttal else "",
+                argument=speech,
+                rebuttal_type=rebuttal.rebuttal_type if rebuttal else "陈述"
+            )
+            exchanges.append(exchange)
+            speech_history.append({
+                "speaker": speaker.figure_name,
+                "method": speaker.primary_method,
+                "stance": speaker.stance,
+                "key_points": speaker.key_points[:2],
+            })
+
+            # 如果有反驳，插入反驳记录
+            if rebuttal:
+                exchanges.append(rebuttal)
+
+            # 冲突检测：检查未发言者中是否有人要插队
+            remaining = [(i, opinions[i]) for i in range(len(opinions))
+                         if opinions[i].figure_id not in spoken]
+
+            conflict_idx = _find_conflict_target(speaker.stance, remaining)
+            if conflict_idx is not None:
+                jump_idx = remaining[conflict_idx][0]
+                # 插队到队列最前面
+                queue.insert(0, jump_idx)
+
+        # 4. 共识提取
         consensus = self._extract_consensus(opinions, exchanges)
 
-        # 5. 分歧总结
+        # 5. 分歧提取
         disagreements = self._extract_disagreements(opinions, exchanges)
 
-        # 6. 玄照视角
+        # 6. 玄照综合视角（唯一使用LLM的地方）
         xuanzhao = self.generate_xuanzhao_perspective(opinions, consensus, disagreements, question)
+
+        # 7. 总结
+        summary = self._generate_summary(opinions, consensus, disagreements)
 
         return {
             "participants": [{
@@ -74,12 +224,44 @@ class DebateEngine:
             "exchanges": exchanges,
             "consensus": consensus,
             "disagreements": disagreements,
-            "summary": self._generate_summary(opinions, consensus, disagreements),
+            "summary": summary,
             "xuanzhao_perspective": xuanzhao,
         }
 
+    def _compose_speech(self, speaker: PerspectiveOpinion,
+                        speech_history: List[dict], question: str) -> str:
+        """构建发言内容，引用前面人的发言"""
+        parts = []
+
+        # 核心立场
+        parts.append(f"【{speaker.figure_name}（{speaker.primary_method}）】")
+        parts.append(speaker.stance)
+
+        # 引用前面发言中的相关/对立观点
+        if speech_history:
+            # 找最近的同术法发言
+            same_method = [s for s in speech_history[-10:] if s["method"] == speaker.primary_method]
+            if same_method:
+                ref = same_method[-1]
+                parts.append(f"（承接{ref['speaker']}的{speaker.primary_method}视角）")
+
+            # 找对立观点
+            for pos_kw, neg_kw in OPPOSING_GROUPS[:2]:
+                if _keyword_match(speaker.stance, pos_kw) > 0:
+                    for s in speech_history[-5:]:
+                        if _keyword_match(s["stance"], neg_kw) > 0:
+                            parts.append(f"（对{s['speaker']}的「{s['stance'][:20]}」持不同看法）")
+                            break
+                    break
+
+        # 关键论据
+        if speaker.key_points:
+            parts.append(f"核心：{'；'.join(speaker.key_points[:2])}")
+
+        return "".join(parts)
+
     def _cluster_opinions(self, opinions: List[PerspectiveOpinion]) -> Dict[str, List[str]]:
-        """观点聚类——按立场关键词加权匹配，支持综合平衡兜底"""
+        """观点聚类——按立场关键词加权匹配"""
         clusters = {
             "积极进取": [],
             "谨慎保守": [],
@@ -88,7 +270,6 @@ class DebateEngine:
             "综合平衡": [],
         }
 
-        # 关键词权重：每个词匹配得1分，取最高分的类
         keyword_scores = {
             "积极进取": {"动": 1, "进": 1, "突破": 2, "断": 1, "胜": 1, "拼": 1, "冲": 1, "攻": 1},
             "谨慎保守": {"稳": 1, "守": 1, "防": 1, "静": 1, "韬": 1, "隐": 1, "退": 1, "藏": 1},
@@ -109,415 +290,126 @@ class DebateEngine:
             else:
                 clusters["综合平衡"].append(o.figure_name)
 
-        # 去掉空集群
         return {k: v for k, v in clusters.items() if v}
-
-    def _find_conflicts(self, opinions: List[PerspectiveOpinion]) -> List[tuple]:
-        """基于置信度差异和立场对立找冲突对，覆盖更广泛的术法交叉"""
-        if len(opinions) < 2:
-            return []
-
-        conflicts = []
-        seen_pairs = set()
-
-        # 定义对立立场关键词组
-        opposing_groups = [
-            (["动", "进", "突破", "断", "拼", "冲", "攻", "果断"],
-             ["稳", "守", "防", "静", "韬", "隐", "退", "谨慎"]),
-            (["动", "进", "突破", "果断"],
-             ["顺", "自然", "无为", "随缘", "水到渠成"]),
-            (["稳", "守", "防", "静"],
-             ["转", "变", "破", "革", "新"]),
-        ]
-
-        def _match_group(stance, keywords):
-            return sum(1 for k in keywords if k in stance)
-
-        # 1. 立场明确对立的人物对
-        for pos_kw, neg_kw in opposing_groups:
-            pos = [o for o in opinions if _match_group(o.stance, pos_kw) > 0]
-            neg = [o for o in opinions if _match_group(o.stance, neg_kw) > 0]
-
-            for a in pos[:2]:
-                for b in neg[:2]:
-                    pair_key = tuple(sorted([a.figure_id, b.figure_id]))
-                    if pair_key not in seen_pairs:
-                        seen_pairs.add(pair_key)
-                        conflicts.append((a, b))
-
-        # 2. 同术法但置信度差异大的人物对（术法内部异议）
-        method_groups = {}
-        for o in opinions:
-            method_groups.setdefault(o.primary_method, []).append(o)
-        for method, group in method_groups.items():
-            if len(group) >= 2:
-                sorted_by_conf = sorted(group, key=lambda x: x.confidence)
-                low, high = sorted_by_conf[0], sorted_by_conf[-1]
-                if high.confidence - low.confidence >= 0.2:
-                    pair_key = tuple(sorted([low.figure_id, high.figure_id]))
-                    if pair_key not in seen_pairs:
-                        seen_pairs.add(pair_key)
-                        conflicts.append((low, high))
-
-        # 3. 跨术法高置信度差异对（互补验证）
-        methods = list(method_groups.keys())
-        for i in range(len(methods)):
-            for j in range(i + 1, len(methods)):
-                g1, g2 = method_groups[methods[i]], method_groups[methods[j]]
-                for a in g1[:1]:
-                    for b in g2[:1]:
-                        pair_key = tuple(sorted([a.figure_id, b.figure_id]))
-                        if pair_key not in seen_pairs:
-                            seen_pairs.add(pair_key)
-                            conflicts.append((a, b))
-
-        return conflicts
-
-    def _generate_round(self, round_num: int, conflict_pairs: List[tuple],
-                        opinions: List[PerspectiveOpinion], question: str,
-                        previous_exchanges: List[Exchange] = None) -> List[Exchange]:
-        """生成一轮交锋（第二轮起携带前轮交锋上下文，形成真正的辩论递进）"""
-        exchanges = []
-
-        for (p1, p2) in conflict_pairs:
-            # A 反驳 B
-            arg = self._generate_argument(p1, p2, question, previous_exchanges)
-            exchanges.append(Exchange(
-                round_num=round_num,
-                speaker=p1.figure_name,
-                speaker_method=p1.primary_method,
-                target=p2.figure_name,
-                target_method=p2.primary_method,
-                argument=arg,
-                rebuttal_type="深化反驳" if round_num > 1 and previous_exchanges else "逻辑反驳"
-            ))
-
-            # B 回应
-            arg2 = self._generate_argument(p2, p1, question, previous_exchanges)
-            exchanges.append(Exchange(
-                round_num=round_num,
-                speaker=p2.figure_name,
-                speaker_method=p2.primary_method,
-                target=p1.figure_name,
-                target_method=p1.primary_method,
-                argument=arg2,
-                rebuttal_type="深化反驳" if round_num > 1 and previous_exchanges else "逻辑反驳"
-            ))
-
-        return exchanges
-
-    def _generate_argument(self, speaker: PerspectiveOpinion,
-                           target: PerspectiveOpinion, question: str,
-                           previous_exchanges: List[Exchange] = None) -> str:
-        """生成反驳论据（支持多轮递进上下文）"""
-
-        # 优先使用 LLM 生成有深度的辩论论据
-        try:
-            return self._llm_generate_argument(speaker, target, question, previous_exchanges)
-        except Exception as e:
-            logger.warning(f"LLM 辩论生成失败，回退模板: {e}")
-            return self._template_argument(speaker, target)
-
-    def _llm_generate_argument(self, speaker: PerspectiveOpinion,
-                               target: PerspectiveOpinion, question: str,
-                               previous_exchanges: List[Exchange] = None) -> str:
-        """使用 LLM 生成辩论论据（第二轮起携带前轮交锋上下文）"""
-        from engine.llm_client import get_llm_client
-
-        speaker_fig = FIGURES.get(speaker.figure_id)
-        speaker_name = speaker_fig.name if speaker_fig else speaker.figure_name
-        speaker_catchphrase = speaker_fig.catchphrase if speaker_fig else ""
-
-        # 构造前轮交锋摘要（仅保留与当前 speaker/target 相关的交锋）
-        prev_context = ""
-        if previous_exchanges:
-            relevant = [
-                ex for ex in previous_exchanges
-                if ex.speaker in (speaker_name, target.figure_name)
-                   or ex.target in (speaker_name, target.figure_name)
-            ]
-            if relevant:
-                prev_lines = []
-                for ex in relevant[-4:]:  # 最多取最近4条
-                    prev_lines.append(
-                        f"[第{ex.round_num}轮] {ex.speaker}（{ex.speaker_method}）对{ex.target}说：{ex.argument[-120:]}"
-                    )
-                prev_context = f"\n\n## 前轮交锋记录（你需要针对这些论点做出回应和深化）\n" + "\n".join(prev_lines)
-
-        prompt = f"""你正在参加一场关于命理的辩论。
-
-你方观点（{speaker_name}，{speaker.primary_method}视角）：
-- 立场：{speaker.stance}
-- 置信度：{speaker.confidence}
-- 核心理由：{'; '.join(speaker.key_points[:3])}
-
-对方观点（{target.figure_name}，{target.primary_method}视角）：
-- 立场：{target.stance}
-- 核心理由：{'; '.join(target.key_points[:3]) if target.key_points else '未明确'}
-
-用户问题：{question}
-{prev_context}
-
-请以{speaker_name}的身份，用{speaker.primary_method}的逻辑反驳对方。
-要求：
-1. {'针对前轮对方的论点进行逐一回应，指出其不足和漏洞' if previous_exchanges else '用你擅长的术法具体数据来反驳，指出对方分析的不足'}
-2. 引用自己的推理依据来强化论点
-3. {'在前轮基础上深化论点，提出新的论据或角度，不要重复之前说过的话' if previous_exchanges else '语言风格符合' + speaker_name + '的身份'}
-4. 控制在150字以内，只返回反驳文字，不要返回JSON"""
-        llm = get_llm_client()
-        result = llm.chat(
-            messages=[
-                {"role": "system", "content": f"你是{speaker_name}，{speaker_catchphrase}。用你的术法逻辑进行辩论反驳。{'你正在回应对方的反驳，需要针对性地回应并深化你的论点。' if previous_exchanges else ''}"},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.8,
-            max_tokens=400,
-        )
-
-        if result.startswith("[LLM"):
-            raise RuntimeError(result)
-
-        return f"{speaker_name}（{speaker.primary_method}视角）：{result}"
-
-    def _template_argument(self, speaker: PerspectiveOpinion,
-                           target: PerspectiveOpinion) -> str:
-        """模板回退：生成基础论据"""
-        method_strengths = {
-            "八字": "格局层次、五行喜忌",
-            "紫微": "十二宫位、星曜组合",
-            "占星": "宫位相位、星体落座",
-            "六爻": "动爻变化、用神旺衰",
-            "奇门": "八门九星、格局吉凶",
-            "大六壬": "三传四课、神将关系",
-            "太乙": "太乙宫位、积年推演",
-            "综合": "多术法交叉验证",
-        }
-
-        if speaker.primary_method != target.primary_method:
-            speaker_strength = method_strengths.get(speaker.primary_method, "该术法体系")
-            target_strength = method_strengths.get(target.primary_method, "该术法体系")
-            return (
-                f"{speaker.figure_name}（{speaker.primary_method}视角）："
-                f"从{speaker.primary_method}的{speaker_strength}来看，结论是{speaker.stance}。"
-                f"{target.figure_name}用{target.primary_method}分析的是{target_strength}，"
-                f"角度不同，结论自然有差异。"
-                f"{f'关键依据：{speaker.key_points[0]}。' if speaker.key_points else ''}"
-            )
-        else:
-            return (
-                f"{speaker.figure_name}（{speaker.primary_method}视角）："
-                f"同为{speaker.primary_method}，但我看{speaker.key_points[0] if speaker.key_points else '重点不同'}，"
-                f"与{target.figure_name}的结论有所出入。"
-            )
 
     def _extract_consensus(self, opinions: List[PerspectiveOpinion],
                            exchanges: List[Exchange]) -> List[str]:
-        """提取共识——支持模糊语义匹配，不依赖精确字符串相同"""
-        consensus = []
-
+        """提取共识——相同关键词出现频率高的观点"""
         all_points = []
         for o in opinions:
             all_points.extend(o.key_points)
 
-        if not all_points:
-            # 无 key_points 时取最高置信度立场
-            best = max(opinions, key=lambda o: o.confidence)
-            return [best.stance]
-
-        # === 1. 精确匹配（原有逻辑） ===
+        # 统计关键词频率
         from collections import Counter
-        counts = Counter(all_points)
-        for point, count in counts.most_common(3):
-            if count >= 2:
-                consensus.append(point)
+        # 按字符拆分关键点的关键词
+        word_counts = Counter()
+        for point in all_points:
+            for word in ["进", "守", "稳", "动", "突破", "顺", "自然", "财", "官",
+                         "印", "比", "杀", "食", "伤", "吉", "凶", "利", "贵"]:
+                if word in point:
+                    word_counts[word] += 1
 
-        # === 2. 关键词语义聚类（核心改进） ===
-        # 提取命理关键词，找不同人物观点中共同提及的核心概念
-        THEME_KEYWORDS = {
-            "身强": ["身强", "日主强", "身旺", "有力"],
-            "身弱": ["身弱", "日主弱", "身衰", "无力"],
-            "七杀透干": ["七杀", "偏官"],
-            "正官有力": ["正官", "官星"],
-            "财星": ["财星", "偏财", "正财", "财"],
-            "印星": ["印", "偏印", "正印", "印星"],
-            "食伤": ["食神", "伤官", "食伤"],
-            "比劫": ["比肩", "劫财", "比劫"],
-            "冲": ["冲", "六冲", "相冲"],
-            "合": ["合", "六合", "三合", "相合"],
-            "五行平衡": ["五行平衡", "五行调和", "五行均匀"],
-            "五行偏颇": ["五行偏", "过旺", "缺失", "不足"],
-            "桃花": ["桃花", "红鸾", "天喜"],
-            "贵人": ["贵人", "天乙贵人", "天德"],
-            "事业格局高": ["格局高", "格局不错", "事业格局"],
-            "稳健发展": ["稳健", "稳扎稳打", "稳步"],
-            "积极进取": ["进取", "突破", "发展"],
-            "顺势而为": ["顺势", "顺应", "无为"],
-            "调候用神": ["调候", "用神"],
-            "大运": ["大运", "十年"],
-            "流年": ["流年", "年运"],
-            "命宫": ["命宫"],
-            "官禄宫": ["官禄", "事业宫"],
-            "夫妻宫": ["夫妻", "婚姻宫"],
-            "疾厄宫": ["疾厄", "健康宫"],
-            "财帛宫": ["财帛", "财宫"],
-        }
+        consensus = []
+        n = len(opinions)
+        for word, count in word_counts.most_common(5):
+            if count >= max(2, n * 0.1):  # 至少10%的人提到
+                consensus.append(f"多数人提及「{word}」（{count}/{n}人）")
 
-        # 统计每个主题被多少个不同人物提及
-        theme_persons = {}  # theme -> set of figure_ids
+        # 同术法共识
+        method_groups = {}
         for o in opinions:
-            combined_text = " ".join(o.key_points) + " " + o.stance + " " + o.reasoning[:200]
-            for theme, keywords in THEME_KEYWORDS.items():
-                if any(kw in combined_text for kw in keywords):
-                    theme_persons.setdefault(theme, set()).add(o.figure_id)
+            method_groups.setdefault(o.primary_method, []).append(o)
 
-        # 多人（≥2）共同提及的主题 = 语义共识
-        semantic_consensus = []
-        for theme, persons in theme_persons.items():
-            if len(persons) >= 2:
-                semantic_consensus.append((theme, len(persons)))
+        for method, group in method_groups.items():
+            if len(group) >= 2:
+                stances = [o.stance for o in group]
+                # 找共同关键词
+                common = []
+                for kw in ["利", "吉", "顺", "宜", "旺"]:
+                    if sum(1 for s in stances if kw in s) >= len(group) * 0.5:
+                        common.append(kw)
+                if common:
+                    consensus.append(f"{method}内部共识：多认为含「{''.join(common)}」之象")
 
-        # 按提及人数降序
-        semantic_consensus.sort(key=lambda x: x[1], reverse=True)
-
-        # 将语义共识转为可读描述
-        THEME_DESCRIPTIONS = {
-            "身强": "多位视角一致认为日主身强，命局根基扎实",
-            "身弱": "多位视角一致认为日主身弱，需借力打力",
-            "七杀透干": "多位视角均关注到七杀透干，性格刚强有魄力",
-            "正官有力": "多位视角均认为正官有力，有管理运和责任心",
-            "财星": "多位视角均关注财星配置，财运是重要议题",
-            "印星": "多位视角均关注印星，学习和贵人运是共同焦点",
-            "食伤": "多位视角均关注食伤，表达力和创造力是共同特征",
-            "比劫": "多位视角均关注比劫，人际关系和竞争是共同主题",
-            "冲": "多位视角均关注冲的关系，变动是命局主旋律",
-            "合": "多位视角均关注合的关系，缘分和合作是主旋律",
-            "五行平衡": "多位视角一致认为五行较为平衡，体质尚可",
-            "五行偏颇": "多位视角均指出五行有偏，需注意平衡调理",
-            "桃花": "多位视角均关注桃花信息，感情生活是重点",
-            "贵人": "多位视角均认为贵人运不差，有外部助力",
-            "事业格局高": "多位视角一致认为事业格局较高",
-            "稳健发展": "多位视角均建议稳健发展，不宜冒进",
-            "积极进取": "多位视角均认为可以积极进取",
-            "顺势而为": "多位视角均建议顺势而为",
-            "调候用神": "多位视角均关注调候用神",
-            "大运": "多位视角均关注大运走势",
-            "流年": "多位视角均关注流年变化",
-            "命宫": "多位视角均关注命宫配置",
-            "官禄宫": "多位视角均关注官禄宫（事业宫）",
-            "夫妻宫": "多位视角均关注夫妻宫（感情宫）",
-            "疾厄宫": "多位视角均关注疾厄宫（健康宫）",
-            "财帛宫": "多位视角均关注财帛宫（财运宫）",
-        }
-
-        for theme, count in semantic_consensus[:3]:
-            desc = THEME_DESCRIPTIONS.get(theme, f"多位视角共同关注「{theme}」")
-            if desc not in consensus:
-                consensus.append(desc)
-
-        # === 3. 立场方向一致性的共识 ===
-        # 如果大多数人物立场方向相同，也是一种共识
-        stance_keywords = {
-            "积极": ["进", "动", "突破", "拼", "冲", "果断"],
-            "保守": ["稳", "守", "防", "静", "谨慎"],
-            "顺势": ["顺", "自然", "无为", "随缘"],
-        }
-        stance_group_counts = {}
-        for group, kws in stance_keywords.items():
-            count = sum(1 for o in opinions if any(kw in o.stance for kw in kws))
-            stance_group_counts[group] = count
-
-        majority = len(opinions) * 0.6
-        for group, count in stance_group_counts.items():
-            if count >= majority and count >= 2:
-                desc = f"多数视角（{count}/{len(opinions)}）倾向{group}立场"
-                if desc not in consensus:
-                    consensus.append(desc)
-                break
-
-        # 兜底
-        if not consensus:
-            best = max(opinions, key=lambda o: o.confidence)
-            consensus.append(best.stance)
-
-        return consensus
+        return consensus[:8]
 
     def _extract_disagreements(self, opinions: List[PerspectiveOpinion],
-                                exchanges: List[Exchange]) -> List[Dict]:
+                               exchanges: List[Exchange]) -> List[Dict]:
         """提取分歧"""
         disagreements = []
 
-        # 找 stance 差异最大的
-        stances = [(o.figure_name, o.stance) for o in opinions]
-        for i, (n1, s1) in enumerate(stances):
-            for n2, s2 in stances[i+1:]:
-                if self._stance_differs(s1, s2):
-                    disagreements.append({
-                        "between": [n1, n2],
-                        "stance_a": s1,
-                        "stance_b": s2,
-                    })
+        # 从反驳记录提取
+        for ex in exchanges:
+            if ex.rebuttal_type in ("针对性反驳",) and ex.target:
+                disagreements.append({
+                    "between": [ex.speaker, ex.target],
+                    "stance_a": ex.argument[:80],
+                    "stance_b": f"立场不同",
+                    "aspect": "观点对立",
+                })
 
-        return disagreements[:3]
+        # 同术法内部分歧
+        method_groups = {}
+        for o in opinions:
+            method_groups.setdefault(o.primary_method, []).append(o)
 
-    def _stance_differs(self, s1: str, s2: str) -> bool:
-        """判断两个立场是否不同"""
-        # 简单规则：如果包含明显相反的词
-        opposites = [
-            (["进", "动", "突破"], ["守", "静", "稳"]),
-            (["早", "快"], ["晚", "慢"]),
-            (["合", "留"], ["分", "离"]),
-        ]
+        for method, group in method_groups.items():
+            if len(group) >= 2:
+                # 检查是否有对立立场
+                for i in range(len(group)):
+                    for j in range(i + 1, len(group)):
+                        for pos_kw, neg_kw in OPPOSING_GROUPS[:2]:
+                            if _keyword_match(group[i].stance, pos_kw) > 0 and \
+                               _keyword_match(group[j].stance, neg_kw) > 0:
+                                disagreements.append({
+                                    "between": [group[i].figure_name, group[j].figure_name],
+                                    "stance_a": group[i].stance[:50],
+                                    "stance_b": group[j].stance[:50],
+                                    "aspect": f"{method}内部分歧",
+                                })
+                                break
 
-        for pos, neg in opposites:
-            s1_pos = any(p in s1 for p in pos)
-            s1_neg = any(n in s1 for n in neg)
-            s2_pos = any(p in s2 for p in pos)
-            s2_neg = any(n in s2 for n in neg)
-
-            if (s1_pos and s2_neg) or (s1_neg and s2_pos):
-                return True
-
-        return False
+        return disagreements[:10]
 
     def _generate_summary(self, opinions: List[PerspectiveOpinion],
                           consensus: List[str], disagreements: List[Dict]) -> str:
         """生成辩论总结"""
-        methods_used = list(set(o.primary_method for o in opinions))
+        n = len(opinions)
+        methods = set(o.primary_method for o in opinions)
 
-        summary = f""
-        summary += f"本次辩论共有{len(opinions)}位人物参与，"
-        summary += f"使用{len(methods_used)}种术法（{'、'.join(methods_used)}）。"
+        summary = f"本次辩论共{n}位人物参与，涵盖{len(methods)}种术法。"
 
         if consensus:
-            summary += f"共识：{'；'.join(consensus[:3])}。"
+            summary += f"达成{len(consensus)}项共识。"
 
         if disagreements:
-            summary += f"主要分歧在于{' vs '.join(disagreements[0]['between'])}。"
+            summary += f"存在{len(disagreements)}处分歧。"
 
-        summary += "最终判断需综合各方观点，结合命主实际情况。"
+        # 置信度统计
+        avg_conf = sum(o.confidence for o in opinions) / n if n else 0
+        summary += f"平均置信度{avg_conf:.0%}。"
 
         return summary
 
     def generate_xuanzhao_perspective(self, opinions: List[PerspectiveOpinion],
-                                       consensus: List[str],
-                                       disagreements: List[Dict],
-                                       question: str = "") -> Dict:
-        """生成玄照视角——综合所有人物观点的深度分析（优先 LLM 合成，回退规则引擎）"""
+                                      consensus: List[str], disagreements: List[Dict],
+                                      question: str) -> dict:
+        """玄照综合视角——唯一使用LLM的地方"""
 
-        # 统计基础数据（始终计算，用于 LLM prompt 和回退）
+        # 统计基础数据
         methods_used = list(set(o.primary_method for o in opinions))
         factions = {}
         for o in opinions:
             fig = FIGURES.get(o.figure_id)
-            if fig:
-                factions[fig.faction] = factions.get(fig.faction, 0) + 1
+            f = fig.faction if fig else "其他"
+            factions[f] = factions.get(f, 0) + 1
 
         stances = {}
         for o in opinions:
-            if any(k in o.stance for k in ["稳健", "保守", "谨慎", "等待"]):
-                stances["谨慎保守"] = stances.get("谨慎保守", 0) + 1
-            elif any(k in o.stance for k in ["积极", "突破", "变革", "行动"]):
+            if any(k in o.stance for k in ["动", "进", "突破", "断", "拼", "冲"]):
                 stances["积极进取"] = stances.get("积极进取", 0) + 1
+            elif any(k in o.stance for k in ["稳", "守", "防", "静", "韬", "隐"]):
+                stances["谨慎保守"] = stances.get("谨慎保守", 0) + 1
             elif any(k in o.stance for k in ["顺势", "自然", "无为", "顺应"]):
                 stances["顺其自然"] = stances.get("顺其自然", 0) + 1
             else:
@@ -597,97 +489,54 @@ class DebateEngine:
 
         from engine.llm_client import get_llm_client
 
-        # 构造各视角观点摘要
+        # 构造各视角观点摘要（取前20个代表）
         opinions_text = []
-        for o in opinions:
+        for o in opinions[:20]:
             fig = FIGURES.get(o.figure_id)
             faction = fig.faction if fig else "未知"
             opinions_text.append(
-                f"【{o.figure_name}】（{o.primary_method}视角，{faction}阵营，置信度{o.confidence}）\n"
+                f"【{o.figure_name}】（{o.primary_method}，{faction}，置信度{o.confidence}）\n"
                 f"  立场：{o.stance}\n"
-                f"  核心论点：{'；'.join(o.key_points[:3]) if o.key_points else '无'}\n"
-                f"  推理摘要：{o.reasoning[:200] if o.reasoning else '无'}"
+                f"  核心：{'；'.join(o.key_points[:3]) if o.key_points else '无'}"
             )
 
-        # 构造共识摘要
         consensus_text = "；".join(consensus[:5]) if consensus else "暂无明显共识"
 
-        # 构造分歧摘要
         disagreement_texts = []
         for d in disagreements[:3]:
             disagreement_texts.append(
-                f"{d['between'][0]}认为「{d['stance_a']}」vs {d['between'][1]}认为「{d['stance_b']}」"
+                f"{d['between'][0]} vs {d['between'][1]}：{d.get('aspect', '观点对立')}"
             )
-        disagreement_text = "；".join(disagreement_texts) if disagreement_texts else "暂无明显分歧"
 
-        system_prompt = """你是「玄照」——七术群体智能预测系统的最高综合视角。
+        prompt = f"""你是玄照，108位命理大师的综合视角。
 
-你不是任何一个具体术法的代言人，而是所有视角的整合者。你的任务是：
+问题：{question}
 
-1. **超越单一术法**：综合八字、紫微、占星、六爻、奇门、大六壬、太乙的数据，给出超越任何单一视角的判断
-2. **识别共识与分歧的本质**：共识为什么成立？分歧的根源是什么（术法维度差异、数据不足、还是真正的矛盾信号）？
-3. **给出可操作的综合判断**：不是模糊的"综合来看"，而是有明确方向和依据的结论
-4. **校准置信度**：多术法一致指向时高置信度，术法间有分歧时降低置信度并说明原因
-
-语言风格：沉稳、博学、超越派系之争，以「照见者」的视角俯瞰全局。"""
-
-        user_prompt = f"""## 用户问题
-{question}
-
-## 各视角观点（共{len(opinions)}位人物，使用{len(methods_used)}种术法：{'、'.join(methods_used)}）
-
+108位大师的观点摘要：
 {chr(10).join(opinions_text)}
 
-## 立场分布
-{'，'.join(f'{k}:{v}人' for k, v in stances.items())}
+共识：{consensus_text}
+分歧：{'；'.join(disagreement_texts) if disagreement_texts else '无明显分歧'}
 
-## 已识别的共识
-{consensus_text}
+立场分布：{stances}
+使用术法：{methods_used}
 
-## 已识别的分歧
-{disagreement_text}
+请综合所有观点，给出玄照视角：
+1. stance：一句话总结立场（30字内）
+2. reasoning：深度分析（200字内）
+3. key_points：3-5个关键要点
+4. confidence：0.0-1.0的置信度
 
-请以玄照的视角进行深度综合分析，返回 JSON：
-{{
-  "stance": "一句话核心判断（必须明确方向，不能含糊）",
-  "confidence": 0.0到1.0,
-  "reasoning": "200-400字的深度分析（必须引用各视角的具体论点，说明你如何综合判断）",
-  "key_points": ["综合论断1", "综合论断2", "综合论断3"]
-}}"""
+返回JSON格式。"""
 
-        try:
-            llm = get_llm_client()
-            result = llm.chat_json(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0.5,
-                max_tokens=1500,
-            )
+        llm = get_llm_client()
+        result = llm.chat_json(
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.5,
+            max_tokens=1000,
+        )
 
-            if result.get("parse_error"):
-                raw = result.get("raw_response", "")
-                if raw:
-                    return {
-                        "stance": raw[:100],
-                        "confidence": 0.6,
-                        "reasoning": raw,
-                        "key_points": ["综合判断"],
-                    }
-                return None
-
-            stance = result.get("stance", "")
-            if not stance:
-                return None
-
-            return {
-                "stance": stance,
-                "confidence": float(result.get("confidence", 0.7)),
-                "reasoning": result.get("reasoning", ""),
-                "key_points": result.get("key_points", ["综合判断"]),
-            }
-
-        except Exception as e:
-            logger.warning(f"LLM 玄照视角合成调用失败: {e}")
+        if result.get("parse_error"):
             return None
+
+        return result

@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <nav class="nav">
+    <a href="#main-content" class="skip-link">跳过导航</a>
+
+    <nav class="nav" class="nav-sticky" aria-label="主导航">
         <a href="/" class="nav-brand">玄照 <span>v2.0</span></a>
         <div class="nav-links">
             <a href="/">排盘</a>
@@ -16,18 +18,44 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container" id="main-content">
         <!-- 输入面板 -->
         <div class="input-panel">
             <h2>辩论问题</h2>
             <div class="form-grid">
                 <div class="form-group">
-                    <label>出生时间</label>
-                    <input type="text" id="birth" placeholder="2005-06-09 11:50">
+                    <label>出生年份</label>
+                    <select id="birthYear"><option value="">-- 年 --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>出生月份</label>
+                    <select id="birthMonth"><option value="">-- 月 --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>出生日期</label>
+                    <select id="birthDay"><option value="">-- 日 --</option></select>
+                </div>
+                <div class="form-group">
+                    <label>出生时辰</label>
+                    <select id="birthHour">
+                        <option value="">-- 时辰 --</option>
+                        <option value="00:00">子时 (23-01)</option>
+                        <option value="01:00">丑时 (01-03)</option>
+                        <option value="03:00">寅时 (03-05)</option>
+                        <option value="05:00">卯时 (05-07)</option>
+                        <option value="07:00">辰时 (07-09)</option>
+                        <option value="09:00">巳时 (09-11)</option>
+                        <option value="11:00">午时 (11-13)</option>
+                        <option value="13:00">未时 (13-15)</option>
+                        <option value="15:00">申时 (15-17)</option>
+                        <option value="17:00">酉时 (17-19)</option>
+                        <option value="19:00">戌时 (19-21)</option>
+                        <option value="21:00">亥时 (21-23)</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>出生地点</label>
-                    <input type="text" id="location" placeholder="呼和浩特" value="呼和浩特">
+                    <input type="text" id="location" placeholder="如 呼和浩特">
                 </div>
                 <div class="form-group">
                     <label>性别</label>
@@ -36,19 +64,19 @@
                         <option value="女">女</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="grid-column: span 2">
                     <label>问题</label>
-                    <input type="text" id="question" placeholder="此人事业如何？" value="此人事业如何？">
+                    <input type="text" id="question" placeholder="请输入要问的问题">
                 </div>
             </div>
 
             <!-- 人物选择 -->
-            <div class="figure-select" id="figureSelect" style="margin-top:1.5rem;">
+            <div class="figure-select" id="figureSelect" style="margin-top:1.5rem">
                 <div style="color:var(--accent-gold); margin-bottom:0.8rem; font-size:0.95rem;">
                     选择参与辩论的人物（留空则全部参与）
                 </div>
                 <div class="figure-grid" id="figureGrid">
-                    <div style="color:var(--text-muted); font-size:0.85rem;">正在加载人物...</div>
+                    <div class="data-muted">正在加载人物...</div>
                 </div>
             </div>
 
@@ -58,16 +86,16 @@
         </div>
 
         <!-- 加载 -->
-        <div id="loading" class="loading" style="display:none;">
+        <div id="loading" class="loading hidden">
             <div class="spinner"></div>
             <p>正在召集人物，准备辩论...</p>
         </div>
 
         <!-- 错误 -->
-        <div id="error" class="error-message" style="display:none;"></div>
+        <div id="error" class="error-message hidden"></div>
 
         <!-- 辩论结果 -->
-        <div id="debateResult" style="display:none;">
+        <div id="debateResult" class="hidden">
             <!-- 参与者 -->
             <div class="card">
                 <div class="card-title">参与者</div>
@@ -89,26 +117,26 @@
             <!-- 共识与分歧 -->
             <div class="card">
                 <div class="card-title">共识与分歧</div>
-                <div style="margin-bottom:1rem;">
-                    <strong style="color:var(--success);">共识：</strong>
+                <div style="margin-bottom:1rem">
+                    <strong class="text-jade">共识：</strong>
                     <div id="consensus"></div>
                 </div>
                 <div>
-                    <strong style="color:var(--danger);">分歧：</strong>
+                    <strong class="text-red">分歧：</strong>
                     <div id="disagreements"></div>
                 </div>
             </div>
 
             <!-- 玄照视角 -->
             <div class="card" id="xuanzhaoCard" style="display:none; border-color:var(--accent-gold);">
-                <div class="card-title" style="color:var(--accent-gold);">玄照视角 · 七术照见</div>
-                <div id="xuanzhaoPerspective" style="line-height:1.8;"></div>
+                <div class="card-title data-gold">玄照视角 · 八术照见</div>
+                <div id="xuanzhaoPerspective" style="line-height:1.8"></div>
             </div>
 
             <!-- 总结 -->
             <div class="card">
                 <div class="card-title">&#x603B;&#x7ED3;</div>
-                <div id="summary" style="line-height:1.8;"></div>
+                <div id="summary" style="line-height:1.8"></div>
             </div>
         </div>
     </div>
@@ -117,9 +145,40 @@
     <script>
         // 从URL参数读取
         const params = new URLSearchParams(window.location.search);
-        if (params.get('birth')) document.getElementById('birth').value = params.get('birth');
-        if (params.get('location')) document.getElementById('location').value = params.get('location');
-        if (params.get('gender')) document.getElementById('gender').value = params.get('gender');
+        // 填充年月下拉框
+        (function() {
+            const yearSel = document.getElementById('birthYear');
+            for (let y = 2026; y >= 1930; y--) { const o = document.createElement('option'); o.value = y; o.textContent = y + '年'; yearSel.appendChild(o); }
+            const monthSel = document.getElementById('birthMonth');
+            for (let m = 1; m <= 12; m++) { const o = document.createElement('option'); o.value = m; o.textContent = m + '月'; monthSel.appendChild(o); }
+            function updateDays() {
+                const daySel = document.getElementById('birthDay'), cur = daySel.value;
+                const y = parseInt(yearSel.value), m = parseInt(monthSel.value);
+                const max = m === 2 ? (y && y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0) ? 29 : 28) : ([4,6,9,11].includes(m) ? 30 : 31);
+                daySel.innerHTML = '<option value="">-- 日 --</option>';
+                for (let d = 1; d <= (max || 31); d++) { const o = document.createElement('option'); o.value = d; o.textContent = d + '日'; daySel.appendChild(o); }
+                if (cur && cur <= max) daySel.value = cur;
+            }
+            yearSel.addEventListener('change', updateDays);
+            monthSel.addEventListener('change', updateDays);
+            updateDays();
+            // 从URL参数恢复
+            const b = params.get('birth');
+            if (b && b.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)) {
+                const parts = b.split(/[- :]/);
+                yearSel.value = parts[0]; monthSel.value = parseInt(parts[1]); updateDays();
+                document.getElementById('birthDay').value = parseInt(parts[2]);
+                document.getElementById('birthHour').value = parts[3] + ':' + parts[4];
+            }
+            if (params.get('location')) document.getElementById('location').value = params.get('location');
+            if (params.get('gender')) document.getElementById('gender').value = params.get('gender');
+        })();
+        function getBirth() {
+            const y = document.getElementById('birthYear').value, m = document.getElementById('birthMonth').value;
+            const d = document.getElementById('birthDay').value, h = document.getElementById('birthHour').value;
+            if (!y || !m || !d || !h) return '';
+            return y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0') + ' ' + h;
+        }
 
         let figureData = {};
         let selectedFigures = new Set();
@@ -167,7 +226,7 @@
         }
 
         async function startDebate() {
-            const birth = document.getElementById('birth').value;
+            const birth = getBirth();
             const location = document.getElementById('location').value;
             const gender = document.getElementById('gender').value;
             const question = document.getElementById('question').value;
@@ -194,70 +253,73 @@
         }
 
         function renderDebate(data) {
-            // 参与者
+            // 参与者统计
             const partContainer = document.getElementById('participants');
             partContainer.innerHTML = '';
+            
+            // 按阵营分组
+            const factions = {};
             data.participants?.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'participant';
-                div.innerHTML = `
-                    <div class="participant-name">${p.name}</div>
-                    <div class="participant-method">${p.method}</div>
-                    <div class="participant-stance">${p.stance}</div>
-                `;
-                partContainer.appendChild(div);
+                const f = p.faction || '其他';
+                if (!factions[f]) factions[f] = [];
+                factions[f].push(p);
+            });
+            
+            // 显示统计
+            const statsDiv = document.createElement('div');
+            statsDiv.style.cssText = 'margin-bottom:1rem; color:var(--text-muted); font-size:0.9rem;';
+            statsDiv.innerHTML = `共 <strong class="data-gold">${data.participants?.length || 0}</strong> 位人物参与，涵盖 <strong class="data-gold">${Object.keys(factions).length}</strong> 个阵营`;
+            partContainer.appendChild(statsDiv);
+            
+            // 按阵营展示参与者
+            Object.entries(factions).forEach(([faction, members]) => {
+                const factionDiv = document.createElement('div');
+                factionDiv.style.cssText = 'margin-bottom:0.8rem;';
+                factionDiv.innerHTML = `<div style="color:var(--accent-gold); font-size:0.85rem; margin-bottom:0.3rem;">${faction}（${members.length}人）</div>`;
+                
+                const membersDiv = document.createElement('div');
+                membersDiv.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.3rem;';
+                members.forEach(p => {
+                    const tag = document.createElement('span');
+                    tag.style.cssText = 'padding:0.2rem 0.5rem; background:var(--bg-card); border-radius:4px; font-size:0.8rem; border:1px solid var(--border);';
+                    tag.textContent = p.name;
+                    tag.title = `${p.method}：${p.stance?.substring(0, 50) || ''}`;
+                    membersDiv.appendChild(tag);
+                });
+                factionDiv.appendChild(membersDiv);
+                partContainer.appendChild(factionDiv);
             });
 
-            // 按轮次分组辩论交锋
-            const round1Exchanges = (data.exchanges || []).filter(e => e.round_num === 1);
-            const round2Exchanges = (data.exchanges || []).filter(e => e.round_num === 2);
-
-            // 第一轮：各抒己见（参与者的初始立场 + 第一轮交锋）
+            // 辩论发言（按时间顺序，区分陈述和反驳）
             const round1Container = document.getElementById('round1');
             round1Container.innerHTML = '';
-            // 先展示各人立场
-            data.participants?.forEach(p => {
+            
+            const exchanges = data.exchanges || [];
+            exchanges.forEach((e, idx) => {
                 const div = document.createElement('div');
-                div.className = 'exchange';
+                const isRebuttal = e.rebuttal_type?.includes('反驳');
+                div.className = 'exchange' + (isRebuttal ? ' rebuttal' : '');
+                div.style.cssText = isRebuttal 
+                    ? 'border-left:3px solid var(--danger); padding-left:0.8rem; margin:0.5rem 0;'
+                    : 'border-left:3px solid var(--accent-gold); padding-left:0.8rem; margin:0.5rem 0;';
+                
+                const typeBadge = isRebuttal 
+                    ? '<span style="color:var(--danger); font-size:0.75rem;">【反驳】</span>'
+                    : '<span style="color:var(--accent-gold); font-size:0.75rem;">【陈述】</span>';
+                
+                const targetInfo = e.target 
+                    ? ` → <span class="exchange-target">${e.target}</span>`
+                    : '';
+                
                 div.innerHTML = `
-                    <div><span class="exchange-speaker">${p.name}</span>（${p.method}）</div>
-                    <div class="exchange-text">${p.stance}</div>
+                    <div>${typeBadge} <span class="exchange-speaker">${e.speaker}</span>（${e.speaker_method}）${targetInfo}</div>
+                    <div class="exchange-text">${e.argument}</div>
                 `;
                 round1Container.appendChild(div);
             });
-            // 再展示第一轮交锋
-            if (round1Exchanges.length > 0) {
-                const divider = document.createElement('div');
-                divider.style.cssText = 'margin:1rem 0; padding:0.5rem; color:var(--accent-gold); font-size:0.9rem; border-top:1px dashed var(--border-color);';
-                divider.textContent = '—— 第一轮交锋 ——';
-                round1Container.appendChild(divider);
-                round1Exchanges.forEach(e => {
-                    const div = document.createElement('div');
-                    div.className = 'exchange';
-                    div.innerHTML = `
-                        <div><span class="exchange-speaker">${e.speaker}</span>（${e.speaker_method}）→ <span class="exchange-target">${e.target}</span>（${e.target_method}）</div>
-                        <div class="exchange-text">${e.argument}</div>
-                    `;
-                    round1Container.appendChild(div);
-                });
-            }
 
-            // 第二轮：深度交锋
-            const round2Container = document.getElementById('round2');
-            round2Container.innerHTML = '';
-            if (round2Exchanges.length > 0) {
-                round2Exchanges.forEach(e => {
-                    const div = document.createElement('div');
-                    div.className = 'exchange';
-                    div.innerHTML = `
-                        <div><span class="exchange-speaker">${e.speaker}</span>（${e.speaker_method}）→ <span class="exchange-target">${e.target}</span>（${e.target_method}）</div>
-                        <div class="exchange-text">${e.argument}</div>
-                    `;
-                    round2Container.appendChild(div);
-                });
-            } else {
-                round2Container.innerHTML = '<div style="color:var(--text-muted); padding:1rem;">本轮无深度交锋</div>';
-            }
+            // 隐藏第二轮（新机制不再分轮）
+            document.getElementById('round2').parentElement.style.display = 'none';
 
             // 共识
             const consensusContainer = document.getElementById('consensus');
@@ -275,7 +337,7 @@
             data.disagreements?.forEach(d => {
                 const div = document.createElement('div');
                 div.className = 'conflict-item';
-                div.innerHTML = `${d.between?.join(' vs ')}：${d.stance_a} / ${d.stance_b}`;
+                div.innerHTML = `<strong>${d.between?.join(' vs ')}</strong>：${d.aspect || '观点对立'}`;
                 disagreementsContainer.appendChild(div);
             });
 
@@ -288,9 +350,9 @@
                 let xzHtml = '';
                 xzHtml += `<div style="font-size:1.1rem; color:var(--accent-gold); margin-bottom:0.5rem;">${xz.figure_name} · ${xz.figure_title}</div>`;
                 xzHtml += `<div style="font-size:1rem; margin-bottom:0.8rem;"><strong>立场：</strong>${xz.stance}</div>`;
-                xzHtml += `<div style="margin-bottom:0.5rem;"><strong>置信度：</strong>${(xz.confidence * 100).toFixed(0)}%</div>`;
+                xzHtml += `<div style="margin-bottom:0.5rem"><strong>置信度：</strong>${(xz.confidence * 100).toFixed(0)}%</div>`;
                 if (xz.key_points?.length) {
-                    xzHtml += `<div style="margin-bottom:0.5rem;"><strong>关键要点：</strong>${xz.key_points.join(' · ')}</div>`;
+                    xzHtml += `<div style="margin-bottom:0.5rem"><strong>关键要点：</strong>${xz.key_points.join(' · ')}</div>`;
                 }
                 // 深度推理（区分 LLM 模式和规则模式）
                 if (typeof xz.reasoning === 'string' && xz.reasoning.length > 0) {
@@ -351,5 +413,9 @@
         // 页面加载时获取人物列表
         loadFigures();
     </script>
+    <footer class="footer">
+        <div class="footer-divider"></div>
+        <p>玄照 v2.0 · 八术排盘 · 交叉验证 · 108视角群体智能</p>
+    </footer>
 </body>
 </html>

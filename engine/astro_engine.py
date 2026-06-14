@@ -1,179 +1,223 @@
-#!/usr/bin/env python3
-"""
-玄照 v2.0 - 西洋占星引擎
+"""占星引擎 - Astrology Engine using pyswisseph."""
 
-基于 pyswisseph，封装星座、宫位、相位计算。
-"""
-from .base import DivinationEngine
-from .time_engine import CorrectedTime
+import swisseph as swe
+from datetime import datetime, timedelta, timezone
 from typing import Optional
+
+from .base import DivinationEngine, CorrectedTime
+
+
+SIGN_NAMES = ['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼']
+SIGN_ELEMENTS = {
+    '白羊':'火','狮子':'火','射手':'火',
+    '金牛':'土','处女':'土','摩羯':'土',
+    '双子':'风','天秤':'风','水瓶':'风',
+    '巨蟹':'水','天蝎':'水','双鱼':'水',
+}
+
+PLANETS = {
+    '太阳': swe.SUN, '月亮': swe.MOON, '水星': swe.MERCURY,
+    '金星': swe.VENUS, '火星': swe.MARS, '木星': swe.JUPITER,
+    '土星': swe.SATURN, '天王星': swe.URANUS, '海王星': swe.NEPTUNE,
+    '冥王星': swe.PLUTO,
+}
+
+ASPECT_DEFS = [
+    ('合相', 0, 8), ('六合', 60, 4), ('刑', 90, 6),
+    ('三合', 120, 6), ('冲', 180, 8),
+]
+
+
+def _jd(dt: datetime) -> float:
+    """Convert a naive or aware datetime to Julian Day (UT)."""
+    if dt.tzinfo is None:
+        utc_dt = dt
+    else:
+        utc_dt = dt.astimezone(timezone.utc)
+    return swe.julday(utc_dt.year, utc_dt.month, utc_dt.day,
+                      utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0)
+
+
+def _sign_degree(longitude: float) -> tuple[str, float, int]:
+    """Return (sign_name, degree_in_sign, sign_index)."""
+    longitude = longitude % 360.0
+    idx = int(longitude / 30)
+    deg = longitude - idx * 30
+    return SIGN_NAMES[idx], deg, idx
+
+
+def _find_house(lon: float, cusps: list[float]) -> int:
+    """Find which house a given longitude falls in. Returns 1-12."""
+    for i in range(12):
+        start = cusps[i]
+        end = cusps[(i + 1) % 12]
+        if start < end:
+            if start <= lon < end:
+                return i + 1
+        else:  # wraps around 360
+            if lon >= start or lon < end:
+                return i + 1
+    return 12
 
 
 class AstroEngine(DivinationEngine):
-    """西洋占星引擎"""
-
-    @property
-    def name(self) -> str:
-        return "占星"
-
-    @property
-    def name_en(self) -> str:
-        return "Astrology"
-
-    @property
-    def priority(self) -> int:
-        return 7  # 占星优先级最低
+    name = '占星'
+    name_en = 'astro'
+    priority = 3
 
     def __init__(self):
-        self.signs = [
-            '白羊', '金牛', '双子', '巨蟹', '狮子', '处女',
-            '天秤', '天蝎', '射手', '摩羯', '水瓶', '双鱼'
-        ]
-
-        self.elements = {
-            '白羊': '火', '狮子': '火', '射手': '火',
-            '金牛': '土', '处女': '土', '摩羯': '土',
-            '双子': '风', '天秤': '风', '水瓶': '风',
-            '巨蟹': '水', '天蝎': '水', '双鱼': '水',
-        }
-
-    def _get_swe(self):
-        """动态导入 swisseph"""
-        try:
-            import swisseph as swe
-            return swe
-        except Exception as e:
-            return {"error": str(e)}
+        import os
+        ephe_path = os.environ.get('SWISS_EPHE_PATH', os.path.expanduser('~/.ephe'))
+        swe.set_ephe_path(ephe_path)
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        swe = self._get_swe()
-        if isinstance(swe, dict) and "error" in swe:
-            return {"error": f"pyswisseph import failed: {swe['error']}"}
-        if swe is None:
-            return {"error": "pyswisseph not installed"}
+        # Convert true_solar to UTC for planet calculations
+        true_solar = time.true_solar
+        if true_solar.tzinfo is None:
+            # Assume true_solar is local apparent solar time at the given longitude
+            # Convert to UTC by subtracting the longitude-based offset
+            offset_hours = time.longitude / 15.0
+            utc_dt = true_solar - timedelta(hours=offset_hours)
+        else:
+            utc_dt = true_solar.astimezone(timezone.utc)
 
-        # 占星排盘用 UTC（pyswisseph 需要 UT）
-        dt = time.utc
+        jd_utc = _jd(utc_dt)
+        # For houses, use true solar time (local apparent solar time)
+        jd_solar = _jd(true_solar) if true_solar.tzinfo is None else _jd(true_solar.astimezone(timezone.utc) - timedelta(hours=time.longitude / 15.0))
+
         lat = time.latitude
         lon = time.longitude
 
-        # Julian Day (UT)
-        jd = swe.julday(dt.year, dt.month, dt.day,
-                             dt.hour + dt.minute / 60.0)
+        # Calculate houses using true solar time
+        cusps, ascmc = swe.houses(jd_solar, lat, lon, b'P')
+        # cusps: 12 cusps (index 0=ASC=1st, 1=2nd, ..., 11=12th)
+        # ascmc[0]=ASC, ascmc[1]=MC
 
-        # 行星位置
+        # Build house data
+        houses = []
+        for i in range(12):
+            sign, degree, sign_idx = _sign_degree(cusps[i])
+            houses.append({
+                'house': i + 1,
+                'cusp_longitude': round(cusps[i], 4),
+                'sign': sign,
+                'sign_index': sign_idx,
+                'degree': round(degree, 2),
+            })
+
+        # Calculate planet positions (UTC-based)
         planets = {}
-        planet_ids = [
-            (swe.SUN, '太阳'),
-            (swe.MOON, '月亮'),
-            (swe.MERCURY, '水星'),
-            (swe.VENUS, '金星'),
-            (swe.MARS, '火星'),
-            (swe.JUPITER, '木星'),
-            (swe.SATURN, '土星'),
-            (swe.URANUS, '天王星'),
-            (swe.NEPTUNE, '海王星'),
-            (swe.PLUTO, '冥王星'),
-        ]
+        for pname, pid in PLANETS.items():
+            # calc_ut returns (longitude, latitude, distance, speed_lon, ...)
+            result = swe.calc_ut(jd_utc, pid)
+            plon = result[0][0] if isinstance(result[0], (list, tuple)) else result[0]
+            plon = plon % 360.0
+            sign, degree, sign_idx = _sign_degree(plon)
+            house = _find_house(plon, list(cusps))
+            planets[pname] = {
+                'longitude': round(plon, 4),
+                'sign': sign,
+                'sign_index': sign_idx,
+                'degree': round(degree, 2),
+                'house': house,
+            }
 
-        for pid, pname in planet_ids:
-            try:
-                pos = swe.calc_ut(jd, pid)
-                lon_deg = pos[0][0]
-                sign_idx = int(lon_deg / 30) % 12
-                planets[pname] = {
-                    "longitude": round(lon_deg, 2),
-                    "sign": self.signs[sign_idx],
-                    "element": self.elements[self.signs[sign_idx]],
-                    "degree": round(lon_deg % 30, 2),
-                }
-            except Exception:
-                planets[pname] = {"error": "calculation failed"}
+        # Sun/Moon signs and elements
+        sun_sign = planets['太阳']['sign']
+        moon_sign = planets['月亮']['sign']
+        sun_element = SIGN_ELEMENTS[sun_sign]
+        moon_element = SIGN_ELEMENTS[moon_sign]
 
-        # 宫位（Placidus 分宫制）
-        houses = {}
-        try:
-            cusps, ascmc = swe.houses(jd, lat, lon, b'P')
-            ascendant = cusps[0]
-            mc = ascmc[1]
+        # ASC and MC
+        asc_sign, asc_deg, _ = _sign_degree(ascmc[0])
+        mc_sign, mc_deg, _ = _sign_degree(ascmc[1])
 
-            for i in range(12):
-                lon_deg = cusps[i]
-                sign_idx = int(lon_deg / 30) % 12
-                houses[f"house_{i+1}"] = {
-                    "cusp": round(lon_deg, 2),
-                    "sign": self.signs[sign_idx],
-                    "element": self.elements[self.signs[sign_idx]],
-                }
-        except Exception:
-            ascendant = 0
-            mc = 0
+        # Calculate aspects between planets
+        aspects = []
+        planet_names = list(planets.keys())
+        for i in range(len(planet_names)):
+            for j in range(i + 1, len(planet_names)):
+                p1, p2 = planet_names[i], planet_names[j]
+                lon1 = planets[p1]['longitude']
+                lon2 = planets[p2]['longitude']
+                diff = abs(lon1 - lon2)
+                if diff > 180:
+                    diff = 360 - diff
+                for aspect_name, aspect_angle, orb_limit in ASPECT_DEFS:
+                    orb = abs(diff - aspect_angle)
+                    if orb <= orb_limit:
+                        aspects.append({
+                            'planet1': p1,
+                            'planet2': p2,
+                            'aspect': aspect_name,
+                            'angle': aspect_angle,
+                            'orb': round(orb, 2),
+                            'house1': planets[p1]['house'],
+                            'house2': planets[p2]['house'],
+                            'sign1': planets[p1]['sign'],
+                            'sign2': planets[p2]['sign'],
+                        })
+                        break
 
-        # 上升星座
-        asc_sign = ""
-        if ascendant:
-            asc_sign = self.signs[int(ascendant / 30) % 12]
-
-        # 太阳星座
-        sun_sign = planets.get('太阳', {}).get('sign', '')
-        moon_sign = planets.get('月亮', {}).get('sign', '')
-
-        # 主要相位
-        aspects = self._calc_aspects(planets)
+        # 宫主星计算
+        house_rulers = {}
+        ruler_map = {
+            '白羊': '火星', '金牛': '金星', '双子': '水星', '巨蟹': '月亮',
+            '狮子': '太阳', '处女': '水星', '天秤': '金星', '天蝎': '冥王星',
+            '射手': '木星', '摩羯': '土星', '水瓶': '天王星', '双鱼': '海王星'
+        }
+        for h in houses:
+            sign = h.get('sign', '')
+            house_num = h.get('house', 0)
+            ruler = ruler_map.get(sign, '')
+            if ruler:
+                house_rulers[house_num] = {'sign': sign, 'ruler': ruler}
 
         return {
-            "planets": planets,
-            "ascendant": round(ascendant, 2) if ascendant else 0,
-            "ascendant_sign": asc_sign,
-            "mc": round(mc, 2) if mc else 0,
-            "houses": houses,
-            "sun_sign": sun_sign,
-            "moon_sign": moon_sign,
-            "sun_element": self.elements.get(sun_sign, ""),
-            "moon_element": self.elements.get(moon_sign, ""),
-            "aspects": aspects,
+            'sun_sign': sun_sign,
+            'sun_element': sun_element,
+            'moon_sign': moon_sign,
+            'moon_element': moon_element,
+            'ascendant': round(ascmc[0], 4),
+            'ascendant_sign': asc_sign,
+            'ascendant_degree': round(asc_deg, 2),
+            'mc': round(ascmc[1], 4),
+            'mc_sign': mc_sign,
+            'mc_degree': round(mc_deg, 2),
+            'houses': houses,
+            'planets': planets,
+            'aspects': aspects,
+            'aspects_summary': self._build_aspects_summary(aspects),
+            'house_rulers': house_rulers,
+            'house_system': 'Placidus',
+            'gender': gender,
+            'birth_time': str(time.original),
+            'location': time.location_name,
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
-        if "error" in data:
-            return False, data["error"]
-        if not data.get("sun_sign"):
-            return False, "太阳星座为空"
+        # Check that key astrology fields are present
+        required_fields = ['sun_sign', 'moon_sign', 'planets']
+        for field in required_fields:
+            if field not in data:
+                return False, f'Missing required field: {field}'
+        if not data.get('planets'):
+            return False, 'No planet data calculated'
         return True, None
 
-    def _calc_aspects(self, planets: dict) -> list:
-        """计算主要相位"""
-        aspects = []
-        aspect_angles = {
-            "合相": 0,
-            "六分": 60,
-            "四分": 90,
-            "三分": 120,
-            "对冲": 180,
+    def _build_aspects_summary(self, aspects: list) -> dict:
+        """构建相位摘要统计"""
+        summary = {
+            'total': len(aspects),
+            'harmonious': 0,  # 合相+六合+三合
+            'challenging': 0,  # 刑+冲
+            'by_type': {},
         }
-
-        names = list(planets.keys())
-        for i, n1 in enumerate(names):
-            p1 = planets[n1]
-            if "longitude" not in p1:
-                continue
-            for n2 in names[i+1:]:
-                p2 = planets[n2]
-                if "longitude" not in p2:
-                    continue
-
-                diff = abs(p1["longitude"] - p2["longitude"])
-                if diff > 180:
-                    diff = 360 - diff
-
-                for aspect_name, angle in aspect_angles.items():
-                    if abs(diff - angle) <= 8:  # 容许度8度
-                        aspects.append({
-                            "p1": n1,
-                            "p2": n2,
-                            "aspect": aspect_name,
-                            "angle": round(diff, 1),
-                            "orb": round(abs(diff - angle), 1),
-                        })
-
-        return aspects
+        for asp in aspects:
+            name = asp.get('aspect', '')
+            summary['by_type'][name] = summary['by_type'].get(name, 0) + 1
+            if name in ('合相', '六合', '三合'):
+                summary['harmonious'] += 1
+            elif name in ('刑', '冲'):
+                summary['challenging'] += 1
+        return summary

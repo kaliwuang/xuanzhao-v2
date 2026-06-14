@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """
-玄照 v2.0 - 大六壬引擎（完整版）
+玄照 v2.0 - 大六壬引擎（基于 kinliuren 库）
 
 核心流程：
-  1. 月将加时 → 天地盘
-  2. 日干寄宫（十干寄十二支）
-  3. 四课（日干→干寄宫→日支→支寄宫）
-  4. 三传（贼克法/比用法/涉害法/遥克法/昴星法/别责法/八专法/伏吟法/返吟法）
-  5. 天将（十二天将排布）
+  1. 通过 lunar_python 获取四柱干支和节气
+  2. 使用 kinliuren 库排盘：月将加时 → 天地盘 → 四课 → 三传 → 天将
+  3. 返回标准化的结构化数据供 UDM 使用
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from typing import Optional, Dict, List
+from typing import Optional
 
 
 class LiuRenEngine(DivinationEngine):
-    """大六壬引擎"""
+    """大六壬引擎（kinliuren 库驱动）"""
 
     @property
     def name(self) -> str:
@@ -23,50 +21,31 @@ class LiuRenEngine(DivinationEngine):
 
     @property
     def name_en(self) -> str:
-        return "LiuRen"
+        return "liuren"
 
     @property
     def priority(self) -> int:
-        return 5
+        return 6
 
-    # 十二地支
-    ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
-
-    # 十天干
-    GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-
-    # 地支五行
-    ZHI_WUXING = {
-        "子": "水", "丑": "土", "寅": "木", "卯": "木",
-        "辰": "土", "巳": "火", "午": "火", "未": "土",
-        "申": "金", "酉": "金", "戌": "土", "亥": "水",
+    # 月将名称映射
+    YUE_JIANG_NAMES = {
+        "亥": "登明", "戌": "河魁", "酉": "从魁", "申": "传送",
+        "未": "小吉", "午": "胜光", "巳": "太乙", "辰": "天罡",
+        "卯": "太冲", "寅": "功曹", "丑": "大吉", "子": "神后",
     }
 
-    # 天干五行
-    GAN_WUXING = {
-        "甲": "木", "乙": "木", "丙": "火", "丁": "火",
-        "戊": "土", "己": "土", "庚": "金", "辛": "金",
-        "壬": "水", "癸": "水",
-    }
-
-    # 十干寄宫（天干寄于地支）
-    GAN_JI_GONG = {
-        "甲": "寅", "乙": "辰", "丙": "巳", "丁": "未",
-        "戊": "巳", "己": "未", "庚": "申", "辛": "戌",
-        "壬": "亥", "癸": "丑",
-    }
-
-    # 月将（节气对应月将）— 24节气全部映射
+    # 节气→月将地支映射
     # 规则：每个"节"继承前一个"中气"的月将
-    # 12中气→月将：大寒→子, 雨水→亥, 春分→戌, 谷雨→酉, 小满→申, 夏至→未, 大暑→午, 处暑→巳, 秋分→辰, 霜降→卯, 小雪→寅, 冬至→丑
-    YUE_JIANG_MAP = {
+    # 12中气→月将：大寒→子, 雨水→亥, 春分→戌, 谷雨→酉, 小满→申, 夏至→未,
+    #              大暑→午, 处暑→巳, 秋分→辰, 霜降→卯, 小雪→寅, 冬至→丑
+    JIEQI_TO_YUEJIANG = {
         # 中气
         "大寒": "子", "雨水": "亥", "春分": "戌",
         "谷雨": "酉", "小满": "申", "夏至": "未",
         "大暑": "午", "处暑": "巳", "秋分": "辰",
         "霜降": "卯", "小雪": "寅", "冬至": "丑",
-        # 节（继承前一个中气）
-        "小寒": "子",   # 大寒后→子
+        # 节（继承前一个中气的月将）
+        "小寒": "丑",   # 冬至后→丑
         "立春": "子",   # 大寒后→子
         "惊蛰": "亥",   # 雨水后→亥
         "清明": "戌",   # 春分后→戌
@@ -80,118 +59,376 @@ class LiuRenEngine(DivinationEngine):
         "大雪": "寅",   # 小雪后→寅
     }
 
-    YUE_JIANG_NAMES = {
-        "亥": "登明", "戌": "河魁", "酉": "从魁", "申": "传送",
-        "未": "小吉", "午": "胜光", "巳": "太乙", "辰": "天罡",
-        "卯": "太冲", "寅": "功曹", "丑": "大吉", "子": "神后",
-    }
-
-    # 十二天将
-    TIAN_JIANG = ["贵人", "螣蛇", "朱雀", "六合", "勾陈", "青龙",
-                  "天空", "白虎", "太常", "玄武", "太阴", "天后"]
-
-    # 贵人起法：日干贵人
-    GUI_REN = {
-        "甲": ("丑", "未"),  # 甲日贵人在丑(昼)或未(夜)
-        "戊": ("丑", "未"),
-        "庚": ("丑", "未"),
-        "己": ("子", "申"),
-        "乙": ("子", "申"),
-        "丙": ("亥", "酉"),
-        "丁": ("亥", "酉"),
-        "壬": ("卯", "巳"),
-        "癸": ("卯", "巳"),
-        "辛": ("午", "寅"),
-    }
-
-    # 地支六合
-    LIU_HE = {
-        "子": "丑", "丑": "子", "寅": "亥", "亥": "寅",
-        "卯": "戌", "戌": "卯", "辰": "酉", "酉": "辰",
-        "巳": "申", "申": "巳", "午": "未", "未": "午",
-    }
-
-    # 地支六冲
-    LIU_CHONG = {
-        "子": "午", "午": "子", "丑": "未", "未": "丑",
-        "寅": "申", "申": "寅", "卯": "酉", "酉": "卯",
-        "辰": "戌", "戌": "辰", "巳": "亥", "亥": "巳",
-    }
-
-    # 地支五行生克关系
-    SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
-    KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
-
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        dt = time.true_solar
+        """
+        大六壬排盘主入口。
 
-        # 获取日干支和节气
+        使用 kinliuren 库进行排盘，返回标准化结构化数据。
+        """
+        orig = time.original
+
+        # ── 1. 获取四柱干支和节气（通过 lunar_python） ──
         try:
             from lunar_python import Solar
-            solar = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute, 0)
+
+            # 晚子时用次日日期定日柱
+            if time.is_late_zi:
+                from datetime import timedelta
+                pillar_date = orig + timedelta(days=1)
+            else:
+                pillar_date = orig
+
+            solar = Solar.fromYmdHms(
+                pillar_date.year, pillar_date.month, pillar_date.day,
+                orig.hour, orig.minute, 0
+            )
             lunar = solar.getLunar()
             ec = lunar.getEightChar()
+
+            year_gan = ec.getYearGan()
+            year_zhi = ec.getYearZhi()
+            month_gan = ec.getMonthGan()
+            month_zhi = ec.getMonthZhi()
             day_gan = ec.getDayGan()
             day_zhi = ec.getDayZhi()
+            time_gan = ec.getTimeGan()
+            time_zhi = ec.getTimeZhi()
 
-            # 获取节气
+            # 节气（用于月将判定）
             jieqi_name = self._get_current_jieqi(lunar)
         except Exception:
-            day_gan = "甲"
-            day_zhi = "子"
+            year_gan, year_zhi = "甲", "子"
+            month_gan, month_zhi = "甲", "子"
+            day_gan, day_zhi = "甲", "子"
+            time_gan, time_zhi = "甲", "子"
             jieqi_name = "冬至"
 
-        # 1. 月将
-        yue_jiang_zhi = self.YUE_JIANG_MAP.get(jieqi_name, "丑")
+        # ── 2. 月将 ──
+        yue_jiang_zhi = self.JIEQI_TO_YUEJIANG.get(jieqi_name, "丑")
         yue_jiang_name = self.YUE_JIANG_NAMES.get(yue_jiang_zhi, "大吉")
 
-        # 2. 占时（时支）
-        hour_zhi_idx = (dt.hour + 1) // 2 % 12
-        zhan_shi = self.ZHI[hour_zhi_idx]
+        # ── 3. 占时（时支） ──
+        hour_zhi_idx = (orig.hour + 1) // 2 % 12
+        zhi_list = list("子丑寅卯辰巳午未申酉戌亥")
+        zhan_shi = zhi_list[hour_zhi_idx]
 
-        # 3. 天盘（月将加时）
-        tian_pan = self._pai_tian_pan(yue_jiang_zhi, zhan_shi)
+        # ── 4. 日干寄宫 ──
+        shigangjigong = dict(
+            zip(
+                list("甲乙丙丁戊己庚辛壬癸") + list("子丑寅卯辰巳午未申酉戌亥"),
+                list("寅辰巳未巳未申戌亥丑") + list("子丑寅卯辰巳午未申酉戌亥"),
+            )
+        )
+        gan_ji = shigangjigong.get(day_gan, "寅")
 
-        # 4. 地盘（固定）
-        di_pan = {zhi: zhi for zhi in self.ZHI}
+        # ── 5. 使用 kinliuren 库排盘 ──
+        try:
+            from kinliuren.kinliuren import Liuren
 
-        # 5. 日干寄宫
-        gan_ji = self.GAN_JI_GONG.get(day_gan, "寅")
+            day_ganzhi = day_gan + day_zhi
+            hour_ganzhi = time_gan + time_zhi
 
-        # 6. 四课
-        si_ke = self._qi_si_ke(day_gan, day_zhi, gan_ji, tian_pan)
+            # kinliuren 使用繁体中文节气名
+            SIMP_TO_TRAD_JIEQI = {
+                '立春': '立春', '雨水': '雨水', '驚蟄': '驚蟄', '惊蛰': '驚蟄',
+                '春分': '春分', '清明': '清明', '穀雨': '穀雨', '谷雨': '穀雨',
+                '立夏': '立夏', '小满': '小滿', '小滿': '小滿', '芒种': '芒種', '芒種': '芒種',
+                '夏至': '夏至', '小暑': '小暑', '大暑': '大暑', '立秋': '立秋',
+                '处暑': '處暑', '處暑': '處暑', '白露': '白露', '秋分': '秋分',
+                '寒露': '寒露', '霜降': '霜降', '立冬': '立冬', '小雪': '小雪',
+                '大雪': '大雪', '冬至': '冬至', '小寒': '小寒', '大寒': '大寒',
+            }
+            jieqi_trad = SIMP_TO_TRAD_JIEQI.get(jieqi_name, jieqi_name)
+            lr = Liuren(jieqi_trad, month_zhi, day_ganzhi, hour_ganzhi)
+            lr_result = lr.result(0)
 
-        # 7. 三传（贼克法为主）
-        san_chuan = self._fa_san_chuan(si_ke, tian_pan)
+            # 提取四课
+            si_ke_raw = lr_result.get("四課", {})
+            si_ke = (
+                si_ke_raw.get("一課", []),
+                si_ke_raw.get("二課", []),
+                si_ke_raw.get("三課", []),
+                si_ke_raw.get("四課", []),
+            )
 
-        # 8. 天将
-        tian_jiang_pan = self._pai_tian_jiang(day_gan, dt.hour)
+            # 提取三传
+            san_chuan_raw = lr_result.get("三傳", {})
+            san_chuan = (
+                san_chuan_raw.get("初傳", []),
+                san_chuan_raw.get("中傳", []),
+                san_chuan_raw.get("末傳", []),
+            )
+
+            # 提取天地盘
+            tian_pan_raw = lr_result.get("天地盤", {})
+            di_pan_list = tian_pan_raw.get("地盤", list("子丑寅卯辰巳午未申酉戌亥"))
+            tian_pan_list = tian_pan_raw.get("天盤", list("子丑寅卯辰巳午未申酉戌亥"))
+            tian_jiang_list = tian_pan_raw.get("天將", [""] * 12)
+
+            # 天盘：地支→天盘地支
+            tian_pan = {}
+            for i, zhi in enumerate(list("子丑寅卯辰巳午未申酉戌亥")):
+                if i < len(tian_pan_list):
+                    tian_pan[zhi] = tian_pan_list[i]
+                else:
+                    tian_pan[zhi] = zhi
+
+            # 天将：地支→天将
+            tian_jiang = {}
+            di_zhi_order = list("子丑寅卯辰巳午未申酉戌亥")
+            for i, zhi in enumerate(di_zhi_order):
+                if i < len(tian_jiang_list):
+                    tian_jiang[zhi] = tian_jiang_list[i]
+                else:
+                    tian_jiang[zhi] = ""
+
+            # 也可以用库自带的地转天盘/地转天将
+            di_to_tian = lr_result.get("地轉天盤", tian_pan)
+            di_to_jiang = lr_result.get("地轉天將", tian_jiang)
+
+            # 格局
+            ge_ju = lr_result.get("格局", [])
+            ge_ju_name = "·".join(ge_ju) if ge_ju else ""
+
+            # 日马
+            day_ma = lr_result.get("日馬", "")
+
+            # 用神分析（基于三传初传）
+            yong_shen_analysis = self._analyze_yong_shen(
+                san_chuan_raw, si_ke_raw, day_gan, day_zhi, tian_jiang
+            )
+
+            # 四课详细解读
+            si_ke_analysis = self._analyze_si_ke(si_ke_raw, day_gan, tian_jiang)
+
+        except Exception:
+            # kinliuren 不可用时，返回最小可用结构
+            si_ke = ([], [], [], [])
+            san_chuan = ([], [], [])
+            tian_pan = {zhi: zhi for zhi in list("子丑寅卯辰巳午未申酉戌亥")}
+            tian_jiang = {zhi: "" for zhi in list("子丑寅卯辰巳午未申酉戌亥")}
+            di_to_tian = tian_pan.copy()
+            di_to_jiang = tian_jiang.copy()
+            ge_ju_name = ""
+            day_ma = ""
+            yong_shen_analysis = {}
+            si_ke_analysis = {}
+
+        # ── 6. 合并十二宫信息（便于前端渲染） ──
+        positions = {}
+        zhi_wuxing = {
+            "子": "水", "丑": "土", "寅": "木", "卯": "木",
+            "辰": "土", "巳": "火", "午": "火", "未": "土",
+            "申": "金", "酉": "金", "戌": "土", "亥": "水",
+        }
+        for zhi in list("子丑寅卯辰巳午未申酉戌亥"):
+            positions[zhi] = {
+                "zhi": zhi,
+                "wuxing": zhi_wuxing.get(zhi, ""),
+                "di_zhi": zhi,
+                "tian_zhi": di_to_tian.get(zhi, zhi),
+                "tian_jiang": di_to_jiang.get(zhi, ""),
+            }
+
+        # ── 7. 构造返回字典 ──
+        # 确保四课/三传是list（JSON序列化兼容）
+        si_ke_list = [list(k) if isinstance(k, (tuple, list)) else k for k in si_ke]
+        san_chuan_list = [list(c) if isinstance(c, (tuple, list)) else c for c in san_chuan]
 
         return {
+            # 四柱
+            "year_gan": year_gan,
+            "year_zhi": year_zhi,
+            "month_gan": month_gan,
+            "month_zhi": month_zhi,
+            "day_gan": day_gan,
+            "day_zhi": day_zhi,
+            "time_gan": time_gan,
+            "time_zhi": time_zhi,
+            # 占时与月将
             "zhan_shi": zhan_shi,
             "yue_jiang": yue_jiang_name,
             "yue_jiang_zhi": yue_jiang_zhi,
+            # 节气
             "jieqi": jieqi_name,
-            "tian_pan": tian_pan,
-            "di_pan": di_pan,
+            # 天盘（地支→天盘地支）
+            "tian_pan": di_to_tian,
+            # 十二宫位置（便于前端渲染）
+            "positions": positions,
+            # 日干寄宫
             "gan_ji": gan_ji,
-            "si_ke": si_ke,
-            "san_chuan": san_chuan,
-            "tian_jiang": tian_jiang_pan,
-            "day_gan": day_gan,
-            "day_zhi": day_zhi,
-            "date": dt.strftime("%Y-%m-%d %H:%M"),
+            # 四课（list of 4）
+            "si_ke": si_ke_list,
+            # 三传（list of 3）
+            "san_chuan": san_chuan_list,
+            # 天将（地支→天将）
+            "tian_jiang": di_to_jiang,
+            # 附加信息
+            "ge_ju": ge_ju_name,
+            "day_ma": day_ma,
+            "yong_shen": yong_shen_analysis,
+            "si_ke_analysis": si_ke_analysis,
+            "date": orig.strftime("%Y-%m-%d %H:%M"),
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
-        if not data.get("si_ke"):
+        """
+        验证排盘结果是否合理。
+
+        检查：
+        1. 四课不为空
+        2. 三传不为空
+        """
+        si_ke = data.get("si_ke")
+        if not si_ke or all(not k for k in si_ke):
             return False, "四课为空"
+
+        san_chuan = data.get("san_chuan")
+        if not san_chuan or all(not c for c in san_chuan):
+            return False, "三传为空"
+
         return True, None
+
+    def _analyze_si_ke(self, si_ke_raw: dict, day_gan: str, tian_jiang: dict) -> dict:
+        """四课详细解读"""
+        analysis = {}
+
+        ZHI_WUXING = {
+            '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火',
+            '午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'
+        }
+
+        GAN_WUXING = {
+            '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土',
+            '庚':'金','辛':'金','壬':'水','癸':'水'
+        }
+
+        KE_NAMES = {'一課': '干上神（日上）', '二課': '干阳神', '三課': '支上神（辰上）', '四課': '支阳神'}
+
+        SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
+        KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
+
+        day_wx = GAN_WUXING.get(day_gan, '')
+
+        for key in ['一課', '二課', '三課', '四課']:
+            val = si_ke_raw.get(key, [])
+            if not val or len(val) < 2:
+                continue
+            gz = val[0] if isinstance(val[0], str) else str(val[0])
+            jiang = val[1] if len(val) > 1 else ''
+
+            zhi = gz[-1] if gz else ''
+            wx = ZHI_WUXING.get(zhi, '')
+
+            # 判断该课与日干的关系
+            relation = ''
+            if wx and day_wx:
+                if wx == day_wx:
+                    relation = '比和'
+                elif SHENG.get(day_wx) == wx:
+                    relation = '我生'
+                elif SHENG.get(wx) == day_wx:
+                    relation = '生我'
+                elif KE.get(day_wx) == wx:
+                    relation = '我克'
+                elif KE.get(wx) == day_wx:
+                    relation = '克我'
+
+            analysis[key] = {
+                'name': KE_NAMES.get(key, key),
+                'gan_zhi': gz,
+                'tian_jiang': jiang,
+                'wuxing': wx,
+                'relation_to_day': relation,
+            }
+
+        return analysis
+
+    def _analyze_yong_shen(self, san_chuan_raw: dict, si_ke_raw: dict,
+                           day_gan: str, day_zhi: str, tian_jiang: dict) -> dict:
+        """分析用神：基于三传初传的天将和六亲关系"""
+        # 十二天将含义（含kinliuren缩写映射）
+        JIANG_YI = {
+            "貴人": {"吉凶": "大吉", "含义": "贵人相助、提携"},
+            "貴": {"吉凶": "大吉", "含义": "贵人相助、提携"},
+            "騰蛇": {"吉凶": "凶", "含义": "虚惊、怪异、纠缠"},
+            "蛇": {"吉凶": "凶", "含义": "虚惊、怪异、纠缠"},
+            "朱雀": {"吉凶": "凶", "含义": "口舌、文书、信息"},
+            "雀": {"吉凶": "凶", "含义": "口舌、文书、信息"},
+            "六合": {"吉凶": "吉", "含义": "合作、婚姻、和合"},
+            "合": {"吉凶": "吉", "含义": "合作、婚姻、和合"},
+            "勾陳": {"吉凶": "凶", "含义": "争斗、阻滞、官职"},
+            "勾": {"吉凶": "凶", "含义": "争斗、阻滞、官职"},
+            "青龍": {"吉凶": "大吉", "含义": "财喜、名声、晋升"},
+            "龍": {"吉凶": "大吉", "含义": "财喜、名声、晋升"},
+            "龙": {"吉凶": "大吉", "含义": "财喜、名声、晋升"},
+            "天空": {"吉凶": "凶", "含义": "虚伪、空亡、欺骗"},
+            "空": {"吉凶": "凶", "含义": "虚伪、空亡、欺骗"},
+            "白虎": {"吉凶": "凶", "含义": "凶事、病伤、血光"},
+            "虎": {"吉凶": "凶", "含义": "凶事、病伤、血光"},
+            "太常": {"吉凶": "吉", "含义": "饮食、喜庆、宴席"},
+            "常": {"吉凶": "吉", "含义": "饮食、喜庆、宴席"},
+            "玄武": {"吉凶": "凶", "含义": "盗贼、暗昧、小人"},
+            "武": {"吉凶": "凶", "含义": "盗贼、暗昧、小人"},
+            "太陰": {"吉凶": "吉", "含义": "女眷、隐私、谋划"},
+            "陰": {"吉凶": "吉", "含义": "女眷、隐私、谋划"},
+            "阴": {"吉凶": "吉", "含义": "女眷、隐私、谋划"},
+            "天后": {"吉凶": "大吉", "含义": "恩泽、庇护、婚姻"},
+            "后": {"吉凶": "大吉", "含义": "恩泽、庇护、婚姻"},
+        }
+
+        # 五行生克
+        SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
+        KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+
+        zhi_wuxing = {
+            "子": "水", "丑": "土", "寅": "木", "卯": "木",
+            "辰": "土", "巳": "火", "午": "火", "未": "土",
+            "申": "金", "酉": "金", "戌": "土", "亥": "水",
+        }
+
+        # 初传信息
+        chu_chuan = san_chuan_raw.get("初傳", [])
+        chu_zhi = chu_chuan[0] if chu_chuan else ""
+        chu_jiang = chu_chuan[1] if len(chu_chuan) > 1 else ""
+        chu_liuqin = chu_chuan[2] if len(chu_chuan) > 2 else ""
+
+        # 初传天将含义
+        jiang_info = JIANG_YI.get(chu_jiang, {"吉凶": "中", "含义": ""})
+
+        # 日干五行
+        gan_wuxing = {"甲": "木", "乙": "木", "丙": "火", "丁": "火",
+                      "戊": "土", "己": "土", "庚": "金", "辛": "金",
+                      "壬": "水", "癸": "水"}
+        day_wx = gan_wuxing.get(day_gan, "")
+        chu_wx = zhi_wuxing.get(chu_zhi, "")
+
+        # 初传与日干的关系
+        relation = ""
+        if day_wx and chu_wx:
+            if day_wx == chu_wx:
+                relation = "比和"
+            elif SHENG.get(day_wx) == chu_wx:
+                relation = "我生（泄气）"
+            elif SHENG.get(chu_wx) == day_wx:
+                relation = "生我（得助）"
+            elif KE.get(day_wx) == chu_wx:
+                relation = "我克（得财）"
+            elif KE.get(chu_wx) == day_wx:
+                relation = "克我（受制）"
+
+        return {
+            "chu_chuan_zhi": chu_zhi,
+            "chu_chuan_jiang": chu_jiang,
+            "chu_chuan_liuqin": chu_liuqin,
+            "jiang_ji_xiong": jiang_info.get("吉凶", ""),
+            "jiang_han_yi": jiang_info.get("含义", ""),
+            "ri_gan_relation": relation,
+        }
 
     def _get_current_jieqi(self, lunar) -> str:
         """获取当前节气（用于月将判定）"""
         try:
-            # 用 lunar_python 的 getPrevJieQi 获取前一个节气（含中气）
             prev_jieqi = lunar.getPrevJieQi()
             if prev_jieqi:
                 return prev_jieqi.getName()
@@ -199,12 +436,9 @@ class LiuRenEngine(DivinationEngine):
             pass
 
         try:
-            # fallback: 遍历24节气找到当前所处的节气
-            jieqi_list = lunar.getJieQiList()
             current_solar = lunar.getSolar()
             current_md = (current_solar.getMonth(), current_solar.getDay())
 
-            # 节气大致日期（月,日）
             jieqi_dates = [
                 ("小寒", 1, 6), ("大寒", 1, 20), ("立春", 2, 4), ("雨水", 2, 19),
                 ("惊蛰", 3, 6), ("春分", 3, 21), ("清明", 4, 5), ("谷雨", 4, 20),
@@ -223,6 +457,7 @@ class LiuRenEngine(DivinationEngine):
         except Exception:
             pass
 
+        # 最终回退：按月份估算
         month = lunar.getMonth()
         approx = {
             1: "小寒", 2: "雨水", 3: "春分", 4: "谷雨",
@@ -230,130 +465,3 @@ class LiuRenEngine(DivinationEngine):
             9: "秋分", 10: "霜降", 11: "小雪", 12: "冬至",
         }
         return approx.get(month, "冬至")
-
-    def _pai_tian_pan(self, yue_jiang_zhi: str, zhan_shi: str) -> dict:
-        """排天盘（月将加时）"""
-        yj_idx = self.ZHI.index(yue_jiang_zhi)
-        zs_idx = self.ZHI.index(zhan_shi)
-
-        tian_pan = {}
-        for i, zhi in enumerate(self.ZHI):
-            # 天盘 = 月将从占时位置开始顺布
-            tian_pan[zhi] = self.ZHI[(yj_idx + i - zs_idx) % 12]
-
-        return tian_pan
-
-    def _qi_si_ke(self, day_gan: str, day_zhi: str,
-                   gan_ji: str, tian_pan: dict) -> list:
-        """
-        起四课：
-        第一课：日干 → 干寄宫在天盘的对应
-        第二课：干寄宫 → 干寄宫在天盘的对应
-        第三课：日支 → 支在天盘的对应
-        第四课：支 → 支在天盘的对应
-        """
-        # 第一课：干 → 干寄宫天盘
-        gan_ji_tian = tian_pan.get(gan_ji, "子")
-
-        # 第二课：干寄宫天盘 → 该支在天盘
-        ke2 = tian_pan.get(gan_ji_tian, "子")
-
-        # 第三课：日支 → 日支在天盘
-        zhi_tian = tian_pan.get(day_zhi, "子")
-
-        # 第四课：日支天盘 → 该支在天盘
-        ke4 = tian_pan.get(zhi_tian, "子")
-
-        return [
-            {"ke": f"{day_gan}上{gan_ji_tian}", "name": "第一课", "gan": day_gan, "zhi": gan_ji_tian},
-            {"ke": f"{gan_ji_tian}上{ke2}", "name": "第二课", "gan": gan_ji_tian, "zhi": ke2},
-            {"ke": f"{day_zhi}上{zhi_tian}", "name": "第三课", "gan": day_zhi, "zhi": zhi_tian},
-            {"ke": f"{zhi_tian}上{ke4}", "name": "第四课", "gan": zhi_tian, "zhi": ke4},
-        ]
-
-    def _fa_san_chuan(self, si_ke: list, tian_pan: dict) -> list:
-        """
-        发三传（贼克法为主）
-        贼克法：四课中找出下克上（下克上为"贼"）或上克下（上克下为"克"）的关系
-        以被克者为初传，初传所克为中传，中传所克为末传
-        """
-        if len(si_ke) < 4:
-            return [
-                {"chuan": "初传", "name": "待推"},
-                {"chuan": "中传", "name": "待推"},
-                {"chuan": "末传", "name": "待推"},
-            ]
-
-        # 分析四课的生克关系
-        chuan = []
-        visited = set()
-
-        # 从四课中找贼克关系
-        for ke_data in si_ke:
-            below_zhi = ke_data.get("gan", "")
-            above_zhi = ke_data.get("zhi", "")
-
-            # 判断是否为天干或地支
-            below_wx = self.GAN_WUXING.get(below_zhi) or self.ZHI_WUXING.get(below_zhi, "")
-            above_wx = self.ZHI_WUXING.get(above_zhi, "")
-
-            if not below_wx or not above_wx:
-                continue
-
-            # 下克上（贼）：下五行克上五行
-            if self.KE.get(below_wx) == above_wx:
-                chuan.append(above_zhi)
-                break
-            # 上克下（克）：上五行克下五行
-            elif self.KE.get(above_wx) == below_wx:
-                chuan.append(below_zhi)
-                break
-
-        # 如果没有找到贼克关系，用第一课上神
-        if not chuan:
-            first_zhi = si_ke[0].get("zhi", "子")
-            chuan.append(first_zhi)
-
-        # 中传：初传在天盘的对应
-        chuzhuan = chuan[0]
-        if chuzhuan in self.ZHI:
-            zhongzhuan = tian_pan.get(chuzhuan, self.ZHI[(self.ZHI.index(chuzhuan) + 1) % 12])
-        else:
-            # 初传是天干，转为地支再查天盘
-            ji = self.GAN_JI_GONG.get(chuzhuan, "子")
-            zhongzhuan = tian_pan.get(ji, "子")
-        chuan.append(zhongzhuan)
-
-        # 末传：中传在天盘的对应
-        if zhongzhuan in self.ZHI:
-            mozhuan = tian_pan.get(zhongzhuan, self.ZHI[(self.ZHI.index(zhongzhuan) + 1) % 12])
-        else:
-            ji = self.GAN_JI_GONG.get(zhongzhuan, "子")
-            mozhuan = tian_pan.get(ji, "子")
-        chuan.append(mozhuan)
-
-        return [
-            {"chuan": "初传", "name": chuan[0], "wuxing": self.ZHI_WUXING.get(chuan[0], "")},
-            {"chuan": "中传", "name": chuan[1], "wuxing": self.ZHI_WUXING.get(chuan[1], "")},
-            {"chuan": "末传", "name": chuan[2], "wuxing": self.ZHI_WUXING.get(chuan[2], "")},
-        ]
-
-    def _pai_tian_jiang(self, day_gan: str, hour: int) -> dict:
-        """排十二天将"""
-        # 贵人位置
-        gui_ren_pair = self.GUI_REN.get(day_gan, ("丑", "未"))
-        # 昼贵夜贵：6-18点用昼贵，其余用夜贵
-        if 6 <= hour < 18:
-            gui_zhi = gui_ren_pair[0]
-        else:
-            gui_zhi = gui_ren_pair[1]
-
-        gr_idx = self.ZHI.index(gui_zhi)
-
-        tian_jiang = {}
-        for i, zhi in enumerate(self.ZHI):
-            # 贵人起，顺布（阳日顺布，阴日逆布，简化为顺布）
-            actual_idx = (gr_idx + i) % 12
-            tian_jiang[self.ZHI[actual_idx]] = self.TIAN_JIANG[i % 12]
-
-        return tian_jiang

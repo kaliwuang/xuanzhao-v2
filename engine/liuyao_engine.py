@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 """
-玄照 v2.0 - 六爻引擎（完整版）
+玄照 v2.0 - 六爻引擎
 
-梅花易数时间起卦法 + 纳甲装卦 + 六亲 + 六神 + 世应 + 变卦
+主路径：基于 najia 库的纳甲六爻排盘
+回退路径：自包含的梅花易数 + 京房纳甲体系
 
-起卦方法：时间起卦
-  上卦 = (年数 + 月数 + 日数) % 8
-  下卦 = (年数 + 月数 + 日数 + 时数) % 8
-  动爻 = (年数 + 月数 + 日数 + 时数) % 6
-
+起卦方法：时间起卦（确定性，基于出生时间哈希）
 纳甲法：按京房纳甲体系
   乾纳甲壬，坤纳乙癸，震纳庚，巽纳辛，坎纳戊，离纳己，艮纳丙，兑纳丁
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List
+import hashlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LiuYaoEngine(DivinationEngine):
-    """六爻引擎"""
+    """六爻引擎（najia 库主路径 + 自包含回退）"""
+
+    # ─── 属性 ────────────────────────────────────────────
 
     @property
     def name(self) -> str:
@@ -26,87 +29,29 @@ class LiuYaoEngine(DivinationEngine):
 
     @property
     def name_en(self) -> str:
-        return "LiuYao"
+        return "liuyao"
 
     @property
     def priority(self) -> int:
-        return 3
+        return 4
 
-    # 八卦基本信息：(五行, 纳甲天干, 二进制三爻)
-    # 二进制：1=阳爻(—), 0=阴爻(--)
-    # 从下往上读
-    BAGUA = {
-        "乾": ("金", "甲", (1, 1, 1)),
-        "兑": ("金", "丁", (1, 1, 0)),
-        "离": ("火", "己", (1, 0, 1)),
-        "震": ("木", "庚", (0, 0, 1)),
-        "巽": ("木", "辛", (1, 1, 0)),  # 从下: 0,1,1 → 巽
-        "坎": ("水", "戊", (0, 1, 0)),
-        "艮": ("土", "丙", (0, 0, 1)),  # 从下: 1,0,0 → 艮
-        "坤": ("土", "乙", (0, 0, 0)),
-    }
+    # ─── 八卦二进制（从初爻到上爻）─── 自包含回退用 ────
 
-    # 修正八卦二进制（从下爻到上爻）
-    BAGUA_LINES = {
-        "乾": (1, 1, 1),  # ─ ─ ─
-        "兑": (0, 1, 1),  # -- ─ ─
-        "离": (1, 0, 1),  # ─ -- ─
-        "震": (1, 0, 0),  # ─ -- --
-        "巽": (0, 1, 1),  # -- ─ ─  # 注意：兑巽相同二进制，靠上下卦区分
-        "坎": (0, 1, 0),  # -- ─ --
-        "艮": (0, 0, 1),  # -- -- ─
-        "坤": (0, 0, 0),  # -- -- --
-    }
-
-    # 更正：八卦二进制（从初爻到上爻）
-    # 乾=111, 兑=011, 离=101, 震=100, 巽=011, 坎=010, 艮=001, 坤=000
-    # 兑和巽都是011？不对，重新定义：
-    # 乾(天)=阳阳阳=111
-    # 兑(泽)=阴阳阳=011  (初爻阴)
-    # 离(火)=阳阴阳=101
-    # 震(雷)=阳阴阴=100  (初爻阳，二三爻阴)
-    # 巽(风)=阴阳阳=011  (初爻阴，二三爻阳)  ← 这和兑一样？
-    # 不对！标准：
-    # 兑=上缺: 初爻阳，二爻阳，三爻阴 → 1,1,0
-    # 巽=下断: 初爻阴，二爻阳，三爻阳 → 0,1,1
-    # 坎=中满: 初爻阴，二爻阳，三爻阴 → 0,1,0
-    # 艮=上实: 初爻阴，二爻阴，三爻阳 → 0,0,1
-    # 坤=三断: 阴阴阴 → 0,0,0
-
-    # 最终正确的八卦二进制（从初爻到上爻）
     GUA_LINES = {
-        "乾": (1, 1, 1),
-        "兑": (1, 1, 0),
-        "离": (1, 0, 1),
-        "震": (1, 0, 0),
-        "巽": (0, 1, 1),
-        "坎": (0, 1, 0),
-        "艮": (0, 0, 1),
-        "坤": (0, 0, 0),
+        "乾": (1, 1, 1), "兑": (1, 1, 0), "离": (1, 0, 1), "震": (1, 0, 0),
+        "巽": (0, 1, 1), "坎": (0, 1, 0), "艮": (0, 0, 1), "坤": (0, 0, 0),
     }
 
-    # 八卦五行
     GUA_WUXING = {
         "乾": "金", "兑": "金", "离": "火", "震": "木",
         "巽": "木", "坎": "水", "艮": "土", "坤": "土",
     }
 
-    # 纳甲表：八卦 → (内卦纳干, 外卦纳干)
-    # 乾纳甲壬(内甲外壬), 坤纳乙癸(内乙外癸)
-    # 震纳庚, 巽纳辛, 坎纳戊, 离纳己, 艮纳丙, 兑纳丁
     NAJIA = {
-        "乾": ("甲", "壬"),
-        "坤": ("乙", "癸"),
-        "震": ("庚", "庚"),
-        "巽": ("辛", "辛"),
-        "坎": ("戊", "戊"),
-        "离": ("己", "己"),
-        "艮": ("丙", "丙"),
-        "兑": ("丁", "丁"),
+        "乾": ("甲", "壬"), "坤": ("乙", "癸"), "震": ("庚", "庚"), "巽": ("辛", "辛"),
+        "坎": ("戊", "戊"), "离": ("己", "己"), "艮": ("丙", "丙"), "兑": ("丁", "丁"),
     }
 
-    # 纳甲地支：八卦 → (内卦六爻地支, 外卦六爻地支)
-    # 从初爻到上爻
     NAJIA_ZHI = {
         "乾": (["子", "寅", "辰"], ["午", "申", "戌"]),
         "坤": (["未", "巳", "卯"], ["丑", "亥", "酉"]),
@@ -118,10 +63,8 @@ class LiuYaoEngine(DivinationEngine):
         "兑": (["巳", "卯", "丑"], ["亥", "酉", "未"]),
     }
 
-    # 数字转八卦（先天八卦序：乾1兑2离3震4巽5坎6艮7坤8/0）
     NUM_TO_GUA = ["坤", "乾", "兑", "离", "震", "巽", "坎", "艮"]
 
-    # 六十四卦名 (上卦, 下卦) → 卦名
     GUA64_NAMES = {
         ("乾", "乾"): "乾为天", ("乾", "坤"): "天地否", ("乾", "震"): "天雷无妄",
         ("乾", "巽"): "天风姤", ("乾", "坎"): "天水讼", ("乾", "离"): "天火同人",
@@ -149,30 +92,19 @@ class LiuYaoEngine(DivinationEngine):
         ("兑", "离"): "泽火革", ("兑", "艮"): "泽山咸",
     }
 
-    # 六神（按日干排）
     LIU_SHEN = {
         "甲": ["青龙", "朱雀", "勾陈", "螣蛇", "白虎", "玄武"],
         "乙": ["青龙", "朱雀", "勾陈", "螣蛇", "白虎", "玄武"],
         "丙": ["朱雀", "勾陈", "螣蛇", "白虎", "玄武", "青龙"],
         "丁": ["朱雀", "勾陈", "螣蛇", "白虎", "玄武", "青龙"],
         "戊": ["勾陈", "螣蛇", "白虎", "玄武", "青龙", "朱雀"],
-        "己": ["勾陈", "螣蛇", "白虎", "玄武", "青龙", "朱雀"],
-        "庚": ["螣蛇", "白虎", "玄武", "青龙", "朱雀", "勾陈"],
-        "辛": ["螣蛇", "白虎", "玄武", "青龙", "朱雀", "勾陈"],
-        "壬": ["白虎", "玄武", "青龙", "朱雀", "勾陈", "螣蛇"],
-        "癸": ["白虎", "玄武", "青龙", "朱雀", "勾陈", "螣蛇"],
+        "己": ["螣蛇", "白虎", "玄武", "青龙", "朱雀", "勾陈"],
+        "庚": ["白虎", "玄武", "青龙", "朱雀", "勾陈", "螣蛇"],
+        "辛": ["白虎", "玄武", "青龙", "朱雀", "勾陈", "螣蛇"],
+        "壬": ["玄武", "青龙", "朱雀", "勾陈", "螣蛇", "白虎"],
+        "癸": ["玄武", "青龙", "朱雀", "勾陈", "螣蛇", "白虎"],
     }
 
-    # 世应表：64卦 → (世爻位, 应爻位)，1-6从初爻到上爻
-    # 八纯卦世在六爻，应在三爻
-    # 归魂卦世在三爻，应在六爻
-    # 游魂卦世在四爻，应在初爻
-    # 一世卦世在初爻，应在四爻
-    # 二世卦世在二爻，应在五爻
-    # 三世卦世在三爻，应在六爻
-    # 四世卦世在四爻，应在初爻
-    # 五世卦世在五爻，应在二爻
-    # 本宫卦世在六爻，应在三爻
     SHI_YING_TABLE = {
         # 乾宫
         "乾为天": (6, 3), "天风姤": (1, 4), "天山遁": (2, 5), "天地否": (3, 6),
@@ -200,27 +132,354 @@ class LiuYaoEngine(DivinationEngine):
         "水山蹇": (4, 1), "地山谦": (5, 2), "雷山小过": (4, 1), "雷泽归妹": (3, 6),
     }
 
-    # 地支五行
+    # 京房八宫归属 → 卦宫五行
+    GUA_GONG_WUXING = {
+        "乾为天": "金", "天风姤": "金", "天山遁": "金", "天地否": "金",
+        "风地观": "金", "山地剥": "金", "火地晋": "金", "火天大有": "金",
+        "坤为地": "土", "地雷复": "土", "地泽临": "土", "地天泰": "土",
+        "雷天大壮": "土", "泽天夬": "土", "水天需": "土", "水地比": "土",
+        "震为雷": "木", "雷地豫": "木", "雷水解": "木", "雷风恒": "木",
+        "地风升": "木", "水风井": "木", "泽风大过": "木", "泽雷随": "木",
+        "巽为风": "木", "风天小畜": "木", "风火家人": "木", "风雷益": "木",
+        "天雷无妄": "木", "火雷噬嗑": "木", "山雷颐": "木", "山风蛊": "木",
+        "坎为水": "水", "水泽节": "水", "水雷屯": "水", "水火既济": "水",
+        "泽火革": "水", "雷火丰": "水", "地火明夷": "水", "地水师": "水",
+        "离为火": "火", "火山旅": "火", "火风鼎": "火", "火水未济": "火",
+        "山水蒙": "火", "风水涣": "火", "天水讼": "火", "天火同人": "火",
+        "艮为山": "土", "山火贲": "土", "山天大畜": "土", "山泽损": "土",
+        "火泽睽": "土", "天泽履": "土", "风泽中孚": "土", "风山渐": "土",
+        "兑为泽": "金", "泽水困": "金", "泽地萃": "金", "泽山咸": "金",
+        "水山蹇": "金", "地山谦": "金", "雷山小过": "金", "雷泽归妹": "金",
+    }
+
     ZHI_WUXING = {
         "子": "水", "丑": "土", "寅": "木", "卯": "木",
         "辰": "土", "巳": "火", "午": "火", "未": "土",
         "申": "金", "酉": "金", "戌": "土", "亥": "水",
     }
 
-    # 天干五行
     GAN_WUXING = {
         "甲": "木", "乙": "木", "丙": "火", "丁": "火",
         "戊": "土", "己": "土", "庚": "金", "辛": "金",
         "壬": "水", "癸": "水",
     }
 
+    # ─── 初始化 ──────────────────────────────────────────
+
+    def __init__(self):
+        self._najia_available = False
+        try:
+            from najia import Najia
+            # 测试实例化（najia 2.0.1 的 __init__ 有 verbose=None 的 bug）
+            Najia(verbose=0)
+            self._Najia = Najia
+            self._najia_available = True
+        except Exception:
+            pass
+
+    # ─── 确定性爻值生成 ──────────────────────────────────
+
+    def _generate_params(self, dt) -> list:
+        """
+        基于时间哈希确定性生成6个爻值。
+
+        编码（najia 库格式）：
+          0 = 阴静, 1 = 阳静, 3 = 老阳（阳动）, 4 = 老阴（阴动）
+
+        至少包含一个动爻以确保有变卦。
+        """
+        seed = f"{dt.year}{dt.month:02d}{dt.day:02d}{dt.hour:02d}{dt.minute:02d}"
+        h = int(hashlib.sha256(seed.encode()).hexdigest(), 16)
+
+        params = []
+        for i in range(6):
+            v = (h >> (i * 3)) & 7
+            # 概率分布：~25% 阳静, ~25% 阴静, ~25% 阳动, ~25% 阴动
+            if v < 2:
+                params.append(1)   # 阳静
+            elif v < 4:
+                params.append(0)   # 阴静
+            elif v < 6:
+                params.append(3)   # 老阳（阳动）
+            else:
+                params.append(4)   # 老阴（阴动）
+
+        # 确保至少一个动爻
+        if not any(p > 2 for p in params):
+            params[h % 6] = 3
+
+        return params
+
+    # ─── 主分析方法 ──────────────────────────────────────
+
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        dt = time.true_solar
+        """
+        六爻排盘分析。
+
+        优先使用 najia 库；若不可用或出错则回退到自包含引擎。
+        """
+        try:
+            if self._najia_available:
+                return self._analyze_najia(time, gender)
+        except Exception as e:
+            logger.warning(f"najia 库排盘失败，回退到内置引擎: {e}")
+
+        return self._analyze_builtin(time, gender)
+
+    # ─── najia 库排盘 ────────────────────────────────────
+
+    def _analyze_najia(self, time: CorrectedTime, gender: int) -> dict:
+        """使用 najia 库进行纳甲六爻排盘"""
+        from najia.utils import get_najia, set_shi_yao, palace, get_qin6, GZ5X
+        from najia.const import (
+            ZHI5, ZHIS, XING5, GUA5, GUAS, GUA64, GANS
+        )
+
+        orig = time.original
+
+        # 1. 确定性起卦
+        params = self._generate_params(orig)
+
+        # 2. 排盘
+        date_str = f"{orig.year}-{orig.month:02d}-{orig.day:02d} {orig.hour:02d}:{orig.minute:02d}"
+        n = self._Najia(verbose=0)
+        n.compile(params=params, gender=gender, date=date_str)
+        data = n.data
+
+        mark = data['mark']          # 二进制卦码 "111000"
+        dong = data['dong']          # 动爻列表（0-indexed）
+        shi_ying = data['shiy']      # (世爻, 应爻, 宫位) 世应1-indexed
+        qin6 = data['qin6']          # 六亲 list[6]
+        qinx = data['qinx']          # 干支五行 list[6] e.g. "甲子水"
+        god6 = data['god6']          # 六神 list[6]
+        gong_name = data['gong']     # 卦宫名 e.g. "乾"
+
+        # 3. 获取纳甲干支
+        najia_gz = get_najia(mark)   # list[6] e.g. ["甲子", "甲寅", ...]
+
+        # 4. 构建 lines
+        lines = []
+        for i in range(6):
+            gz = najia_gz[i]
+            gan = gz[0]
+            dizhi = gz[1]
+            wz_idx = ZHIS.index(dizhi)
+            wuxing = XING5[ZHI5[wz_idx]]
+            lines.append({
+                'liu_qin': qin6[i],
+                'liu_shen': god6[i],
+                'wuxing': wuxing,
+                'dizhi': dizhi,
+                'gan': gan,
+                'position': i + 1,
+                'is_dong': i in dong,
+                'is_shi': (i + 1) == shi_ying[0],
+                'is_ying': (i + 1) == shi_ying[1],
+            })
+
+        # 5. 变卦
+        bian_data = data.get('bian')
+        bian_gua = {}
+        bian_lines = []
+        if bian_data:
+            bian_mark = bian_data.get('mark', '')
+            bian_qin6 = bian_data.get('qin6', [])
+            bian_name = bian_data.get('name', '')
+
+            # 变卦也需要反转位序
+            if len(bian_mark) >= 6:
+                bian_xia_bits = bian_mark[:3][::-1]
+                bian_shang_bits = bian_mark[3:][::-1]
+                bian_shang_gua = GUAS[int(bian_shang_bits, 2)]
+                bian_xia_gua = GUAS[int(bian_xia_bits, 2)]
+            else:
+                bian_shang_gua = bian_xia_gua = ''
+            bian_gua = {
+                'name': bian_name,
+                'mark': bian_mark,
+                'shang': bian_shang_gua,
+                'xia': bian_xia_gua,
+                'gong': bian_data.get('gong', ''),
+            }
+
+            if bian_mark:
+                bian_najia = get_najia(bian_mark)
+                for i in range(6):
+                    gz = bian_najia[i]
+                    gan = gz[0]
+                    dizhi = gz[1]
+                    wz_idx = ZHIS.index(dizhi)
+                    wuxing = XING5[ZHI5[wz_idx]]
+                    bian_lines.append({
+                        'liu_qin': bian_qin6[i] if i < len(bian_qin6) else '',
+                        'wuxing': wuxing,
+                        'dizhi': dizhi,
+                        'gan': gan,
+                        'position': i + 1,
+                    })
+
+        # 6. 卦宫五行
+        gong_idx = GUAS.index(gong_name) if gong_name in GUAS else 0
+        gua_gong_wuxing = XING5[GUA5[gong_idx]]
+
+        # 7. 本卦信息
+        # ⚠️ 位序修正：mark 从初爻到上爻存储（bit0=初爻），需反转位序再查GUAS
+        ben_gua_name = data.get('name', GUA64.get(mark, ''))
+        if len(mark) >= 6:
+            xia_bits = mark[:3][::-1]  # 下卦3位反转
+            shang_bits = mark[3:][::-1]  # 上卦3位反转
+            shang_gua = GUAS[int(shang_bits, 2)]
+            xia_gua = GUAS[int(xia_bits, 2)]
+        else:
+            shang_gua = xia_gua = ''
+        ben_gua = {
+            'name': ben_gua_name,
+            'mark': mark,
+            'shang': shang_gua,
+            'xia': xia_gua,
+        }
+
+        # 8. 伏神（隐藏信息）
+        hide = data.get('hide')
+
+        # 9. 五行分析摘要
+        wuxing_count = {}
+        for line in lines:
+            wx = line.get('wuxing', '')
+            if wx:
+                wuxing_count[wx] = wuxing_count.get(wx, 0) + 1
+
+        # 世爻五行分析
+        shi_yao = next((l for l in lines if l.get('is_shi')), {})
+        shi_wuxing = shi_yao.get('wuxing', '')
+        gua_gong_wx = gua_gong_wuxing or ''
+
+        # 用神分析（根据卦宫五行和世爻关系）
+        yong_shen = ''
+        if shi_wuxing and gua_gong_wx:
+            if shi_wuxing == gua_gong_wx:
+                yong_shen = '世爻与卦宫同五行，自身有力'
+            else:
+                rel = self._calc_liuqin(gua_gong_wx, shi_wuxing)
+                yong_shen = f'世爻为{rel}，{shi_wuxing}生克卦宫{gua_gong_wx}'
+
+        # 10. 详细用神分析
+        yong_shen_detail = self._build_yong_shen_detail(
+            lines, bian_lines, shi_ying[0], shi_ying[1], gua_gong_wuxing, list(dong)
+        )
+
+        # 11. 格局识别
+        ben_gua_name = ben_gua.get('name', '')
+        bian_gua_name = bian_gua.get('name', '')
+        ge_ju = self._identify_ge_ju(
+            ben_gua_name, bian_gua_name, lines, bian_lines, shi_ying[0], shi_ying[1]
+        )
+
+        result = {
+            'ben_gua': ben_gua,
+            'bian_gua': bian_gua,
+            'dong_yao': list(dong),
+            'shi': shi_ying[0],
+            'ying': shi_ying[1],
+            'lines': lines,
+            'bian_lines': bian_lines,
+            'liu_shen': list(god6),
+            'gua_gong_wuxing': gua_gong_wuxing,
+            'date': orig.strftime("%Y-%m-%d %H:%M"),
+            'wuxing_analysis': {
+                'wuxing_count': wuxing_count,
+                'shi_wuxing': shi_wuxing,
+                'yong_shen': yong_shen,
+                'yong_shen_detail': yong_shen_detail,
+            },
+            'ge_ju': ge_ju,
+        }
+
+        # 日月建分析
+        try:
+            from lunar_python import Solar
+            solar = Solar.fromYmdHms(orig.year, orig.month, orig.day, orig.hour, orig.minute, 0)
+            lunar = solar.getLunar()
+            ec = lunar.getEightChar()
+            day_g = ec.getDayGan()
+            day_z = ec.getDayZhi()
+            month_z = ec.getMonthZhi()
+            result['ri_yue_jian'] = self._calc_ri_yue_jian(day_g, day_z, month_z)
+        except Exception:
+            pass
+
+        # 流年太岁分析
+        try:
+            from lunar_python import Solar as _Solar
+            _solar = _Solar.fromYmdHms(orig.year, orig.month, orig.day, orig.hour, orig.minute, 0)
+            _lunar = _solar.getLunar()
+            _year_zhi = _lunar.getYearZhi()
+            _year_gan = _lunar.getYearGan()
+            _tai_sui_wx = self.ZHI_WUXING.get(_year_zhi, '')
+
+            _shi_yao = next((l for l in lines if l.get('is_shi')), {})
+            _shi_dizhi = _shi_yao.get('dizhi', '')
+            _tai_sui_vs_shi = ''
+            if _shi_dizhi and _year_zhi:
+                if _shi_dizhi == _year_zhi:
+                    _tai_sui_vs_shi = '太岁临世爻，年运有靠'
+                elif self._zhi_liuhe(_shi_dizhi) == _year_zhi:
+                    _tai_sui_vs_shi = '世爻与太岁六合，年运顺遂'
+                elif self._zhi_liuchong(_shi_dizhi) == _year_zhi:
+                    _tai_sui_vs_shi = '世爻与太岁六冲，年运多变'
+                else:
+                    _tai_sui_vs_shi = f'太岁{_year_zhi}({_tai_sui_wx})与世爻{_shi_dizhi}无特殊关系'
+
+            _tai_sui_yao_rel = []
+            for _line in lines:
+                _dz = _line.get('dizhi', '')
+                if _dz == _year_zhi:
+                    _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '太岁临爻'})
+                elif self._zhi_liuhe(_dz) == _year_zhi:
+                    _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六合太岁'})
+                elif self._zhi_liuchong(_dz) == _year_zhi:
+                    _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六冲太岁'})
+
+            result['liunian'] = {
+                'year': orig.year,
+                'year_ganzhi': f'{_year_gan}{_year_zhi}',
+                'tai_sui_zhi': _year_zhi,
+                'tai_sui_wuxing': _tai_sui_wx,
+                'tai_sui_vs_shi': _tai_sui_vs_shi,
+                'tai_sui_yao_rel': _tai_sui_yao_rel,
+            }
+        except Exception as e:
+            logger.debug(f"流年分析失败: {e}")
+
+        if hide:
+            result['fu_shen'] = hide
+
+        return result
+
+    @staticmethod
+    def _zhi_liuhe(zhi: str) -> str:
+        """地支六合"""
+        pairs = {'子': '丑', '丑': '子', '寅': '亥', '亥': '寅', '卯': '戌', '戌': '卯',
+                 '辰': '酉', '酉': '辰', '巳': '申', '申': '巳', '午': '未', '未': '午'}
+        return pairs.get(zhi, '')
+
+    @staticmethod
+    def _zhi_liuchong(zhi: str) -> str:
+        """地支六冲"""
+        pairs = {'子': '午', '午': '子', '丑': '未', '未': '丑', '寅': '申', '申': '寅',
+                 '卯': '酉', '酉': '卯', '辰': '戌', '戌': '辰', '巳': '亥', '亥': '巳'}
+        return pairs.get(zhi, '')
+
+    # ─── 自包含引擎（回退）──────────────────────────────
+
+    def _analyze_builtin(self, time: CorrectedTime, gender: int) -> dict:
+        """自包含的梅花易数 + 京房纳甲排盘（无需外部库）"""
+        orig = time.original
 
         # 获取农历信息用于起卦
         try:
             from lunar_python import Solar
-            solar = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute, 0)
+            solar = Solar.fromYmdHms(orig.year, orig.month, orig.day, orig.hour, orig.minute, 0)
             lunar = solar.getLunar()
             year_num = lunar.getYear()
             month_num = lunar.getMonth()
@@ -229,14 +488,15 @@ class LiuYaoEngine(DivinationEngine):
             day_gan = ec.getDayGan()
             day_zhi = ec.getDayZhi()
         except Exception:
-            year_num = dt.year
-            month_num = dt.month
-            day_num = dt.day
+            logger.warning("lunar_python 不可用，使用公历近似起卦")
+            year_num = orig.year
+            month_num = orig.month
+            day_num = orig.day
             day_gan = "甲"
             day_zhi = "子"
 
-        hour_zhi_idx = (dt.hour + 1) // 2 % 12
-        hour_num = hour_zhi_idx + 1  # 子=1, 丑=2...
+        hour_zhi_idx = (orig.hour + 1) // 2 % 12
+        hour_num = hour_zhi_idx + 1
 
         # 1. 梅花易数起卦
         shang_num = abs(year_num) + month_num + day_num
@@ -246,66 +506,106 @@ class LiuYaoEngine(DivinationEngine):
         xia_gua = self._num_to_gua(xia_num)
 
         # 动爻
-        dong_yao = (shang_num + hour_num) % 6
-        if dong_yao == 0:
-            dong_yao = 6
+        dong_yao_pos = (shang_num + hour_num) % 6
+        if dong_yao_pos == 0:
+            dong_yao_pos = 6
 
         # 2. 获取六爻（本卦）
         ben_lines = self._get_hexagram_lines(shang_gua, xia_gua)
 
         # 3. 变卦
-        bian_lines = list(ben_lines)
-        bian_lines[dong_yao - 1] = 1 - bian_lines[dong_yao - 1]
-        bian_shang = self._lines_to_gua(bian_lines[3:6])
-        bian_xia = self._lines_to_gua(bian_lines[0:3])
+        bian_lines_raw = list(ben_lines)
+        bian_lines_raw[dong_yao_pos - 1] = 1 - bian_lines_raw[dong_yao_pos - 1]
+        bian_shang = self._lines_to_gua(bian_lines_raw[3:6])
+        bian_xia = self._lines_to_gua(bian_lines_raw[0:3])
 
         # 4. 卦名
         ben_name = self.GUA64_NAMES.get((shang_gua, xia_gua), f"{shang_gua}上{xia_gua}下")
         bian_name = self.GUA64_NAMES.get((bian_shang, bian_xia), f"{bian_shang}上{bian_xia}下")
 
         # 5. 纳甲装卦
-        yao_list = self._najia_zhuanggua(shang_gua, xia_gua, ben_lines, day_gan, day_zhi)
+        gua_gong_wuxing = self.GUA_GONG_WUXING.get(ben_name, self.GUA_WUXING.get(shang_gua, "金"))
+        yao_list = self._najia_zhuanggua(shang_gua, xia_gua, ben_lines, day_gan, day_zhi, gua_gong_wuxing)
+
+        # 5b. 标记动爻
+        yao_list[dong_yao_pos - 1]['is_dong'] = True
+        orig_yinyang = yao_list[dong_yao_pos - 1]['yinyang']
+        yao_list[dong_yao_pos - 1]['yinyang'] = '阴' if orig_yinyang == '阳' else '阳'
 
         # 6. 世应
         shi_ying = self.SHI_YING_TABLE.get(ben_name, (6, 3))
         shi_pos, ying_pos = shi_ying
+        yao_list[shi_pos - 1]['is_shi'] = True
+        yao_list[ying_pos - 1]['is_ying'] = True
 
-        # 7. 六亲（根据卦宫五行定六亲）
-        gua_gong_wuxing = self.GUA_WUXING.get(shang_gua, "金")  # 以上卦五行为卦宫
-
-        # 8. 六神
+        # 7. 六神
         liu_shen = self.LIU_SHEN.get(day_gan, self.LIU_SHEN["甲"])
 
-        # 9. 变爻纳甲
-        bian_yao_list = self._najia_zhuanggua(bian_shang, bian_xia, bian_lines, day_gan, day_zhi)
+        # 8. 变爻纳甲
+        bian_yao_list = self._najia_zhuanggua(bian_shang, bian_xia, bian_lines_raw, day_gan, day_zhi, gua_gong_wuxing)
+        bian_yao_list[shi_pos - 1]['is_shi'] = True
+        bian_yao_list[ying_pos - 1]['is_ying'] = True
+
+        # 9. 为每行添加 liu_shen
+        for i, yao in enumerate(yao_list):
+            yao['liu_shen'] = liu_shen[i]
+
+        # 构建标准化 lines 输出
+        lines = []
+        for yao in yao_list:
+            lines.append({
+                'liu_qin': yao['liuqin'],
+                'liu_shen': yao.get('liu_shen', ''),
+                'wuxing': yao['wuxing'],
+                'dizhi': yao['zhi'],
+                'gan': yao['gan'],
+                'position': yao['position'],
+                'is_dong': yao['is_dong'],
+                'is_shi': yao['is_shi'],
+                'is_ying': yao['is_ying'],
+            })
+
+        bian_lines = []
+        for yao in bian_yao_list:
+            bian_lines.append({
+                'liu_qin': yao['liuqin'],
+                'wuxing': yao['wuxing'],
+                'dizhi': yao['zhi'],
+                'gan': yao['gan'],
+                'position': yao['position'],
+            })
 
         return {
-            "ben_gua": {
-                "name": ben_name,
-                "shang": shang_gua,
-                "xia": xia_gua,
-                "shang_wuxing": self.GUA_WUXING.get(shang_gua, ""),
-                "xia_wuxing": self.GUA_WUXING.get(xia_gua, ""),
+            'ben_gua': {
+                'name': ben_name,
+                'shang': shang_gua,
+                'xia': xia_gua,
+                'shang_wuxing': self.GUA_WUXING.get(shang_gua, ''),
+                'xia_wuxing': self.GUA_WUXING.get(xia_gua, ''),
             },
-            "bian_gua": {
-                "name": bian_name,
-                "shang": bian_shang,
-                "xia": bian_xia,
+            'bian_gua': {
+                'name': bian_name,
+                'shang': bian_shang,
+                'xia': bian_xia,
             },
-            "dong_yao": dong_yao,
-            "shi": shi_pos,
-            "ying": ying_pos,
-            "lines": yao_list,
-            "bian_lines": bian_yao_list,
-            "liu_shen": liu_shen,
-            "gua_gong_wuxing": gua_gong_wuxing,
-            "date": dt.strftime("%Y-%m-%d %H:%M"),
+            'dong_yao': [dong_yao_pos],
+            'shi': shi_pos,
+            'ying': ying_pos,
+            'lines': lines,
+            'bian_lines': bian_lines,
+            'liu_shen': liu_shen,
+            'gua_gong_wuxing': gua_gong_wuxing,
+            'date': orig.strftime("%Y-%m-%d %H:%M"),
+            'wuxing_analysis': self._builtin_wuxing_analysis(
+                lines, bian_lines, shi_pos, ying_pos, gua_gong_wuxing, [dong_yao_pos]
+            ),
+            'ge_ju': self._identify_ge_ju(
+                ben_name, bian_name, lines, bian_lines, shi_pos, ying_pos
+            ),
+            'ri_yue_jian': self._calc_ri_yue_jian(day_gan, day_zhi, lunar.getMonthZhi() if 'lunar' in dir() else '子'),
         }
 
-    def validate(self, data: dict) -> tuple[bool, Optional[str]]:
-        if not data.get("ben_gua"):
-            return False, "本卦为空"
-        return True, None
+    # ─── 自包含工具方法 ──────────────────────────────────
 
     def _num_to_gua(self, num: int) -> str:
         """数字转八卦（先天数：乾1兑2离3震4巽5坎6艮7坤8/0）"""
@@ -317,29 +617,30 @@ class LiuYaoEngine(DivinationEngine):
 
     def _get_hexagram_lines(self, shang: str, xia: str) -> list:
         """获取六爻二进制（从初爻到上爻）"""
-        xia_lines = self.GUA_LINES[xia]    # 下卦 = 初二三爻
-        shang_lines = self.GUA_LINES[shang]  # 上卦 = 四五六爻
+        xia_lines = self.GUA_LINES[xia]
+        shang_lines = self.GUA_LINES[shang]
         return list(xia_lines) + list(shang_lines)
 
-    def _lines_to_gua(self, three_lines: tuple) -> str:
+    def _lines_to_gua(self, three_lines) -> str:
         """三爻二进制 → 八卦名"""
+        t = tuple(three_lines)
         for name, lines in self.GUA_LINES.items():
-            if lines == tuple(three_lines):
+            if lines == t:
                 return name
         return "乾"
 
     def _najia_zhuanggua(self, shang_gua: str, xia_gua: str,
-                          lines: list, day_gan: str, day_zhi: str) -> list:
+                         lines: list, day_gan: str, day_zhi: str,
+                         gua_gong_wuxing: str = None) -> list:
         """纳甲装卦：为每一爻分配天干、地支、五行、六亲"""
         xia_zhi = self.NAJIA_ZHI.get(xia_gua, (["子", "寅", "辰"], ["午", "申", "戌"]))[0]
         shang_zhi = self.NAJIA_ZHI.get(shang_gua, (["子", "寅", "辰"], ["午", "申", "戌"]))[1]
-        all_zhi = xia_zhi + shang_zhi  # 6个地支
+        all_zhi = xia_zhi + shang_zhi
 
         xia_gan = self.NAJIA.get(xia_gua, ("甲", "壬"))[0]
         shang_gan = self.NAJIA.get(shang_gua, ("甲", "壬"))[1]
 
-        # 卦宫五行（以上卦定宫）
-        gua_wuxing = self.GUA_WUXING.get(shang_gua, "金")
+        gua_wuxing = gua_gong_wuxing or self.GUA_WUXING.get(shang_gua, "金")
 
         yao_list = []
         for i in range(6):
@@ -355,26 +656,300 @@ class LiuYaoEngine(DivinationEngine):
                 "zhi": zhi,
                 "wuxing": yao_wuxing,
                 "liuqin": liuqin,
-                "is_dong": False,  # 后面设置
+                "is_dong": False,
                 "is_shi": False,
                 "is_ying": False,
             })
 
         return yao_list
 
+    def _builtin_wuxing_analysis(self, lines: list, bian_lines: list,
+                                 shi_pos: int, ying_pos: int,
+                                 gua_gong_wuxing: str, dong: list) -> dict:
+        """内置引擎的五行分析摘要（与najia路径输出一致，含详细用神分析）"""
+        wuxing_count = {}
+        for line in lines:
+            wx = line.get('wuxing', '')
+            if wx:
+                wuxing_count[wx] = wuxing_count.get(wx, 0) + 1
+
+        shi_wuxing = ''
+        for line in lines:
+            if line.get('position') == shi_pos:
+                shi_wuxing = line.get('wuxing', '')
+                break
+
+        gua_gong_wx = gua_gong_wuxing or ''
+        yong_shen = ''
+        if shi_wuxing and gua_gong_wx:
+            if shi_wuxing == gua_gong_wx:
+                yong_shen = '世爻与卦宫同五行，自身有力'
+            else:
+                rel = self._calc_liuqin(gua_gong_wx, shi_wuxing)
+                yong_shen = f'世爻为{rel}，{shi_wuxing}生克卦宫{gua_gong_wx}'
+
+        # 详细用神分析
+        yong_shen_detail = self._build_yong_shen_detail(
+            lines, bian_lines, shi_pos, ying_pos, gua_gong_wuxing, dong
+        )
+
+        return {
+            'wuxing_count': wuxing_count,
+            'shi_wuxing': shi_wuxing,
+            'yong_shen': yong_shen,
+            'yong_shen_detail': yong_shen_detail,
+        }
+
+    # ─── 地支冲合关系 ──────────────────────────────────────
+
+    ZHI_CHONG = {
+        "子": "午", "午": "子", "丑": "未", "未": "丑",
+        "寅": "申", "申": "寅", "卯": "酉", "酉": "卯",
+        "辰": "戌", "戌": "辰", "巳": "亥", "亥": "巳",
+    }
+
+    ZHI_HE = {
+        "子": "丑", "丑": "子", "寅": "亥", "亥": "寅",
+        "卯": "戌", "戌": "卯", "辰": "酉", "酉": "辰",
+        "巳": "申", "申": "巳", "午": "未", "未": "午",
+    }
+
     def _calc_liuqin(self, gua_wuxing: str, yao_wuxing: str) -> str:
         """计算六亲"""
-        # 生我者父母，我生者子孙，克我者官鬼，我克者妻财，同我者兄弟
         relations = {
             ("金", "金"): "兄弟", ("金", "木"): "妻财", ("金", "水"): "子孙",
             ("金", "火"): "官鬼", ("金", "土"): "父母",
             ("木", "木"): "兄弟", ("木", "土"): "妻财", ("木", "火"): "子孙",
             ("木", "金"): "官鬼", ("木", "水"): "父母",
-            ("水", "水"): "兄弟", ("水", "火"): "妻财", ("水", "土"): "子孙",
-            ("水", "木"): "官鬼", ("水", "金"): "父母",
-            ("火", "火"): "兄弟", ("火", "金"): "妻财", ("火", "水"): "子孙",
-            ("火", "土"): "官鬼", ("火", "木"): "父母",
-            ("土", "土"): "兄弟", ("土", "水"): "妻财", ("土", "木"): "子孙",
-            ("土", "火"): "官鬼", ("土", "金"): "父母",
+            ("水", "水"): "兄弟", ("水", "火"): "妻财", ("水", "土"): "官鬼",
+            ("水", "木"): "子孙", ("水", "金"): "父母",
+            ("火", "火"): "兄弟", ("火", "金"): "妻财", ("火", "水"): "官鬼",
+            ("火", "土"): "子孙", ("火", "木"): "父母",
+            ("土", "土"): "兄弟", ("土", "水"): "妻财", ("土", "木"): "官鬼",
+            ("土", "火"): "父母", ("土", "金"): "子孙",
         }
         return relations.get((gua_wuxing, yao_wuxing), "兄弟")
+
+    def _get_wuxing_relation(self, wx_a: str, wx_b: str) -> str:
+        """计算两个五行之间的关系（A 对 B）"""
+        SHENG = {'木': '火', '火': '土', '土': '金', '金': '水', '水': '木'}
+        if not wx_a or not wx_b:
+            return '未知'
+        if wx_a == wx_b:
+            return '比和'
+        if SHENG.get(wx_a) == wx_b:
+            return f'{wx_a}生{wx_b}（我生）'
+        if SHENG.get(wx_b) == wx_a:
+            return f'{wx_b}生{wx_a}（生我）'
+        # 克: A克B
+        KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
+        if KE.get(wx_a) == wx_b:
+            return f'{wx_a}克{wx_b}（我克）'
+        if KE.get(wx_b) == wx_a:
+            return f'{wx_b}克{wx_a}（克我）'
+        return '未知'
+
+    def _get_dong_yao_meaning(self, count: int) -> str:
+        """解释动爻数量的含义"""
+        meanings = {
+            0: '无动爻，卦象静止，事情稳定不变',
+            1: '一爻动，事有专主，变化明确，易断',
+            2: '二爻动，事情有两方面变化，需看动爻关系',
+            3: '三爻动，事情变化较多，以中间动爻为主',
+            4: '四爻动，变化纷繁，以不变之爻为主断',
+            5: '五爻动，以唯一静爻为主断',
+            6: '六爻全动，事情剧变，需看变卦整体',
+        }
+        return meanings.get(count, '动爻异常')
+
+    def _identify_ge_ju(self, ben_name: str, bian_name: str,
+                        lines: list, bian_lines: list,
+                        shi_pos: int, ying_pos: int) -> list:
+        """
+        识别六爻格局。
+
+        返回格局列表，可能包含：
+        - 伏吟：变卦与本卦卦码完全相同
+        - 反吟：变卦与本卦卦码完全相反
+        - 六冲：上卦与下卦地支形成六冲关系
+        - 六合：上卦与下卦地支形成六合关系
+        - 世应冲：世爻与应爻地支相冲
+        - 世应合：世爻与应爻地支相合
+        """
+        ge_ju = []
+
+        # 1. 伏吟/反吟（通过比较本卦和变卦 lines 的爻码）
+        if lines and bian_lines and len(lines) == 6 and len(bian_lines) == 6:
+            # 比较阴阳
+            ben_yinyang = []
+            bian_yinyang = []
+            for i in range(6):
+                ben_wx = lines[i].get('wuxing', '')
+                bian_wx = bian_lines[i].get('wuxing', '') if i < len(bian_lines) else ''
+                ben_zhi = lines[i].get('dizhi', '')
+                bian_zhi = bian_lines[i].get('dizhi', '') if i < len(bian_lines) else ''
+                ben_yinyang.append((ben_wx, ben_zhi))
+                bian_yinyang.append((bian_wx, bian_zhi))
+
+            # 伏吟：所有爻的地支五行相同
+            all_same = all(
+                ben_yinyang[i] == bian_yinyang[i]
+                for i in range(6)
+            )
+            if all_same:
+                ge_ju.append('伏吟')
+
+            # 反吟：所有爻的地支五行都相冲
+            all_chong = all(
+                self.ZHI_CHONG.get(ben_yinyang[i][1]) == bian_yinyang[i][1]
+                for i in range(6)
+                if ben_yinyang[i][1] and bian_yinyang[i][1]
+            )
+            if all_chong:
+                ge_ju.append('反吟')
+
+        # 2. 六冲/六合（检查上卦与下卦的地支配对）
+        if lines and len(lines) == 6:
+            # 对应位置：初爻-四爻, 二爻-五爻, 三爻-上爻
+            chong_count = 0
+            he_count = 0
+            for i in range(3):
+                zhi_below = lines[i].get('dizhi', '')
+                zhi_above = lines[i + 3].get('dizhi', '')
+                if zhi_below and zhi_above:
+                    if self.ZHI_CHONG.get(zhi_below) == zhi_above:
+                        chong_count += 1
+                    if self.ZHI_HE.get(zhi_below) == zhi_above:
+                        he_count += 1
+
+            if chong_count == 3:
+                ge_ju.append('六冲')
+            elif he_count == 3:
+                ge_ju.append('六合')
+
+        # 3. 世应冲/合
+        if lines and len(lines) == 6:
+            shi_zhi = lines[shi_pos - 1].get('dizhi', '') if 1 <= shi_pos <= 6 else ''
+            ying_zhi = lines[ying_pos - 1].get('dizhi', '') if 1 <= ying_pos <= 6 else ''
+            if shi_zhi and ying_zhi:
+                if self.ZHI_CHONG.get(shi_zhi) == ying_zhi:
+                    ge_ju.append('世应冲')
+                elif self.ZHI_HE.get(shi_zhi) == ying_zhi:
+                    ge_ju.append('世应合')
+
+        return ge_ju if ge_ju else ['普通']
+
+    def _build_yong_shen_detail(self, lines: list, bian_lines: list,
+                                shi_pos: int, ying_pos: int,
+                                gua_gong_wuxing: str, dong: list) -> dict:
+        """
+        构建详细的用神分析。
+
+        包含世爻六亲、世爻与卦宫五行关系、动爻分析、
+        变卦与本卦宫五行关系、世应距离与五行关系。
+        """
+        # 世爻信息
+        shi_yao = next((l for l in lines if l.get('position') == shi_pos), {})
+        shi_wuxing = shi_yao.get('wuxing', '')
+        shi_liu_qin = shi_yao.get('liu_qin', '')
+        shi_dizhi = shi_yao.get('dizhi', '')
+
+        # 应爻信息
+        ying_yao = next((l for l in lines if l.get('position') == ying_pos), {})
+        ying_wuxing = ying_yao.get('wuxing', '')
+        ying_dizhi = ying_yao.get('dizhi', '')
+
+        # 世爻与卦宫五行关系
+        shi_yao_wuxing_relation = self._get_wuxing_relation(shi_wuxing, gua_gong_wuxing)
+
+        # 动爻分析
+        dong_yao_count = len(dong) if dong else 0
+        dong_yao_meaning = self._get_dong_yao_meaning(dong_yao_count)
+
+        # 世应距离
+        shi_ying_distance = abs(shi_pos - ying_pos)
+        shi_ying_relation = self._get_wuxing_relation(shi_wuxing, ying_wuxing)
+
+        # 变卦宫五行关系
+        bian_gua_relation = ''
+        if bian_lines and len(bian_lines) >= 6:
+            # 变卦的宫五行需要从 GUA_GONG_WUXING 查找
+            # 这里用变卦的世爻五行来近似分析
+            bian_shi_yao = next((l for l in bian_lines if l.get('position') == shi_pos), {})
+            bian_shi_wx = bian_shi_yao.get('wuxing', '')
+            if bian_shi_wx and shi_wuxing:
+                bian_gua_relation = self._get_wuxing_relation(shi_wuxing, bian_shi_wx)
+
+        return {
+            'shi_yao_liu_qin': shi_liu_qin,
+            'shi_yao_wuxing': shi_wuxing,
+            'shi_yao_dizhi': shi_dizhi,
+            'shi_yao_wuxing_relation': shi_yao_wuxing_relation,
+            'dong_yao_count': dong_yao_count,
+            'dong_yao_meaning': dong_yao_meaning,
+            'shi_ying_distance': shi_ying_distance,
+            'shi_ying_relation': shi_ying_relation,
+            'bian_gua_relation': bian_gua_relation,
+        }
+
+    # ─── 验证 ────────────────────────────────────────────
+
+
+    def _calc_ri_yue_jian(self, day_gan: str, day_zhi: str, month_zhi: str) -> dict:
+        """计算日建月建对各爻的影响"""
+        ri_jian = day_zhi  # 日建 = 日支
+        yue_jian = month_zhi  # 月建 = 月支
+        
+        # 日建月建五行
+        ri_wx = self.ZHI_WUXING.get(ri_jian, '')
+        yue_wx = self.ZHI_WUXING.get(yue_jian, '')
+        
+        # 旺衰关系分析
+        SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
+        KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
+        SHENG_REV = {v:k for k,v in SHENG.items()}
+        KE_REV = {v:k for k,v in KE.items()}
+
+        def _wx_relation(wx: str, ref_wx: str) -> str:
+            if not wx or not ref_wx:
+                return '无'
+            if wx == ref_wx:
+                return '旺（比和）'
+            if SHENG.get(ref_wx) == wx:
+                return '相（被生）'
+            if SHENG_REV.get(ref_wx) == wx:
+                return '休（生出）'
+            if KE.get(ref_wx) == wx:
+                return '囚（被克）'
+            if KE_REV.get(ref_wx) == wx:
+                return '死（克出）'
+            return '无'
+
+        # 为每个五行计算日建/月建旺衰
+        all_wx = ['木','火','土','金','水']
+        ri_wangshuai = {wx: _wx_relation(wx, ri_wx) for wx in all_wx}
+        yue_wangshuai = {wx: _wx_relation(wx, yue_wx) for wx in all_wx}
+
+        return {
+            'ri_jian': ri_jian,
+            'ri_jian_wuxing': ri_wx,
+            'yue_jian': yue_jian,
+            'yue_jian_wuxing': yue_wx,
+            'day_gan': day_gan,
+            'day_shishen': self._calc_liuqin(ri_wx, self.GAN_WUXING.get(day_gan, '')),
+            'ri_wangshuai': ri_wangshuai,
+            'yue_wangshuai': yue_wangshuai,
+        }
+
+    def validate(self, data: dict) -> tuple[bool, Optional[str]]:
+        """验证六爻排盘结果"""
+        if "error" in data:
+            return False, data["error"]
+        if not data.get("ben_gua"):
+            return False, "本卦为空"
+        lines = data.get("lines", [])
+        if len(lines) != 6:
+            return False, f"爻数不为6（实际{len(lines)}）"
+        if data.get("shi") is None or data.get("ying") is None:
+            return False, "世应位置缺失"
+        return True, None

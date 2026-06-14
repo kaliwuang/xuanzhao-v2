@@ -1,28 +1,137 @@
 #!/usr/bin/env python3
 """
-玄照 v2.0 - 紫微斗数引擎（标准安星版）
+玄照 v2.0 - 紫微斗数引擎（iztro-py后端版）
 
-基于紫微斗数全书标准排盘算法实现。
-支持：命宫、身宫、五行局、十四主星、六吉星、四化、十二宫。
+基于 iztro-py 库实现标准紫微斗数排盘。
+iztro-py 是经过验证的开源紫微斗数库，安星准确。
 
-安星流程：
-1. 定命宫（寅起正月，顺数生月，逆数生时）
-2. 定身宫（寅起正月，顺数生月，顺数生时）
-3. 定五行局（命宫干支纳音）
-4. 起紫微（局数除日数，商数定宫位）
-5. 安紫微星系（逆布）：紫微、天机、空、太阳、武曲、天同、空、廉贞
-6. 安天府星系（顺布）：天府、太阴、贪狼、巨门、天相、天梁、七杀、破军
-7. 安辅星：禄存、擎羊、陀罗、天魁、天钺、左辅、右弼、文昌、文曲
-8. 安四化
-9. 排十二宫
+支持：命宫、身宫、五行局、十四主星、六吉六煞、杂耀、四化、十二宫、长生十二博士等。
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from typing import Optional, List, Dict
+from typing import Optional, Dict, List
+from datetime import datetime
+
+
+# 地支英文→中文映射
+BRANCH_MAP = {
+    'ziEarthly': '子', 'chouEarthly': '丑', 'yinEarthly': '寅', 'maoEarthly': '卯',
+    'chenEarthly': '辰', 'siEarthly': '巳', 'wuEarthly': '午', 'weiEarthly': '未',
+    'shenEarthly': '申', 'youEarthly': '酉', 'xuEarthly': '戌', 'haiEarthly': '亥',
+}
+
+# 天干英文→中文映射
+STEM_MAP = {
+    'jiaHeavenly': '甲', 'yiHeavenly': '乙', 'bingHeavenly': '丙', 'dingHeavenly': '丁',
+    'wuHeavenly': '戊', 'jiHeavenly': '己', 'gengHeavenly': '庚', 'xinHeavenly': '辛',
+    'renHeavenly': '壬', 'guiHeavenly': '癸',
+}
+
+# 宫位英文→中文映射
+PALACE_NAME_MAP = {
+    'soulPalace': '福德', 'spiritPalace': '命宫',
+    'siblingsPalace': '兄弟', 'spousePalace': '夫妻',
+    'childrenPalace': '子女', 'wealthPalace': '财帛',
+    'healthPalace': '疾厄', 'surfacePalace': '迁移',
+    'friendsPalace': '交友', 'careerPalace': '官禄',
+    'propertyPalace': '田宅', 'fortunePalace': '福德',
+    'parentsPalace': '父母',
+}
+
+# 星曜英文→中文映射（主星）
+MAJOR_STAR_MAP = {
+    'ziweiMaj': '紫微', 'tianjiMaj': '天机', 'taiyangMaj': '太阳',
+    'wuquMaj': '武曲', 'tiantongMaj': '天同', 'lianzhenMaj': '廉贞',
+    'tianfuMaj': '天府', 'taiyinMaj': '太阴', 'tanlangMaj': '贪狼',
+    'jumenMaj': '巨门', 'tianxiangMaj': '天相', 'tianliangMaj': '天梁',
+    'qishaMaj': '七杀', 'pojunMaj': '破军',
+}
+
+# 辅星英文→中文映射
+MINOR_STAR_MAP = {
+    'lucunMin': '禄存', 'qingyangMin': '擎羊', 'tuoluoMin': '陀罗',
+    'tiankuiMin': '天魁', 'tianyueMin': '天钺',
+    'zuofuMin': '左辅', 'youbiMin': '右弼',
+    'wenchangMin': '文昌', 'wenquMin': '文曲',
+    'huoxingMin': '火星', 'lingxingMin': '铃星',
+    'dikongMin': '地空', 'dijieMin': '地劫',
+    'tianmaMin': '天马',
+}
+
+# 杂耀英文→中文映射
+ADJECTIVE_STAR_MAP = {
+    'tianxi': '天喜', 'taifu': '台辅', 'jieshen': '解神',
+    'tianxu': '天虚', 'tianku': '天哭', 'longchi': '龙池',
+    'fengge': '凤阁', 'huagai': '华盖', 'tianyao': '天姚',
+    'tiande': '天德', 'yuede': '月德', 'tiancai': '天才',
+    'tianshou': '天寿', 'santai': '三台', 'bazuo': '八座',
+    'enguang': '恩光', 'tiangui': '天贵', 'tianwu': '天巫',
+    'tianshi': '天史', 'posui': '破碎', 'guchen': '孤辰',
+    'guasu': '寡宿', 'feilian': '蜚廉', 'tianxing': '天刑',
+    'tianshang': '天伤', 'hongluan': '红鸾', 'xianchi': '咸池',
+    'tianchu': '天厨', 'jielu': '截路', 'kongwang': '空亡',
+    'xunkong': '旬空', 'fenggao': '封诰', 'nianjie': '年解',
+    'yinsha': '阴煞',    'tianfuAdj': '天福', 'tiankong': '天空',
+    'tianguan': '天官', 'tianyue': '天月',
+}
+
+# 亮度映射
+BRIGHTNESS_MAP = {
+    '庙': '庙', '旺': '旺', '得': '得', '利': '利', '平': '平',
+    '不': '不', '陷': '陷',
+}
+
+# 天干四化表（完整版，用于计算自化）
+# {天干: {禄星, 权星, 科星, 忌星}}
+TIAN_GAN_SIHUA = {
+    '甲': {'禄': '廉贞', '权': '破军', '科': '武曲', '忌': '太阳'},
+    '乙': {'禄': '天机', '权': '天梁', '科': '紫微', '忌': '太阴'},
+    '丙': {'禄': '天同', '权': '天机', '科': '文昌', '忌': '廉贞'},
+    '丁': {'禄': '太阴', '权': '天同', '科': '天机', '忌': '巨门'},
+    '戊': {'禄': '贪狼', '权': '太阴', '科': '右弼', '忌': '天机'},
+    '己': {'禄': '武曲', '权': '贪狼', '科': '天梁', '忌': '文曲'},
+    '庚': {'禄': '太阳', '权': '武曲', '科': '太阴', '忌': '天同'},
+    '辛': {'禄': '巨门', '权': '太阳', '科': '文曲', '忌': '文昌'},
+    '壬': {'禄': '天梁', '权': '紫微', '科': '左辅', '忌': '武曲'},
+    '癸': {'禄': '破军', '权': '巨门', '科': '太阴', '忌': '贪狼'},
+}
+
+# 天干英文→中文映射（简化版，用于四化查表）
+STEM_EN_TO_CN = {
+    'jiaHeavenly': '甲', 'yiHeavenly': '乙', 'bingHeavenly': '丙', 'dingHeavenly': '丁',
+    'wuHeavenly': '戊', 'jiHeavenly': '己', 'gengHeavenly': '庚', 'xinHeavenly': '辛',
+    'renHeavenly': '壬', 'guiHeavenly': '癸',
+}
+
+
+def _cn_branch(en: str) -> str:
+    """英文地支→中文"""
+    return BRANCH_MAP.get(en, en)
+
+
+def _cn_stem(en: str) -> str:
+    """英文天干→中文"""
+    return STEM_MAP.get(en, en)
+
+
+def _cn_palace_name(en: str) -> str:
+    """英文宫名→中文"""
+    return PALACE_NAME_MAP.get(en, en)
+
+
+def _cn_star(en: str, star_type: str = 'major') -> str:
+    """英文星名→中文"""
+    if star_type == 'major':
+        return MAJOR_STAR_MAP.get(en, en)
+    elif star_type == 'minor':
+        return MINOR_STAR_MAP.get(en, en)
+    elif star_type == 'adjective':
+        return ADJECTIVE_STAR_MAP.get(en, en)
+    return en
 
 
 class ZiWeiEngine(DivinationEngine):
-    """紫微斗数引擎"""
+    """紫微斗数引擎（iztro-py后端）"""
 
     @property
     def name(self) -> str:
@@ -30,266 +139,265 @@ class ZiWeiEngine(DivinationEngine):
 
     @property
     def name_en(self) -> str:
-        return "ZiWei"
+        return "ziwei"
 
     @property
     def priority(self) -> int:
         return 2
 
-    # 十二宫名称（固定逆时针顺序）
-    PALACES = ["命宫", "兄弟", "夫妻", "子女", "财帛", "疾厄",
-               "迁移", "奴仆", "官禄", "田宅", "福德", "父母"]
-
-    # 地支
-    ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
-
-    # 天干
-    GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-
-    # 五虎遁月（寅月天干）
-    WUHU_MONTH = {
-        "甲": "丙", "己": "丙",
-        "乙": "戊", "庚": "戊",
-        "丙": "庚", "辛": "庚",
-        "丁": "壬", "壬": "壬",
-        "戊": "甲", "癸": "甲",
-    }
-
-    # 六十甲子纳音五行局
-    JU_MAP = {
-        # 水二局
-        ("丙", "子"): ("水", 2), ("丁", "丑"): ("水", 2),
-        ("甲", "子"): ("水", 2), ("乙", "丑"): ("水", 2),
-        ("壬", "辰"): ("水", 2), ("癸", "巳"): ("水", 2),
-        ("庚", "辰"): ("水", 2), ("辛", "巳"): ("水", 2),
-        ("戊", "午"): ("水", 2), ("己", "未"): ("水", 2),
-        ("丙", "午"): ("水", 2), ("丁", "未"): ("水", 2),
-        # 木三局
-        ("壬", "寅"): ("木", 3), ("癸", "卯"): ("木", 3),
-        ("庚", "寅"): ("木", 3), ("辛", "卯"): ("木", 3),
-        ("戊", "辰"): ("木", 3), ("己", "巳"): ("木", 3),
-        ("丙", "辰"): ("木", 3), ("丁", "巳"): ("木", 3),
-        ("甲", "寅"): ("木", 3), ("乙", "卯"): ("木", 3),
-        # 金四局
-        ("壬", "申"): ("金", 4), ("癸", "酉"): ("金", 4),
-        ("庚", "申"): ("金", 4), ("辛", "酉"): ("金", 4),
-        ("甲", "辰"): ("金", 4), ("乙", "巳"): ("金", 4),
-        ("丙", "申"): ("金", 4), ("丁", "酉"): ("金", 4),
-        # 土五局
-        ("甲", "午"): ("土", 5), ("乙", "未"): ("土", 5),
-        ("丙", "戌"): ("土", 5), ("丁", "亥"): ("土", 5),
-        ("戊", "申"): ("土", 5), ("己", "酉"): ("土", 5),
-        ("庚", "戌"): ("土", 5), ("辛", "亥"): ("土", 5),
-        ("壬", "午"): ("土", 5), ("癸", "未"): ("土", 5),
-        # 火六局
-        ("戊", "子"): ("火", 6), ("己", "丑"): ("火", 6),
-        ("丙", "寅"): ("火", 6), ("丁", "卯"): ("火", 6),
-        ("甲", "戌"): ("火", 6), ("乙", "亥"): ("火", 6),
-        ("壬", "子"): ("火", 6), ("癸", "丑"): ("火", 6),
-        ("庚", "子"): ("火", 6), ("辛", "丑"): ("火", 6),
-    }
-
-    # 四化表
-    SIHUA_TABLE = {
-        "甲": {"禄": "廉贞", "权": "破军", "科": "武曲", "忌": "太阳"},
-        "乙": {"禄": "天机", "权": "天梁", "科": "紫微", "忌": "太阴"},
-        "丙": {"禄": "天同", "权": "天机", "科": "文昌", "忌": "廉贞"},
-        "丁": {"禄": "太阴", "权": "天同", "科": "天机", "忌": "巨门"},
-        "戊": {"禄": "贪狼", "权": "太阴", "科": "右弼", "忌": "天机"},
-        "己": {"禄": "武曲", "权": "贪狼", "科": "天梁", "忌": "文曲"},
-        "庚": {"禄": "太阳", "权": "武曲", "科": "太阴", "忌": "天同"},
-        "辛": {"禄": "巨门", "权": "太阳", "科": "文曲", "忌": "文昌"},
-        "壬": {"禄": "天梁", "权": "紫微", "科": "左辅", "忌": "武曲"},
-        "癸": {"禄": "破军", "权": "巨门", "科": "太阴", "忌": "贪狼"},
-    }
-
-    # 禄存安宫（由生年天干定）
-    LU_CUN = {
-        "甲": "寅", "乙": "卯", "丙": "巳", "丁": "午",
-        "戊": "巳", "己": "午", "庚": "申", "辛": "酉",
-        "壬": "亥", "癸": "子",
-    }
-
-    # 天魁安宫
-    TIAN_KUI = {
-        "甲": "丑", "乙": "子", "丙": "亥", "丁": "酉",
-        "戊": "丑", "己": "子", "庚": "丑", "辛": "午",
-        "壬": "卯", "癸": "卯",
-    }
-
-    # 天钺安宫
-    TIAN_YUE = {
-        "甲": "未", "乙": "申", "丙": "酉", "丁": "亥",
-        "戊": "未", "己": "申", "庚": "未", "辛": "寅",
-        "壬": "巳", "癸": "巳",
-    }
-
-    def __init__(self):
-        self._available = True
-
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        dt = time.true_solar
-        hour = dt.hour
+        # 用原始出生时间（时辰取决于出生时间，非真太阳时）
+        orig = time.original
+        hour = orig.hour
 
-        from lunar_python import Solar
-        solar = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute, 0)
-        lunar = solar.getLunar()
-        year_gan = lunar.getYearGan()
-        lunar_month = lunar.getMonth()
-        lunar_day = lunar.getDay()
+        # 计算时辰索引（iztro格式：0=早子,1=丑,...,11=亥,12=晚子）
+        # ⚠️ hour=23 是晚子时，必须返回12而非0
+        if hour == 23:
+            time_index = 12  # 晚子时
+        else:
+            time_index = (hour + 1) // 2 % 12
 
-        # 1. 定命宫
-        yin_idx = 2
-        shi_idx = ((hour + 1) // 2) % 12
-        ming_idx = (yin_idx + lunar_month - 1 - shi_idx) % 12
-        ming_gong = self.ZHI[ming_idx]
+        gender_str = '男' if gender == 1 else '女'
 
-        # 2. 定身宫
-        shen_idx = (yin_idx + lunar_month - 1 + shi_idx) % 12
-        shen_gong = self.ZHI[shen_idx]
+        try:
+            from iztro_py.astro import astro
+            result = astro.by_solar(
+                f'{orig.year}-{orig.month:02d}-{orig.day:02d}',
+                time_index,
+                gender_str
+            )
+        except Exception as e:
+            return {"error": f"iztro排盘失败: {str(e)}"}
 
-        # 3. 定命宫天干（五虎遁月 + 顺推）
-        yin_gan = self.WUHU_MONTH.get(year_gan, "丙")
-        yin_gan_idx = self.GAN.index(yin_gan)
-        steps = (ming_idx - yin_idx) % 12
-        ming_gan = self.GAN[(yin_gan_idx + steps) % 10]
+        # 转换为玄照格式
+        return self._convert_result(result, gender_str, orig, time_index)
 
-        # 4. 定五行局
-        ming_ganzhi = ming_gan + ming_gong
-        wuxing_ju = self._get_wuxing_ju(ming_ganzhi)
+    def _convert_result(self, iztro_result, gender_str: str, birth_dt=None, time_index: int = 6) -> dict:
+        """将iztro结果转换为玄照API格式（文墨天机专业版级别）"""
+        r = iztro_result
 
-        # 5. 起紫微星（返回地支索引）
-        ziwei_zhi_idx = self._place_ziwei(wuxing_ju[1], lunar_day)
+        # 基础信息
+        ming_gong_branch = _cn_branch(r.earthly_branch_of_soul_palace)
+        shen_gong_branch = _cn_branch(r.earthly_branch_of_body_palace)
 
-        # 6. 安十四主星（返回 {星名: 地支索引}）
-        star_zhi = self._place_main_stars(ziwei_zhi_idx)
+        # 五行局
+        wuxing_ju_str = r.five_elements_class  # 如 "木三局"
+        CN_DIGITS = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9}
+        wuxing = wuxing_ju_str[0] if wuxing_ju_str else "木"
+        ju_shu = CN_DIGITS.get(wuxing_ju_str[1], 6) if len(wuxing_ju_str) > 1 else 6
 
-        # 7. 安辅星
-        aux_stars = self._place_auxiliary_stars(year_gan, lunar_month, shi_idx, star_zhi)
-        star_zhi.update(aux_stars)
+        # 起运年龄（五行局→起运虚岁）
+        JU_START_AGE = {1: 2, 2: 4, 3: 3, 4: 1, 5: 5, 6: 6}
+        start_age = JU_START_AGE.get(ju_shu, 6)
 
-        # 8. 安四化
-        sihua = self.SIHUA_TABLE.get(year_gan, {"禄": "", "权": "", "科": "", "忌": ""})
+        # 四柱
+        ganzhi = r.chinese_date.split()  # "乙酉 壬午 甲子 庚午"
 
-        # 9. 排十二宫（地支映射到宫名）
-        palaces = self._arrange_palaces(ming_idx, star_zhi)
+        # 构建星曜→宫位映射（用于自化计算）
+        star_in_palace = {}  # {星名中文: 宫位index}
+        for p in r.palaces:
+            for s in p.major_stars:
+                star_in_palace[_cn_star(s.name, 'major')] = p.index
+            for s in p.minor_stars:
+                star_in_palace[_cn_star(s.name, 'minor')] = p.index
 
-        # 生成 {星名: 宫名} 映射
+        # 排十二宫
+        palaces = []
         star_placements = {}
-        for star, zhi in star_zhi.items():
-            for p in palaces:
-                if p["zhi"] == self.ZHI[zhi]:
-                    star_placements[star] = p["name"]
-                    break
+
+        for p in r.palaces:
+            palace_name = _cn_palace_name(p.name)
+            branch = _cn_branch(p.earthly_branch)
+            stem = _cn_stem(p.heavenly_stem)
+            stem_cn = STEM_EN_TO_CN.get(p.heavenly_stem, '')
+
+            # 主星
+            major_stars = []
+            for s in p.major_stars:
+                star_cn = _cn_star(s.name, 'major')
+                brightness = BRIGHTNESS_MAP.get(s.brightness, s.brightness) if s.brightness else ''
+                mutagen = s.mutagen or ''
+                major_stars.append({
+                    'name': star_cn,
+                    'brightness': brightness,
+                    'mutagen': mutagen,
+                })
+                star_placements[star_cn] = palace_name
+
+            # 辅星（完整列表，含亮度）
+            minor_stars = []
+            for s in p.minor_stars:
+                star_cn = _cn_star(s.name, 'minor')
+                minor_stars.append({
+                    'name': star_cn,
+                    'brightness': BRIGHTNESS_MAP.get(s.brightness, s.brightness) if s.brightness else '',
+                    'mutagen': s.mutagen or '',
+                })
+                star_placements[star_cn] = palace_name
+
+            # 杂耀
+            adj_stars = []
+            for s in p.adjective_stars:
+                star_cn = _cn_star(s.name, 'adjective')
+                adj_stars.append({'name': star_cn})
+                star_placements[star_cn] = palace_name
+
+            # 大限信息（每个宫位自身的大限数据）
+            dai_xian_palace = {}
+            if p.decadal:
+                dx_range = p.decadal.range  # (start_age, end_age)
+                dx_stem_cn = STEM_EN_TO_CN.get(p.decadal.heavenly_stem, '')
+                dx_branch_cn = _cn_branch(p.decadal.earthly_branch)
+                dai_xian_palace = {
+                    'start_age': dx_range[0] if dx_range else 0,
+                    'end_age': dx_range[1] if dx_range else 0,
+                    'ganzhi': f'{dx_stem_cn}{dx_branch_cn}',
+                    'stem': dx_stem_cn,
+                    'branch': dx_branch_cn,
+                }
+
+            # 该宫位所有大限年龄列表（虚岁，每个年龄对应一次大限进入此宫）
+            ages = p.ages if hasattr(p, 'ages') and p.ages else []
+
+            # 自化计算：该宫天干引发的四化，是否影响到同宫的星
+            self_hua = []
+            if stem_cn and stem_cn in TIAN_GAN_SIHUA:
+                palace_sihua = TIAN_GAN_SIHUA[stem_cn]
+                palace_star_names = set()
+                for s in p.major_stars:
+                    palace_star_names.add(_cn_star(s.name, 'major'))
+                for s in p.minor_stars:
+                    palace_star_names.add(_cn_star(s.name, 'minor'))
+                for hua_type, star_name in palace_sihua.items():
+                    if star_name in palace_star_names:
+                        self_hua.append({'hua': hua_type, 'star': star_name})
+
+            palaces.append({
+                'name': palace_name,
+                'zhi': branch,
+                'stem': stem,
+                'is_body_palace': p.is_body_palace,
+                'is_original_palace': p.is_original_palace if hasattr(p, 'is_original_palace') else False,
+                'major_stars': major_stars,
+                'minor_stars': minor_stars,
+                'adjective_stars': adj_stars,
+                # 长生十二神
+                'changsheng': p.changsheng12 if hasattr(p, 'changsheng12') else '',
+                # 博士十二神
+                'boshi': p.boshi12 if hasattr(p, 'boshi12') else '',
+                # 将前十二神
+                'jiangqian': p.jiangqian12 if hasattr(p, 'jiangqian12') else '',
+                # 岁前十二神
+                'suiqian': p.suiqian12 if hasattr(p, 'suiqian12') else '',
+                # 大限标注（该宫对应的大限干支+年龄范围）
+                'dai_xian': dai_xian_palace,
+                # 大限年龄列表（该宫被哪些虚岁大限所入）
+                'dai_xian_ages': ages,
+                # 自化
+                'self_hua': self_hua,
+            })
+
+        # 年干四化（生年四化）
+        sihua = {}
+        soul_star = _cn_star(r.soul, 'major') if r.soul else ''
+        body_star = _cn_star(r.body, 'major') if r.body else ''
+
+        for p in r.palaces:
+            for s in p.major_stars:
+                if s.mutagen:
+                    mutagen_map = {'禄': '禄', '权': '权', '科': '科', '忌': '忌'}
+                    if s.mutagen in mutagen_map:
+                        sihua[mutagen_map[s.mutagen]] = _cn_star(s.name, 'major')
+
+        # 自化汇总（哪些宫位有自化禄/权/科/忌）
+        self_hua_map = {'禄': [], '权': [], '科': [], '忌': []}
+        for pal in palaces:
+            for sh in pal['self_hua']:
+                self_hua_map[sh['hua']].append({
+                    'palace': pal['name'],
+                    'star': sh['star'],
+                })
+
+        # 大限完整序列（保留原有逻辑用于dai_xian顶层字段）
+        dai_xian = []
+        try:
+            current_year = datetime.now().year
+            birth_year = birth_dt.year if birth_dt else datetime.now().year
+
+            seen_palaces = set()
+            for test_age in range(start_age, 100, 10):
+                test_year = birth_year + test_age - 1  # 虚岁
+                try:
+                    h = r.horoscope(f'{test_year}-{birth_dt.month:02d}-{birth_dt.day:02d}', time_index)
+                    dx = h.decadal
+                    stem_en = dx.heavenly_stem.replace('Heavenly', '')
+                    branch_en = dx.earthly_branch.replace('Earthly', '')
+                    STEM_MAP_LOCAL = {'jia':'甲','yi':'乙','bing':'丙','ding':'丁','wu':'戊','ji':'己','geng':'庚','xin':'辛','ren':'壬','gui':'癸'}
+                    BRANCH_MAP_LOCAL = {'zi':'子','chou':'丑','yin':'寅','mao':'卯','chen':'辰','si':'巳','wu':'午','wei':'未','shen':'申','you':'酉','xu':'戌','hai':'亥'}
+                    s = STEM_MAP_LOCAL.get(stem_en, stem_en)
+                    b = BRANCH_MAP_LOCAL.get(branch_en, branch_en)
+                    gz = f'{s}{b}'
+                    if gz not in seen_palaces:
+                        seen_palaces.add(gz)
+                        pal_name = ''
+                        if dx.palace_names:
+                            pal_name = PALACE_NAME_MAP.get(dx.palace_names[0], dx.palace_names[0])
+
+                        # 大限四化
+                        dx_sihua = {}
+                        if dx.mutagen:
+                            MUTAGEN_LABELS = ['禄', '权', '科', '忌']
+                            for i, star_en in enumerate(dx.mutagen):
+                                if i < 4:
+                                    star_cn = _cn_star(star_en, 'major') if star_en in MAJOR_STAR_MAP else _cn_star(star_en, 'minor')
+                                    dx_sihua[MUTAGEN_LABELS[i]] = star_cn
+
+                        dai_xian.append({
+                            'start_age': test_age,
+                            'end_age': test_age + 9,
+                            'ganzhi': gz,
+                            'palace_name': pal_name,
+                            'palace_index': dx.index,
+                            'sihua': dx_sihua,
+                        })
+                except Exception:
+                    pass
+        except Exception as e:
+            dai_xian = []
+
+        # 子斗（斗君）计算
+        # 斗君 = 寅宫起正月，逆数到出生月份，再从该月所到之地支起子时，顺数到出生时辰
+        # 简化公式：斗君地支 = 寅 + (birth_month - 1) + time_index (模12)
+        zi_dou = ''
+        if birth_dt:
+            BRANCH_ORDER = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
+            # 寅为起点(索引2)，正月=寅
+            dou_jun_idx = (2 + (birth_dt.month - 1) + time_index) % 12
+            zi_dou = BRANCH_ORDER[dou_jun_idx]
 
         return {
-            "ming_gong": ming_gong,
-            "shen_gong": shen_gong,
-            "ming_ganzhi": ming_ganzhi,
-            "wuxing_ju": {"wuxing": wuxing_ju[0], "ju_shu": wuxing_ju[1]},
-            "ziwei_zhi": self.ZHI[ziwei_zhi_idx],
-            "star_placements": star_placements,
-            "sihua": sihua,
-            "palaces": palaces,
-            "gender": "男" if gender == 1 else "女",
+            'ming_gong': ming_gong_branch,
+            'shen_gong': shen_gong_branch,
+            'soul_star': soul_star,
+            'body_star': body_star,
+            'wuxing_ju': {'wuxing': wuxing, 'ju_shu': ju_shu},
+            'start_age': start_age,
+            'palaces': palaces,
+            'star_placements': star_placements,
+            'sihua': sihua,
+            'self_hua_map': self_hua_map,
+            'gender': gender_str,
+            'lunar_date': r.lunar_date if hasattr(r, 'lunar_date') else '',
+            'chinese_date': r.chinese_date if hasattr(r, 'chinese_date') else '',
+            'zodiac': r.zodiac if hasattr(r, 'zodiac') else '',
+            'dai_xian': dai_xian,
+            'nominal_age': datetime.now().year - birth_dt.year + 1 if birth_dt else 0,
+            'zi_dou': zi_dou,
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
-        if not data.get("ming_gong"):
+        if not data.get('ming_gong'):
             return False, "命宫为空"
-        if not data.get("star_placements"):
-            return False, "主星安置失败"
+        if not data.get('palaces'):
+            return False, "宫位数据为空"
         return True, None
-
-    def _get_wuxing_ju(self, ming_ganzhi: str) -> tuple:
-        """返回 (五行, 局数)"""
-        gan = ming_ganzhi[0] if len(ming_ganzhi) > 0 else "甲"
-        zhi = ming_ganzhi[1] if len(ming_ganzhi) > 1 else "子"
-        return self.JU_MAP.get((gan, zhi), ("水", 2))
-
-    def _place_ziwei(self, ju_shu: int, lunar_day: int) -> int:
-        """安紫微星，返回地支索引。
-
-        算法：从亥宫起，每局数个生日推进一宫（顺时针）。
-        口诀对应：
-          水二局 1-2日→亥，3-4日→子...
-          火六局 1-6日→亥，7-12日→子...
-        """
-        step = (lunar_day - 1) // ju_shu
-        return (11 + step) % 12  # 从亥(11)起顺时针
-
-    def _place_main_stars(self, ziwei_zhi_idx: int) -> Dict[str, int]:
-        """安十四主星，返回 {星名: 地支索引}。"""
-        star_zhi = {}
-
-        # 紫微星系（逆布，从紫微位置开始）
-        ziwei_xing = ["紫微", "天机", "", "太阳", "武曲", "天同", "", "廉贞"]
-        for i, star in enumerate(ziwei_xing):
-            if star:
-                star_zhi[star] = (ziwei_zhi_idx - i) % 12
-
-        # 天府与紫微相对（相隔6宫），天府星系（顺布）
-        tianfu_zhi_idx = (ziwei_zhi_idx + 6) % 12
-        tianfu_xing = ["天府", "太阴", "贪狼", "巨门", "天相", "天梁", "七杀", "破军"]
-        for i, star in enumerate(tianfu_xing):
-            star_zhi[star] = (tianfu_zhi_idx + i) % 12
-
-        return star_zhi
-
-    def _place_auxiliary_stars(self, year_gan: str, lunar_month: int,
-                                shi_idx: int, star_zhi: Dict[str, int]) -> Dict[str, int]:
-        """安辅星，返回 {星名: 地支索引}。"""
-        aux = {}
-
-        # 禄存（由生年天干定）
-        lu_cun_zhi = self.ZHI.index(self.LU_CUN.get(year_gan, "寅"))
-        aux["禄存"] = lu_cun_zhi
-
-        # 擎羊（禄存前一位，顺时针）
-        aux["擎羊"] = (lu_cun_zhi + 1) % 12
-
-        # 陀罗（禄存后一位，逆时针）
-        aux["陀罗"] = (lu_cun_zhi - 1) % 12
-
-        # 天魁（由生年天干定）
-        aux["天魁"] = self.ZHI.index(self.TIAN_KUI.get(year_gan, "丑"))
-
-        # 天钺（由生年天干定）
-        aux["天钺"] = self.ZHI.index(self.TIAN_YUE.get(year_gan, "未"))
-
-        # 左辅（由生月定，正月辰起顺行）
-        # 辰=4，正月=1，左辅在辰；二月=2，左辅在巳...
-        zuo_fu_idx = (4 + lunar_month - 1) % 12
-        aux["左辅"] = zuo_fu_idx
-
-        # 右弼（由生月定，正月戌起逆行）
-        # 戌=10，正月=1，右弼在戌；二月=2，右弼在酉...
-        you_bi_idx = (10 - (lunar_month - 1)) % 12
-        aux["右弼"] = you_bi_idx
-
-        # 文昌（由生时定，子时戌起逆行）
-        # 戌=10，子时=0，文昌在戌；丑时=1，文昌在酉...
-        wen_chang_idx = (10 - shi_idx) % 12
-        aux["文昌"] = wen_chang_idx
-
-        # 文曲（由生时定，子时辰起顺行）
-        # 辰=4，子时=0，文曲在辰；丑时=1，文曲在巳...
-        wen_qu_idx = (4 + shi_idx) % 12
-        aux["文曲"] = wen_qu_idx
-
-        return aux
-
-    def _arrange_palaces(self, ming_idx: int, star_zhi: Dict[str, int]) -> List[Dict]:
-        """排十二宫。紫微斗数十二宫从命宫开始逆时针排列。"""
-        palaces = []
-        for i, name in enumerate(self.PALACES):
-            # 逆时针：从命宫开始，每次减1
-            zhi_idx = (ming_idx - i) % 12
-            zhi = self.ZHI[zhi_idx]
-            stars_in_palace = [s for s, z in star_zhi.items() if z == zhi_idx]
-            palaces.append({
-                "name": name,
-                "zhi": zhi,
-                "stars": stars_in_palace,
-            })
-        return palaces

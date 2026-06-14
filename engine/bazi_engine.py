@@ -6,8 +6,44 @@
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from .udm import Pillar, SHISHEN_MAP
-from typing import Optional
+from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING
+import logging
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+from typing import Optional, Dict
+
+# 六十甲子纳音表
+NAYIN_TABLE = {
+    "甲子": "海中金", "乙丑": "海中金", "丙寅": "炉中火", "丁卯": "炉中火",
+    "戊辰": "大林木", "己巳": "大林木", "庚午": "路旁土", "辛未": "路旁土",
+    "壬申": "剑锋金", "癸酉": "剑锋金", "甲戌": "山头火", "乙亥": "山头火",
+    "丙子": "涧下水", "丁丑": "涧下水", "戊寅": "城头土", "己卯": "城头土",
+    "庚辰": "白蜡金", "辛巳": "白蜡金", "壬午": "杨柳木", "癸未": "杨柳木",
+    "甲申": "泉中水", "乙酉": "泉中水", "丙戌": "屋上土", "丁亥": "屋上土",
+    "戊子": "霹雳火", "己丑": "霹雳火", "庚寅": "松柏木", "辛卯": "松柏木",
+    "壬辰": "长流水", "癸巳": "长流水", "甲午": "沙中金", "乙未": "沙中金",
+    "丙申": "山下火", "丁酉": "山下火", "戊戌": "平地木", "己亥": "平地木",
+    "庚子": "壁上土", "辛丑": "壁上土", "壬寅": "金箔金", "癸卯": "金箔金",
+    "甲辰": "覆灯火", "乙巳": "覆灯火", "丙午": "天河水", "丁未": "天河水",
+    "戊申": "大驿土", "己酉": "大驿土", "庚戌": "钗钏金", "辛亥": "钗钏金",
+    "壬子": "桑柘木", "癸丑": "桑柘木", "甲寅": "大溪水", "乙卯": "大溪水",
+    "丙辰": "沙中土", "丁巳": "沙中土", "戊午": "天上火", "己未": "天上火",
+    "庚申": "石榴木", "辛酉": "石榴木", "壬戌": "大海水", "癸亥": "大海水",
+}
+
+# 地支藏干传统排序表（本气→中气→余气）
+TRADITIONAL_HIDE_GAN = {
+    '子': '癸', '丑': '己癸辛', '寅': '甲丙戊', '卯': '乙',
+    '辰': '戊乙癸', '巳': '丙戊庚', '午': '丁己',
+    '未': '己丁乙', '申': '庚壬戊', '酉': '辛',
+    '戌': '戊辛丁', '亥': '壬甲',
+}
+
+# 长生十二宫
+CHANGSHENG_ORDER = ['长生','沐浴','冠带','临官','帝旺','衰','病','死','墓','绝','胎','养']
+CHANGSHENG_START = {'甲':'亥','丙':'寅','戊':'寅','庚':'巳','壬':'申','乙':'午','丁':'酉','己':'酉','辛':'子','癸':'卯'}
+DI_ZHI = '子丑寅卯辰巳午未申酉戌亥'
 
 
 class BaziEngine(DivinationEngine):
@@ -39,14 +75,16 @@ class BaziEngine(DivinationEngine):
         if not self._available:
             return {"error": "lunar_python not installed"}
 
-        # 使用修正后的时间
-        # 晚子时用次日日期
+        # 使用原始出生时间计算时柱（时柱基于出生时间，不应受真太阳时影响）
+        # 晚子时(23:xx)用次日日期+子时(hour=0)
+        # 2026-06-13 修正：时柱必须用原始出生小时，不能用真太阳时
+        # 五鼠遁日起时法基于日干+出生时辰，出生时辰按原始时间定
         dt = time.bazi_day_pillar_date
-        hour = time.bazi_hour
+        hour = 0 if time.is_late_zi else time.original.hour
 
         solar = self.Solar.fromYmdHms(
             dt.year, dt.month, dt.day,
-            hour, dt.minute, 0
+            hour, time.original.minute, 0
         )
         lunar = solar.getLunar()
         ec = self.EightChar(lunar)
@@ -59,13 +97,33 @@ class BaziEngine(DivinationEngine):
 
         day_master = ec.getDayGan()
 
-        # 藏干
-        hidden_gans = {
+        # 地支藏干传统排序表（本气→中气→余气）
+        # lunar_python 对部分地支返回非传统顺序，需修正
+        # NOTE: TRADITIONAL_HIDE_GAN is now a module-level constant
+
+        def _fix_hide_gan(zhi: str, raw: str) -> list:
+            """修正 lunar_python 藏干顺序为传统本气→中气→余气"""
+            trad = TRADITIONAL_HIDE_GAN.get(zhi)
+            if trad and len(trad) > 1:
+                return list(trad)
+            return list(raw)
+
+        # 藏干（已修正顺序）
+        raw_hidden = {
             "year": ec.getYearHideGan(),
             "month": ec.getMonthHideGan(),
             "day": ec.getDayHideGan(),
             "time": ec.getTimeHideGan(),
         }
+        zhi_map = {
+            "year": ec.getYearZhi(),
+            "month": ec.getMonthZhi(),
+            "day": ec.getDayZhi(),
+            "time": ec.getTimeZhi(),
+        }
+        hidden_gans = {}
+        for k in raw_hidden:
+            hidden_gans[k] = _fix_hide_gan(zhi_map[k], raw_hidden[k])
 
         # 十神（按天干）
         shishen_gan = {
@@ -75,13 +133,10 @@ class BaziEngine(DivinationEngine):
             "time": ec.getTimeShiShenGan(),
         }
 
-        # 十神（按地支藏干）
-        shishen_zhi = {
-            "year": ec.getYearShiShenZhi(),
-            "month": ec.getMonthShiShenZhi(),
-            "day": ec.getDayShiShenZhi(),
-            "time": ec.getTimeShiShenZhi(),
-        }
+        # 十神（按地支藏干）——使用导入的 SHISHEN_MAP（已含修正后藏干顺序）
+        shishen_zhi = {}
+        for k in hidden_gans:
+            shishen_zhi[k] = [SHISHEN_MAP.get((day_master, g), '?') for g in hidden_gans[k]]
 
         # 纳音
         nayin = {
@@ -95,27 +150,204 @@ class BaziEngine(DivinationEngine):
         xunkong = {
             "year": ec.getYearXunKong(),
             "day": ec.getDayXunKong(),
+            "time": ec.getTimeXunKong(),
         }
 
-        # 大运
+        # 命宫·胎元·身宫
+        ming_gong = ec.getMingGong()
+        tai_yuan = ec.getTaiYuan()
+        shen_gong = ec.getShenGong()
+
+        # 长生十二宫计算（定义在大运之前，供大运使用）
+        # NOTE: CHANGSHENG_ORDER, CHANGSHENG_START, DI_ZHI are now module-level constants
+
+        def _calc_changsheng(dm: str, zhi: str) -> str:
+            start = CHANGSHENG_START.get(dm)
+            if not start or zhi not in DI_ZHI:
+                return ''
+            start_idx = DI_ZHI.index(start)
+            zhi_idx = DI_ZHI.index(zhi)
+            is_yang = dm in '甲丙戊庚壬'
+            offset = (zhi_idx - start_idx) % 12 if is_yang else (start_idx - zhi_idx) % 12
+            return CHANGSHENG_ORDER[offset]
+
+        # 大运（增强版：含十神、藏干、纳音、长生、神煞、流年）
+        # NOTE: lunar_python's getStartYear() returns ABSOLUTE year, not age.
+        # e.g., getStartYear() might return 2015, not 10.
+        # Age = absolute_start_year - birth_year
         dayun_list = []
         dayun_start_year = 0
         dayun_start_age = 0
+        birth_year = time.original.year
+        current_year = datetime.now().year
+        current_liunian = None
         try:
             yun = ec.getYun(gender=gender)
             for d in yun.getDaYun():
                 gz = d.getGanZhi()
                 if gz:
+                    abs_start = d.getStartYear()
+                    abs_end = d.getEndYear()
+                    # Use library-provided ages (虚岁) instead of manual arithmetic
+                    # Manual calc (abs_start - birth_year) is off by 1 for most cases
+                    try:
+                        start_age = int(d.getStartAge())
+                        end_age = int(d.getEndAge())
+                    except Exception:
+                        start_age = abs_start - birth_year
+                        end_age = start_age + 9
+
+                    # 大运天干十神
+                    dy_gan = gz[0]
+                    dy_zhi = gz[1]
+                    dy_shishen_gan = SHISHEN_MAP.get((day_master, dy_gan), '?')
+
+                    # 大运地支藏干及藏干十神
+                    dy_hidden = _fix_hide_gan(dy_zhi, TRADITIONAL_HIDE_GAN.get(dy_zhi, ''))
+                    dy_shishen_zhi = [SHISHEN_MAP.get((day_master, h), '?') for h in dy_hidden]
+
+                    # 大运纳音
+                    dy_nayin = NAYIN_TABLE.get(gz, '')
+
+                    # 大运长生十二宫
+                    dy_changsheng = _calc_changsheng(day_master, dy_zhi)
+
+                    # 大运带来的神煞（大运地支对照原局四柱）
+                    dy_shensha = []
+                    tianyi_zhis = {'甲':['丑','未'],'戊':['丑','未'],'庚':['丑','未'],
+                                   '乙':['子','申'],'己':['子','申'],
+                                   '丙':['亥','酉'],'丁':['亥','酉'],
+                                   '壬':['卯','巳'],'癸':['卯','巳'],
+                                   '辛':['午','寅']}
+                    if dy_zhi in tianyi_zhis.get(day_master, []):
+                        dy_shensha.append('天乙贵人')
+                    huagai_map = {'子':'辰','丑':'丑','寅':'戌','卯':'未','辰':'辰','巳':'丑',
+                                  '午':'戌','未':'未','申':'辰','酉':'丑','戌':'戌','亥':'未'}
+                    if dy_zhi == huagai_map.get(year_pillar.zhi, ''):
+                        dy_shensha.append('华盖')
+                    yima_map = {'子':'寅','丑':'亥','寅':'申','卯':'巳','辰':'寅','巳':'亥',
+                                '午':'申','未':'巳','申':'寅','酉':'亥','戌':'申','亥':'巳'}
+                    if dy_zhi == yima_map.get(year_pillar.zhi, ''):
+                        dy_shensha.append('驿马')
+                    taohua_map = {'子':'酉','丑':'午','寅':'卯','卯':'子','辰':'酉','巳':'午',
+                                  '午':'卯','未':'子','申':'酉','酉':'午','戌':'卯','亥':'子'}
+                    if dy_zhi == taohua_map.get(year_pillar.zhi, ''):
+                        dy_shensha.append('桃花')
+
+                    # 流年（该大运期间每年）
+                    liunian_list = []
+                    try:
+                        for ln in d.getLiuNian():
+                            ln_gz = ln.getGanZhi()
+                            if ln_gz and len(ln_gz) >= 2:
+                                ln_gan = ln_gz[0]
+                                ln_zhi = ln_gz[1]
+                                # 流年神煞
+                                ln_shensha = []
+                                try:
+                                    # 天乙贵人
+                                    tianyi_map = {'甲':['丑','未'],'戊':['丑','未'],'庚':['丑','未'],
+                                                   '乙':['子','申'],'己':['子','申'],
+                                                   '丙':['亥','酉'],'丁':['亥','酉'],
+                                                   '壬':['卯','巳'],'癸':['卯','巳'],'辛':['午','寅']}
+                                    if ln_zhi in tianyi_map.get(day_master, []):
+                                        ln_shensha.append('天乙贵人')
+                                    # 华盖
+                                    huagai_map = {'子':'辰','丑':'丑','寅':'戌','卯':'未','辰':'辰','巳':'丑',
+                                                  '午':'戌','未':'未','申':'辰','酉':'丑','戌':'戌','亥':'未'}
+                                    if ln_zhi == huagai_map.get(year_pillar.zhi, ''):
+                                        ln_shensha.append('华盖')
+                                    # 驿马
+                                    yima_map = {'子':'寅','丑':'亥','寅':'申','卯':'巳','辰':'寅','巳':'亥',
+                                                '午':'申','未':'巳','申':'寅','酉':'亥','戌':'申','亥':'巳'}
+                                    if ln_zhi == yima_map.get(year_pillar.zhi, ''):
+                                        ln_shensha.append('驿马')
+                                    # 桃花
+                                    taohua_map = {'子':'酉','丑':'午','寅':'卯','卯':'子','辰':'酉','巳':'午',
+                                                  '午':'卯','未':'子','申':'酉','酉':'午','戌':'卯','亥':'子'}
+                                    if ln_zhi == taohua_map.get(year_pillar.zhi, ''):
+                                        ln_shensha.append('桃花')
+                                    # 文昌
+                                    wenchang_map = {'甲':'巳','乙':'午','丙':'申','丁':'酉','戊':'申','己':'酉',
+                                                    '庚':'亥','辛':'子','壬':'寅','癸':'卯'}
+                                    if ln_zhi == wenchang_map.get(day_master, ''):
+                                        ln_shensha.append('文昌')
+                                    # 禄神
+                                    lu_map = {'甲':'寅','乙':'卯','丙':'巳','丁':'午','戊':'巳','己':'午',
+                                              '庚':'申','辛':'酉','壬':'亥','癸':'子'}
+                                    if ln_zhi == lu_map.get(day_master, ''):
+                                        ln_shensha.append('禄神')
+                                    # 红鸾
+                                    hongluan_map = {'子':'卯','丑':'寅','寅':'丑','卯':'子','辰':'亥','巳':'戌',
+                                                    '午':'酉','未':'申','申':'未','酉':'午','戌':'巳','亥':'辰'}
+                                    if ln_zhi == hongluan_map.get(year_pillar.zhi, ''):
+                                        ln_shensha.append('红鸾')
+                                    # 天喜
+                                    tianxi_map = {'子':'酉','丑':'申','寅':'未','卯':'午','辰':'巳','巳':'辰',
+                                                  '午':'卯','未':'寅','申':'丑','酉':'子','戌':'亥','亥':'戌'}
+                                    if ln_zhi == tianxi_map.get(year_pillar.zhi, ''):
+                                        ln_shensha.append('天喜')
+                                    # 太极贵人
+                                    taiji_map = {'甲':['子','午'],'乙':['子','午'],'丙':['卯','酉'],'丁':['卯','酉'],
+                                                 '戊':['辰','戌','丑','未'],'己':['辰','戌','丑','未'],
+                                                 '庚':['寅','亥'],'辛':['寅','亥'],'壬':['巳','申'],'癸':['巳','申']}
+                                    if ln_zhi in taiji_map.get(day_master, []):
+                                        ln_shensha.append('太极贵人')
+                                    # 月德
+                                    yuede_map = {'子':'壬','丑':'庚','寅':'丙','卯':'甲','辰':'壬','巳':'庚',
+                                                 '午':'丙','未':'甲','申':'壬','酉':'庚','戌':'丙','亥':'甲'}
+                                    if ln_gan == yuede_map.get(month_pillar.zhi, ''):
+                                        ln_shensha.append('月德')
+                                    # 将星
+                                    jiangxing_map = {'子':'子','丑':'酉','寅':'午','卯':'卯','辰':'子','巳':'酉',
+                                                     '午':'午','未':'卯','申':'子','酉':'酉','戌':'午','亥':'卯'}
+                                    if ln_zhi == jiangxing_map.get(year_pillar.zhi, ''):
+                                        ln_shensha.append('将星')
+                                except Exception:
+                                    pass
+                                ln_info = {
+                                    "year": ln.getYear(),
+                                    "age": ln.getAge(),
+                                    "ganzhi": ln_gz,
+                                    "shishen_gan": SHISHEN_MAP.get((day_master, ln_gan), '?'),
+                                    "nayin": NAYIN_TABLE.get(ln_gz, ''),
+                                    "shensha": ln_shensha,
+                                }
+                                liunian_list.append(ln_info)
+                                # 找出当前年份的流年
+                                if ln.getYear() == current_year:
+                                    ln_hidden = _fix_hide_gan(ln_zhi, TRADITIONAL_HIDE_GAN.get(ln_zhi, ''))
+                                    current_liunian = {
+                                        "year": ln.getYear(),
+                                        "age": ln.getAge(),
+                                        "ganzhi": ln_gz,
+                                        "shishen_gan": SHISHEN_MAP.get((day_master, ln_gan), '?'),
+                                        "shishen_zhi": [SHISHEN_MAP.get((day_master, h), '?') for h in ln_hidden],
+                                        "hidden_gans": ln_hidden,
+                                        "nayin": NAYIN_TABLE.get(ln_gz, ''),
+                                        "changsheng": _calc_changsheng(day_master, ln_zhi),
+                                    }
+                    except Exception:
+                        pass
+
                     dayun_list.append({
-                        "start_age": d.getStartYear(),
-                        "end_age": d.getStartYear() + 9,
+                        "start_age": start_age,
+                        "end_age": end_age,
                         "ganzhi": gz,
-                        "start_year": time.original.year + d.getStartYear(),
+                        "start_year": abs_start,
+                        "end_year": abs_end,
+                        "shishen_gan": dy_shishen_gan,
+                        "shishen_zhi": dy_shishen_zhi,
+                        "hidden_gans": dy_hidden,
+                        "nayin": dy_nayin,
+                        "changsheng": dy_changsheng,
+                        "shensha": dy_shensha,
+                        "liunian": liunian_list,
                     })
-            dayun_start_year = time.original.year + yun.getStartYear()
-            dayun_start_age = yun.getStartYear()
-        except Exception:
-            pass
+            dayun_start_year = dayun_list[0]["start_year"] if dayun_list else 0
+            dayun_start_age = dayun_list[0]["start_age"] if dayun_list else 0
+        except Exception as e:
+            logger.warning(f"大运计算异常: {e}")
 
         # 日主五行
         gan_wuxing = {
@@ -128,11 +360,108 @@ class BaziEngine(DivinationEngine):
         # 调候用神
         tiaohou = self._calc_tiaohou(day_master, month_pillar.zhi)
 
+        # 神煞
+        shensha = self._calc_shensha(
+            day_master, day_pillar, year_pillar, month_pillar, time_pillar
+        )
+
         # 特征提取
         features = self._extract_features(
             year_pillar, month_pillar, day_pillar, time_pillar,
             shishen_gan, hidden_gans
         )
+
+        # 五行得分
+        wuxing_score = self._calc_wuxing_score(
+            [year_pillar, month_pillar, day_pillar, time_pillar]
+        )
+
+        # 命宫·胎元·身宫的十神（天干对日主）
+        def _shishen_for_ganzhi(gz: str) -> dict:
+            """给定干支，返回天干十神和藏干十神"""
+            if not gz or len(gz) < 2:
+                return {"gan_shishen": "", "zhi_shishen": []}
+            g = gz[0]
+            z = gz[1]
+            gan_ss = SHISHEN_MAP.get((day_master, g), '')
+            zhi_hides = _fix_hide_gan(z, TRADITIONAL_HIDE_GAN.get(z, ''))
+            zhi_ss = [SHISHEN_MAP.get((day_master, h), '?') for h in zhi_hides]
+            return {"gan_shishen": gan_ss, "zhi_shishen": zhi_ss, "hidden_gans": zhi_hides}
+
+        ming_gong_info = _shishen_for_ganzhi(ming_gong)
+        tai_yuan_info = _shishen_for_ganzhi(tai_yuan)
+        shen_gong_info = _shishen_for_ganzhi(shen_gong)
+
+        # 喜用神计算
+        xi_yong = self._calc_xi_yong(day_master, month_pillar.zhi, wuxing_score)
+
+        # 长生十二宫（每柱）
+        changsheng = {}
+        for pillar_name, pillar in [('year', year_pillar), ('month', month_pillar), ('day', day_pillar), ('time', time_pillar)]:
+            changsheng[pillar_name] = _calc_changsheng(day_master, pillar.zhi)
+
+        # 每柱神煞（从shensha列表按关键词分组到对应柱）
+        shensha_per_pillar = {'year': [], 'month': [], 'day': [], 'time': []}
+        PILLAR_KEYWORDS = {
+            'year': ['年支', '年柱', '年干'],
+            'month': ['月支', '月柱', '月干'],
+            'day': ['日支', '日柱', '日干'],
+            'time': ['时支', '时柱', '时干'],
+        }
+        for s in shensha:
+            matched = False
+            for pillar_name, keywords in PILLAR_KEYWORDS.items():
+                for kw in keywords:
+                    if kw in s:
+                        # Remove the parenthetical location info
+                        clean = s.split('（')[0] if '（' in s else s
+                        shensha_per_pillar[pillar_name].append(clean)
+                        matched = True
+                        break
+                if matched:
+                    break
+            if not matched:
+                # Shensha without specific pillar - try to infer from context
+                for pillar_name, pillar in [('year', year_pillar), ('month', month_pillar), ('day', day_pillar), ('time', time_pillar)]:
+                    if pillar.zhi in s:
+                        clean = s.split('（')[0] if '（' in s else s
+                        shensha_per_pillar[pillar_name].append(clean)
+                        break
+
+        # 天干关系
+        gan_relations = []
+        all_gans = [year_pillar.gan, month_pillar.gan, day_pillar.gan, time_pillar.gan]
+        GAN_CHONG = {'甲':'庚','庚':'甲','乙':'辛','辛':'乙','丙':'壬','壬':'丙','丁':'癸','癸':'丁'}
+        GAN_HE = {'甲':'己','己':'甲','乙':'庚','庚':'乙','丙':'辛','辛':'丙','丁':'壬','壬':'丁','戊':'癸','癸':'戊'}
+        for i in range(len(all_gans)):
+            for j in range(i+1, len(all_gans)):
+                g1, g2 = all_gans[i], all_gans[j]
+                if GAN_CHONG.get(g1) == g2:
+                    gan_relations.append(f'{g1}{g2}冲')
+                if GAN_HE.get(g1) == g2:
+                    gan_relations.append(f'{g1}{g2}合')
+
+        # 地支关系
+        zhi_relations = []
+        all_zhis = [year_pillar.zhi, month_pillar.zhi, day_pillar.zhi, time_pillar.zhi]
+        ZHI_CHONG = {'子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'}
+        ZHI_HE = {'子':'丑','丑':'子','寅':'亥','亥':'寅','卯':'戌','戌':'卯','辰':'酉','酉':'辰','巳':'申','申':'巳','午':'未','未':'午'}
+        ZHI_XING = {'子':'卯','卯':'子','寅':'巳','巳':'申','申':'寅','丑':'未','未':'戌','戌':'丑','辰':'辰','午':'午','酉':'酉','亥':'亥'}
+        ZHI_HAI = {'子':'未','未':'子','丑':'午','午':'丑','寅':'巳','巳':'寅','卯':'辰','辰':'卯','申':'亥','亥':'申','酉':'戌','戌':'酉'}
+        ZHI_PO = {'子':'酉','酉':'子','丑':'辰','辰':'丑','寅':'亥','亥':'寅','卯':'午','午':'卯','巳':'申','申':'巳','未':'戌','戌':'未'}
+        for i in range(len(all_zhis)):
+            for j in range(i+1, len(all_zhis)):
+                z1, z2 = all_zhis[i], all_zhis[j]
+                if ZHI_CHONG.get(z1) == z2:
+                    zhi_relations.append(f'{z1}{z2}冲')
+                if ZHI_HE.get(z1) == z2:
+                    zhi_relations.append(f'{z1}{z2}合')
+                if ZHI_XING.get(z1) == z2:
+                    zhi_relations.append(f'{z1}{z2}刑')
+                if ZHI_HAI.get(z1) == z2:
+                    zhi_relations.append(f'{z1}{z2}害')
+                if ZHI_PO.get(z1) == z2:
+                    zhi_relations.append(f'{z1}{z2}破')
 
         return {
             "year": year_pillar,
@@ -150,7 +479,25 @@ class BaziEngine(DivinationEngine):
             "dayun_start_year": dayun_start_year,
             "dayun_start_age": dayun_start_age,
             "tiaohou": tiaohou,
+            "shensha": shensha,
+            "shensha_per_pillar": shensha_per_pillar,
+            "changsheng": changsheng,
+            "gan_relations": gan_relations,
+            "zhi_relations": zhi_relations,
             "features": features,
+            "wuxing_score": wuxing_score,
+            "ming_gong": ming_gong,
+            "ming_gong_shishen": ming_gong_info,
+            "tai_yuan": tai_yuan,
+            "tai_yuan_shishen": tai_yuan_info,
+            "shen_gong": shen_gong,
+            "shen_gong_shishen": shen_gong_info,
+            "xi_yong": xi_yong,
+            "liunian": current_liunian,
+            "location": {
+                "longitude": getattr(time, 'longitude', None),
+                "latitude": getattr(time, 'latitude', None),
+            },
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
@@ -160,18 +507,28 @@ class BaziEngine(DivinationEngine):
             return False, "日主为空"
         return True, None
 
+    # 类级别缓存，避免每次调用都读磁盘
+    _tiaohou_cache = None
+
     def _calc_tiaohou(self, day_gan: str, month_zhi: str) -> str:
         """调候用神计算，优先从 data/tiaohou.json 读取"""
         import json
         from pathlib import Path
-        tiaohou_file = Path(__file__).parent.parent / "data" / "tiaohou.json"
-        if tiaohou_file.exists():
-            try:
-                with open(tiaohou_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                return data.get(day_gan, {}).get(month_zhi, "")
-            except Exception:
-                pass
+        
+        # 使用类级别缓存
+        if BaziEngine._tiaohou_cache is None:
+            tiaohou_file = Path(__file__).parent.parent / "data" / "tiaohou.json"
+            if tiaohou_file.exists():
+                try:
+                    with open(tiaohou_file, "r", encoding="utf-8") as f:
+                        BaziEngine._tiaohou_cache = json.load(f)
+                except Exception:
+                    BaziEngine._tiaohou_cache = {}
+            else:
+                BaziEngine._tiaohou_cache = {}
+        
+        if BaziEngine._tiaohou_cache:
+            return BaziEngine._tiaohou_cache.get(day_gan, {}).get(month_zhi, "")
 
         # 回退：硬编码
         table = {
@@ -186,7 +543,7 @@ class BaziEngine(DivinationEngine):
             ("丙", "寅"): "壬庚", ("丙", "卯"): "壬己", ("丙", "辰"): "壬甲",
             ("丙", "巳"): "壬庚癸", ("丙", "午"): "壬庚", ("丙", "未"): "壬庚",
             ("丙", "申"): "壬戊", ("丙", "酉"): "壬戊", ("丙", "戌"): "甲壬",
-            ("丙", "亥"): "甲戊庚壬", ("丙", "子"): "壬戊戊", ("丙", "丑"): "壬甲",
+            ("丙", "亥"): "甲戊庚壬", ("丙", "子"): "壬戊", ("丙", "丑"): "壬甲",
             ("丁", "寅"): "甲庚", ("丁", "卯"): "庚甲", ("丁", "辰"): "甲庚",
             ("丁", "巳"): "甲庚", ("丁", "午"): "壬庚癸", ("丁", "未"): "甲壬庚",
             ("丁", "申"): "甲庚丙", ("丁", "酉"): "甲庚丙", ("丁", "戌"): "甲庚",
@@ -210,11 +567,11 @@ class BaziEngine(DivinationEngine):
             ("壬", "寅"): "庚丙戊", ("壬", "卯"): "戊庚辛", ("壬", "辰"): "甲庚",
             ("壬", "巳"): "庚癸辛", ("壬", "午"): "癸庚辛", ("壬", "未"): "辛庚癸",
             ("壬", "申"): "戊丁", ("壬", "酉"): "丁甲", ("壬", "戌"): "甲庚",
-            ("壬", "亥"): "戊丙庚", ("壬", "子"): "戊丙戊", ("壬", "丑"): "丙丁甲",
+            ("壬", "亥"): "戊丙庚", ("壬", "子"): "戊丙", ("壬", "丑"): "丙丁甲",
             ("癸", "寅"): "辛丙", ("癸", "卯"): "庚辛", ("癸", "辰"): "丙辛甲",
             ("癸", "巳"): "辛", ("癸", "午"): "庚辛壬", ("癸", "未"): "庚辛壬",
             ("癸", "申"): "丁甲", ("癸", "酉"): "辛丙", ("癸", "戌"): "辛甲",
-            ("癸", "亥"): "庚戊辛丙", ("癸", "子"): "丙辛丙", ("癸", "丑"): "丙丁",
+            ("癸", "亥"): "庚戊辛丙", ("癸", "子"): "丙辛", ("癸", "丑"): "丙丁",
         }
         return table.get((day_gan, month_zhi), "")
 
@@ -292,3 +649,658 @@ class BaziEngine(DivinationEngine):
             features.append("日坐禄地 — 自身根基扎实")
 
         return features[:12]  # 最多12条
+
+    def _calc_shensha(self, day_master: str, day_pillar, year_pillar, month_pillar, time_pillar) -> list:
+        """计算神煞（以日干和年支为主）"""
+        shensha = []
+        day_gan = day_master
+        day_zhi = day_pillar.zhi
+        year_zhi = year_pillar.zhi
+        year_gan = year_pillar.gan
+        all_zhis = [year_pillar.zhi, month_pillar.zhi, day_pillar.zhi, time_pillar.zhi]
+        all_gans = [year_pillar.gan, month_pillar.gan, day_pillar.gan, time_pillar.gan]
+
+        # 1. 天乙贵人（以日干查四支）
+        tianyi_map = {
+            '甲': ['丑','未'], '戊': ['丑','未'], '庚': ['丑','未'],
+            '乙': ['子','申'], '己': ['子','申'],
+            '丙': ['亥','酉'], '丁': ['亥','酉'],
+            '壬': ['卯','巳'], '癸': ['卯','巳'],
+            '辛': ['午','寅'],
+        }
+        tianyi_zhis = tianyi_map.get(day_gan, [])
+        for z in all_zhis:
+            if z in tianyi_zhis:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'天乙贵人（{pos}支{z}）')
+                break
+
+        # 2. 华盖（以年支查四支）
+        huagai_map = {
+            '子':'辰','丑':'丑','寅':'戌','卯':'未',
+            '辰':'辰','巳':'丑','午':'戌','未':'未',
+            '申':'辰','酉':'丑','戌':'戌','亥':'未',
+        }
+        huagai_zhi = huagai_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == huagai_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'华盖（{pos}支{z}）')
+                break
+
+        # 3. 驿马（以年支查三合局冲位）
+        yima_map = {
+            '子':'寅','丑':'亥','寅':'申','卯':'巳',
+            '辰':'寅','巳':'亥','午':'申','未':'巳',
+            '申':'寅','酉':'亥','戌':'申','亥':'巳',
+        }
+        yima_zhi = yima_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == yima_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'驿马（{pos}支{z}）')
+                break
+
+        # 4. 桃花（以年支查）
+        taohua_map = {
+            '子':'酉','丑':'午','寅':'卯','卯':'子',
+            '辰':'酉','巳':'午','午':'卯','未':'子',
+            '申':'酉','酉':'午','戌':'卯','亥':'子',
+        }
+        taohua_zhi = taohua_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == taohua_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'桃花（{pos}支{z}）')
+                break
+
+        # 5. 将星（以年支查）
+        jiangxing_map = {
+            '子':'子','丑':'酉','寅':'午','卯':'卯',
+            '辰':'子','巳':'酉','午':'午','未':'卯',
+            '申':'子','酉':'酉','戌':'午','亥':'卯',
+        }
+        jiangxing_zhi = jiangxing_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == jiangxing_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'将星（{pos}支{z}）')
+                break
+
+        # 6. 天德贵人（以月支查天干）
+        tiande_map = {
+            '子':'巳','丑':'庚','寅':'丁','卯':'申',
+            '辰':'壬','巳':'辛','午':'甲','未':'癸',
+            '申':'丙','酉':'乙','戌':'巳','亥':'庚',
+        }
+        tiande = tiande_map.get(month_pillar.zhi, '')
+        if tiande:
+            for g in all_gans:
+                if g == tiande:
+                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    shensha.append(f'天德贵人（{pos}干{g}）')
+                    break
+
+        # 7. 文昌贵人（以日干查）
+        wenchang_map = {
+            '甲':'巳','乙':'午','丙':'申','丁':'酉',
+            '戊':'申','己':'酉','庚':'亥','辛':'子',
+            '壬':'寅','癸':'卯',
+        }
+        wenchang_zhi = wenchang_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == wenchang_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'文昌贵人（{pos}支{z}）')
+                break
+
+        # 8. 红艳煞（以日干查）
+        hongyan_map = {
+            '甲':'午','乙':'申','丙':'寅','丁':'未',
+            '戊':'辰','己':'辰','庚':'戌','辛':'酉',
+            '壬':'子','癸':'申',
+        }
+        hongyan_zhi = hongyan_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == hongyan_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'红艳煞（{pos}支{z}）')
+                break
+
+        # 9. 禄神（以日干查）
+        lu_map = {
+            '甲':'寅','乙':'卯','丙':'巳','丁':'午',
+            '戊':'巳','己':'午','庚':'申','辛':'酉',
+            '壬':'亥','癸':'子',
+        }
+        lu_zhi = lu_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == lu_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'禄神（{pos}支{z}）')
+                break
+
+        # 10. 红鸾（以年支查）
+        hongluan_map = {
+            '子':'卯','丑':'寅','寅':'丑','卯':'子',
+            '辰':'亥','巳':'戌','午':'酉','未':'申',
+            '申':'未','酉':'午','戌':'巳','亥':'辰',
+        }
+        hongluan_zhi = hongluan_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == hongluan_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'红鸾（{pos}支{z}）')
+                break
+
+        # 11. 天喜（以年支查，红鸾对冲）
+        tianxi_map = {
+            '子':'酉','丑':'申','寅':'未','卯':'午',
+            '辰':'巳','巳':'辰','午':'卯','未':'寅',
+            '申':'丑','酉':'子','戌':'亥','亥':'戌',
+        }
+        tianxi_zhi = tianxi_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == tianxi_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'天喜（{pos}支{z}）')
+                break
+
+        # 12. 月德（以月支查天干）
+        yuede_map = {
+            '子':'壬','丑':'庚','寅':'丙','卯':'甲',
+            '辰':'壬','巳':'庚','午':'丙','未':'甲',
+            '申':'壬','酉':'庚','戌':'丙','亥':'甲',
+        }
+        yuede = yuede_map.get(month_pillar.zhi, '')
+        if yuede:
+            for g in all_gans:
+                if g == yuede:
+                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    shensha.append(f'月德（{pos}干{g}）')
+                    break
+
+        # 13. 太极贵人（以日干查四支）
+        taiji_map = {
+            '甲': ['子','午'], '乙': ['子','午'],
+            '丙': ['卯','酉'], '丁': ['卯','酉'],
+            '戊': ['辰','戌','丑','未'], '己': ['辰','戌','丑','未'],
+            '庚': ['寅','亥'], '辛': ['寅','亥'],
+            '壬': ['巳','申'], '癸': ['巳','申'],
+        }
+        taiji_zhis = taiji_map.get(day_gan, [])
+        for z in all_zhis:
+            if z in taiji_zhis:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'太极贵人（{pos}支{z}）')
+                break
+
+        # 14. 福星贵人（以日干查）
+        fuxing_map = {
+            '甲': ['寅'], '乙': ['丑','亥'], '丙': ['子','戌'],
+            '丁': ['酉'], '戊': ['申'], '己': ['未'],
+            '庚': ['午'], '辛': ['巳'], '壬': ['辰'], '癸': ['卯'],
+        }
+        fuxing_zhis = fuxing_map.get(day_gan, [])
+        for z in all_zhis:
+            if z in fuxing_zhis:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'福星贵人（{pos}支{z}）')
+                break
+
+        # 15. 金舆（以日干查）
+        jinyu_map = {
+            '甲': ['辰'], '乙': ['巳'], '丙': ['未'], '丁': ['申'],
+            '戊': ['未'], '己': ['申'], '庚': ['戌'], '辛': ['亥'],
+            '壬': ['丑'], '癸': ['寅'],
+        }
+        jinyu_zhi = jinyu_map.get(day_gan, '')
+        for z in all_zhis:
+            if z in jinyu_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'金舆（{pos}支{z}）')
+                break
+
+        # 16. 天德合（以月支查天干，天德的六合）
+        tiande_map = {'子':'巳','丑':'庚','寅':'丁','卯':'申','辰':'壬','巳':'辛','午':'甲','未':'癸','申':'丙','酉':'乙','戌':'巳','亥':'庚'}
+        tiande_he_map = {'甲':'己','乙':'庚','丙':'辛','丁':'壬','戊':'癸','己':'甲','庚':'乙','辛':'丙','壬':'丁','癸':'戊'}
+        tiande = tiande_map.get(month_pillar.zhi, '')
+        tiande_he = tiande_he_map.get(tiande, '')
+        if tiande_he:
+            for g in all_gans:
+                if g == tiande_he:
+                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    shensha.append(f'天德合（{pos}干{g}）')
+                    break
+
+        # 17. 月德合（以月支查天干，月德的六合）
+        yuede_map = {'子':'壬','丑':'庚','寅':'丙','卯':'甲','辰':'壬','巳':'庚','午':'丙','未':'甲','申':'壬','酉':'庚','戌':'丙','亥':'甲'}
+        yuede_he_map = {'甲':'己','乙':'庚','丙':'辛','丁':'壬','戊':'癸','己':'甲','庚':'乙','辛':'丙','壬':'丁','癸':'戊'}
+        yuede = yuede_map.get(month_pillar.zhi, '')
+        yuede_he = yuede_he_map.get(yuede, '')
+        if yuede_he:
+            for g in all_gans:
+                if g == yuede_he:
+                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    shensha.append(f'月德合（{pos}干{g}）')
+                    break
+
+        # 18. 天赦（以月支查日干）
+        tianshe_map = {
+            '子':'戊寅','丑':'戊寅','寅':'戊寅',
+            '卯':'甲午','辰':'甲午','巳':'甲午',
+            '午':'戊申','未':'戊申','申':'戊申',
+            '酉':'甲子','戌':'甲子','亥':'甲子',
+        }
+        tianshe = tianshe_map.get(month_pillar.zhi, '')
+        if tianshe:
+            day_gz = day_pillar.gan + day_pillar.zhi
+            if day_gz == tianshe:
+                shensha.append('天赦')
+
+        # 19. 天医（以月支查）
+        tianyi_map = {
+            '子':'丑','丑':'寅','寅':'卯','卯':'辰',
+            '辰':'巳','巳':'午','午':'未','未':'申',
+            '申':'酉','酉':'戌','戌':'亥','亥':'子',
+        }
+        tianyi_zhi = tianyi_map.get(month_pillar.zhi, '')
+        for z in all_zhis:
+            if z == tianyi_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'天医（{pos}支{z}）')
+                break
+
+        # 20. 天厨（以日干查）
+        tianchu_map = {
+            '甲':'巳','乙':'午','丙':'巳','丁':'午',
+            '戊':'申','己':'酉','庚':'亥','辛':'子',
+            '壬':'寅','癸':'卯',
+        }
+        tianchu_zhi = tianchu_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == tianchu_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'天厨（{pos}支{z}）')
+                break
+
+        # 21. 学堂（以日干查长生位）
+        xuetang_map = {
+            '甲':'亥','乙':'午','丙':'寅','丁':'酉',
+            '戊':'寅','己':'酉','庚':'巳','辛':'子',
+            '壬':'申','癸':'卯',
+        }
+        xuetang_zhi = xuetang_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == xuetang_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'学堂（{pos}支{z}）')
+                break
+
+        # 22. 词馆（以日干查临官位）
+        ciguan_map = {
+            '甲':'寅','乙':'卯','丙':'巳','丁':'午',
+            '戊':'巳','己':'午','庚':'申','辛':'酉',
+            '壬':'亥','癸':'子',
+        }
+        ciguan_zhi = ciguan_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == ciguan_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'词馆（{pos}支{z}）')
+                break
+
+        # 23. 羊刃（以日干查，阳干帝旺位）
+        yangren_map = {
+            '甲':'卯','丙':'午','戊':'午','庚':'酉','壬':'子',
+        }
+        yangren_zhi = yangren_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == yangren_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'羊刃（{pos}支{z}）')
+                break
+
+        # 24. 飞刃（以日干查，羊刃对冲）
+        feiren_map = {
+            '甲':'酉','丙':'子','戊':'子','庚':'卯','壬':'午',
+        }
+        feiren_zhi = feiren_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == feiren_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'飞刃（{pos}支{z}）')
+                break
+
+        # 25. 流霞（以日干查）
+        liuxia_map = {
+            '甲':'酉','乙':'戌','丙':'未','丁':'申',
+            '戊':'巳','己':'午','庚':'辰','辛':'卯',
+            '壬':'亥','癸':'寅',
+        }
+        liuxia_zhi = liuxia_map.get(day_gan, '')
+        for z in all_zhis:
+            if z == liuxia_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'流霞（{pos}支{z}）')
+                break
+
+        # 26. 亡神（以年支查三合局绝位）
+        wangshen_map = {
+            '子':'巳','丑':'寅','寅':'亥','卯':'申',
+            '辰':'巳','巳':'寅','午':'亥','未':'申',
+            '申':'巳','酉':'寅','戌':'亥','亥':'申',
+        }
+        wangshen_zhi = wangshen_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == wangshen_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'亡神（{pos}支{z}）')
+                break
+
+        # 27. 劫煞（以年支查三合局死位）
+        jiesha_map = {
+            '子':'巳','丑':'寅','寅':'亥','卯':'申',
+            '辰':'巳','巳':'寅','午':'亥','未':'申',
+            '申':'巳','酉':'寅','戌':'亥','亥':'申',
+        }
+        jiesha_zhi = jiesha_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == jiesha_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'劫煞（{pos}支{z}）')
+                break
+
+        # 28. 灾煞（以年支查三合局墓位）
+        zaisha_map = {
+            '子':'午','丑':'卯','寅':'酉','卯':'子',
+            '辰':'午','巳':'卯','午':'酉','未':'子',
+            '申':'午','酉':'卯','戌':'酉','亥':'子',
+        }
+        zaisha_zhi = zaisha_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == zaisha_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'灾煞（{pos}支{z}）')
+                break
+
+        # 29. 勾煞（以年支查）
+        gousha_map = {
+            '子':'卯','丑':'辰','寅':'巳','卯':'午',
+            '辰':'未','巳':'申','午':'酉','未':'戌',
+            '申':'亥','酉':'子','戌':'丑','亥':'寅',
+        }
+        gousha_zhi = gousha_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == gousha_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'勾煞（{pos}支{z}）')
+                break
+
+        # 30. 绞煞（以年支查，勾煞对冲）
+        jiaosha_map = {
+            '子':'酉','丑':'戌','寅':'亥','卯':'子',
+            '辰':'丑','巳':'寅','午':'卯','未':'辰',
+            '申':'巳','酉':'午','戌':'未','亥':'申',
+        }
+        jiaosha_zhi = jiaosha_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == jiaosha_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'绞煞（{pos}支{z}）')
+                break
+
+        # 31. 孤辰寡宿（以年支查）
+        guchen_map = {
+            '子':'寅','丑':'寅','寅':'巳','卯':'巳',
+            '辰':'巳','巳':'申','午':'申','未':'申',
+            '申':'亥','酉':'亥','戌':'亥','亥':'寅',
+        }
+        guasu_map = {
+            '子':'戌','丑':'戌','寅':'丑','卯':'丑',
+            '辰':'丑','巳':'辰','午':'辰','未':'辰',
+            '申':'未','酉':'未','戌':'未','亥':'戌',
+        }
+        guchen_zhi = guchen_map.get(year_zhi, '')
+        guasu_zhi = guasu_map.get(year_zhi, '')
+        for z in all_zhis:
+            if z == guchen_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'孤辰（{pos}支{z}）')
+                break
+        for z in all_zhis:
+            if z == guasu_zhi:
+                pos = ['年','月','日','时'][all_zhis.index(z)]
+                shensha.append(f'寡宿（{pos}支{z}）')
+                break
+
+        # 32. 天罗地网（以年支或日支查）
+        tianluo_map = {'戌':'亥','亥':'戌'}
+        diwang_map = {'辰':'巳','巳':'辰'}
+        for z in all_zhis:
+            if z in tianluo_map and tianluo_map[z] in all_zhis:
+                shensha.append('天罗')
+                break
+        for z in all_zhis:
+            if z in diwang_map and diwang_map[z] in all_zhis:
+                shensha.append('地网')
+                break
+
+        # 33. 十恶大败（以日柱查）
+        eba_map = ['甲辰','乙巳','丙申','丁亥','戊戌','己丑','庚辰','辛巳','壬申','癸亥']
+        day_gz = day_pillar.gan + day_pillar.zhi
+        if day_gz in eba_map:
+            shensha.append('十恶大败')
+
+        # 34. 四废（以月支查日柱）
+        sifei_map = {
+            '子':['庚申','辛酉'],'丑':['庚申','辛酉'],
+            '寅':['壬子','癸亥'],'卯':['壬子','癸亥'],
+            '辰':['甲寅','乙卯'],'巳':['甲寅','乙卯'],
+            '午':['丙午','丁未'],'未':['丙午','丁未'],
+            '申':['戊辰','己巳'],'酉':['戊辰','己巳'],
+            '戌':['庚申','辛酉'],'亥':['庚申','辛酉'],
+        }
+        sifei_list = sifei_map.get(month_pillar.zhi, [])
+        if day_gz in sifei_list:
+            shensha.append('四废')
+
+        # 35. 六甲空亡（以日柱查空亡）
+        xunkong_map = {
+            '甲子':'戌亥','甲戌':'申酉','甲申':'午未','甲午':'辰巳','甲辰':'寅卯','甲寅':'子丑',
+            '乙丑':'戌亥','乙酉':'申酉','乙未':'午未','乙巳':'辰巳','乙卯':'寅卯','乙亥':'子丑',
+            '丙寅':'戌亥','丙子':'申酉','丙戌':'午未','丙申':'辰巳','丙午':'寅卯','丙辰':'子丑',
+            '丁卯':'戌亥','丁丑':'申酉','丁亥':'午未','丁酉':'辰巳','丁未':'寅卯','丁巳':'子丑',
+            '戊辰':'戌亥','戊寅':'申酉','戊子':'午未','戊戌':'辰巳','戊申':'寅卯','戊午':'子丑',
+            '己巳':'戌亥','己卯':'申酉','己丑':'午未','己亥':'辰巳','己酉':'寅卯','己未':'子丑',
+            '庚午':'戌亥','庚辰':'申酉','庚寅':'午未','庚子':'辰巳','庚戌':'寅卯','庚申':'子丑',
+            '辛未':'戌亥','辛巳':'申酉','辛卯':'午未','辛丑':'辰巳','辛亥':'寅卯','辛酉':'子丑',
+            '壬申':'戌亥','壬午':'申酉','壬辰':'午未','壬寅':'辰巳','壬子':'寅卯','壬戌':'子丑',
+            '癸酉':'戌亥','癸未':'申酉','癸巳':'午未','癸卯':'辰巳','癸丑':'寅卯','癸亥':'子丑',
+        }
+        xunkong = xunkong_map.get(day_gz, '')
+        if xunkong:
+            for z in all_zhis:
+                if z in xunkong:
+                    pos = ['年','月','日','时'][all_zhis.index(z)]
+                    shensha.append(f'空亡（{pos}支{z}）')
+
+        # 36. 天乙贵人（完整版，多个位置都算）
+        tianyi_map = {
+            '甲': ['丑','未'], '戊': ['丑','未'], '庚': ['丑','未'],
+            '乙': ['子','申'], '己': ['子','申'],
+            '丙': ['亥','酉'], '丁': ['亥','酉'],
+            '壬': ['卯','巳'], '癸': ['卯','巳'],
+            '辛': ['午','寅'],
+        }
+        tianyi_zhis = tianyi_map.get(day_gan, [])
+        tianyi_count = 0
+        for z in all_zhis:
+            if z in tianyi_zhis:
+                tianyi_count += 1
+        if tianyi_count >= 2:
+            shensha.append(f'双天乙贵人')
+
+        # 37. 双华盖
+        huagai_map = {'子':'辰','丑':'丑','寅':'戌','卯':'未','辰':'辰','巳':'丑','午':'戌','未':'未','申':'辰','酉':'丑','戌':'戌','亥':'未'}
+        huagai_zhi = huagai_map.get(year_zhi, '')
+        huagai_count = sum(1 for z in all_zhis if z == huagai_zhi)
+        if huagai_count >= 2:
+            shensha.append('双华盖')
+
+        # 38. 双桃花
+        taohua_map = {'子':'酉','丑':'午','寅':'卯','卯':'子','辰':'酉','巳':'午','午':'卯','未':'子','申':'酉','酉':'午','戌':'卯','亥':'子'}
+        taohua_zhi = taohua_map.get(year_zhi, '')
+        taohua_count = sum(1 for z in all_zhis if z == taohua_zhi)
+        if taohua_count >= 2:
+            shensha.append('双桃花')
+
+        return shensha
+
+    def _calc_xi_yong(self, day_gan: str, month_zhi: str, wuxing_score: dict) -> dict:
+        """
+        综合用神计算：普通旺衰 + 调候用神
+        
+        返回: {xi: [喜用五行], ji: [忌神五行], xian: [闲神五行], reason: str}
+        """
+        # 五行映射
+        gan_wuxing = {
+            '甲': '木', '乙': '木', '丙': '火', '丁': '火',
+            '戊': '土', '己': '土', '庚': '金', '辛': '金',
+            '壬': '水', '癸': '水',
+        }
+        day_wx = gan_wuxing.get(day_gan, '')
+        
+        # 计算日主得分占比
+        total = sum(wuxing_score.values()) if wuxing_score else 1
+        day_score = wuxing_score.get(day_wx, 0)
+        ratio = day_score / total if total > 0 else 0
+        
+        # 五行生克关系（动态推导用神，不硬编码）
+        KE = {'木':'土', '土':'水', '水':'火', '火':'金', '金':'木'}  # 我克=财
+        SHENG = {'木':'火', '火':'土', '土':'金', '金':'水', '水':'木'}  # 我生=食伤
+        BEI_KE = {'木':'金', '金':'火', '火':'水', '水':'土', '土':'木'}  # 克我=官杀
+        
+        # 普通旺衰判断
+        if ratio >= 0.40:
+            strength = '身强'
+            # 喜：克我(官杀) + 我克(财) + 我生(食伤泄)
+            base_xi = [BEI_KE[day_wx], KE[day_wx], SHENG[day_wx]]
+            # 忌：生我(印) + 同我(比劫)
+            base_ji = [day_wx, {v:k for k,v in SHENG.items()}[day_wx]]  # 同我 + 生我
+        elif ratio >= 0.25:
+            strength = '中和'
+            base_xi = []
+            base_ji = []
+        else:
+            strength = '身弱'
+            # 喜：生我(印) + 同我(比劫)
+            base_xi = [{v:k for k,v in SHENG.items()}[day_wx], day_wx]
+            # 忌：克我(官杀) + 我克(财) + 我生(食伤)
+            base_ji = [BEI_KE[day_wx], KE[day_wx], SHENG[day_wx]]
+        
+        # 调候用神（优先于普通旺衰）
+        # 季节判断
+        summer_zhi = {'巳', '午', '未'}
+        winter_zhi = {'亥', '子', '丑'}
+        
+        tiaohou_xi = []
+        tiaohou_ji = []
+        
+        if month_zhi in summer_zhi:
+            # 夏月调候
+            tiaohou_table = {
+                '甲': ['水', '木'], '乙': ['水', '木'],
+                '丙': ['水', '土'], '丁': ['水', '木'],
+                '戊': ['水', '木'], '己': ['水', '木'],
+                '庚': ['水', '木'], '辛': ['水', '木'],
+                '壬': ['水', '金'], '癸': ['水', '金'],
+            }
+            tiaohou_xi = tiaohou_table.get(day_gan, ['水'])
+        elif month_zhi in winter_zhi:
+            # 冬月调候
+            tiaohou_table = {
+                '甲': ['火', '土'], '乙': ['火', '土'],
+                '丙': ['火', '木'], '丁': ['火', '木'],
+                '戊': ['火', '土'], '己': ['火', '土'],
+                '庚': ['火', '土'], '辛': ['火', '土'],
+                '壬': ['火', '木'], '癸': ['火', '木'],
+            }
+            tiaohou_xi = tiaohou_table.get(day_gan, ['火'])
+        
+        # 综合判断
+        if strength == '中和' and tiaohou_xi:
+            # 中和命局以调候为主
+            xi = tiaohou_xi
+            ji = [w for w in ['木', '火', '土', '金', '水'] if w not in xi]
+            xian = []
+            reason = f"中和命局，以调候用神为主：喜{'+'.join(xi)}"
+        elif tiaohou_xi:
+            # 有调候时，取调候与普通旺衰的交集
+            xi = list(set(base_xi) | set(tiaohou_xi))
+            ji = [w for w in ['木', '火', '土', '金', '水'] if w not in xi]
+            xian = []
+            reason = f"{strength}，调候+普通旺衰综合：喜{'+'.join(xi)}"
+        else:
+            xi = base_xi if base_xi else ['木', '火', '土', '金', '水']
+            ji = base_ji
+            xian = [w for w in ['木', '火', '土', '金', '水'] if w not in xi and w not in ji]
+            reason = f"{strength}，无特殊调候：喜{'+'.join(xi)}"
+        
+        return {
+            'xi': xi,
+            'ji': ji,
+            'xian': xian,
+            'strength': strength,
+            'reason': reason,
+            'day_score': round(day_score, 1),
+            'total_score': round(total, 1),
+            'ratio': round(ratio * 100, 1),
+        }
+
+    def _calc_wuxing_score(self, pillars: list) -> Dict[str, float]:
+        """
+        五行得分计算。
+
+        天干本气: 1分
+        地支本气: 1分
+        地支中气: 0.5分
+        地支余气: 0.3分
+
+        使用 ZHI_CANGGAN 映射获取藏干数据。
+        """
+        score: Dict[str, float] = {"木": 0.0, "火": 0.0, "土": 0.0, "金": 0.0, "水": 0.0}
+
+        # 天干五行映射
+        gan_wuxing_map = {k: v[0].value for k, v in GAN_WUXING.items()}
+
+        for pillar in pillars:
+            if not pillar:
+                continue
+
+            # 天干本气: 1分
+            gan_wx = gan_wuxing_map.get(pillar.gan)
+            if gan_wx:
+                score[gan_wx] += 1.0
+
+            # 地支藏干
+            canggan_list = ZHI_CANGGAN.get(pillar.zhi, [])
+            for idx, canggan in enumerate(canggan_list):
+                canggan_wx = gan_wuxing_map.get(canggan)
+                if not canggan_wx:
+                    continue
+                if idx == 0:
+                    # 本气: 1分
+                    score[canggan_wx] += 1.0
+                elif idx == 1:
+                    # 中气: 0.5分
+                    score[canggan_wx] += 0.5
+                elif idx == 2:
+                    # 余气: 0.3分
+                    score[canggan_wx] += 0.3
+
+        # 保留一位小数
+        for k in score:
+            score[k] = round(score[k], 1)
+
+        return score

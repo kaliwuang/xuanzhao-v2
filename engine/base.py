@@ -60,14 +60,19 @@ class EngineOrchestrator:
     def __init__(self):
         self._engines: list[DivinationEngine] = []
 
+    @property
+    def engines(self) -> list[DivinationEngine]:
+        """公开的只读引擎列表"""
+        return self._engines
+
     def register(self, engine: DivinationEngine):
         self._engines.append(engine)
         self._engines.sort(key=lambda e: e.priority)
 
     def run_all(self, time: CorrectedTime, gender: int) -> DestinyModel:
         """运行所有术法引擎，生成完整的UDM"""
-        from .udm import DestinyModel
         udm = DestinyModel(corrected_time=time)
+        udm.birth_year = time.original.year
 
         for engine in self._engines:
             try:
@@ -104,7 +109,22 @@ class EngineOrchestrator:
             udm.dayun_start_year = data.get("dayun_start_year", 0)
             udm.dayun_start_age = data.get("dayun_start_age", 0)
             udm.tiaohou = data.get("tiaohou")
+            udm.shensha = data.get("shensha", [])
             udm.features = data.get("features", [])
+            udm.wuxing_score = data.get("wuxing_score", {})
+            udm.ming_gong = data.get("ming_gong", "")
+            udm.ming_gong_shishen = data.get("ming_gong_shishen")
+            udm.tai_yuan = data.get("tai_yuan", "")
+            udm.tai_yuan_shishen = data.get("tai_yuan_shishen")
+            udm.shen_gong = data.get("shen_gong", "")
+            udm.shen_gong_shishen = data.get("shen_gong_shishen")
+            udm.xi_yong = data.get("xi_yong", {})
+            udm.shensha_per_pillar = data.get("shensha_per_pillar", {})
+            udm.changsheng = data.get("changsheng", {})
+            udm.gan_relations = data.get("gan_relations", [])
+            udm.zhi_relations = data.get("zhi_relations", [])
+            udm.liunian = data.get("liunian")
+            udm.location = data.get("location")
         elif engine_name == "紫微":
             udm.ziwei_chart = data
         elif engine_name == "六爻":

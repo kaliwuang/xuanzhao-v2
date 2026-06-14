@@ -62,9 +62,9 @@ class TimeEngine:
     # 中国夏令时历史 (1986-1991)
     # 每年4月中旬第x个周日2:00开始，9月中旬第x个周日2:00结束
     DST_PERIODS = [
-        (1986, 4, 13, 9, 14),
+        (1986, 5, 4, 9, 14),
         (1987, 4, 12, 9, 13),
-        (1988, 4, 10, 9, 11),
+        (1988, 4, 17, 9, 11),
         (1989, 4, 16, 9, 17),
         (1990, 4, 15, 9, 16),
         (1991, 4, 14, 9, 15),
@@ -143,11 +143,11 @@ class TimeEngine:
         # 2. 查经纬度
         lat, lon = self._lookup_location(location)
 
-        # 3. 时区转换（默认东八区）
-        utc = self._to_utc(original)
+        # 3. 夏令时回退（在本地时间上检查，DST边界是北京时间）
+        original = self._undo_dst_local(original)
 
-        # 4. 夏令时回退
-        utc = self._undo_dst(utc)
+        # 4. 时区转换（默认东八区）
+        utc = self._to_utc(original)
 
         # 5. 真太阳时修正
         true_solar = self._true_solar_time(utc, lon)
@@ -171,13 +171,22 @@ class TimeEngine:
 
     def _parse_time(self, s: str) -> Optional[datetime]:
         """解析多种时间格式"""
+        if not s:
+            return None
+        # 统一处理：+号作为空格（URL编码兼容）
+        s = s.strip().replace('+', ' ')
         formats = [
+            "%Y-%m-%d %H:%M:%S",
             "%Y-%m-%d %H:%M",
+            "%Y/%m/%d %H:%M:%S",
             "%Y/%m/%d %H:%M",
+            "%Y-%m-%dT%H:%M:%S",
             "%Y-%m-%dT%H:%M",
+            "%Y%m%d %H%M%S",
             "%Y%m%d %H%M",
             "%Y-%m-%d %H",
             "%Y-%m-%d",
+            "%Y年%m月%d日 %H:%M:%S",
             "%Y年%m月%d日 %H:%M",
             "%Y年%m月%d日 %H时",
             "%Y年%m月%d日",
@@ -206,8 +215,8 @@ class TimeEngine:
         """东八区转UTC"""
         return dt - timedelta(hours=8)
 
-    def _undo_dst(self, dt: datetime) -> datetime:
-        """回退夏令时（中国1986-1991）"""
+    def _undo_dst_local(self, dt: datetime) -> datetime:
+        """回退夏令时（中国1986-1991），在本地时间上检查"""
         for year, start_month, start_day, end_month, end_day in self.DST_PERIODS:
             if dt.year == year:
                 start = datetime(year, start_month, start_day, 2)

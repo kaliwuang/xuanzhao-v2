@@ -1,385 +1,542 @@
-#!/usr/bin/env python3
 """
-玄照 v2.0 - 奇门遁甲引擎（完整版）
+Qi Men Dun Jia (奇门遁甲) Engine for XuanZhao v2.0
+"""
+from typing import Optional
+from datetime import datetime
 
-时家奇门排盘：拆补法
-  1. 节气定阴阳遁（冬至→夏至=阳遁，夏至→冬至=阴遁）
-  2. 节气三元定局数（上中下三元，每元5天）
-  3. 地盘固定排列（阳遁顺布，阴遁逆布）
-  4. 天盘旋转（时干加临地盘）
-  5. 八门排列（值使门随天盘转动）
-  6. 九星排列（值符星随天盘转动）
-  7. 八神排列（阳遁顺布，阴遁逆布）
-"""
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from typing import Optional, Dict, List
-import math
 
 
 class QiMenEngine(DivinationEngine):
-    """奇门遁甲引擎"""
+    """奇门遁甲排盘引擎"""
+
+    # 九宫基础信息
+    PALACE_NAMES = {1: '坎一宫', 2: '坤二宫', 3: '震三宫', 4: '巽四宫',
+                    5: '中五宫', 6: '乾六宫', 7: '兑七宫', 8: '艮八宫', 9: '离九宫'}
+    PALACE_DIRECTIONS = {1: '北', 2: '西南', 3: '东', 4: '东南',
+                         5: '中', 6: '西北', 7: '西', 8: '东北', 9: '南'}
+
+    # 九星
+    NINE_STARS = ['天蓬', '天芮', '天冲', '天辅', '天禽', '天心', '天柱', '天任', '天英']
+
+    # 地盘三奇六仪
+    DI_PAN_YI = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙']
+
+    # 天干 / 地支
+    TIAN_GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
+    DI_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
+
+    # 八神
+    EIGHT_GODS = ['值符', '腾蛇', '太阴', '六合', '白虎', '玄武', '九地', '九天']
+
+    # 阳遁局数（节气 -> 局）
+    YANG_JU = {
+        '冬至': 1, '小寒': 2, '大寒': 3,
+        '立春': 8, '雨水': 9, '惊蛰': 1,
+        '春分': 3, '清明': 4, '谷雨': 5,
+        '立夏': 4, '小满': 5, '芒种': 6,
+    }
+    # 阴遁局数
+    YIN_JU = {
+        '夏至': 9, '小暑': 8, '大暑': 7,
+        '立秋': 2, '处暑': 1, '白露': 9,
+        '秋分': 7, '寒露': 6, '霜降': 5,
+        '立冬': 6, '小雪': 5, '大雪': 4,
+    }
+
+    # 洛书飞宫顺序（中五寄坤二）
+    LUO_SHU_ORDER = [1, 8, 3, 4, 9, 2, 7, 6, 5]
+
+    # ---- abstract property implementations ----
 
     @property
     def name(self) -> str:
-        return "奇门"
+        return '奇门'
 
     @property
     def name_en(self) -> str:
-        return "QiMen"
+        return 'qimen'
 
     @property
     def priority(self) -> int:
-        return 4
+        return 5
 
-    # 九宫（洛书顺序）
-    GONG = ["坎一", "坤二", "震三", "巽四", "中五", "乾六", "兑七", "艮八", "离九"]
-
-    # 九宫地支对应
-    GONG_ZHI = {
-        "坎一": "子", "坤二": "未申", "震三": "卯",
-        "巽四": "辰巳", "中五": "", "乾六": "戌亥",
-        "兑七": "酉", "艮八": "丑寅", "离九": "午",
-    }
-
-    # 九宫五行
-    GONG_WUXING = {
-        "坎一": "水", "坤二": "土", "震三": "木", "巽四": "木",
-        "中五": "土", "乾六": "金", "兑七": "金", "艮八": "土", "离九": "火",
-    }
-
-    # 天干
-    TIAN_GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
-
-    # 六仪三奇（甲子旬首遁戊，甲戌己，甲申庚，甲午辛，甲辰壬，甲寅癸）
-    # 三奇：乙(日奇)、丙(月奇)、丁(星奇)
-    YI_QI = ["戊", "己", "庚", "辛", "壬", "癸", "丁", "丙", "乙"]
-
-    # 八门
-    BA_MEN = ["休门", "生门", "伤门", "杜门", "景门", "死门", "惊门", "开门"]
-
-    # 八门原始宫位（阳遁一局时）
-    # 休门坎一、生门艮八、伤门震三、杜门巽四、景门离九、死门坤二、惊门兑七、开门乾六
-    MEN_ORIGIN = {
-        "休门": 0, "生门": 7, "伤门": 2, "杜门": 3,
-        "景门": 8, "死门": 1, "惊门": 6, "开门": 5,
-    }
-
-    # 九星
-    JIU_XING = ["天蓬", "天芮", "天冲", "天辅", "天禽", "天心", "天柱", "天任", "天英"]
-
-    # 九星原始宫位
-    XING_ORIGIN = {
-        "天蓬": 0, "天芮": 1, "天冲": 2, "天辅": 3, "天禽": 4,
-        "天心": 5, "天柱": 6, "天任": 7, "天英": 8,
-    }
-
-    # 八神
-    BA_SHEN = ["值符", "螣蛇", "太阴", "六合", "白虎(勾陈)", "玄武(朱雀)", "九地", "九天"]
-
-    # 二十四节气 → (阳遁局数, 阴遁局数)
-    # 每个节气15天，分上中下三元，每元5天
-    JIEQI_JU = {
-        # 冬至后阳遁
-        "冬至": (1, 7, 4),   # 上元1局，中元7局，下元4局
-        "小寒": (2, 8, 5),
-        "大寒": (3, 9, 6),
-        "立春": (8, 5, 2),
-        "雨水": (9, 6, 3),
-        "惊蛰": (1, 7, 4),
-        "春分": (3, 9, 6),
-        "清明": (4, 1, 7),
-        "谷雨": (5, 2, 8),
-        "立夏": (4, 1, 7),
-        "小满": (5, 2, 8),
-        "芒种": (6, 3, 9),
-        # 夏至后阴遁
-        "夏至": (9, 3, 6),
-        "小暑": (8, 2, 5),
-        "大暑": (7, 1, 4),
-        "立秋": (2, 5, 8),
-        "处暑": (1, 4, 7),
-        "白露": (9, 3, 6),
-        "秋分": (7, 1, 4),
-        "寒露": (6, 9, 3),
-        "霜降": (5, 8, 2),
-        "立冬": (6, 9, 3),
-        "小雪": (5, 8, 2),
-        "大雪": (4, 7, 1),
-    }
-
-    # 节气顺序
-    JIEQI_ORDER = [
-        "小寒", "大寒", "立春", "雨水", "惊蛰", "春分",
-        "清明", "谷雨", "立夏", "小满", "芒种", "夏至",
-        "小暑", "大暑", "立秋", "处暑", "白露", "秋分",
-        "寒露", "霜降", "立冬", "小雪", "大雪", "冬至",
-    ]
-
-    def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        dt = time.true_solar
-
-        # 获取节气信息和日干支
-        try:
-            from lunar_python import Solar
-            solar = Solar.fromYmdHms(dt.year, dt.month, dt.day, dt.hour, dt.minute, 0)
-            lunar = solar.getLunar()
-            ec = lunar.getEightChar()
-            day_gan = ec.getDayGan()
-            day_zhi = ec.getDayZhi()
-            day_jiazi_idx = self._get_jiazi_idx(day_gan, day_zhi)
-
-            # 获取当前节气
-            jieqi_name = self._get_current_jieqi(lunar)
-        except Exception:
-            day_gan = "甲"
-            day_zhi = "子"
-            day_jiazi_idx = 0
-            jieqi_name = "冬至"
-
-        # 时干支
-        hour_zhi_idx = (dt.hour + 1) // 2 % 12
-        time_gan_idx = self._get_time_gan_idx(day_gan, hour_zhi_idx)
-        time_gan = self.TIAN_GAN[time_gan_idx]
-
-        # 1. 确定阴阳遁
-        yin_yang = self._get_yin_yang_dun(jieqi_name)
-
-        # 2. 确定局数
-        ju_shu = self._get_ju_shu(jieqi_name, day_jiazi_idx, yin_yang)
-
-        # 3. 排地盘
-        di_pan = self._pai_di_pan(yin_yang, ju_shu)
-
-        # 4. 确定值符值使
-        # 甲子旬首遁戊，找出时干所在旬
-        xun_shou = self._get_xun_shou(day_jiazi_idx)
-        xun_shou_gan = self.YI_QI[xun_shou]
-
-        # 值符星 = 地盘旬首所在宫的九星
-        zhi_fu_gong = self._find_gong_of_gan(di_pan, xun_shou_gan)
-
-        # 5. 排天盘（时干落宫转动）
-        tian_pan = self._pai_tian_pan(di_pan, time_gan, yin_yang)
-
-        # 6. 排九星
-        jiu_xing = self._pai_jiu_xing(di_pan, tian_pan, zhi_fu_gong, yin_yang, ju_shu)
-
-        # 7. 排八门
-        ba_men = self._pai_ba_men(di_pan, tian_pan, zhi_fu_gong, yin_yang, ju_shu, hour_zhi_idx)
-
-        # 8. 排八神
-        ba_shen = self._pai_ba_shen(zhi_fu_gong, yin_yang)
-
-        return {
-            "yin_yang": yin_yang,
-            "ju_shu": ju_shu,
-            "ju_name": f"{yin_yang}{ju_shu}局",
-            "jieqi": jieqi_name,
-            "di_pan": di_pan,
-            "tian_pan": tian_pan,
-            "ba_men": ba_men,
-            "jiu_xing": jiu_xing,
-            "ba_shen": ba_shen,
-            "zhi_fu": xun_shou_gan,
-            "zhi_shi": self.BA_MEN[0],  # 简化
-            "time_gan": time_gan,
-            "date": dt.strftime("%Y-%m-%d %H:%M"),
-        }
+    # ---- core methods ----
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
-        if not data.get("ju_shu"):
-            return False, "局数为空"
+        """校验排盘数据"""
+        if 'ju_shu' not in data or not (1 <= data['ju_shu'] <= 9):
+            return False, '局数必须在1-9之间'
+        if 'palaces' not in data or len(data.get('palaces', [])) != 9:
+            return False, '必须包含9个宫位'
         return True, None
 
-    def _get_current_jieqi(self, lunar) -> str:
-        """获取当前所处节气"""
+    def analyze(self, time: CorrectedTime, gender: int) -> dict:
+        """执行奇门遁甲排盘
+
+        Args:
+            time: 校正后的时间信息
+            gender: 性别 (1=男, 0=女)
+
+        Returns:
+            dict: 奇门排盘结果
+        """
+        solar_dt = time.true_solar or time.original
+
+        # 1. 节气 & 局数
+        jieqi, ju, yin_yang = self._get_jieqi_info(solar_dt)
+
+        # 2. 干支
+        hour_gan_zhi = self._calc_hour_gan_zhi(solar_dt)
+        day_gan_zhi = self._get_day_gan_zhi(solar_dt)
+        time_gan = hour_gan_zhi[0] if hour_gan_zhi else '甲'
+
+        # 3. 地盘
+        di_pan = self._build_di_pan(ju, yin_yang)
+
+        # 4. 天盘、八门、九星
+        tian_pan, ba_men, jiu_xing = self._build_tian_pan(di_pan, hour_gan_zhi, ju, yin_yang)
+
+        # 5. 值符 & 值使
+        zhi_fu_gong = self._find_gong_for_gan(di_pan, time_gan)
+        zhi_fu_star = jiu_xing.get(zhi_fu_gong, '天蓬')
+        zhi_shi_door = ba_men.get(1, '休门')
+
+        # 6. 八神
+        ba_shen = self._build_ba_shen(yin_yang, zhi_fu_gong)
+
+        # 7. 宫位汇总
+        palaces = self._build_palaces(di_pan, tian_pan, ba_men, jiu_xing, ba_shen)
+
+        # 旬空
+        xun_kong = self._calc_xun_kong(day_gan_zhi)
+
+        result = {
+            'engine': self.name,
+            'engine_en': self.name_en,
+            'ju_name': f'{yin_yang}{ju}局',
+            'yin_yang': yin_yang,
+            'ju_shu': ju,
+            'jieqi': jieqi,
+            'day_gan_zhi': day_gan_zhi,
+            'time_gan_zhi': hour_gan_zhi,
+            'time_gan': time_gan,
+            'di_pan': {str(k): v for k, v in di_pan.items()},
+            'tian_pan': {str(k): v for k, v in tian_pan.items()},
+            'ba_men': {str(k): v for k, v in ba_men.items()},
+            'jiu_xing': {str(k): v for k, v in jiu_xing.items()},
+            'ba_shen': {str(k): v for k, v in ba_shen.items()},
+            'palaces': palaces,
+            'zhi_fu': {'star': zhi_fu_star, 'gong': zhi_fu_gong},
+            'zhi_fu_gong': zhi_fu_gong,
+            'zhi_shi': {'door': zhi_shi_door, 'gong': 1},
+            'solar_time': solar_dt.isoformat(),
+            'gender': gender,
+            'xun_kong': xun_kong,
+            # 天地人三盘摘要（便于前端快速展示）
+            'san_pan_summary': self._build_san_pan_summary(palaces),
+            'ge_ju_analysis': self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong),
+            # 流年分析
+            'liunian': self._build_liunian(solar_dt, di_pan, tian_pan, palaces),
+        }
+
+        valid, err = self.validate(result)
+        if not valid:
+            raise ValueError(f'奇门排盘数据校验失败: {err}')
+
+        return result
+
+    # ---- internal helpers ----
+
+    def _get_jieqi_info(self, solar_dt: datetime) -> tuple[str, int, str]:
+        """根据阳历日期计算当前节气、局数和阴阳遁
+
+        优先使用 lunar_python 精确节气，回退到近似日期表。
+
+        Returns:
+            (节气名, 局数, '阳遁'/'阴遁')
+        """
+        # 优先使用 lunar_python 精确节气
         try:
-            # 获取最近的节
-            prev_jie = lunar.getPrevJie()
-            if prev_jie:
-                return prev_jie.getName()
+            from lunar_python import Solar
+            solar = Solar.fromYmdHms(
+                solar_dt.year, solar_dt.month, solar_dt.day,
+                solar_dt.hour, solar_dt.minute, solar_dt.second
+            )
+            lunar = solar.getLunar()
+            prev_jieqi = lunar.getPrevJieQi()
+            if prev_jieqi:
+                jq_name = prev_jieqi.getName()
+                # 转换简繁体（lunar_python返回简体）
+                if jq_name in self.YANG_JU:
+                    return jq_name, self.YANG_JU[jq_name], '阳遁'
+                elif jq_name in self.YIN_JU:
+                    return jq_name, self.YIN_JU[jq_name], '阴遁'
         except Exception:
             pass
 
-        # fallback: 按月份估算
-        month = lunar.getMonth()
-        jieqi_approx = {
-            1: "小寒", 2: "立春", 3: "惊蛰", 4: "清明",
-            5: "立夏", 6: "芒种", 7: "小暑", 8: "立秋",
-            9: "白露", 10: "寒露", 11: "立冬", 12: "大雪",
-        }
-        return jieqi_approx.get(month, "冬至")
+        # 回退：按月日近似节气分界
+        m, d = solar_dt.month, solar_dt.day
 
-    def _get_yin_yang_dun(self, jieqi_name: str) -> str:
-        """按节气定阴阳遁：冬至到夏至为阳遁，夏至到冬至为阴遁"""
-        yang_jieqi = {"冬至", "小寒", "大寒", "立春", "雨水", "惊蛰",
-                      "春分", "清明", "谷雨", "立夏", "小满", "芒种"}
-        if jieqi_name in yang_jieqi:
-            return "阳遁"
-        return "阴遁"
+        # 按月日近似节气分界
+        jieqi_table = [
+            (1, 6, '小寒'), (1, 20, '大寒'),
+            (2, 4, '立春'), (2, 19, '雨水'),
+            (3, 6, '惊蛰'), (3, 21, '春分'),
+            (4, 5, '清明'), (4, 20, '谷雨'),
+            (5, 6, '立夏'), (5, 21, '小满'),
+            (6, 6, '芒种'), (6, 21, '夏至'),
+            (7, 7, '小暑'), (7, 23, '大暑'),
+            (8, 7, '立秋'), (8, 23, '处暑'),
+            (9, 8, '白露'), (9, 23, '秋分'),
+            (10, 8, '寒露'), (10, 23, '霜降'),
+            (11, 7, '立冬'), (11, 22, '小雪'),
+            (12, 7, '大雪'), (12, 22, '冬至'),
+        ]
 
-    def _get_ju_shu(self, jieqi_name: str, day_jiazi_idx: int, yin_yang: str) -> int:
-        """拆补法定局：节气+日干支三元"""
-        ju_tuple = self.JIEQI_JU.get(jieqi_name, (1, 7, 4))
+        current_jieqi = '冬至'
+        for jm, jd, name in jieqi_table:
+            if (m > jm) or (m == jm and d >= jd):
+                current_jieqi = name
 
-        # 三元判定：甲子、甲午为上元；己卯、己酉为中元；其余为下元
-        # 简化：用日干支序号对15取余分三元
-        # 甲子(0)~戊辰(4)为上元，己巳(5)~癸酉(9)为中元，甲戌(10)~戊寅(14)为下元
-        yuan = day_jiazi_idx % 15
-        if yuan < 5:
-            return ju_tuple[0]  # 上元
-        elif yuan < 10:
-            return ju_tuple[1]  # 中元
+        if current_jieqi in self.YANG_JU:
+            return current_jieqi, self.YANG_JU[current_jieqi], '阳遁'
         else:
-            return ju_tuple[2]  # 下元
+            return current_jieqi, self.YIN_JU[current_jieqi], '阴遁'
 
-    def _pai_di_pan(self, yin_yang: str, ju_shu: int) -> dict:
-        """排地盘：六仪三奇按洛书九宫排列"""
-        # 阳遁：戊起局数宫，顺布
-        # 阴遁：戊起局数宫，逆布
+    def _calc_hour_gan_zhi(self, solar_dt: datetime) -> str:
+        """计算时柱天干地支"""
+        try:
+            from lunar_python import Solar
+            lunar = Solar.fromYmdHms(
+                solar_dt.year, solar_dt.month, solar_dt.day,
+                solar_dt.hour, solar_dt.minute, solar_dt.second
+            ).getLunar()
+            return lunar.getTimeInGanZhi()
+        except Exception:
+            hour = solar_dt.hour
+            zhi_idx = ((hour + 1) % 24) // 2
+            day_gan_idx = (solar_dt.toordinal() + 9) % 10
+            gan_idx = (day_gan_idx * 2 + zhi_idx) % 10
+            return f'{self.TIAN_GAN[gan_idx]}{self.DI_ZHI[zhi_idx]}'
+
+    def _get_day_gan_zhi(self, solar_dt: datetime) -> str:
+        """获取日柱干支"""
+        try:
+            from lunar_python import Solar
+            lunar = Solar.fromYmdHms(
+                solar_dt.year, solar_dt.month, solar_dt.day,
+                solar_dt.hour, solar_dt.minute, solar_dt.second
+            ).getLunar()
+            return lunar.getDayInGanZhi()
+        except Exception:
+            ga = (solar_dt.toordinal() + 9) % 10
+            zi = (solar_dt.toordinal() + 1) % 12
+            return f'{self.TIAN_GAN[ga]}{self.DI_ZHI[zi]}'
+
+    def _build_di_pan(self, ju: int, yin_yang: str) -> dict:
+        """构建地盘（九宫对应的三奇六仪）
+
+        阳遁: 戊落在第 ju 宫，洛书飞宫顺序顺排
+        阴遁: 戊落在第 ju 宫，逆排
+        """
+        yi_order = self.DI_PAN_YI  # 戊己庚辛壬癸丁丙乙
+        luo = self.LUO_SHU_ORDER   # 1 8 3 4 9 2 7 6 5
+
+        start = luo.index(ju) if ju in luo else 0
         di_pan = {}
-        gong_order = [0, 1, 2, 3, 4, 5, 6, 7, 8]  # 洛书顺序：坎坤震巽中乾兑艮离
-
-        start = ju_shu - 1  # 局数-1 = 起始宫索引
-
-        for i in range(9):
-            if yin_yang == "阳遁":
-                gong_idx = (start + i) % 9
+        for i, palace in enumerate(luo):
+            if yin_yang == '阳遁':
+                yi_idx = (i - start) % 9
             else:
-                gong_idx = (start - i) % 9
-            di_pan[self.GONG[gong_idx]] = self.YI_QI[i]
-
+                yi_idx = (start - i) % 9
+            di_pan[palace] = yi_order[yi_idx]
         return di_pan
 
-    def _pai_tian_pan(self, di_pan: dict, time_gan: str, yin_yang: str) -> dict:
-        """排天盘：值符随时干转动
+    def _build_tian_pan(self, di_pan: dict, hour_gan_zhi: str, ju: int, yin_yang: str):
+        """构建天盘、八门、九星
 
-        规则：值符星落在时干所在的地盘宫位，天盘的三奇六仪随之旋转。
-        天盘的排列 = 地盘以时干宫为轴旋转后的结果。
+        天盘旋转规则：值符随时干转。
+        值符（时干在地盘对应的星）从原宫位转到时干所在宫位，
+        其余八星按洛书飞宫顺序跟随转动。
         """
-        tian_pan = {}
+        hour_gan = hour_gan_zhi[0] if hour_gan_zhi else '甲'
 
-        # 找时干在地盘的宫位索引
-        time_gan_gong_idx = None
-        for i, gong in enumerate(self.GONG):
-            if di_pan.get(gong) == time_gan:
-                time_gan_gong_idx = i
-                break
-
-        if time_gan_gong_idx is None:
-            return di_pan.copy()
-
-        # 天盘旋转：地盘的起始宫（戊所在宫）转到时干宫
-        # 找戊在地盘的宫位
-        wu_gong_idx = None
-        for i, gong in enumerate(self.GONG):
-            if di_pan.get(gong) == "戊":
-                wu_gong_idx = i
-                break
-
-        if wu_gong_idx is None:
-            return di_pan.copy()
-
-        # 旋转量 = 时干宫 - 戊宫
-        rotation = time_gan_gong_idx - wu_gong_idx
-
-        for i, gong in enumerate(self.GONG):
-            src_idx = (i - rotation) % 9
-            tian_pan[gong] = di_pan.get(self.GONG[src_idx], "")
-
-        return tian_pan
-
-    def _pai_jiu_xing(self, di_pan: dict, tian_pan: dict,
-                       zhi_fu_gong: int, yin_yang: str, ju_shu: int) -> dict:
-        """排九星"""
+        # 九星按洛书顺序
+        luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
         jiu_xing = {}
+        for i, palace in enumerate(luo8):
+            jiu_xing[palace] = self.NINE_STARS[i]
 
-        # 值符星落在时干所在宫
-        # 九星原始宫位：天蓬坎、天芮坤、天冲震...
-        # 阳遁：天蓬起坎一宫顺行
-        # 阴遁：天蓬起离九宫逆行
-
-        gong_order = list(range(9))  # 坎坤震巽中乾兑艮离
-
-        if yin_yang == "阳遁":
-            start = ju_shu - 1
-        else:
-            start = 9 - ju_shu
-
-        for i in range(9):
-            if yin_yang == "阳遁":
-                gong_idx = (start + i) % 9
-            else:
-                gong_idx = (start - i) % 9
-            jiu_xing[self.GONG[gong_idx]] = self.JIU_XING[i]
-
-        return jiu_xing
-
-    def _pai_ba_men(self, di_pan: dict, tian_pan: dict,
-                     zhi_fu_gong: int, yin_yang: str, ju_shu: int,
-                     hour_zhi_idx: int) -> dict:
-        """排八门"""
+        # 八门按洛书顺序
+        doors = ['休门', '生门', '伤门', '杜门', '景门', '死门', '惊门', '开门']
         ba_men = {}
+        for i, palace in enumerate(luo8):
+            ba_men[palace] = doors[i]
 
-        if yin_yang == "阳遁":
-            start = ju_shu - 1
+        # 天盘旋转：找到时干在地盘中的宫位
+        hour_gan_gong = None
+        for gong, yi in di_pan.items():
+            if yi == hour_gan:
+                hour_gan_gong = gong
+                break
+
+        if hour_gan_gong:
+            gong_int = int(hour_gan_gong)
+            # 中宫5不在洛书飞宫序列中，寄坤二宫处理
+            if gong_int == 5:
+                gong_int = 2
+            # ju=5 也需寄坤二宫
+            ju_lookup = 2 if ju == 5 else ju
+            if gong_int in luo8:
+                # 找到值符（ju对应的星）在洛书中的位置
+                zhi_fu_idx = luo8.index(ju_lookup) if ju_lookup in luo8 else 0
+                # 时干宫在洛书中的位置
+                target_idx = luo8.index(gong_int)
+                # 计算旋转偏移
+                offset = target_idx - zhi_fu_idx
+
+                # 天盘 = 地盘元素按offset旋转
+                n = len(luo8)
+                tian_pan = {}
+                for i, palace in enumerate(luo8):
+                    src_idx = (i - offset) % n
+                    src_palace = luo8[src_idx]
+                    tian_pan[palace] = di_pan.get(src_palace, '')
+                # 中宫保持不变
+                tian_pan[5] = di_pan.get(5, '')
+
+                # 九星也按同样偏移旋转
+                new_jiu_xing = {}
+                for i, palace in enumerate(luo8):
+                    src_idx = (i - offset) % n
+                    new_jiu_xing[palace] = jiu_xing[luo8[src_idx]]
+                new_jiu_xing[5] = jiu_xing.get(5, '天禽')
+                jiu_xing = new_jiu_xing
+
+                # 八门也按同样偏移旋转
+                new_ba_men = {}
+                for i, palace in enumerate(luo8):
+                    src_idx = (i - offset) % n
+                    new_ba_men[palace] = ba_men[luo8[src_idx]]
+                new_ba_men[5] = ''
+                ba_men = new_ba_men
+            else:
+                tian_pan = dict(di_pan)
         else:
-            start = 9 - ju_shu
+            tian_pan = dict(di_pan)
 
-        # 八门排列：休门起始，按洛书顺序
-        men_order = ["休门", "生门", "伤门", "杜门", "景门", "死门", "惊门", "开门"]
-        gong_order = [0, 7, 2, 3, 8, 1, 6, 5]  # 坎艮震巽离坤兑乾（跳过中五）
+        return tian_pan, ba_men, jiu_xing
 
-        for i, gong_idx in enumerate(gong_order):
-            if yin_yang == "阳遁":
-                actual_idx = (start + gong_idx) % 9
-            else:
-                actual_idx = (start - gong_idx) % 9
-            if i < len(men_order):
-                ba_men[self.GONG[actual_idx]] = men_order[i]
+    def _build_ba_shen(self, yin_yang: str, zhi_fu_gong: int) -> dict:
+        """分配八神"""
+        luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
+        start = luo8.index(zhi_fu_gong) if zhi_fu_gong in luo8 else 0
+        gods = self.EIGHT_GODS
 
-        return ba_men
-
-    def _pai_ba_shen(self, zhi_fu_gong: int, yin_yang: str) -> dict:
-        """排八神"""
         ba_shen = {}
-        gong_order = [0, 7, 2, 3, 8, 1, 6, 5]  # 跳过中五
-
-        start_idx = 0
-        for i, gong_idx in enumerate(gong_order):
-            if yin_yang == "阳遁":
-                actual_idx = (zhi_fu_gong + gong_idx) % 9
-            else:
-                actual_idx = (zhi_fu_gong - gong_idx) % 9
-            if i < len(self.BA_SHEN):
-                ba_shen[self.GONG[actual_idx]] = self.BA_SHEN[i]
-
+        for i, palace in enumerate(luo8):
+            god_idx = (i - start) % len(gods)
+            ba_shen[palace] = gods[god_idx]
         return ba_shen
 
-    def _get_jiazi_idx(self, gan: str, zhi: str) -> int:
-        """天干地支 → 甲子序号"""
-        gan_idx = self.TIAN_GAN.index(gan)
-        zhi_list = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
-        zhi_idx = zhi_list.index(zhi)
-        # 六十甲子序号
-        idx = (gan_idx * 6 + (zhi_idx - gan_idx) % 12) % 60
-        return idx
+    def _find_gong_for_gan(self, di_pan: dict, gan: str) -> int:
+        """在地盘中找到天干所在宫位"""
+        for gong, yi in di_pan.items():
+            if yi == gan:
+                return gong
+        return 1  # fallback
 
-    def _get_time_gan_idx(self, day_gan: str, hour_zhi_idx: int) -> int:
-        """日干定时干（五鼠遁日起时法）"""
-        # 甲己日起甲子时，乙庚日起丙子时，丙辛日起戊子时，丁壬日起庚子时，戊癸日起壬子时
-        start_map = {"甲": 0, "己": 0, "乙": 2, "庚": 2, "丙": 4, "辛": 4, "丁": 6, "壬": 6, "戊": 8, "癸": 8}
-        start = start_map.get(day_gan, 0)
-        return (start + hour_zhi_idx) % 10
+    def _calc_xun_kong(self, day_gan_zhi: str) -> dict:
+        """计算日柱旬空（空亡地支）和旬首奇仪"""
+        TIANGAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']
+        DIZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
+        # 旬首对应的奇仪（甲子→戊, 甲戌→己, 甲申→庚, 甲午→辛, 甲辰→壬, 甲寅→癸）
+        XUN_HIDDEN_YI = {'子': '戊', '戌': '己', '申': '庚', '午': '辛', '辰': '壬', '寅': '癸'}
+        if len(day_gan_zhi) < 2:
+            return {'xun_shou': '', 'kong_wang': [], 'hidden_yi': ''}
+        gan_idx = TIANGAN.index(day_gan_zhi[0]) if day_gan_zhi[0] in TIANGAN else 0
+        zhi_idx = DIZHI.index(day_gan_zhi[1]) if day_gan_zhi[1] in DIZHI else 0
+        xun_start_zhi = (zhi_idx - gan_idx) % 12
+        xun_shou_zhi = DIZHI[xun_start_zhi]
+        xun_shou = TIANGAN[0] + xun_shou_zhi
+        kong1 = DIZHI[(xun_start_zhi + 10) % 12]
+        kong2 = DIZHI[(xun_start_zhi + 11) % 12]
+        hidden_yi = XUN_HIDDEN_YI.get(xun_shou_zhi, '戊')
+        return {'xun_shou': xun_shou, 'kong_wang': [kong1, kong2], 'hidden_yi': hidden_yi}
 
-    def _get_xun_shou(self, day_jiazi_idx: int) -> int:
-        """确定旬首（甲子旬=0, 甲戌旬=1, 甲申旬=2, 甲午旬=3, 甲辰旬=4, 甲寅旬=5）"""
-        return day_jiazi_idx // 10
+    def _build_palaces(self, di_pan, tian_pan, ba_men, jiu_xing, ba_shen) -> list:
+        """合并生成 9 宫数据列表"""
+        palaces = []
+        for gong in range(1, 10):
+            palaces.append({
+                'gong': gong,
+                'name': self.PALACE_NAMES.get(gong, ''),
+                'direction': self.PALACE_DIRECTIONS.get(gong, ''),
+                'di_pan': di_pan.get(gong, ''),
+                'tian_pan': tian_pan.get(gong, ''),
+                'men': ba_men.get(gong, ''),
+                'xing': jiu_xing.get(gong, ''),
+                'shen': ba_shen.get(gong, ''),
+            })
+        return palaces
 
-    def _find_gong_of_gan(self, di_pan: dict, gan: str) -> int:
-        """找天干在地盘的宫位索引"""
-        for i, gong in enumerate(self.GONG):
-            if di_pan.get(gong) == gan:
-                return i
-        return 0
+    def _analyze_ge_ju(self, palaces: list, ba_men: dict, jiu_xing: dict, ba_shen: dict, xun_kong: dict) -> dict:
+        """奇门格局判断：识别吉格和凶格"""
+        ji_ge = []   # 吉格
+        xiong_ge = []  # 凶格
+
+        # ---- 吉格检测 ----
+
+        # 1. 天遁：生门+天辅星同宫
+        for p in palaces:
+            g = p['gong']
+            if p['men'] == '生门' and p['xing'] == '天辅':
+                ji_ge.append({'name': '天遁', 'gong': g, 'desc': '生门配天辅，谋事大吉'})
+
+        # 2. 地遁：开门+天心星同宫
+        for p in palaces:
+            g = p['gong']
+            if p['men'] == '开门' and p['xing'] == '天心':
+                ji_ge.append({'name': '地遁', 'gong': g, 'desc': '开门配天心，百事可为'})
+
+        # 3. 人遁：休门+天任星同宫
+        for p in palaces:
+            g = p['gong']
+            if p['men'] == '休门' and p['xing'] == '天任':
+                ji_ge.append({'name': '人遁', 'gong': g, 'desc': '休门配天任，贵人相助'})
+
+        # 4. 龙遁：开门/休门+九天同宫
+        for p in palaces:
+            g = p['gong']
+            if p['men'] in ('开门', '休门') and p['shen'] == '九天':
+                ji_ge.append({'name': '龙遁', 'gong': g, 'desc': f"{p['men']}配九天，飞龙在天"})
+
+        # 5. 虎遁：开门/生门+白虎同宫
+        for p in palaces:
+            g = p['gong']
+            if p['men'] in ('开门', '生门') and p['shen'] == '白虎':
+                ji_ge.append({'name': '虎遁', 'gong': g, 'desc': f"{p['men']}配白虎，威猛有力"})
+
+        # ---- 凶格检测 ----
+
+        # 1. 朱雀投江：景门落坎宫(1)
+        for p in palaces:
+            if p['men'] == '景门' and p['gong'] == 1:
+                xiong_ge.append({'name': '朱雀投江', 'gong': 1, 'desc': '景门入坎，文书有失'})
+
+        # 2. 螣蛇夭矫：死门落巽宫(4)
+        for p in palaces:
+            if p['men'] == '死门' and p['gong'] == 4:
+                xiong_ge.append({'name': '螣蛇夭矫', 'gong': 4, 'desc': '死门入巽，虚惊怪异'})
+
+        # 3. 太白入荧：庚+丙（天盘庚，地盘丙）
+        for p in palaces:
+            if p.get('tian_pan') == '庚' and p.get('di_pan') == '丙':
+                xiong_ge.append({'name': '太白入荧', 'gong': p['gong'], 'desc': '庚加丙，贼来为患'})
+
+        # 4. 荧入太白：丙+庚
+        for p in palaces:
+            if p.get('tian_pan') == '丙' and p.get('di_pan') == '庚':
+                xiong_ge.append({'name': '荧入太白', 'gong': p['gong'], 'desc': '丙加庚，贼去平安'})
+
+        # 5. 击刑：天盘天干落地盘相刑之宫
+        XING_MAP = {1: '子', 8: '丑', 3: '卯', 4: '辰', 9: '午', 2: '未', 7: '酉', 6: '戌'}
+        GAN_XING = {'壬': 1, '癸': 8, '庚': 3, '辛': 4, '戊': 2, '己': 9}
+        for p in palaces:
+            g = p['gong']
+            tp = p.get('tian_pan', '')
+            if tp in GAN_XING and GAN_XING[tp] == g:
+                xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{XING_MAP.get(g, "中")}宫，刑伤之象'})
+
+        # 6. 入墓：天干落墓宫
+        GAN_MU = {'乙': 6, '丁': 8, '己': 8, '辛': 4, '壬': 4}  # 简化版
+        for p in palaces:
+            g = p['gong']
+            tp = p.get('tian_pan', '')
+            if tp in GAN_MU and GAN_MU[tp] == g:
+                xiong_ge.append({'name': '入墓', 'gong': g, 'desc': f'{tp}入墓，事有阻碍'})
+
+        # 旬空宫
+        kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
+        kong_gongs = []
+        ZHI_TO_GONG = {
+            '子': 1, '丑': 8, '寅': 3, '卯': 3, '辰': 4, '巳': 4,
+            '午': 9, '未': 2, '申': 2, '酉': 7, '戌': 6, '亥': 6,
+        }
+        for zhi in kong_wang:
+            if zhi in ZHI_TO_GONG:
+                kong_gongs.append(ZHI_TO_GONG[zhi])
+
+        return {
+            'ji_ge': ji_ge,
+            'xiong_ge': xiong_ge,
+            'kong_wang_gongs': kong_gongs,
+            'summary': (
+                f"吉格{len(ji_ge)}个，凶格{len(xiong_ge)}个"
+                + (f"，旬空宫：{kong_gongs}" if kong_gongs else "")
+            ),
+        }
+
+    def _build_san_pan_summary(self, palaces: list) -> dict:
+        """天地人三盘摘要：每宫的天盘/地盘/八门/九星/八神一句话"""
+        summary = {}
+        for p in palaces:
+            gong = p['gong']
+            if gong == 5:  # 中宫跳过
+                continue
+            name = p.get('name', '')
+            direction = p.get('direction', '')
+            di = p.get('di_pan', '')
+            tian = p.get('tian_pan', '')
+            men = p.get('men', '')
+            xing = p.get('xing', '')
+            shen = p.get('shen', '')
+            summary[str(gong)] = {
+                'name': name,
+                'direction': direction,
+                'tian_di': f'天{tian}地{di}',  # 天盘+地盘
+                'men_xing_shen': f'{men}/{xing}/{shen}',  # 门/星/神
+            }
+        return summary
+
+    def _build_liunian(self, solar_dt: datetime, di_pan: dict, tian_pan: dict, palaces: list) -> dict:
+        """流年太岁分析 — 当前年份太落在哪个宫，与各宫的关系"""
+        try:
+            from lunar_python import Solar
+            solar = Solar.fromYmdHms(solar_dt.year, solar_dt.month, solar_dt.day, solar_dt.hour, solar_dt.minute, 0)
+            lunar = solar.getLunar()
+            year_gan = lunar.getYearGan()
+            year_zhi = lunar.getYearZhi()
+            year_ganzhi = f'{year_gan}{year_zhi}'
+
+            # 太岁地支→宫位
+            ZHI_TO_GONG_NUM = {
+                '子': 1, '丑': 8, '寅': 3, '卯': 3, '辰': 4, '巳': 4,
+                '午': 9, '未': 2, '申': 2, '酉': 7, '戌': 6, '亥': 6,
+            }
+            tai_sui_gong = ZHI_TO_GONG_NUM.get(year_zhi, 0)
+
+            # 找到太岁宫的信息
+            tai_sui_palace = None
+            for p in palaces:
+                if p.get('gong') == tai_sui_gong:
+                    tai_sui_palace = p
+                    break
+
+            return {
+                'year': solar_dt.year,
+                'year_ganzhi': year_ganzhi,
+                'year_gan': year_gan,
+                'year_zhi': year_zhi,
+                'tai_sui_gong': tai_sui_gong,
+                'tai_sui_palace_name': tai_sui_palace.get('name', '') if tai_sui_palace else '',
+                'tai_sui_direction': tai_sui_palace.get('direction', '') if tai_sui_palace else '',
+                'tai_sui_men': tai_sui_palace.get('men', '') if tai_sui_palace else '',
+                'tai_sui_xing': tai_sui_palace.get('xing', '') if tai_sui_palace else '',
+                'tai_sui_shen': tai_sui_palace.get('shen', '') if tai_sui_palace else '',
+            }
+        except Exception:
+            return {}
+

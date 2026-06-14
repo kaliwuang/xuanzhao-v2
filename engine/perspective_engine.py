@@ -7,6 +7,7 @@
 """
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
+import hashlib
 import json
 import logging
 import os
@@ -421,7 +422,9 @@ class PerspectiveEngine:
         opinions = []
 
         for pid in ids:
-            figure = self.figures[pid]
+            figure = self.figures.get(pid)
+            if figure is None:
+                continue
             opinion = self._reason(figure, udm, question)
             opinions.append(opinion)
 
@@ -578,11 +581,15 @@ class PerspectiveEngine:
         return data
 
     def _apply_thinking_model(self, figure: Figure, method_data: Dict, question: str) -> Dict:
-        """应用思维模型生成推理 — 通过 LLM 调用"""
+        """应用思维模型生成推理 — 默认用模板推理（108人不用LLM避免超时），仅精选人物用LLM"""
+
+        # 精选用LLM的人物（最多5人），其余全部用模板
+        LLM_FIGURES = {"zhuge-liang", "jung", "taleb", "sunzi", "kongzi"}
+
+        if figure.id not in LLM_FIGURES:
+            return self._fallback_reasoning(figure, method_data, question)
 
         from engine.llm_client import get_llm_client
-
-        # 构造 prompt
         prompt = self._build_prompt(figure, method_data, question)
 
         try:
@@ -597,7 +604,6 @@ class PerspectiveEngine:
             )
 
             if result.get("parse_error"):
-                # LLM 返回了非 JSON，用原始文本
                 raw = result.get("raw_response", "")
                 return {
                     "stance": raw[:100] if raw else "暂无明确立场",
@@ -699,16 +705,14 @@ class PerspectiveEngine:
 }}"""
 
     def _fallback_reasoning(self, figure: Figure, method_data: Dict, question: str) -> Dict:
-        """LLM 失败时的模板回退——按术法类型提取对应数据"""
+        """LLM 失败时的模板回退——按人物特色生成差异化观点"""
         question_type = self._classify_question(question)
         key_points = []
         reasoning_parts = []
 
-        for principle in figure.thinking_model.principles[:2]:
-            reasoning_parts.append(f"【{figure.name}思维】{principle}")
-
         method = method_data.get("method", figure.primary_method)
 
+        # 1. 根据术法类型提取核心数据
         if method == "八字":
             dm = method_data.get("day_master", "")
             wx = method_data.get("day_master_wuxing", "")
@@ -719,11 +723,10 @@ class PerspectiveEngine:
             if features:
                 reasoning_parts.append(f"命局特征：{features[0]}")
                 key_points.append(features[0])
-            wuxing = method_data.get("wuxing_count", {})
-            if wuxing:
-                max_wx = max(wuxing, key=wuxing.get)
-                reasoning_parts.append(f"五行中{max_wx}最旺（{wuxing[max_wx]}个）")
-                key_points.append(f"{max_wx}旺")
+            tiaohou = method_data.get("tiaohou", "")
+            if tiaohou:
+                reasoning_parts.append(f"调候用神：{tiaohou}")
+                key_points.append(f"调候{tiaohou}")
 
         elif method == "紫微":
             ming_gong = method_data.get("ming_gong", "")
@@ -740,31 +743,18 @@ class PerspectiveEngine:
                 if main_stars:
                     reasoning_parts.append(f"主星：{'、'.join(main_stars[:3])}")
                     key_points.append(f"主星{'、'.join(main_stars[:2])}")
-            wj = method_data.get("wuxing_ju", {})
-            if wj:
-                reasoning_parts.append(f"五行局：{wj.get('wuxing', '')}{wj.get('ju_shu', '')}局")
 
         elif method == "占星":
             sun = method_data.get("sun_sign", "")
             moon = method_data.get("moon_sign", "")
-            asc = method_data.get("ascendant", "") or method_data.get("ascendant_sign", "")
             if sun:
-                reasoning_parts.append(f"太阳{sun}，核心意志")
+                reasoning_parts.append(f"太阳{sun}")
                 key_points.append(f"太阳{sun}")
             if moon:
-                reasoning_parts.append(f"月亮{moon}，情感模式")
-                key_points.append(f"月亮{moon}")
-            if asc:
-                reasoning_parts.append(f"上升{asc}，外在表现")
-            aspects = method_data.get("aspects", [])
-            if aspects:
-                asp_desc = f"{aspects[0].get('p1', '')}{aspects[0].get('aspect', '')}{aspects[0].get('p2', '')}"
-                if asp_desc:
-                    reasoning_parts.append(f"主要相位：{asp_desc}")
+                reasoning_parts.append(f"月亮{moon}")
 
         elif method == "六爻":
             ben = method_data.get("ben_gua", {})
-            bian = method_data.get("bian_gua", {})
             dong = method_data.get("dong_yao", 0)
             if ben:
                 gua_name = ben.get("name", "")
@@ -772,12 +762,8 @@ class PerspectiveEngine:
                     reasoning_parts.append(f"本卦{gua_name}")
                     key_points.append(f"本卦{gua_name}")
             if dong:
-                reasoning_parts.append(f"动爻第{dong}爻，变化节点")
+                reasoning_parts.append(f"动爻第{dong}爻")
                 key_points.append(f"动爻第{dong}爻")
-            if bian:
-                bian_name = bian.get("name", "")
-                if bian_name:
-                    reasoning_parts.append(f"变卦{bian_name}，事态走向")
 
         elif method == "奇门":
             ju = method_data.get("ju_name", "")
@@ -787,79 +773,91 @@ class PerspectiveEngine:
             men = method_data.get("ba_men", {})
             if men:
                 ji_men = [k for k, v in men.items() if v in ("开门", "生门", "休门")]
-                xiong_men = [k for k, v in men.items() if v in ("死门", "惊门", "伤门")]
                 if ji_men:
-                    reasoning_parts.append(f"吉门在{'、'.join(ji_men)}")
                     key_points.append(f"吉门{', '.join(ji_men)}")
-                if xiong_men:
-                    reasoning_parts.append(f"凶门在{'、'.join(xiong_men)}")
-            jx = method_data.get("jiu_xing", {})
-            if jx:
-                reasoning_parts.append(f"九星分布已定")
 
         elif method == "大六壬":
             yj = method_data.get("yue_jiang", "")
             if yj:
-                reasoning_parts.append(f"月将：{yj}")
                 key_points.append(f"月将{yj}")
             sc = method_data.get("san_chuan", [])
             if sc:
-                chuan_str = "→".join(str(s) for s in sc[:3])
-                reasoning_parts.append(f"三传走势：{chuan_str}")
-                key_points.append(f"三传{chuan_str}")
-            sk = method_data.get("si_ke", [])
-            if sk:
-                reasoning_parts.append(f"四课：{'、'.join(str(s) for s in sk[:4])}")
+                key_points.append(f"三传{'→'.join(str(s.get('name','')) for s in sc[:3])}")
 
         elif method == "太乙":
             tg = method_data.get("taiyi_gong", "")
             if tg:
-                reasoning_parts.append(f"太乙居{tg}宫")
                 key_points.append(f"太乙{tg}宫")
-            jn = method_data.get("ji_nian", 0)
-            if jn:
-                reasoning_parts.append(f"积年{jn}")
 
-        elif method == "综合":
-            # 综合视角：提取各术法核心数据
-            bazi_data = method_data.get("bazi", {})
-            if bazi_data:
-                dm = bazi_data.get("day_master", "")
-                wx = bazi_data.get("day_master_wuxing", "")
-                if dm:
-                    reasoning_parts.append(f"八字日主{dm}（{wx}）")
-                    key_points.append(f"日主{dm}")
-            ziwei_data = method_data.get("ziwei", {})
-            if ziwei_data:
-                mg = ziwei_data.get("ming_gong", "")
-                if mg:
-                    reasoning_parts.append(f"紫微命宫{mg}")
-                    key_points.append(f"命宫{mg}")
-            astro_data = method_data.get("astro", {})
-            if astro_data:
-                sun = astro_data.get("sun_sign", "")
-                if sun:
-                    reasoning_parts.append(f"占星太阳{sun}")
-                    key_points.append(f"太阳{sun}")
+        # 2. 根据人物阵营(faction)和名言生成差异化stance
+        faction = figure.faction if hasattr(figure, 'faction') else "其他"
+        catchphrase = figure.catchphrase or ""
+        name = figure.name
 
-        # 如果所有术法数据都为空，用原则兜底
-        if not key_points:
-            key_points.append(figure.catchphrase)
-
-        stance_map = {
-            "事业": "事业宜稳健发展，借势而为",
-            "感情": "感情需耐心经营，不可强求",
-            "财运": "财路已现，需把握时机",
-            "健康": "注意五行平衡，防患于未然",
+        # 按阵营生成不同风格的stance
+        faction_stance_templates = {
+            "儒家": [
+                f"君子务本，{name}认为事业当以德行为先，厚积薄发",
+                f"中庸之道，{name}主张不偏不倚，稳中求进",
+                f"仁者乐山，{name}建议以仁德立身，事业自然亨通",
+            ],
+            "道家": [
+                f"上善若水，{name}认为顺势而为方为上策",
+                f"无为而治，{name}主张不强求，让事业自然生长",
+                f"反者道之动，{name}提醒逆境中往往蕴含转机",
+            ],
+            "兵家": [
+                f"知己知彼，{name}认为事业需审时度势，择机而动",
+                f"以正合以奇胜，{name}主张守正出奇",
+                f"不战而屈人之兵，{name}建议以智取胜，避免正面冲突",
+            ],
+            "法家": [
+                f"法术势并重，{name}认为事业需制度+策略+权威三者兼备",
+                f"因时变法，{name}主张顺应时势调整策略",
+            ],
+            "纵横家": [
+                f"捭阖之术，{name}认为事业关键在于把握开合时机",
+                f"顺势而为，{name}主张借力打力，四两拨千斤",
+            ],
+            "心理学": [
+                f"个体化进程，{name}认为事业发展的关键是自我整合与成长",
+                f"潜意识驱动，{name}提醒要关注内心真正的渴望",
+            ],
+            "投资": [
+                f"价值投资，{name}主张选择有护城河的事业方向长期深耕",
+                f"安全边际，{name}建议留足余地，不把鸡蛋放一个篮子里",
+            ],
         }
-        stance = stance_map.get(question_type, "顺势而为，知命不认命")
+
+        # 选择stance模板
+        templates = faction_stance_templates.get(faction, [])
+        if templates:
+            # 用figure.id的hash来选择模板，确保同一人物总是选择同一模板
+            idx = int(hashlib.md5(figure.id.encode()).hexdigest(), 16) % len(templates)
+            stance = templates[idx]
+        else:
+            # 默认：用名言+问题类型生成
+            stance_map = {
+                "事业": f"事业当审时度势，{name}曰「{catchphrase[:15]}」",
+                "感情": f"感情需顺其自然，{name}认为缘分不可强求",
+                "财运": f"财路在于积累，{name}主张稳健理财",
+                "健康": f"养生重在平衡，{name}提醒注意身心调和",
+            }
+            stance = stance_map.get(question_type, f"顺势而为，{name}曰「{catchphrase[:15]}」")
+
+        # 3. 如果有术法数据，加入具体论断
+        if key_points:
+            stance += f"（核心：{'；'.join(key_points[:2])}）"
+
+        if not key_points:
+            key_points.append(catchphrase or figure.name)
 
         return {
             "stance": stance,
             "confidence": 0.5,
-            "reasoning": "\n".join(reasoning_parts),
-            "key_points": key_points[:5] or [figure.catchphrase],
-            "quotes": [figure.catchphrase],
+            "reasoning": "\n".join(reasoning_parts) if reasoning_parts else f"基于{method}分析",
+            "key_points": key_points[:5] or [catchphrase or figure.name],
+            "quotes": [catchphrase] if catchphrase else [figure.name],
         }
 
     def _classify_question(self, question: str) -> str:

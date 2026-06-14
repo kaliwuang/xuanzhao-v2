@@ -214,17 +214,20 @@ class QAEngine:
             palaces = udm.ziwei_chart.get("palaces", [])
             for p in palaces:
                 name = p.get("name", "")
-                stars = p.get("stars", [])
-                if not stars:
+                # Fix: use major_stars (list of dicts with 'name' key) instead of non-existent 'stars'
+                major = p.get("major_stars", [])
+                minor = p.get("minor_stars", [])
+                star_names = [s["name"] for s in major if s.get("name")] + [s["name"] for s in minor if s.get("name")]
+                if not star_names:
                     continue
                 if qtype == QuestionType.CAREER and name == "官禄":
-                    data["key_points"].append(f"紫微官禄宫：{'、'.join(stars)}")
+                    data["key_points"].append(f"紫微官禄宫：{'、'.join(star_names)}")
                 elif qtype == QuestionType.WEALTH and name == "财帛":
-                    data["key_points"].append(f"紫微财帛宫：{'、'.join(stars)}")
+                    data["key_points"].append(f"紫微财帛宫：{'、'.join(star_names)}")
                 elif qtype == QuestionType.LOVE and name == "夫妻":
-                    data["key_points"].append(f"紫微夫妻宫：{'、'.join(stars)}")
+                    data["key_points"].append(f"紫微夫妻宫：{'、'.join(star_names)}")
                 elif qtype == QuestionType.GENERAL and name in ("命宫", "官禄", "财帛", "夫妻"):
-                    data["key_points"].append(f"紫微{name}宫：{'、'.join(stars)}")
+                    data["key_points"].append(f"紫微{name}宫：{'、'.join(star_names)}")
 
         # 六爻数据（所有问题类型均纳入，六爻是即时占断法）
         if udm.liuyao_chart:
@@ -406,8 +409,12 @@ class QAEngine:
                 parts.append(f"四化：{', '.join(f'{k}→{v}' for k, v in sihua.items())}")
             palaces = udm.ziwei_chart.get("palaces", [])
             for p in palaces:
-                if p.get("stars") and p.get("name") in ("命宫", "官禄", "财帛", "夫妻", "疾厄"):
-                    parts.append(f"  {p['name']}宫：{'、'.join(p['stars'])}")
+                # Fix: use major_stars/minor_stars instead of non-existent 'stars'
+                major = p.get("major_stars", [])
+                minor = p.get("minor_stars", [])
+                star_names = [s["name"] for s in major if s.get("name")] + [s["name"] for s in minor if s.get("name")]
+                if star_names and p.get("name") in ("命宫", "官禄", "财帛", "夫妻", "疾厄"):
+                    parts.append(f"  {p['name']}宫：{'、'.join(star_names)}")
 
         # 占星数据
         if udm.astro_chart:

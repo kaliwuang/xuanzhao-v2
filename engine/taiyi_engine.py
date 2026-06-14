@@ -1,21 +1,41 @@
 #!/usr/bin/env python3
 """
-玄照 v2.0 - 太乙神数引擎（完整版）
+玄照 v2.0 - 太乙神数引擎（kintaiyi后端版）
 
-核心：
-  1. 太乙积年（黄帝元年=公元前2697年起算）
-  2. 太乙行宫（每年移一宫，九宫一圈）
-  3. 三基（君基、臣基、民基）
-  4. 五福（大游、小游、四神、五帝、天乙）
-  5. 阴阳遁
+基于 kintaiyi 库实现标准太乙神数排盘。
+kintaiyi 是经过验证的开源太乙神数库。
+
+支持：年計/月計/日計/時計、太乙統宗/金鏡/淘金歌等多種紀法、
+      三基、五福、八門、主客算、二十八宿等完整系統。
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from typing import Optional
+from typing import Optional, Dict
+
+
+# 地支→九宫映射
+ZHI_TO_GONG = {
+    '子': '坎一宫', '丑': '艮八宫', '寅': '艮八宫',
+    '卯': '震三宫', '辰': '巽四宫', '巳': '巽四宫',
+    '午': '离九宫', '未': '坤二宫', '申': '坤二宫',
+    '酉': '兑七宫', '戌': '乾六宫', '亥': '乾六宫',
+}
+
+# 数字→九宫映射
+NUM_TO_GONG = {
+    1: '坎一宫', 2: '坤二宫', 3: '震三宫', 4: '巽四宫',
+    5: '中五宫', 6: '乾六宫', 7: '兑七宫', 8: '艮八宫', 9: '离九宫',
+}
+
+# 八卦→地支映射
+GUA_TO_ZHI = {
+    '坎': '子', '坤': '未', '震': '卯', '巽': '辰',
+    '中': '中', '乾': '戌', '兑': '酉', '艮': '丑', '离': '午',
+}
 
 
 class TaiYiEngine(DivinationEngine):
-    """太乙神数引擎"""
+    """太乙神数引擎（kintaiyi后端）"""
 
     @property
     def name(self) -> str:
@@ -23,120 +43,232 @@ class TaiYiEngine(DivinationEngine):
 
     @property
     def name_en(self) -> str:
-        return "TaiYi"
+        return "taiyi"
 
     @property
     def priority(self) -> int:
-        return 6
-
-    # 九宫（洛书顺序）
-    JIUGONG = ["坎一宫", "坤二宫", "震三宫", "巽四宫", "中五宫",
-               "乾六宫", "兑七宫", "艮八宫", "离九宫"]
-
-    JIUGONG_SHORT = ["坎一", "坤二", "震三", "巽四", "中五",
-                     "乾六", "兑七", "艮八", "离九"]
-
-    # 九宫五行
-    GONG_WUXING = {
-        "坎一宫": "水", "坤二宫": "土", "震三宫": "木", "巽四宫": "木",
-        "中五宫": "土", "乾六宫": "金", "兑七宫": "金", "艮八宫": "土", "离九宫": "火",
-    }
-
-    # 太乙积年起点（黄帝元年 = 公元前2697年）
-    HUANGDI_YEAR = -2697
+        return 7
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        dt = time.true_solar
-        year = dt.year
+        # 用原始出生时间排盘
+        orig = time.original
+        year = orig.year
+        month = orig.month
+        day = orig.day
+        hour = orig.hour
 
-        # 1. 计算太乙积年数
-        ji_nian = self._calc_ji_nian(year)
+        try:
+            from kintaiyi.kintaiyi import Taiyi
+            t = Taiyi(year, month, day, hour, orig.minute)
+        except Exception as e:
+            return {"error": f"kintaiyi初始化失败: {str(e)}"}
 
-        # 2. 确定太乙所在宫位
-        taiyi_gong = self._get_taiyi_gong(ji_nian)
+        # 年計太乙統宗（最常用的纪法）
+        try:
+            result = t.pan(0, 0)
+        except Exception as e:
+            return {"error": f"kintaiyi排盘失败: {str(e)}"}
 
-        # 3. 确定阴阳遁（按节气）
-        yin_yang = self._get_yin_yang(year, dt.month, dt.day)
+        return self._convert_result(result, year)
 
-        # 4. 三基（君基、臣基、民基）
-        san_ji = self._get_san_ji(ji_nian)
+    def _convert_result(self, r: dict, year: int) -> dict:
+        """将kintaiyi结果转换为玄照API格式"""
 
-        # 5. 五福（大游、小游、四神、五帝、天乙）
-        wu_fu = self._get_wu_fu(ji_nian)
+        # 太乙落宫
+        try:
+            taiyi_num = int(r.get('太乙落宮', 0))
+        except (ValueError, TypeError):
+            taiyi_num = 0
+        taiyi_gua = r.get('太乙', '')
+        taiyi_gong = NUM_TO_GONG.get(taiyi_num, f'{taiyi_gua}宫')
 
-        # 6. 计算年干支
-        year_gan_idx = (year - 4) % 10
-        year_zhi_idx = (year - 4) % 12
-        gan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"][year_gan_idx]
-        zhi = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"][year_zhi_idx]
+        # 三基
+        san_ji = {
+            '君基': self._zhi_to_gong(r.get('君基', '')),
+            '臣基': self._zhi_to_gong(r.get('臣基', '')),
+            '民基': self._zhi_to_gong(r.get('民基', '')),
+        }
+
+        # 五福/帝符/太尊
+        wu_fu_gua = r.get('五福', '')
+        wu_fu_gong = self._gua_to_gong(wu_fu_gua) if wu_fu_gua else ''
+
+        # 大游/小游
+        da_you = r.get('大游', 0)
+        xiao_you = r.get('小游', 0)
+
+        # 局式
+        ju_shi = r.get('局式', {})
+        ju_name = ju_shi.get('文', '')
+        ju_num = ju_shi.get('數', 0)
+        ji_nian = ju_shi.get('積年數', 0)
+
+        # 阴阳遁
+        yin_yang = '阳遁' if '陽遁' in ju_name else '阴遁'
+
+        # 天乙/地乙/四神
+        tian_yi = r.get('天乙', '')
+        di_yi = r.get('地乙', '')
+        si_shen = r.get('四神', '')
+
+        # 直符
+        zhi_fu = r.get('直符', '')
+
+        # 文昌/始击
+        wen_chang = r.get('文昌', [])
+        shi_ji = r.get('始擊', '')
+
+        # 主算/客算/定算
+        def _native_list(lst):
+            """Convert numpy types to native Python types for JSON serialization"""
+            if not isinstance(lst, list):
+                return lst
+            return [int(x) if hasattr(x, 'item') else x for x in lst]
+
+        zhu_suan = _native_list(r.get('主算', []))
+        ke_suan = _native_list(r.get('客算', []))
+        ding_suan = _native_list(r.get('定算', []))
+
+        # 八门
+        ba_men = r.get('八門值事', '')
+        ba_men_dist = r.get('八門分佈', {})
+
+        # 干支
+        ganzhi = r.get('干支', [])
+        year_gz = ganzhi[0] if len(ganzhi) > 0 else ''
+        month_gz = ganzhi[1] if len(ganzhi) > 1 else ''
+        day_gz = ganzhi[2] if len(ganzhi) > 2 else ''
+        hour_gz = ganzhi[3] if len(ganzhi) > 3 else ''
+
+        # 纪元
+        ji_yuan = r.get('紀元', '')
+
+        # 预测
+        taisui_su = r.get('太歲值宿斷事', '')
+        shiji_su = r.get('始擊值宿斷事', '')
+        tian_gan_yu = r.get('十天干歲始擊落宮預測', '')
+
+        # 主客胜负
+        zhu_ke = r.get('推主客相闗法', '')
+        sheng_fu = r.get('推多少以占勝負', '')
 
         return {
-            "year": year,
-            "year_ganzhi": f"{gan}{zhi}",
-            "ji_nian": ji_nian,
-            "taiyi_gong": taiyi_gong,
-            "yin_yang": yin_yang,
-            "san_ji": san_ji,
-            "wu_fu": wu_fu,
-            "date": dt.strftime("%Y-%m-%d %H:%M"),
+            'taiyi_gong': taiyi_gong,
+            'taiyi_num': taiyi_num,
+            'taiyi_gua': taiyi_gua,
+            'ju_name': ju_name,
+            'ju_num': ju_num,
+            'yin_yang': yin_yang,
+            'ji_nian': ji_nian,
+            'ji_yuan': ji_yuan,
+            'year_ganzhi': year_gz,
+            'month_ganzhi': month_gz,
+            'day_ganzhi': day_gz,
+            'hour_ganzhi': hour_gz,
+            'san_ji': san_ji,
+            'wu_fu': wu_fu_gong,
+            'da_you': da_you,
+            'xiao_you': xiao_you,
+            'tian_yi': self._gua_to_gong(tian_yi) if isinstance(tian_yi, str) and tian_yi else str(tian_yi),
+            'di_yi': self._gua_to_gong(di_yi) if isinstance(di_yi, str) and di_yi else str(di_yi),
+            'si_shen': si_shen,
+            'zhi_fu': zhi_fu,
+            'wen_chang': wen_chang,
+            'shi_ji': shi_ji,
+            'zhu_suan': zhu_suan,
+            'ke_suan': ke_suan,
+            'ding_suan': ding_suan,
+            'ba_men': ba_men,
+            'ba_men_dist': self._safe_convert_ba_men_dist(ba_men_dist),
+            'tai_su_su': taisui_su,
+            'shi_ji_su': shiji_su,
+            'tian_gan_yu': tian_gan_yu,
+            'zhu_ke': zhu_ke,
+            'sheng_fu': sheng_fu,
+            'suan_analysis': self._analyze_suan(zhu_suan, ke_suan, ding_suan),
         }
+
+    def _analyze_suan(self, zhu_suan, ke_suan, ding_suan) -> dict:
+        """主客算解读分析 - 将主算、客算、定算数值解读为人类可读的判断"""
+        analysis = {}
+
+        # 主算解读
+        if zhu_suan:
+            zhu_val = zhu_suan[0] if isinstance(zhu_suan, list) and zhu_suan else zhu_suan
+            try:
+                zhu_num = int(zhu_val) if not isinstance(zhu_val, int) else zhu_val
+                if zhu_num >= 7:
+                    analysis['zhu_ji'] = '主算强盛（{}），自身实力雄厚'.format(zhu_num)
+                elif zhu_num >= 4:
+                    analysis['zhu_ji'] = '主算中平（{}），守中有进'.format(zhu_num)
+                else:
+                    analysis['zhu_ji'] = '主算较弱（{}），宜守不宜攻'.format(zhu_num)
+            except (ValueError, TypeError):
+                analysis['zhu_ji'] = f'主算：{zhu_val}'
+
+        # 客算解读
+        if ke_suan:
+            ke_val = ke_suan[0] if isinstance(ke_suan, list) and ke_suan else ke_suan
+            try:
+                ke_num = int(ke_val) if not isinstance(ke_val, int) else ke_val
+                if ke_num >= 7:
+                    analysis['ke_ji'] = '客算强盛（{}），外部压力大'.format(ke_num)
+                elif ke_num >= 4:
+                    analysis['ke_ji'] = '客算中平（{}），外力平和'.format(ke_num)
+                else:
+                    analysis['ke_ji'] = '客算较弱（{}），外部阻力小'.format(ke_num)
+            except (ValueError, TypeError):
+                analysis['ke_ji'] = f'客算：{ke_val}'
+
+        # 定算综合
+        if ding_suan:
+            ding_val = ding_suan[0] if isinstance(ding_suan, list) and ding_suan else ding_suan
+            analysis['ding_ji'] = f'定算：{ding_val}'
+
+        # 主客对比
+        zhu_num_safe = int(zhu_suan[0]) if zhu_suan and isinstance(zhu_suan, list) else 0
+        ke_num_safe = int(ke_suan[0]) if ke_suan and isinstance(ke_suan, list) else 0
+        if zhu_num_safe and ke_num_safe:
+            if zhu_num_safe > ke_num_safe:
+                analysis['pan_duan'] = f'主强客弱（{zhu_num_safe}>{ke_num_safe}），宜主动出击'
+            elif ke_num_safe > zhu_num_safe:
+                analysis['pan_duan'] = f'客强主弱（{ke_num_safe}>{zhu_num_safe}），宜以守为攻'
+            else:
+                analysis['pan_duan'] = f'主客均势（{zhu_num_safe}={ke_num_safe}），随机应变'
+
+        return analysis
+
+    def _zhi_to_gong(self, zhi: str) -> str:
+        """地支→九宫名"""
+        return ZHI_TO_GONG.get(zhi, f'{zhi}宫')
+
+    @staticmethod
+    def _safe_convert_ba_men_dist(ba_men_dist) -> dict:
+        """安全转换八门分布，处理非数字key和numpy类型"""
+        if not ba_men_dist:
+            return {}
+        result = {}
+        for k, v in ba_men_dist.items():
+            try:
+                gong = NUM_TO_GONG.get(int(k), str(k))
+            except (ValueError, TypeError):
+                gong = str(k)
+            # Convert numpy types
+            if hasattr(v, 'item'):
+                v = v.item()
+            result[gong] = v
+        return result
+
+    def _gua_to_gong(self, gua: str) -> str:
+        """八卦→九宫名"""
+        return {
+            '坎': '坎一宫', '坤': '坤二宫', '震': '震三宫', '巽': '巽四宫',
+            '中': '中五宫', '乾': '乾六宫', '兑': '兑七宫', '艮': '艮八宫', '离': '离九宫',
+        }.get(gua, f'{gua}宫')
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
-        if not data.get("taiyi_gong"):
+        if data.get('error'):
+            return False, data['error']
+        if not data.get('taiyi_gong'):
             return False, "太乙宫位为空"
         return True, None
-
-    def _calc_ji_nian(self, year: int) -> int:
-        """计算太乙积年数（从黄帝元年起算）"""
-        # 黄帝元年 = 公元前2697年
-        # 积年 = 公元年 + 2697
-        return year - self.HUANGDI_YEAR
-
-    def _get_taiyi_gong(self, ji_nian: int) -> str:
-        """确定太乙所在宫位（每年移一宫，九宫一圈）"""
-        # 太乙行宫：从一宫开始，每一年移一宫
-        # 积年数对9取余，对应九宫
-        gong_idx = (ji_nian - 1) % 9  # -1因为积年1年在一宫
-        return self.JIUGONG[gong_idx]
-
-    def _get_yin_yang(self, year: int, month: int = 6, day: int = 15) -> str:
-        """确定阴阳遁（按节气：冬至到夏至为阳遁，夏至到冬至为阴遁）"""
-        # 大致节气日期判断
-        # 冬至(12.22) → 夏至(6.21) = 阳遁
-        # 夏至(6.21) → 冬至(12.22) = 阴遁
-        if (month == 12 and day >= 22) or month in [1, 2, 3, 4, 5] or (month == 6 and day < 21):
-            return "阳遁"
-        return "阴遁"
-
-    def _get_san_ji(self, ji_nian: int) -> dict:
-        """
-        三基：
-        君基 = 太乙所在宫
-        臣基 = 君基 + 3宫
-        民基 = 君基 + 6宫
-        """
-        base = (ji_nian - 1) % 9
-        return {
-            "君基": self.JIUGONG[base],
-            "臣基": self.JIUGONG[(base + 3) % 9],
-            "民基": self.JIUGONG[(base + 6) % 9],
-        }
-
-    def _get_wu_fu(self, ji_nian: int) -> dict:
-        """
-        五福：
-        大游 = 积年 * 365.25 / 360 对9取余（简化）
-        小游 = 大游 + 1
-        四神 = 大游 + 4
-        五帝 = 大游 + 5
-        天乙 = 大游 + 7
-        """
-        # 简化计算：以积年为基础
-        base = (ji_nian - 1) % 9
-        return {
-            "大游": self.JIUGONG[(base + 1) % 9],
-            "小游": self.JIUGONG[(base + 2) % 9],
-            "四神": self.JIUGONG[(base + 4) % 9],
-            "五帝": self.JIUGONG[(base + 5) % 9],
-            "天乙": self.JIUGONG[(base + 7) % 9],
-        }

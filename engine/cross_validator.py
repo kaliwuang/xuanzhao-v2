@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import List, Dict
 from enum import Enum
 from .udm import DestinyModel
+from datetime import datetime
 
 
 class ConfidenceLevel(Enum):
@@ -39,6 +40,28 @@ class CrossValidator:
     """交叉验证器"""
 
     ASPECTS = ["性格", "事业", "财运", "感情", "健康", "学业", "人际关系"]
+
+    @staticmethod
+    def _get_palace_stars(palace: dict) -> list:
+        """从紫微宫位数据中提取所有星曜名称（兼容major/minor/adjective_stars结构）"""
+        stars = []
+        for key in ("major_stars", "minor_stars", "adjective_stars"):
+            for s in (palace.get(key) or []):
+                n = s.get("name", "") if isinstance(s, dict) else str(s)
+                if n:
+                    stars.append(n)
+        # fallback: 旧格式直接用 "stars" 字段
+        if not stars:
+            stars = palace.get("stars", [])
+        return stars
+
+    @staticmethod
+    def _find_palace(palaces: list, name: str):
+        """在紫微宫位列表中按名称查找宫位，返回宫位字典或None"""
+        for p in palaces:
+            if p.get("name") == name:
+                return p
+        return None
 
     def __init__(self, udm: DestinyModel):
         self.udm = udm
@@ -76,11 +99,173 @@ class CrossValidator:
         # 8. 人际关系交叉验证
         results["consensus"].extend(self._validate_interpersonal())
 
-        # 9. 冲突检测
+        # 9. 大运流年交叉验证（新增）
+        results["consensus"].extend(self._validate_dayun())
+
+        # 10. 大六壬交叉验证（新增）
+        results["consensus"].extend(self._validate_liuren())
+
+        # 11. 太乙神数交叉验证（新增）
+        results["consensus"].extend(self._validate_taiyi())
+
+        # 12. 六爻交叉验证（新增）
+        results["consensus"].extend(self._validate_liuyao())
+
+        # 12.5 奇门交叉验证（新增）
+        results["consensus"].extend(self._validate_qimen())
+
+        # 13. 冲突检测
         results["conflicts"].extend(self._detect_conflicts())
 
-        # 9. 综合置信度
+        # 14. 综合置信度
         results["overall_confidence"] = self._calc_overall_confidence(results)
+
+        return results
+
+    def _validate_dayun(self) -> List[ConsensusItem]:
+        """大运流年交叉验证 — 利用八字详细大运数据（十神/藏干/纳音/长生/神煞/流年）"""
+        results = []
+        
+        # 检查八字大运数据
+        bazi_dayun = self.udm.dayun if self.udm.dayun else []
+        
+        # 检查紫微大运数据（增加异常处理，防止数据不完整时报错）
+        try:
+            ziwei_dayun = self.udm.ziwei_chart.get("dai_xian", []) if self.udm.ziwei_chart else []
+        except Exception:
+            ziwei_dayun = []
+        
+        if bazi_dayun and ziwei_dayun:
+            # 对比大运周期
+            bazi_dy_ages = [(d.get("start_age"), d.get("end_age")) for d in bazi_dayun if d.get("ganzhi")]
+            ziwei_dy_ages = [(d.get("start_age"), d.get("end_age")) for d in ziwei_dayun if d.get("ganzhi")]
+            
+            if bazi_dy_ages and ziwei_dy_ages:
+                # 实际对比八字与紫微大运的起运年龄是否接近
+                bazi_start = bazi_dy_ages[0][0] or 0
+                ziwei_start = ziwei_dy_ages[0][0] or 0
+                age_diff = abs(bazi_start - ziwei_start)
+                if age_diff <= 2:
+                    results.append(ConsensusItem(
+                        aspect="大运周期",
+                        finding=f"八字起运{bazi_start}岁，紫微起运{ziwei_start}岁，周期接近（差{age_diff}岁）",
+                        supporting_methods=["八字", "紫微斗数"],
+                        confidence=ConfidenceLevel.HIGH
+                    ))
+                else:
+                    results.append(ConsensusItem(
+                        aspect="大运周期",
+                        finding=f"八字起运{bazi_start}岁，紫微起运{ziwei_start}岁，周期有差异（差{age_diff}岁）",
+                        supporting_methods=["八字", "紫微斗数"],
+                        confidence=ConfidenceLevel.MEDIUM
+                    ))
+        
+        # 检查当前大运用神一致性
+        bazi_xiyong = (self.udm.xi_yong or {}).get("xi", "") if self.udm.xi_yong else ""
+        
+        # 检查紫微当前大限
+        try:
+            if bazi_xiyong and ziwei_dayun:
+                from datetime import datetime
+                current_year = datetime.now().year
+                birth_year = getattr(self.udm, 'birth_year', 0) or 2005
+                age = current_year - birth_year
+                for dy in ziwei_dayun:
+                    start = dy.get("start_age", 0)
+                    end = dy.get("end_age", 0)
+                    if start <= age <= end:
+                        results.append(ConsensusItem(
+                            aspect="当前大运",
+                            finding=f"紫微大限在{dy.get('palace_name', '某宫')}宫，八字喜{bazi_xiyong}",
+                            supporting_methods=["八字", "紫微斗数"],
+                            confidence=ConfidenceLevel.MEDIUM
+                        ))
+                        break
+        except Exception:
+            pass
+
+        # ── 新增：利用八字详细大运数据做深层互证 ──
+        if bazi_dayun:
+            from datetime import datetime as _dt
+            current_year = _dt.now().year
+            birth_year = getattr(self.udm, 'birth_year', 0) or 2005
+            age = current_year - birth_year
+
+            for dy in bazi_dayun:
+                start = dy.get("start_age", 0)
+                end = dy.get("end_age", 0)
+                if not (start <= age <= end):
+                    continue
+
+                ganzhi = dy.get("ganzhi", "")
+                shishen = dy.get("shishen_gan", "")
+                nayin = dy.get("nayin", "")
+                changsheng = dy.get("changsheng", "")
+                shensha = dy.get("shensha", [])
+                liunian = dy.get("liunian", [])
+
+                # 大运十神与喜用关系
+                if shishen and bazi_xiyong:
+                    # 根据日主五行和十神关系推导该十神对应的五行，再查喜用
+                    _day_wx = (self.udm.bazi_day or self.udm.bazi_year)
+                    _day_wx = _day_wx.wuxing if _day_wx else ''
+                    _SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
+                    _KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
+                    _ss_wx_map = {}
+                    if _day_wx:
+                        _ss_wx_map = {
+                            '正印': {v:k for k,v in _SHENG.items()}[_day_wx],
+                            '偏印': {v:k for k,v in _SHENG.items()}[_day_wx],
+                            '印':   {v:k for k,v in _SHENG.items()}[_day_wx],
+                            '比肩': _day_wx, '比': _day_wx,
+                            '劫财': _day_wx, '劫': _day_wx,
+                            '食神': _SHENG[_day_wx], '食': _SHENG[_day_wx],
+                            '伤官': _SHENG[_day_wx], '伤': _SHENG[_day_wx],
+                            '正财': _KE[_day_wx], '财': _KE[_day_wx],
+                            '偏财': _KE[_day_wx],
+                            '正官': _KE.get(_KE.get(_day_wx,''), _day_wx),  # 克我
+                            '七杀': _KE.get(_KE.get(_day_wx,''), _day_wx), '杀': _KE.get(_KE.get(_day_wx,''), _day_wx),
+                        }
+                    # 官杀是"克我"的五行
+                    _bei_ke = {v:k for k,v in _KE.items()}
+                    if _day_wx:
+                        _ss_wx_map['正官'] = _bei_ke.get(_day_wx, '')
+                        _ss_wx_map['七杀'] = _bei_ke.get(_day_wx, '')
+                        _ss_wx_map['杀'] = _bei_ke.get(_day_wx, '')
+                    _ss_wx = _ss_wx_map.get(shishen, '')
+                    xi_list = bazi_xiyong if isinstance(bazi_xiyong, list) else [bazi_xiyong]
+                    is_favorable = _ss_wx in xi_list if _ss_wx else False
+                    results.append(ConsensusItem(
+                        aspect="当前大运十神",
+                        finding=f"大运{ganzhi}({shishen})，纳音{nayin}，长生{changsheng}，{'喜用' if is_favorable else '忌神'}运",
+                        supporting_methods=["八字"],
+                        confidence=ConfidenceLevel.HIGH
+                    ))
+
+                # 大运神煞
+                if shensha:
+                    results.append(ConsensusItem(
+                        aspect="当前大运神煞",
+                        finding=f"大运{ganzhi}带神煞：{'、'.join(shensha[:5])}",
+                        supporting_methods=["八字"],
+                        confidence=ConfidenceLevel.MEDIUM
+                    ))
+
+                # 流年分析（最近3年）
+                if liunian:
+                    _now = datetime.now().year
+                    recent = [ln for ln in liunian if _now - 2 <= ln.get("year", 0) <= _now]
+                    for ln in recent:
+                        ln_gz = ln.get("ganzhi", "")
+                        ln_shishen = ln.get("shishen_gan", "")
+                        ln_nayin = ln.get("nayin", "")
+                        results.append(ConsensusItem(
+                            aspect=f"流年{ln.get('year', '')}",
+                            finding=f"{ln_gz}({ln_shishen})，纳音{ln_nayin}",
+                            supporting_methods=["八字"],
+                            confidence=ConfidenceLevel.MEDIUM
+                        ))
+                break
 
         return results
 
@@ -249,26 +434,26 @@ class CrossValidator:
         # 紫微：看官禄宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "官禄":
-                    stars = p.get("stars", [])
-                    if stars:
-                        methods.append("紫微")
-                        auspicious = [s for s in stars if s in ("紫微", "天府", "太阳", "天梁", "天相", "武曲")]
-                        if auspicious:
-                            items.append(ConsensusItem(
-                                aspect="事业方向",
-                                finding=f"官禄宫有{'、'.join(auspicious)}，事业格局较高",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.HIGH if len(auspicious) >= 2 else ConfidenceLevel.MEDIUM
-                            ))
-                        else:
-                            items.append(ConsensusItem(
-                                aspect="事业方向",
-                                finding=f"官禄宫主星{'、'.join(stars[:2])}，事业有特定方向",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.MEDIUM
-                            ))
+            p = self._find_palace(palaces, "官禄")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    methods.append("紫微")
+                    auspicious = [s for s in stars if s in ("紫微", "天府", "太阳", "天梁", "天相", "武曲")]
+                    if auspicious:
+                        items.append(ConsensusItem(
+                            aspect="事业方向",
+                            finding=f"官禄宫有{'、'.join(auspicious)}，事业格局较高",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.HIGH if len(auspicious) >= 2 else ConfidenceLevel.MEDIUM
+                        ))
+                    else:
+                        items.append(ConsensusItem(
+                            aspect="事业方向",
+                            finding=f"官禄宫主星{'、'.join(stars[:2])}，事业有特定方向",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.MEDIUM
+                        ))
 
         # 占星：看中天（MC）星座和太阳星座
         if self.udm.astro_chart:
@@ -318,16 +503,16 @@ class CrossValidator:
         # 紫微：看夫妻宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "夫妻":
-                    stars = p.get("stars", [])
-                    if stars:
-                        items.append(ConsensusItem(
-                            aspect="感情婚姻",
-                            finding=f"夫妻宫有{'、'.join(stars)}",
-                            supporting_methods=["紫微"],
-                            confidence=ConfidenceLevel.MEDIUM
-                        ))
+            p = self._find_palace(palaces, "夫妻")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"夫妻宫有{'、'.join(stars)}",
+                        supporting_methods=["紫微"],
+                        confidence=ConfidenceLevel.MEDIUM
+                    ))
 
         # 占星：看金星落座和第七宫
         if self.udm.astro_chart:
@@ -399,10 +584,26 @@ class CrossValidator:
         if self.udm.astro_chart:
             aspects = self.udm.astro_chart.get("aspects", [])
             for asp in aspects:
-                if asp.get("aspect") == "四分" and "火星" in [asp.get("p1"), asp.get("p2")]:
+                p1, p2 = asp.get("p1", ""), asp.get("p2", "")
+                asp_type = asp.get("aspect", "")
+                if asp_type == "刑" and "火星" in (p1, p2):
                     items.append(ConsensusItem(
                         aspect="健康体质",
                         finding="火星刑克，注意炎症、外伤",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.LOW
+                    ))
+                if asp_type == "冲" and "火星" in (p1, p2):
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding="火星冲相位，注意突发性外伤或手术",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.LOW
+                    ))
+                if "土星" in (p1, p2) and asp_type in ("刑", "冲"):
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"土星{asp_type}相位，注意慢性病、骨骼关节问题",
                         supporting_methods=["占星"],
                         confidence=ConfidenceLevel.LOW
                     ))
@@ -410,27 +611,27 @@ class CrossValidator:
         # 紫微：看疾厄宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "疾厄":
-                    stars = p.get("stars", [])
-                    if stars:
-                        # 吉星在疾厄宫有化解力
-                        good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微")]
-                        bad_stars = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
-                        if good_stars:
-                            items.append(ConsensusItem(
-                                aspect="健康体质",
-                                finding=f"疾厄宫有{'、'.join(good_stars)}，有化解之力，病后恢复快",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.MEDIUM
-                            ))
-                        if bad_stars:
-                            items.append(ConsensusItem(
-                                aspect="健康体质",
-                                finding=f"疾厄宫有{'、'.join(bad_stars)}，需注意突发性疾病或手术",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.MEDIUM
-                            ))
+            p = self._find_palace(palaces, "疾厄")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    # 吉星在疾厄宫有化解力
+                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微")]
+                    bad_stars = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
+                    if good_stars:
+                        items.append(ConsensusItem(
+                            aspect="健康体质",
+                            finding=f"疾厄宫有{'、'.join(good_stars)}，有化解之力，病后恢复快",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.MEDIUM
+                        ))
+                    if bad_stars:
+                        items.append(ConsensusItem(
+                            aspect="健康体质",
+                            finding=f"疾厄宫有{'、'.join(bad_stars)}，需注意突发性疾病或手术",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.MEDIUM
+                        ))
 
         return items
 
@@ -469,25 +670,25 @@ class CrossValidator:
         # 紫微：看财帛宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "财帛":
-                    stars = p.get("stars", [])
-                    if stars:
-                        auspicious = [s for s in stars if s in ("武曲", "天府", "太阴", "紫微", "太阳")]
-                        if auspicious:
-                            items.append(ConsensusItem(
-                                aspect="财运",
-                                finding=f"财帛宫有{'、'.join(auspicious)}，财运格局较高",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.HIGH if len(auspicious) >= 2 else ConfidenceLevel.MEDIUM,
-                            ))
-                        else:
-                            items.append(ConsensusItem(
-                                aspect="财运",
-                                finding=f"财帛宫主星{'、'.join(stars[:2])}，财运有特定模式",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.MEDIUM,
-                            ))
+            p = self._find_palace(palaces, "财帛")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    auspicious = [s for s in stars if s in ("武曲", "天府", "太阴", "紫微", "太阳")]
+                    if auspicious:
+                        items.append(ConsensusItem(
+                            aspect="财运",
+                            finding=f"财帛宫有{'、'.join(auspicious)}，财运格局较高",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.HIGH if len(auspicious) >= 2 else ConfidenceLevel.MEDIUM,
+                        ))
+                    else:
+                        items.append(ConsensusItem(
+                            aspect="财运",
+                            finding=f"财帛宫主星{'、'.join(stars[:2])}，财运有特定模式",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.MEDIUM,
+                        ))
 
         # 奇门：看生门
         if self.udm.qimen_chart:
@@ -560,17 +761,17 @@ class CrossValidator:
         # 紫微：看官禄宫（学业方向）
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "官禄":
-                    stars = p.get("stars", [])
-                    study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
-                    if study_stars:
-                        items.append(ConsensusItem(
-                            aspect="学业",
-                            finding=f"官禄宫有{'、'.join(study_stars)}，学业运势不错",
-                            supporting_methods=["紫微"],
-                            confidence=ConfidenceLevel.HIGH if len(study_stars) >= 2 else ConfidenceLevel.MEDIUM,
-                        ))
+            p = self._find_palace(palaces, "官禄")
+            if p:
+                stars = self._get_palace_stars(p)
+                study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
+                if study_stars:
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding=f"官禄宫有{'、'.join(study_stars)}，学业运势不错",
+                        supporting_methods=["紫微"],
+                        confidence=ConfidenceLevel.HIGH if len(study_stars) >= 2 else ConfidenceLevel.MEDIUM,
+                    ))
 
         # 占星：看水星（思维和学习能力）
         if self.udm.astro_chart:
@@ -644,40 +845,40 @@ class CrossValidator:
         # 紫微：看兄弟宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "兄弟":
-                    stars = p.get("stars", [])
-                    if stars:
-                        good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
-                        bad_stars = [s for s in stars if s in ("七杀", "破军", "擎羊", "陀罗", "火星", "铃星")]
-                        if good_stars:
-                            items.append(ConsensusItem(
-                                aspect="人际关系",
-                                finding=f"兄弟宫有{'、'.join(good_stars)}，手足助力多，朋友圈质量高",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.HIGH if len(good_stars) >= 2 else ConfidenceLevel.MEDIUM,
-                            ))
-                        elif bad_stars:
-                            items.append(ConsensusItem(
-                                aspect="人际关系",
-                                finding=f"兄弟宫有{'、'.join(bad_stars)}，需注意手足或朋友间纠纷",
-                                supporting_methods=["紫微"],
-                                confidence=ConfidenceLevel.MEDIUM,
-                            ))
+            p = self._find_palace(palaces, "兄弟")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
+                    bad_stars = [s for s in stars if s in ("七杀", "破军", "擎羊", "陀罗", "火星", "铃星")]
+                    if good_stars:
+                        items.append(ConsensusItem(
+                            aspect="人际关系",
+                            finding=f"兄弟宫有{'、'.join(good_stars)}，手足助力多，朋友圈质量高",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.HIGH if len(good_stars) >= 2 else ConfidenceLevel.MEDIUM,
+                        ))
+                    elif bad_stars:
+                        items.append(ConsensusItem(
+                            aspect="人际关系",
+                            finding=f"兄弟宫有{'、'.join(bad_stars)}，需注意手足或朋友间纠纷",
+                            supporting_methods=["紫微"],
+                            confidence=ConfidenceLevel.MEDIUM,
+                        ))
 
         # 紫微：看仆役宫（交友宫）
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "仆役":
-                    stars = p.get("stars", [])
-                    if stars:
-                        items.append(ConsensusItem(
-                            aspect="人际关系",
-                            finding=f"仆役宫有{'、'.join(stars[:3])}，下属或合作伙伴类型已定",
-                            supporting_methods=["紫微"],
-                            confidence=ConfidenceLevel.LOW,
-                        ))
+            p = self._find_palace(palaces, "仆役")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"仆役宫有{'、'.join(stars[:3])}，下属或合作伙伴类型已定",
+                        supporting_methods=["紫微"],
+                        confidence=ConfidenceLevel.LOW,
+                    ))
 
         # 占星：看水星（沟通能力）和金星（社交魅力）
         if self.udm.astro_chart:
@@ -717,6 +918,318 @@ class CrossValidator:
 
         return items
 
+
+    def _validate_liuren(self) -> List[ConsensusItem]:
+        """大六壬交叉验证——提取三传、四课、格局等关键信息"""
+        items = []
+        if not self.udm.liuren_chart:
+            return items
+
+        lr = self.udm.liuren_chart
+
+        # 格局
+        ge_ju = lr.get("ge_ju", "")
+        if ge_ju:
+            items.append(ConsensusItem(
+                aspect="六壬格局",
+                finding=f"大六壬格局：{ge_ju}",
+                supporting_methods=["大六壬"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
+        # 三传（初传、中传、末传）
+        san_chuan = lr.get("san_chuan", ([], [], []))
+        if san_chuan and any(san_chuan):
+            chuan_parts = []
+            labels = ["初传", "中传", "末传"]
+            for idx, chuan in enumerate(san_chuan):
+                if chuan:
+                    # 每传是 [天干, 地支] 或类似结构
+                    chuan_str = " ".join(str(x) for x in chuan) if isinstance(chuan, (list, tuple)) else str(chuan)
+                    chuan_parts.append(f"{labels[idx]}：{chuan_str}")
+            if chuan_parts:
+                items.append(ConsensusItem(
+                    aspect="六壬三传",
+                    finding="；".join(chuan_parts),
+                    supporting_methods=["大六壬"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
+        # 四课
+        si_ke = lr.get("si_ke", ([], [], [], []))
+        if si_ke and any(si_ke):
+            ke_parts = []
+            labels = ["一课", "二课", "三课", "四课"]
+            for idx, ke in enumerate(si_ke):
+                if ke:
+                    ke_str = " ".join(str(x) for x in ke) if isinstance(ke, (list, tuple)) else str(ke)
+                    ke_parts.append(f"{labels[idx]}：{ke_str}")
+            if ke_parts:
+                items.append(ConsensusItem(
+                    aspect="六壬四课",
+                    finding="；".join(ke_parts),
+                    supporting_methods=["大六壬"],
+                    confidence=ConfidenceLevel.LOW
+                ))
+
+        # 月将与占时
+        yue_jiang = lr.get("yue_jiang", "")
+        zhan_shi = lr.get("zhan_shi", "")
+        if yue_jiang and zhan_shi:
+            items.append(ConsensusItem(
+                aspect="六壬时空",
+                finding=f"月将：{yue_jiang}，占时：{zhan_shi}",
+                supporting_methods=["大六壬"],
+                confidence=ConfidenceLevel.LOW
+            ))
+
+        # 用神分析（初传天将+六亲+日干关系）
+        yong_shen = lr.get("yong_shen", {})
+        if yong_shen:
+            chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+            chu_liuqin = yong_shen.get("chu_chuan_liuqin", "")
+            ji_xiong = yong_shen.get("jiang_ji_xiong", "")
+            relation = yong_shen.get("ri_gan_relation", "")
+            if chu_jiang:
+                items.append(ConsensusItem(
+                    aspect="六壬用神",
+                    finding=f"初传天将{chu_jiang}（{ji_xiong}），六亲{chu_liuqin}，{relation}",
+                    supporting_methods=["大六壬"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
+        # 日马
+        day_ma = lr.get("day_ma", "")
+        if day_ma:
+            items.append(ConsensusItem(
+                aspect="六壬日马",
+                finding=f"日马在{day_ma}，主动、变动、出行",
+                supporting_methods=["大六壬"],
+                confidence=ConfidenceLevel.LOW
+            ))
+
+        return items
+
+    def _validate_taiyi(self) -> List[ConsensusItem]:
+        """太乙神数交叉验证——提取太乙落宫、局式、三基等关键信息"""
+        items = []
+        if not self.udm.taiyi_chart:
+            return items
+
+        ty = self.udm.taiyi_chart
+
+        # 太乙落宫
+        taiyi_gong = ty.get("taiyi_gong", "")
+        if taiyi_gong:
+            items.append(ConsensusItem(
+                aspect="太乙落宫",
+                finding=f"太乙落{taiyi_gong}",
+                supporting_methods=["太乙"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
+        # 局式（阴阳遁 + 局数）
+        ju_name = ty.get("ju_name", "")
+        ju_num = ty.get("ju_num", 0)
+        yin_yang = ty.get("yin_yang", "")
+        if ju_name or ju_num:
+            finding = f"{yin_yang}" if yin_yang else ""
+            if ju_num:
+                finding += f"第{ju_num}局"
+            if ju_name:
+                finding += f"（{ju_name}）" if finding else ju_name
+            if finding:
+                items.append(ConsensusItem(
+                    aspect="太乙局式",
+                    finding=finding.strip(),
+                    supporting_methods=["太乙"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
+        # 三基（君基、臣基、民基）
+        san_ji = ty.get("san_ji", {})
+        if san_ji:
+            ji_parts = []
+            for key in ("君基", "臣基", "民基"):
+                val = san_ji.get(key, "")
+                if val:
+                    ji_parts.append(f"{key}在{val}")
+            if ji_parts:
+                items.append(ConsensusItem(
+                    aspect="太乙三基",
+                    finding="；".join(ji_parts),
+                    supporting_methods=["太乙"],
+                    confidence=ConfidenceLevel.LOW
+                ))
+
+        # 文昌
+        wen_chang = ty.get("wen_chang", [])
+        if wen_chang:
+            wc_str = "、".join(str(x) for x in wen_chang) if isinstance(wen_chang, list) else str(wen_chang)
+            items.append(ConsensusItem(
+                aspect="太乙文昌",
+                finding=f"文昌在{wc_str}",
+                supporting_methods=["太乙"],
+                confidence=ConfidenceLevel.LOW
+            ))
+
+        return items
+
+    def _validate_liuyao(self) -> List[ConsensusItem]:
+        """六爻交叉验证——提取本卦、变卦、世应、五行分析等关键信息"""
+        items = []
+        if not self.udm.liuyao_chart:
+            return items
+
+        ly = self.udm.liuyao_chart
+
+        # 本卦/变卦
+        ben_gua = ly.get('ben_gua', {})
+        bian_gua = ly.get('bian_gua', {})
+        ben_name = ben_gua.get('name', '')
+        bian_name = bian_gua.get('name', '')
+        if ben_name:
+            items.append(ConsensusItem(
+                aspect="六爻卦象",
+                finding=f"本卦：{ben_name}，变卦：{bian_name}" if bian_name else f"本卦：{ben_name}",
+                supporting_methods=["六爻"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
+        # 世应位置
+        shi = ly.get('shi')
+        ying = ly.get('ying')
+        if shi is not None:
+            items.append(ConsensusItem(
+                aspect="六爻世应",
+                finding=f"世爻在第{shi}爻，应爻在第{ying}爻",
+                supporting_methods=["六爻"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
+        # 五行分析
+        wx_analysis = ly.get('wuxing_analysis', {})
+        if wx_analysis:
+            yong_shen = wx_analysis.get('yong_shen', '')
+            if yong_shen:
+                items.append(ConsensusItem(
+                    aspect="六爻用神",
+                    finding=yong_shen,
+                    supporting_methods=["六爻"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
+        # 六神
+        liu_shen = ly.get('liu_shen', [])
+        if liu_shen:
+            shen_str = '、'.join(liu_shen[:6])
+            items.append(ConsensusItem(
+                aspect="六爻六神",
+                finding=f"六神排列：{shen_str}",
+                supporting_methods=["六爻"],
+                confidence=ConfidenceLevel.LOW
+            ))
+
+        # 日月建旺衰
+        ri_yue = ly.get('ri_yue_jian', {})
+        ri_ws = ri_yue.get('ri_wangshuai', {})
+        if ri_ws:
+            # 找出旺相的五行
+            wang_xiang = [wx for wx, status in ri_ws.items() if '旺' in status or '相' in status]
+            if wang_xiang:
+                items.append(ConsensusItem(
+                    aspect="六爻日建旺衰",
+                    finding=f"日建{ri_yue.get('ri_jian','')}，旺相五行：{'、'.join(wang_xiang)}",
+                    supporting_methods=["六爻"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
+        # 流年太岁与世爻关系
+        liunian = ly.get('liunian', {})
+        if liunian:
+            tai_sui_vs_shi = liunian.get('tai_sui_vs_shi', '')
+            if tai_sui_vs_shi:
+                items.append(ConsensusItem(
+                    aspect="六爻流年太岁",
+                    finding=f"{liunian.get('year_ganzhi','')}年：{tai_sui_vs_shi}",
+                    supporting_methods=["六爻"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+            # 太岁临爻
+            tai_sui_yao_rel = liunian.get('tai_sui_yao_rel', [])
+            if tai_sui_yao_rel:
+                rel_strs = [f"第{r['position']}爻{r['relation']}" for r in tai_sui_yao_rel]
+                items.append(ConsensusItem(
+                    aspect="六爻太岁临爻",
+                    finding=f"太岁与爻关系：{'、'.join(rel_strs)}",
+                    supporting_methods=["六爻"],
+                    confidence=ConfidenceLevel.LOW
+                ))
+
+        return items
+
+    def _validate_qimen(self) -> List[ConsensusItem]:
+        """奇门遁甲交叉验证——提取局数、值符、值使、格局、流年太岁等关键信息"""
+        items = []
+        if not self.udm.qimen_chart:
+            return items
+
+        qm = self.udm.qimen_chart
+
+        # 局数
+        ju_name = qm.get('ju_name', '')
+        if ju_name:
+            items.append(ConsensusItem(
+                aspect="奇门局数",
+                finding=f"起局：{ju_name}",
+                supporting_methods=["奇门遁甲"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
+        # 值符值使
+        zhi_fu = qm.get('zhi_fu', {})
+        zhi_shi = qm.get('zhi_shi', {})
+        if zhi_fu:
+            items.append(ConsensusItem(
+                aspect="奇门值符值使",
+                finding=f"值符：{zhi_fu.get('star','')}落{zhi_fu.get('gong','')}宫，值使：{zhi_shi.get('door','')}",
+                supporting_methods=["奇门遁甲"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
+        # 格局分析
+        ge_ju = qm.get('ge_ju_analysis', {})
+        ji_ge = ge_ju.get('ji_ge', [])
+        xiong_ge = ge_ju.get('xiong_ge', [])
+        if ji_ge or xiong_ge:
+            ge_str = f"吉格{len(ji_ge)}个" if ji_ge else ""
+            if xiong_ge:
+                ge_str += f"，凶格{len(xiong_ge)}个" if ge_str else f"凶格{len(xiong_ge)}个"
+            items.append(ConsensusItem(
+                aspect="奇门格局",
+                finding=ge_str,
+                supporting_methods=["奇门遁甲"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
+        # 流年太岁
+        liunian = qm.get('liunian', {})
+        if liunian:
+            year_ganzhi = liunian.get('year_ganzhi', '')
+            tai_sui_gong = liunian.get('tai_sui_gong', 0)
+            tai_sui_palace = liunian.get('tai_sui_palace_name', '')
+            tai_sui_men = liunian.get('tai_sui_men', '')
+            tai_sui_xing = liunian.get('tai_sui_xing', '')
+            if year_ganzhi and tai_sui_gong:
+                items.append(ConsensusItem(
+                    aspect="奇门流年太岁",
+                    finding=f"{year_ganzhi}太岁落{tai_sui_palace}宫（{tai_sui_men}/{tai_sui_xing}）",
+                    supporting_methods=["奇门遁甲"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
+        return items
+
     def _detect_conflicts(self) -> List[ConflictItem]:
         conflicts = []
         chong = self.udm.get_chong()
@@ -738,15 +1251,15 @@ class CrossValidator:
         ziwei_love_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "夫妻":
-                    stars = p.get("stars", [])
-                    if "紫微" in stars or "天府" in stars:
-                        ziwei_love_good = True
-                        ziwei_love_reason = f"夫妻宫有{'、'.join([s for s in stars if s in ('紫微','天府')])}，格局稳固"
-                    elif "贪狼" in stars or "廉贞" in stars:
-                        # 贪狼/廉贞在夫妻宫也暗示感情复杂
-                        ziwei_love_good = False
+            p = self._find_palace(palaces, "夫妻")
+            if p:
+                stars = self._get_palace_stars(p)
+                if "紫微" in stars or "天府" in stars:
+                    ziwei_love_good = True
+                    ziwei_love_reason = f"夫妻宫有{'、'.join([s for s in stars if s in ('紫微','天府')])}，格局稳固"
+                elif "贪狼" in stars or "廉贞" in stars:
+                    # 贪狼/廉贞在夫妻宫也暗示感情复杂
+                    ziwei_love_good = False
 
         # 八字感情正面信号（有合）
         bazi_love_good = False
@@ -770,13 +1283,13 @@ class CrossValidator:
         ziwei_love_bad_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "夫妻":
-                    stars = p.get("stars", [])
-                    bad_love = [s for s in stars if s in ("贪狼", "廉贞", "七杀", "破军", "擎羊", "陀罗", "火星", "铃星")]
-                    if bad_love:
-                        ziwei_love_bad = True
-                        ziwei_love_bad_reason = f"夫妻宫有{'、'.join(bad_love)}，感情格局偏凶"
+            p = self._find_palace(palaces, "夫妻")
+            if p:
+                stars = self._get_palace_stars(p)
+                bad_love = [s for s in stars if s in ("贪狼", "廉贞", "七杀", "破军", "擎羊", "陀罗", "火星", "铃星")]
+                if bad_love:
+                    ziwei_love_bad = True
+                    ziwei_love_bad_reason = f"夫妻宫有{'、'.join(bad_love)}，感情格局偏凶"
 
         if bazi_love_good and ziwei_love_bad:
             conflicts.append(ConflictItem(
@@ -928,13 +1441,13 @@ class CrossValidator:
         ziwei_career_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "官禄":
-                    stars = p.get("stars", [])
-                    auspicious = [s for s in stars if s in ("紫微", "天府", "太阳", "天梁", "天相")]
-                    if auspicious:
-                        ziwei_career_good = True
-                        ziwei_career_reason = f"官禄宫有{'、'.join(auspicious)}，事业格局高"
+            p = self._find_palace(palaces, "官禄")
+            if p:
+                stars = self._get_palace_stars(p)
+                auspicious = [s for s in stars if s in ("紫微", "天府", "太阳", "天梁", "天相")]
+                if auspicious:
+                    ziwei_career_good = True
+                    ziwei_career_reason = f"官禄宫有{'、'.join(auspicious)}，事业格局高"
 
         bazi_career_weak = any("身弱" in f for f in features) and not bazi_career_good
         if bazi_career_weak and ziwei_career_good:
@@ -958,13 +1471,13 @@ class CrossValidator:
             ziwei_health_reason = ""
             if self.udm.ziwei_chart:
                 palaces = self.udm.ziwei_chart.get("palaces", [])
-                for p in palaces:
-                    if p.get("name") == "疾厄":
-                        stars = p.get("stars", [])
-                        good_stars = [s for s in stars if s in ("天同", "天梁", "天府")]
-                        if good_stars:
-                            ziwei_health_good = True
-                            ziwei_health_reason = f"疾厄宫有{'、'.join(good_stars)}，有化解之力"
+                p = self._find_palace(palaces, "疾厄")
+                if p:
+                    stars = self._get_palace_stars(p)
+                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府")]
+                    if good_stars:
+                        ziwei_health_good = True
+                        ziwei_health_reason = f"疾厄宫有{'、'.join(good_stars)}，有化解之力"
 
             if bazi_health_issue and ziwei_health_good:
                 conflicts.append(ConflictItem(
@@ -982,13 +1495,13 @@ class CrossValidator:
             ziwei_health_bad_reason = ""
             if self.udm.ziwei_chart:
                 palaces = self.udm.ziwei_chart.get("palaces", [])
-                for p in palaces:
-                    if p.get("name") == "疾厄":
-                        stars = p.get("stars", [])
-                        bad_stars = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
-                        if bad_stars:
-                            ziwei_health_bad = True
-                            ziwei_health_bad_reason = f"疾厄宫有{'、'.join(bad_stars)}，需注意突发性疾病或手术"
+                p = self._find_palace(palaces, "疾厄")
+                if p:
+                    stars = self._get_palace_stars(p)
+                    bad_stars = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
+                    if bad_stars:
+                        ziwei_health_bad = True
+                        ziwei_health_bad_reason = f"疾厄宫有{'、'.join(bad_stars)}，需注意突发性疾病或手术"
 
             if bazi_health_balanced and ziwei_health_bad:
                 conflicts.append(ConflictItem(
@@ -1075,13 +1588,13 @@ class CrossValidator:
         ziwei_wealth_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "财帛":
-                    stars = p.get("stars", [])
-                    bad_wealth = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗", "火星", "铃星")]
-                    if bad_wealth:
-                        ziwei_wealth_bad = True
-                        ziwei_wealth_reason = f"财帛宫有{'、'.join(bad_wealth)}，财运波折或有破财风险"
+            p = self._find_palace(palaces, "财帛")
+            if p:
+                stars = self._get_palace_stars(p)
+                bad_wealth = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗", "火星", "铃星")]
+                if bad_wealth:
+                    ziwei_wealth_bad = True
+                    ziwei_wealth_reason = f"财帛宫有{'、'.join(bad_wealth)}，财运波折或有破财风险"
 
         if bazi_wealth_good and ziwei_wealth_bad:
             conflicts.append(ConflictItem(
@@ -1098,13 +1611,13 @@ class CrossValidator:
         ziwei_wealth_good_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "财帛":
-                    stars = p.get("stars", [])
-                    good_wealth = [s for s in stars if s in ("武曲", "天府", "太阴", "紫微", "太阳")]
-                    if good_wealth:
-                        ziwei_wealth_good = True
-                        ziwei_wealth_good_reason = f"财帛宫有{'、'.join(good_wealth)}，后天财运格局高"
+            p = self._find_palace(palaces, "财帛")
+            if p:
+                stars = self._get_palace_stars(p)
+                good_wealth = [s for s in stars if s in ("武曲", "天府", "太阴", "紫微", "太阳")]
+                if good_wealth:
+                    ziwei_wealth_good = True
+                    ziwei_wealth_good_reason = f"财帛宫有{'、'.join(good_wealth)}，后天财运格局高"
 
         bazi_wealth_weak = not bazi_wealth_good
         if any("比劫" in f for f in features):
@@ -1201,13 +1714,13 @@ class CrossValidator:
         ziwei_academic_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "官禄":
-                    stars = p.get("stars", [])
-                    study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
-                    if study_stars:
-                        ziwei_academic_good = True
-                        ziwei_academic_reason = f"官禄宫有{'、'.join(study_stars)}，学业运势不错"
+            p = self._find_palace(palaces, "官禄")
+            if p:
+                stars = self._get_palace_stars(p)
+                study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
+                if study_stars:
+                    ziwei_academic_good = True
+                    ziwei_academic_reason = f"官禄宫有{'、'.join(study_stars)}，学业运势不错"
 
         # 食伤旺但印弱 = 聪明但不踏实；紫微有学业星 = 后天有改善空间
         bazi_academic_weak = not bazi_academic_good and any("食伤" in f for f in features)
@@ -1232,13 +1745,13 @@ class CrossValidator:
         ziwei_interpersonal_reason = ""
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "兄弟":
-                    stars = p.get("stars", [])
-                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
-                    if good_stars:
-                        ziwei_interpersonal_good = True
-                        ziwei_interpersonal_reason = f"兄弟宫有{'、'.join(good_stars)}，手足助力多，朋友圈质量高"
+            p = self._find_palace(palaces, "兄弟")
+            if p:
+                stars = self._get_palace_stars(p)
+                good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
+                if good_stars:
+                    ziwei_interpersonal_good = True
+                    ziwei_interpersonal_reason = f"兄弟宫有{'、'.join(good_stars)}，手足助力多，朋友圈质量高"
 
         if bazi_interpersonal_bad and ziwei_interpersonal_good:
             conflicts.append(ConflictItem(
@@ -1363,11 +1876,11 @@ class CrossValidator:
         # 紫微看事业宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "官禄":
-                    stars = p.get("stars", [])
-                    if stars:
-                        career_trend.append(f"官禄宫主星{stars[0]}，事业格局不错")
+            p = self._find_palace(palaces, "官禄")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    career_trend.append(f"官禄宫主星{stars[0]}，事业格局不错")
 
         judgment["事业"]["趋势"] = "；".join(career_trend) if career_trend else "平稳发展"
         judgment["事业"]["建议"] = "；".join(career_suggest) if career_suggest else "稳扎稳打，借势而为"
@@ -1413,17 +1926,17 @@ class CrossValidator:
 
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "夫妻":
-                    stars = p.get("stars", [])
-                    if "紫微" in stars or "天府" in stars:
-                        love_trend.append("夫妻宫有紫微/天府，感情基础稳")
-                        if love_luck == "凶":
-                            love_luck = "中"  # 紫微缓解了冲的影响
-                        else:
-                            love_luck = "吉"
-                    if stars:
-                        love_trend.append(f"夫妻宫主星{stars[0]}")
+            p = self._find_palace(palaces, "夫妻")
+            if p:
+                stars = self._get_palace_stars(p)
+                if "紫微" in stars or "天府" in stars:
+                    love_trend.append("夫妻宫有紫微/天府，感情基础稳")
+                    if love_luck == "凶":
+                        love_luck = "中"  # 紫微缓解了冲的影响
+                    else:
+                        love_luck = "吉"
+                if stars:
+                    love_trend.append(f"夫妻宫主星{stars[0]}")
 
         if not love_trend:
             love_trend.append("感情运势平稳")
@@ -1486,13 +1999,13 @@ class CrossValidator:
         # 紫微：看官禄宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "官禄":
-                    stars = p.get("stars", [])
-                    study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
-                    if study_stars:
-                        academic_trend.append(f"官禄宫有{'、'.join(study_stars)}，学业运势不错")
-                        academic_luck = "吉"
+            p = self._find_palace(palaces, "官禄")
+            if p:
+                stars = self._get_palace_stars(p)
+                study_stars = [s for s in stars if s in ("天机", "天梁", "太阳", "太阴", "文昌", "文曲")]
+                if study_stars:
+                    academic_trend.append(f"官禄宫有{'、'.join(study_stars)}，学业运势不错")
+                    academic_luck = "吉"
 
         # 占星：看水星
         if self.udm.astro_chart:
@@ -1536,17 +2049,17 @@ class CrossValidator:
         # 紫微：看兄弟宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            for p in palaces:
-                if p.get("name") == "兄弟":
-                    stars = p.get("stars", [])
-                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
-                    bad_stars = [s for s in stars if s in ("七杀", "破军", "擎羊", "陀罗")]
-                    if good_stars:
-                        inter_trend.append(f"兄弟宫有{'、'.join(good_stars)}，手足助力多")
-                        inter_luck = "吉"
-                    elif bad_stars:
-                        inter_trend.append(f"兄弟宫有{'、'.join(bad_stars)}，需注意朋友间纠纷")
-                        inter_suggest.append("交友需谨慎，少参与利益纠纷")
+            p = self._find_palace(palaces, "兄弟")
+            if p:
+                stars = self._get_palace_stars(p)
+                good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微", "太阳")]
+                bad_stars = [s for s in stars if s in ("七杀", "破军", "擎羊", "陀罗")]
+                if good_stars:
+                    inter_trend.append(f"兄弟宫有{'、'.join(good_stars)}，手足助力多")
+                    inter_luck = "吉"
+                elif bad_stars:
+                    inter_trend.append(f"兄弟宫有{'、'.join(bad_stars)}，需注意朋友间纠纷")
+                    inter_suggest.append("交友需谨慎，少参与利益纠纷")
 
         # 占星：看水星和金星
         if self.udm.astro_chart:
