@@ -77,7 +77,10 @@ class EngineOrchestrator:
         for engine in self._engines:
             try:
                 result = engine.analyze(time, gender)
-                valid, error = engine.validate(result)
+                try:
+                    valid, error = engine.validate(result)
+                except Exception as ve:
+                    valid, error = False, f"验证异常: {ve}"
 
                 if not valid:
                     udm.engine_errors[engine.name] = error or "验证失败"

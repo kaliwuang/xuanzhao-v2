@@ -18,6 +18,9 @@ from typing import Optional, Tuple
 from pathlib import Path
 import math
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -152,8 +155,8 @@ class TimeEngine:
         # 5. 真太阳时修正
         true_solar = self._true_solar_time(utc, lon)
 
-        # 6. 早晚子时判定
-        is_late_zi = self._is_late_zi_hour(original)
+        # 6. 早晚子时判定（基于真太阳时）
+        is_late_zi = self._is_late_zi_hour(true_solar)
 
         # 7. 节气上下文
         jieqi = self._get_jieqi_context(true_solar)
@@ -209,6 +212,7 @@ class TimeEngine:
         if loc.endswith("省") and loc[:-1] in self._cities:
             return self._cities[loc[:-1]]
         # 默认北京
+        logger.warning(f"城市 '{loc}' 未找到，回退到北京坐标")
         return (39.9042, 116.4074)
 
     def _to_utc(self, dt: datetime) -> datetime:

@@ -61,9 +61,18 @@ def _find_house(lon: float, cusps: list[float]) -> int:
 
 
 class AstroEngine(DivinationEngine):
-    name = '占星'
-    name_en = 'astro'
-    priority = 3
+
+    @property
+    def name(self) -> str:
+        return '占星'
+
+    @property
+    def name_en(self) -> str:
+        return 'astro'
+
+    @property
+    def priority(self) -> int:
+        return 3
 
     def __init__(self):
         import os
@@ -120,6 +129,8 @@ class AstroEngine(DivinationEngine):
                 'sign_index': sign_idx,
                 'degree': round(degree, 2),
                 'house': house,
+                'speed': round(result[0][3] if isinstance(result[0], (list, tuple)) else result[3], 4) if len(result[0]) > 3 else 0,
+                'retrograde': (result[0][3] < 0) if isinstance(result[0], (list, tuple)) and len(result[0]) > 3 else False,
             }
 
         # Sun/Moon signs and elements
@@ -166,12 +177,33 @@ class AstroEngine(DivinationEngine):
             '狮子': '太阳', '处女': '水星', '天秤': '金星', '天蝎': '冥王星',
             '射手': '木星', '摩羯': '土星', '水瓶': '天王星', '双鱼': '海王星'
         }
+        # Traditional rulership (used alongside modern)
+        traditional_ruler_map = {
+            '白羊': '火星', '金牛': '金星', '双子': '水星', '巨蟹': '月亮',
+            '狮子': '太阳', '处女': '水星', '天秤': '金星', '天蝎': '火星',
+            '射手': '木星', '摩羯': '土星', '水瓶': '土星', '双鱼': '木星'
+        }
         for h in houses:
             sign = h.get('sign', '')
             house_num = h.get('house', 0)
             ruler = ruler_map.get(sign, '')
+            trad_ruler = traditional_ruler_map.get(sign, '')
             if ruler:
-                house_rulers[house_num] = {'sign': sign, 'ruler': ruler}
+                house_rulers[house_num] = {'sign': sign, 'ruler': ruler, 'traditional_ruler': trad_ruler}
+
+        # North/South Node (Lunar Nodes)
+        try:
+            rahu_result = swe.calc_ut(jd_utc, swe.TRUE_NODE)
+            rahu_lon = rahu_result[0][0] if isinstance(rahu_result[0], (list, tuple)) else rahu_result[0]
+            rahu_lon = rahu_lon % 360.0
+            ketu_lon = (rahu_lon + 180) % 360
+            rahu_sign, rahu_deg, _ = _sign_degree(rahu_lon)
+            ketu_sign, ketu_deg, _ = _sign_degree(ketu_lon)
+            north_node = {'longitude': round(rahu_lon, 4), 'sign': rahu_sign, 'degree': round(rahu_deg, 2), 'house': _find_house(rahu_lon, list(cusps))}
+            south_node = {'longitude': round(ketu_lon, 4), 'sign': ketu_sign, 'degree': round(ketu_deg, 2), 'house': _find_house(ketu_lon, list(cusps))}
+        except Exception:
+            north_node = {}
+            south_node = {}
 
         return {
             'sun_sign': sun_sign,
@@ -193,6 +225,9 @@ class AstroEngine(DivinationEngine):
             'gender': gender,
             'birth_time': str(time.original),
             'location': time.location_name,
+            'north_node': north_node,
+            'south_node': south_node,
+            'planetary_details': {name: {'retrograde': p.get('retrograde', False), 'speed': p.get('speed', 0)} for name, p in planets.items()},
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:

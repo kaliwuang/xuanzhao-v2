@@ -1,15 +1,9 @@
 #!/bin/bash
-# Kill existing server
-for pid in $(pgrep -f "uvicorn main:app"); do
-    kill $pid 2>/dev/null
-done
+# Restart xuanzhao server
+kill $(pgrep -f "uvicorn.*main:app") 2>/dev/null
 sleep 2
-
-# Start new server
 cd /data/data/com.termux/files/home/xuanzhao
-nohup uvicorn main:app --host 0.0.0.0 --port 8000 > /tmp/xuanzhao.log 2>&1 &
-echo "Server started with PID $!"
-sleep 3
-
-# Verify
-curl -s localhost:8000/api/health
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+sleep 4
+curl -s http://localhost:8000/ | head -1
+echo "Server restarted"

@@ -14,9 +14,10 @@ import json as _json
 
 logger = logging.getLogger("xuanzhao.api")
 
-# 简单内存缓存
+# 简单内存缓存（带LRU淘汰）
 _cache = {}
 _cache_ttl = 300  # 5分钟过期
+_cache_max_size = 200  # 最大缓存条目数
 
 def _get_cache(key: str):
     """获取缓存"""
@@ -28,14 +29,18 @@ def _get_cache(key: str):
     return None
 
 def _set_cache(key: str, data):
-    """设置缓存"""
-    _cache[key] = (data, time.time())
-    # 清理过期缓存
-    if len(_cache) > 100:
+    """设置缓存，带LRU淘汰"""
+    # 先清理过期缓存
+    if len(_cache) >= _cache_max_size:
         now = time.time()
         expired = [k for k, (_, ts) in _cache.items() if now - ts > _cache_ttl]
         for k in expired:
             del _cache[k]
+        # 如果仍然超过限制，删除最旧的条目直到有空间
+        while len(_cache) >= _cache_max_size:
+            oldest_key = min(_cache, key=lambda k: _cache[k][1])
+            del _cache[oldest_key]
+    _cache[key] = (data, time.time())
 
 from engine.time_engine import get_time_engine
 from engine.base import EngineOrchestrator
@@ -58,9 +63,28 @@ router = APIRouter()
 _orchestrator = None
 _xingming_engine = None  # 姓名学引擎单例
 _default_figure_ids = [
-    "zhuge-liang", "jung", "confucius", "laozi", "sunzi",
-    "ni-haixia", "yuan-tiangang", "li-chunfeng", "gui-gu-zi",
-    "shao-yong", "feynman", "taleb",
+    "zhuge-liang", "ni-haixia", "yuan-tiangang", "li-chunfeng", "gui-gu-zi",
+    "jiang-ziya", "shao-yong", "feynman", "jung", "zhang-zhongjing",
+    "laozi", "sunzi", "chen-tuan", "xu-ziping", "jing-fang",
+    "chen-gongxian", "huang-shigong", "zhang-liang", "kongzi", "zhuangzi",
+    "ptolemy", "nietzsche", "mozi", "hanfeizi", "wang-tingzhi",
+    "wan-minying", "bian-que", "guan-lu", "guo-pu", "li-xuzhong",
+    "liu-bowen", "ren-tieyao", "shen-xiaozhan", "yu-chuntai", "zhang-shenfeng",
+    "lu-dongbin", "qiu-chuji", "zhang-sanfeng", "feng-hou", "yang-junsong",
+    "lai-buyi", "liao-junqing", "yehe-laoren", "wang-hongxu", "miao-gongda",
+    "xu-cibin", "dongfang-shuo", "lu-xixing", "liu-yiming", "lu-binzhao",
+    "liaowu-jushi", "cai-shangji", "jiang-dahong", "zhao-jiufeng", "zhang-jiuyi",
+    "wang-junrong", "zhang-xingyuan", "li-wenhui", "cao-jiuxi", "ling-fuzhi",
+    "zhang-guande", "guo-yuqing", "yan-junping", "william-lilly", "alan-leo",
+    "linda-goodman", "stephen-forrest", "fayun-jushi", "tianyi-shangren", "wu-zhongcheng",
+    "chen-shixing", "zhang-guolao", "cheng-liangyu", "zhang-erqi", "hu-xu",
+    "jiao-yanshou", "wang-mufu", "cheng-shuxun", "liu-chijiang", "wei-qianli",
+    "zhang-qihuang", "yuan-shushan", "dane-rudhyar", "howard-sasportas", "liz-greene",
+    "robert-hand", "xuanzhao", "munger", "taleb", "naval",
+    "stoic", "nostradamus", "geng-shouchang", "zhang-heng", "yixing",
+    "wang-ximing", "socrates", "einstein", "sagan", "nan-huaijin",
+    "sigmund-freud", "maslow", "kahneman", "i-ching", "dante",
+    "rabelais", "hegel", "paracelsus",
 ]
 
 def get_orchestrator():
@@ -106,6 +130,18 @@ def _validate_birth(birth: str):
         raise ValueError(f"日期错误: {day}")
     if not (0 <= hour <= 23):
         raise ValueError(f"小时错误: {hour}")
+    minute = int(hour_min[1])
+    if not (0 <= minute <= 59):
+        raise ValueError(f"分钟错误: {minute}")
+
+
+def _sanitize_name(name: str) -> str:
+    """清理姓名参数，防止注入"""
+    if not name:
+        return ""
+    # 只保留中文字符、字母、数字、常见分隔符
+    sanitized = re.sub(r'[^\u4e00-\u9fff\w\s·-]', '', name.strip())
+    return sanitized[:20]  # 限制长度
 
 def _prepare_udm(birth: str, location: str, gender: str):
     """公共前置：时间校正 + 排盘，返回 (corrected, udm)"""
@@ -123,13 +159,19 @@ def _error_response(e: Exception):
     logger.exception("API error")
     import os
     is_dev = os.environ.get("XUANZHAO_ENV", "prod") == "dev"
+    # 区分客户端错误和服务器错误
+    if isinstance(e, ValueError):
+        status_code = 400
+    else:
+        status_code = 500
     content = {
         "error": f"操作失败: {str(e)}",
         "error_type": type(e).__name__,
+        "error_code": "VALIDATION_ERROR" if isinstance(e, ValueError) else "INTERNAL_ERROR",
     }
     if is_dev:
         content["traceback"] = traceback.format_exc()[-500:]
-    return JSONResponse(status_code=500, content=content)
+    return JSONResponse(status_code=status_code, content=content)
 
 
 def _get_figure_ids(figures: Optional[str]) -> list:
@@ -164,6 +206,7 @@ def get_chart(
 ):
     """七术排盘接口（含姓名学）"""
     try:
+        name = _sanitize_name(name)
         corrected, udm = _prepare_udm(birth, location, gender)
 
         # 构建返回数据
@@ -239,6 +282,10 @@ def get_chart(
                 "planets": udm.astro_chart.get("planets"),
                 "aspects": udm.astro_chart.get("aspects"),
                 "aspects_summary": udm.astro_chart.get("aspects_summary"),
+                "house_rulers": udm.astro_chart.get("house_rulers"),
+                "north_node": udm.astro_chart.get("north_node"),
+                "south_node": udm.astro_chart.get("south_node"),
+                "planetary_details": udm.astro_chart.get("planetary_details"),
             }
 
         # 紫微
@@ -261,6 +308,7 @@ def get_chart(
                 "dai_xian": udm.ziwei_chart.get("dai_xian", []),
                 "nominal_age": udm.ziwei_chart.get("nominal_age", 0),
                 "zi_dou": udm.ziwei_chart.get("zi_dou", ""),
+                "liunian": udm.ziwei_chart.get("liunian", {}),
             }
 
         # 六爻
@@ -527,6 +575,150 @@ def debate_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@router.get("/api/debate/stream-fast")
+def debate_stream_fast(
+    birth: str = Query(..., description="出生时间"),
+    location: str = Query("北京", description="出生地点"),
+    gender: str = Query("男", description="性别"),
+    question: str = Query("此人命运如何？", description="问题"),
+    figures: Optional[str] = Query(None, description="人物ID，逗号分隔"),
+):
+    """快速辩论SSE流（108人模板推理，零LLM，仅玄照综合用1次LLM）"""
+    def event_generator():
+        try:
+            from engine.debate_engine import DebateEngine
+            from engine.perspective_engine import PerspectiveEngine
+
+            corrected, udm = _prepare_udm(birth, location, gender)
+
+            pe = PerspectiveEngine()
+            opinions = pe.analyze(udm, question, _get_figure_ids(figures))
+
+            engine = DebateEngine()
+            for event in engine.debate_stream(opinions, question):
+                yield f"event: {event['event']}\ndata: {_json.dumps(event['data'], ensure_ascii=False)}\n\n"
+
+        except Exception as e:
+            logger.error(f"快速辩论流错误: {e}\n{traceback.format_exc()}")
+            yield f"event: error\ndata: {_json.dumps({'error': str(e)}, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/api/debate/report")
+def debate_report(
+    birth: str = Query(..., description="出生时间"),
+    location: str = Query("北京", description="出生地点"),
+    gender: str = Query("男", description="性别"),
+    question: str = Query("此人命运如何？", description="问题"),
+    figures: Optional[str] = Query(None, description="人物ID，逗号分隔"),
+):
+    """生成辩论报告（Markdown格式）"""
+    try:
+        corrected, udm = _prepare_udm(birth, location, gender)
+        pe = PerspectiveEngine()
+        opinions = pe.analyze(udm, question, _get_figure_ids(figures))
+
+        de = DebateEngine()
+        result = de.debate(opinions, question)
+
+        # 生成Markdown报告
+        report = _generate_debate_report(result, question, birth, location, gender)
+
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(
+            content=report,
+            media_type="text/markdown",
+            headers={
+                "Content-Disposition": f"attachment; filename=debate_report_{birth.replace(' ', '_').replace(':', '-')}.md"
+            }
+        )
+    except Exception as e:
+        return _error_response(e)
+
+
+def _generate_debate_report(result: dict, question: str, birth: str, location: str, gender: str) -> str:
+    """生成辩论Markdown报告"""
+    lines = []
+    lines.append(f"# 玄照辩论报告")
+    lines.append(f"")
+    lines.append(f"## 基本信息")
+    lines.append(f"- **问题**: {question}")
+    lines.append(f"- **出生**: {birth} ({location})")
+    lines.append(f"- **性别**: {gender}")
+    lines.append(f"- **参与人数**: {len(result.get('participants', []))}人")
+    lines.append(f"")
+
+    # 玄照判定
+    xz = result.get("xuanzhao_perspective", {})
+    if xz:
+        lines.append(f"## 🔮 玄照综合判定")
+        lines.append(f"")
+        lines.append(f"**立场**: {xz.get('stance', '综合分析')}")
+        lines.append(f"**置信度**: {round(xz.get('confidence', 0) * 100)}%")
+        lines.append(f"")
+
+        kp = xz.get("key_points", [])
+        if kp:
+            lines.append(f"### 核心观点")
+            for p in kp:
+                lines.append(f"- {p}")
+            lines.append(f"")
+
+    # 共识
+    consensus = result.get("consensus", [])
+    if consensus:
+        lines.append(f"## ✅ 共识")
+        for c in consensus:
+            lines.append(f"- {c}")
+        lines.append(f"")
+
+    # 分歧
+    disagreements = result.get("disagreements", [])
+    if disagreements:
+        lines.append(f"## ⚡ 分歧")
+        for d in disagreements[:10]:
+            names = " vs ".join(d.get("between", []))
+            lines.append(f"- **{names}**: {d.get('aspect', '')}")
+        lines.append(f"")
+
+    # 参与者
+    participants = result.get("participants", [])
+    if participants:
+        lines.append(f"## 👥 参与者")
+        for p in participants:
+            lines.append(f"- {p['name']} ({p['method']}) - {p.get('stance', '')[:50]}")
+        lines.append(f"")
+
+    # 辩论记录
+    exchanges = result.get("exchanges", [])
+    if exchanges:
+        lines.append(f"## 💬 辩论记录")
+        for ex in exchanges:
+            lines.append(f"### {ex.speaker} ({ex.speaker_method})")
+            if ex.target:
+                lines.append(f"> 回应 {ex.target}")
+            lines.append(f"")
+            lines.append(ex.argument)
+            lines.append(f"")
+
+    # 总结
+    summary = result.get("summary", "")
+    if summary:
+        lines.append(f"## 📝 总结")
+        lines.append(summary)
+
+    return "\n".join(lines)
 
 
 @router.get("/api/ask")

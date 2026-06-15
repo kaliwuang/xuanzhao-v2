@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄照 v2.0 - 命盘展示</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .chart-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .chart-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+        .chart-section h3 {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .mini-pillar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.3rem;
+            text-align: center;
+            margin-bottom: 0.8rem;
+        }
+        .mini-pillar-item {
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .mini-pillar-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .mini-pillar-gan {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-gold);
+        }
+        .mini-pillar-zhi {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+        .info-line {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+        .info-line .label {
+            color: var(--accent-gold);
+        }
+        .planet-mini {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.3rem;
+            font-size: 0.8rem;
+        }
+        .planet-mini-item {
+            background: var(--bg-card);
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+        }
+        .gua-info {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+        }
+        .gua-name {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+        .dong-yao {
+            color: var(--text-primary);
+        }
+        .qimen-mini {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.3rem;
+            font-size: 0.75rem;
+        }
+        .qimen-mini-cell {
+            background: var(--bg-card);
+            padding: 0.4rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .qimen-mini-gong {
+            color: var(--text-muted);
+            font-size: 0.65rem;
+        }
+        .qimen-mini-gan {
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+        .qimen-mini-men {
+            color: var(--text-primary);
+        }
+        .liuren-ke {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .liuren-ke-item {
+            background: var(--bg-card);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+        }
+        .taiyi-info {
+            text-align: center;
+            padding: 1rem;
+        }
+        .taiyi-gong {
+            font-size: 1.5rem;
+            color: var(--accent-gold);
+        }
+        .qa-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        .qa-section h3 {
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+        .qa-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .qa-input input {
+            flex: 1;
+            padding: 0.7rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-family: inherit;
+        }
+        .qa-result {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1rem;
+            display: none;
+        }
+        .qa-result.active {
+            display: block;
+        }
+        .qa-answer {
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        .qa-confidence {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-left: 1rem;
+        }
+        .qa-keypoints {
+            margin-top: 1rem;
+        }
+        .qa-keypoint {
+            background: rgba(212, 165, 116, 0.1);
+            border-left: 3px solid var(--accent-gold);
+            padding: 0.5rem 0.8rem;
+            margin-bottom: 0.3rem;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.85rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .back-link:hover {
+            color: var(--accent-gold);
+        }
+        @media (max-width: 1024px) {
+            .chart-layout {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .chart-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">玄照 <span>v2.0</span></a>
+        <div class="nav-links">
+            <a href="/">排盘</a>
+            <a href="/perspectives">108视角</a>
+            <a href="/debate">辩论台</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a href="/" class="back-link">&larr; 返回输入</a>
+
+        <div id="loading" class="loading" style="display:none;">
+            <div class="spinner"></div>
+            <p>正在排盘，请稍候...</p>
+        </div>
+
+        <div id="error" class="error-message" style="display:none;"></div>
+
+        <div id="chartContent">
+            <div class="chart-layout" id="chartLayout"></div>
+
+            <!-- 问答 -->
+            <div class="qa-section" id="qaSection" style="display:none;">
+                <h3>向命盘提问</h3>
+                <div class="qa-input">
+                    <input type="text" id="qaQuestion" placeholder="例如：此人事业如何？感情运势怎样？健康状况？">
+                    <button class="btn btn-primary" onclick="askQuestion()">提问</button>
+                </div>
+                <div class="qa-result" id="qaResult">
+                    <div style="display:flex; align-items:center; margin-bottom:0.5rem;">
+                        <span id="qaType" style="color:var(--accent-gold);"></span>
+                        <span class="qa-confidence" id="qaConfidence"></span>
+                    </div>
+                    <div class="qa-answer" id="qaAnswer"></div>
+                    <div class="qa-keypoints" id="qaKeypoints"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/api.js"></script>
+    <script>
+        try {
+        // 解析URL参数
+        const params = new URLSearchParams(window.location.search);
+        const birth = params.get('birth');
+        const location = params.get('location') || '';
+        const gender = params.get('gender') || '男';
+        const name = params.get('name') || '';
+        if (!birth) { document.getElementById('error').textContent = '缺少出生时间参数'; document.getElementById('error').style.display = 'block'; }
+
+        let chartData = null;
+
+        async function loadChart() {
+            showLoading(true);
+            try {
+                const data = await api.getChart(birth, location, gender, name);
+                chartData = data;
+                renderChart(data);
+                document.getElementById('qaSection').style.display = 'block';
+                showLoading(false);
+            } catch (e) {
+                showLoading(false);
+                showError(e.message);
+            }
+        }
+
+        function renderChart(data) {
+            const layout = document.getElementById('chartLayout');
+            layout.innerHTML = '';
+
+            // 八字
+            if (data.bazi) {
+                layout.appendChild(createBaziSection(data.bazi));
+            }
+
+            // 紫微
+            if (data.ziwei) {
+                layout.appendChild(createZiweiSection(data.ziwei));
+            }
+
+            // 占星
+            if (data.astro) {
+                layout.appendChild(createAstroSection(data.astro));
+            }
+
+            // 六爻
+            if (data.liuyao) {
+                layout.appendChild(createLiuyaoSection(data.liuyao));
+            }
+
+            // 奇门
+            if (data.qimen) {
+                layout.appendChild(createQimenSection(data.qimen));
+            }
+
+            // 大六壬
+            if (data.liuren) {
+                layout.appendChild(createLiurenSection(data.liuren));
+            }
+
+            // 太乙
+            if (data.taiyi) {
+                layout.appendChild(createTaiyiSection(data.taiyi));
+            }
+
+            // 姓名学
+            if (data.xingming) {
+                layout.appendChild(createXingmingSection(data.xingming, data.input?.name));
+            }
+        }
+
+        function createSection(title) {
+            const section = document.createElement('div');
+            section.className = 'chart-section';
+            const h3 = document.createElement('h3');
+            h3.textContent = title;
+            section.appendChild(h3);
+            return section;
+        }
+
+        function createBaziSection(bazi) {
+            const section = createSection('八字');
+            const pillars = ['year', 'month', 'day', 'time'];
+            const labels = ['年柱', '月柱', '日柱', '时柱'];
+            const currentYear = new Date().getFullYear();
+
+            // 十神计算（通用）
+            const SHISHEN_MAP = {
+                '甲': {'甲':'比肩','乙':'劫财','丙':'食神','丁':'伤官','戊':'偏财','己':'正财','庚':'七杀','辛':'正官','壬':'偏印','癸':'正印'},
+                '乙': {'乙':'比肩','甲':'劫财','丁':'食神','丙':'伤官','己':'偏财','戊':'正财','辛':'七杀','庚':'正官','癸':'偏印','壬':'正印'},
+                '丙': {'丙':'比肩','丁':'劫财','戊':'食神','己':'伤官','庚':'偏财','辛':'正财','壬':'七杀','癸':'正官','甲':'偏印','乙':'正印'},
+                '丁': {'丁':'比肩','丙':'劫财','己':'食神','戊':'伤官','辛':'偏财','庚':'正财','癸':'七杀','壬':'正官','乙':'偏印','甲':'正印'},
+                '戊': {'戊':'比肩','己':'劫财','庚':'食神','辛':'伤官','壬':'偏财','癸':'正财','甲':'七杀','乙':'正官','丙':'偏印','丁':'正印'},
+                '己': {'己':'比肩','戊':'劫财','辛':'食神','庚':'伤官','癸':'偏财','壬':'正财','乙':'七杀','甲':'正官','丁':'偏印','丙':'正印'},
+                '庚': {'庚':'比肩','辛':'劫财','壬':'食神','癸':'伤官','甲':'偏财','乙':'正财','丙':'七杀','丁':'正官','戊':'偏印','己':'正印'},
+                '辛': {'辛':'比肩','庚':'劫财','癸':'食神','壬':'伤官','乙':'偏财','甲':'正财','丁':'七杀','丙':'正官','己':'偏印','戊':'正印'},
+                '壬': {'壬':'比肩','癸':'劫财','甲':'食神','乙':'伤官','丙':'偏财','丁':'正财','戊':'七杀','己':'正官','庚':'偏印','辛':'正印'},
+                '癸': {'癸':'比肩','壬':'劫财','乙':'食神','甲':'伤官','丁':'偏财','丙':'正财','己':'七杀','戊':'正官','辛':'偏印','庚':'正印'}
+            };
+            function getShishen(dm, gan) {
+                return SHISHEN_MAP[dm]?.[gan] || '';
+            }
+
+            // 大运/流年展开状态
+            let expandedDayunIdx = null;
+            let expandedLiunianGanzhi = null;
+
+            function renderTable() {
+                const shishenGan = bazi.shishen_gan || {};
+                const hiddenGans = bazi.hidden_gans || {};
+                const shishenZhi = bazi.shishen_zhi || {};
+                const nayin = bazi.nayin || {};
+
+                // 构建列定义
+                let cols = [];
+
+                // 流年列（如果有）
+                if (expandedLiunianGanzhi) {
+                    cols.push({type:'liunian', ganzhi: expandedLiunianGanzhi, label: expandedLiunianGanzhi});
+                }
+                // 大运列（如果有）
+                if (expandedDayunIdx !== null) {
+                    const dy = bazi.dayun[expandedDayunIdx];
+                    cols.push({type:'dayun', ganzhi: dy.ganzhi, label: `${dy.start_age}岁`, sub: `${dy.start_year}`, isCurrent: currentYear >= dy.start_year && currentYear <= dy.start_year + 9});
+                }
+
+                // 本命四柱
+                pillars.forEach((p, i) => {
+                    cols.push({type:'natal', ganzhi: bazi[p], label: labels[i], pillar: p});
+                });
+
+                const sepIdx = cols.findIndex(c => c.type === 'natal');
+
+                // 辅助：给流年/大运干支计算十神
+                function colShishen(col) {
+                    if (col.type === 'natal') return shishenGan[col.pillar] || '';
+                    if (col.type === 'dayun' || col.type === 'liunian') return getShishen(bazi.day_master, col.ganzhi[0]);
+                    return '';
+                }
+
+                let html = '<div style="overflow-x:auto;">';
+                html += '<table style="width:100%;border-collapse:collapse;text-align:center;font-size:0.85rem;">';
+
+                // 表头行：标签
+                html += '<tr>';
+                cols.forEach((c, i) => {
+                    const border = (i === sepIdx - 1) ? 'border-right:3px solid var(--accent-gold);' : '';
+                    const color = c.type === 'liunian' ? '#ff6b6b' : c.type === 'dayun' ? 'var(--accent-jade)' : 'var(--accent-gold)';
+                    html += `<td style="padding:0.4rem;font-size:0.75rem;color:${color};font-weight:600;${border}">${c.label}</td>`;
+                });
+                html += '</tr>';
+
+                // 十神行
+                html += '<tr>';
+                cols.forEach((c, i) => {
+                    const border = (i === sepIdx - 1) ? 'border-right:3px solid var(--accent-gold);' : '';
+                    const ss = colShishen(c);
+                    const color = c.type !== 'natal' ? 'var(--text-muted)' : '';
+                    html += `<td style="padding:0.4rem;font-size:0.8rem;color:${color || 'var(--text-muted)'};${border}">${ss}</td>`;
+                });
+                html += '</tr>';
+
+                // 天干行
+                html += '<tr>';
+                cols.forEach((c, i) => {
+                    const gan = c.ganzhi[0];
+                    const border = (i === sepIdx - 1) ? 'border-right:3px solid var(--accent-gold);' : '';
+                    const bg = c.type !== 'natal' ? 'background:var(--bg-card);' : '';
+                    const color = c.type === 'liunian' ? '#ff6b6b' : c.type === 'dayun' ? 'var(--accent-jade)' : 'var(--accent-gold)';
+                    html += `<td style="padding:0.6rem;font-size:1.3rem;font-weight:bold;color:${color};${bg}${border}">${gan}</td>`;
+                });
+                html += '</tr>';
+
+                // 地支行
+                html += '<tr>';
+                cols.forEach((c, i) => {
+                    const zhi = c.ganzhi[1];
+                    const border = (i === sepIdx - 1) ? 'border-right:3px solid var(--accent-gold);' : '';
+                    const bg = c.type !== 'natal' ? 'background:var(--bg-card);' : '';
+                    html += `<td style="padding:0.6rem;font-size:1.3rem;font-weight:bold;color:var(--text-primary);${bg}${border}">${zhi}</td>`;
+                });
+                html += '</tr>';
+
+                // 藏干行
+                html += '<tr>';
+                cols.forEach((c, i) => {
+                    const border = (i === sepIdx - 1) ? 'border-right:3px solid var(--accent-gold);' : '';
+                    const bg = c.type !== 'natal' ? 'background:var(--bg-card);' : '';
+                    if (c.type === 'natal') {
+                        const hg = hiddenGans[c.pillar] || [];
+                        const zs = shishenZhi[c.pillar] || [];
+                        const text = hg.map((g, gi) => `<div style="font-size:0.7rem;color:var(--text-muted);">${g}${zs[gi] ? zs[gi] : ''}</div>`).join('');
+                        html += `<td style="padding:0.3rem;${bg}${border}">${text}</td>`;
+                    } else {
+                        html += `<td style="padding:0.3rem;${bg}${border}"></td>`;
+                    }
+                });
+                html += '</tr>';
+
+                // 纳音行
+                html += '<tr style="border-top:1px solid var(--border-color);">';
+                cols.forEach((c, i) => {
+                    const border = (i === sepIdx - 1) ? 'border-right:3px solid var(--accent-gold);' : '';
+                    if (c.type === 'natal') {
+                        html += `<td style="padding:0.3rem;font-size:0.7rem;color:var(--text-muted);${border}">${nayin[c.pillar] || ''}</td>`;
+                    } else {
+                        html += `<td style="padding:0.3rem;${border}"></td>`;
+                    }
+                });
+                html += '</tr>';
+
+                // 年份/年龄行
+                html += '<tr style="border-top:1px solid var(--border-color);">';
+                cols.forEach((c, i) => {
+                    const border = (i === sepIdx - 1) ? 'border-right:3px solid var(--accent-gold);' : '';
+                    const bg = (c.type !== 'natal' && c.isCurrent) ? 'background:rgba(212,165,116,0.15);' : '';
+                    let text = '';
+                    if (c.type === 'dayun') text = c.sub || '';
+                    else if (c.type === 'liunian') text = '';
+                    html += `<td style="padding:0.3rem;font-size:0.65rem;color:var(--text-muted);${bg}${border}">${text}</td>`;
+                });
+                html += '</tr>';
+
+                html += '</table></div>';
+                return html;
+            }
+
+            // 主渲染区
+            const tableDiv = document.createElement('div');
+            tableDiv.id = 'baziTableContainer';
+            section.appendChild(tableDiv);
+
+            function refreshTable() {
+                tableDiv.innerHTML = renderTable();
+            }
+            refreshTable();
+
+            // 日主 + 调候 + 喜用
+            section.innerHTML += `
+                <div style="margin-top:0.8rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;">
+                    <span style="font-size:0.85rem;"><span style="color:var(--accent-gold);">日主：</span>${bazi.day_master || ''}（${bazi.day_master_wuxing || ''}）</span>
+                    <span style="font-size:0.85rem;"><span style="color:var(--accent-gold);">调候：</span>${bazi.tiaohou || ''}</span>
+                    <span style="font-size:0.85rem;"><span style="color:var(--accent-gold);">空亡：</span>${bazi.xunkong?.year || ''} ${bazi.xunkong?.day || ''}</span>
+                </div>
+            `;
+
+            // 喜用神
+            if (bazi.xi_yong) {
+                const xy = bazi.xi_yong;
+                section.innerHTML += `
+                    <div style="margin-top:0.5rem;padding:0.5rem;background:var(--bg-card);border-radius:6px;border-left:3px solid var(--accent-gold);font-size:0.85rem;">
+                        <span style="color:#4ecdc4;">喜：${(xy.xi||[]).join(' ')}</span>　
+                        <span style="color:#ff6b6b;">忌：${(xy.ji||[]).join(' ')}</span>　
+                        <span style="color:var(--text-muted);">${xy.strength||''}（${xy.ratio||0}%）</span>
+                    </div>
+                `;
+            }
+
+            // 宫位
+            let gsInfo = [];
+            if (bazi.ming_gong) gsInfo.push(`命宫 ${bazi.ming_gong}`);
+            if (bazi.tai_yuan) gsInfo.push(`胎元 ${bazi.tai_yuan}`);
+            if (bazi.shen_gong) gsInfo.push(`身宫 ${bazi.shen_gong}`);
+            if (gsInfo.length > 0) section.innerHTML += `<div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);">${gsInfo.join(' · ')}</div>`;
+
+            // 神煞
+            if (bazi.shensha && bazi.shensha.length > 0) {
+                section.innerHTML += `<div style="margin-top:0.5rem;font-size:0.8rem;"><span style="color:var(--accent-gold);">神煞：</span>${bazi.shensha.join('　')}</div>`;
+            }
+
+            // 命局特征
+            if (bazi.features && bazi.features.length > 0) {
+                section.innerHTML += `<div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);">${bazi.features.join('　')}</div>`;
+            }
+
+            // 五行分布
+            if (bazi.wuxing_score) {
+                const ws = bazi.wuxing_score;
+                const wxColors = {'木':'#4ecdc4','火':'#ff6b6b','土':'#ffd93d','金':'#6ea8fe','水':'#a78bfa'};
+                let wsHtml = '<div style="margin-top:0.8rem;display:flex;gap:0.8rem;justify-content:center;">';
+                for (const [wx, score] of Object.entries(ws)) {
+                    wsHtml += `<div style="text-align:center;"><div style="font-size:0.75rem;color:${wxColors[wx]||''};">${wx}</div><div style="font-size:1rem;font-weight:600;">${score}</div></div>`;
+                }
+                wsHtml += '</div>';
+                section.innerHTML += wsHtml;
+            }
+
+            // 大运卡片
+            if (bazi.dayun && bazi.dayun.length > 0) {
+                let dyHtml = '<div style="margin-top:1rem;"><div style="font-size:0.85rem;color:var(--accent-gold);margin-bottom:0.4rem;">大运 <span style="font-size:0.7rem;color:var(--text-muted);">点击展开流年</span></div>';
+                dyHtml += '<div style="display:flex;flex-wrap:wrap;gap:0.3rem;" id="dayunCards">';
+                bazi.dayun.forEach((d, idx) => {
+                    const isCurrent = currentYear >= d.start_year && currentYear <= d.start_year + 9;
+                    const isActive = expandedDayunIdx === idx;
+                    const bg = isCurrent ? 'background:rgba(212,165,116,0.2);' : '';
+                    const border = isActive ? 'border:2px solid var(--accent-jade);' : 'border:1px solid var(--border-color);';
+                    const dyShishen = getShishen(bazi.day_master, d.ganzhi[0]);
+                    dyHtml += `<div class="dayun-card" data-idx="${idx}" style="background:var(--bg-card);padding:0.4rem 0.6rem;border-radius:6px;${border}text-align:center;font-size:0.8rem;cursor:pointer;transition:all 0.2s;${bg}" onclick="window._toggleDayun(${idx})">`;
+                    dyHtml += `<div style="color:var(--accent-gold);font-weight:700;font-size:1rem;">${d.ganzhi}</div>`;
+                    dyHtml += `<div style="color:var(--text-muted);font-size:0.7rem;">${dyShishen}</div>`;
+                    dyHtml += `<div style="color:var(--text-muted);font-size:0.65rem;">${d.start_age}-${d.end_age}岁 · ${d.start_year}</div>`;
+                    dyHtml += '</div>';
+                });
+                dyHtml += '</div></div>';
+                section.innerHTML += dyHtml;
+            }
+
+            // 流年列表区
+            const liunianContainer = document.createElement('div');
+            liunianContainer.id = 'liunianListContainer';
+            section.appendChild(liunianContainer);
+
+            // 大运点击
+            window._toggleDayun = function(idx) {
+                if (expandedDayunIdx === idx) {
+                    expandedDayunIdx = null;
+                    expandedLiunianGanzhi = null;
+                    liunianContainer.innerHTML = '';
+                } else {
+                    expandedDayunIdx = idx;
+                    expandedLiunianGanzhi = null;
+                    renderLiunianCards(bazi.dayun[idx]);
+                }
+                refreshTable();
+                updateDayunHighlight();
+            };
+
+            function updateDayunHighlight() {
+                document.querySelectorAll('.dayun-card').forEach(card => {
+                    const idx = parseInt(card.dataset.idx);
+                    card.style.border = (idx === expandedDayunIdx) ? '2px solid var(--accent-jade)' : '1px solid var(--border-color)';
+                });
+            }
+
+            function renderLiunianCards(dayun) {
+                const tianGan = '甲乙丙丁戊己庚辛壬癸';
+                const diZhi = '子丑寅卯辰巳午未申酉戌亥';
+                let html = '<div style="margin-top:0.5rem;">';
+                html += '<div style="font-size:0.8rem;color:#ff6b6b;margin-bottom:0.3rem;">流年 <span style="font-size:0.7rem;color:var(--text-muted);">点击展开到八字表</span></div>';
+                html += '<div style="display:flex;flex-wrap:wrap;gap:0.2rem;">';
+
+                for (let y = 0; y < 10; y++) {
+                    const year = dayun.start_year + y;
+                    const ganIdx = (year - 4) % 10;
+                    const zhiIdx = (year - 4) % 12;
+                    const lyGanzhi = tianGan[ganIdx] + diZhi[zhiIdx];
+                    const isCurrentYear = year === currentYear;
+                    const isActive = expandedLiunianGanzhi === lyGanzhi;
+                    const bg = isCurrentYear ? 'background:rgba(255,107,107,0.2);' : '';
+                    const border = isActive ? 'border:1px solid #ff6b6b;' : 'border:1px solid var(--border-color);';
+                    const lyShishen = getShishen(bazi.day_master, tianGan[ganIdx]);
+                    html += `<div class="liunian-card" style="background:var(--bg-card);padding:0.3rem 0.5rem;border-radius:4px;${border}text-align:center;font-size:0.75rem;cursor:pointer;${bg}" onclick="window._toggleLiunian('${lyGanzhi}')">`;
+                    html += `<div style="color:#ff6b6b;font-weight:600;">${lyGanzhi}</div>`;
+                    html += `<div style="color:var(--text-muted);font-size:0.65rem;">${lyShishen}</div>`;
+                    html += `<div style="color:var(--text-muted);font-size:0.6rem;">${year}</div>`;
+                    html += '</div>';
+                }
+                html += '</div></div>';
+                liunianContainer.innerHTML = html;
+            }
+
+            // 流年点击
+            window._toggleLiunian = function(ganzhi) {
+                if (expandedLiunianGanzhi === ganzhi) {
+                    expandedLiunianGanzhi = null;
+                } else {
+                    expandedLiunianGanzhi = ganzhi;
+                }
+                refreshTable();
+                // 更新流年卡片高亮
+                document.querySelectorAll('.liunian-card').forEach(card => {
+                    const text = card.querySelector('div')?.textContent;
+                    card.style.border = (text === expandedLiunianGanzhi) ? '1px solid #ff6b6b' : '1px solid var(--border-color)';
+                });
+            };
+
+            return section;
+        }
+
+        function createZiweiSection(ziwei) {
+            const section = createSection('紫微斗数');
+            const wh = ziwei.wuxing_ju || {};
+
+            // 信息栏
+            const infoBar = document.createElement('div');
+            infoBar.className = 'ziwei-info-bar';
+            infoBar.innerHTML = `
+                <span>命宫：${ziwei.ming_gong || ''}</span>
+                <span>身宫：${ziwei.shen_gong || ''}</span>
+                <span>五行局：${wh.wuxing || ''}${wh.ju_shu || ''}局</span>
+                <span>命主：${ziwei.soul_star || ''}</span>
+                <span>身主：${ziwei.body_star || ''}</span>
+                <span>生肖：${ziwei.zodiac || ''}</span>
+                <span>四化：禄${ziwei.sihua?.禄 || ''} 权${ziwei.sihua?.权 || ''} 科${ziwei.sihua?.科 || ''} 忌${ziwei.sihua?.忌 || ''}</span>
+            `;
+            section.appendChild(infoBar);
+
+            // 4x4标准盘面
+            const board = document.createElement('div');
+            board.className = 'ziwei-board';
+
+            const cellZhi = {0:'巳',1:'午',2:'未',3:'申',4:'辰',7:'酉',8:'卯',11:'戌',12:'寅',13:'丑',14:'子',15:'亥'};
+            const zhiMap = {};
+            (ziwei.palaces || []).forEach(p => { zhiMap[p.zhi] = p; });
+
+            const mainStars = ['紫微','天机','太阳','武曲','天同','廉贞','天府','太阴','贪狼','巨门','天相','天梁','七杀','破军'];
+
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                if (!cellZhi[i]) {
+                    cell.className = 'ziwei-cell empty';
+                } else {
+                    const zhi = cellZhi[i];
+                    const palace = zhiMap[zhi];
+                    const isMing = palace && palace.name === '命宫';
+                    cell.className = 'ziwei-cell' + (isMing ? ' ming-gong' : '');
+
+                    let starsHtml = '';
+                    if (palace) {
+                        // 合并主星、辅星、杂耀（API返回三个独立数组）
+                        const allStars = [];
+                        (palace.major_stars || []).forEach(s => {
+                            const name = typeof s === 'string' ? s : s.name;
+                            if (name) allStars.push({name, isMain: true});
+                        });
+                        (palace.minor_stars || []).forEach(s => {
+                            const name = typeof s === 'string' ? s : s.name;
+                            if (name) allStars.push({name, isMain: false});
+                        });
+                        (palace.adjective_stars || []).forEach(s => {
+                            const name = typeof s === 'string' ? s : s.name;
+                            if (name) allStars.push({name, isMain: false});
+                        });
+                        allStars.forEach(({name, isMain}) => {
+                            let sihua = '';
+                            if (ziwei.sihua) {
+                                if (ziwei.sihua.禄 === name) sihua = ' ziwei-star-sihua-lu';
+                                else if (ziwei.sihua.权 === name) sihua = ' ziwei-star-sihua-quan';
+                                else if (ziwei.sihua.科 === name) sihua = ' ziwei-star-sihua-ke';
+                                else if (ziwei.sihua.忌 === name) sihua = ' ziwei-star-sihua-ji';
+                            }
+                            const cls = isMain ? 'ziwei-star-main' : 'ziwei-star-aux';
+                            starsHtml += `<span class="${cls}${sihua}">${name}</span>`;
+                        });
+                    }
+
+                    cell.innerHTML = `
+                        <div class="ziwei-cell-header">
+                            <span class="ziwei-cell-zhi">${zhi}</span>
+                            <span class="ziwei-cell-name">${palace ? palace.name : ''}</span>
+                        </div>
+                        <div class="ziwei-cell-stars">${starsHtml}</div>
+                    `;
+                }
+                board.appendChild(cell);
+            }
+            section.appendChild(board);
+            return section;
+        }
+
+        function createAstroSection(astro) {
+            const section = createSection('西洋占星');
+
+            // 星盘SVG
+            const wheelSize = 280;
+            const cx = wheelSize / 2, cy = wheelSize / 2, r = 120;
+            const signs = ['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'];
+            const signColors = ['#ff6b6b','#ffd93d','#4ecdc4','#a78bfa','#ff6b6b','#ffd93d','#4ecdc4','#a78bfa','#ff6b6b','#ffd93d','#4ecdc4','#a78bfa'];
+
+            // 计算宫头位置
+            function signToAngle(signName) {
+                const idx = signs.indexOf(signName);
+                return idx >= 0 ? idx * 30 : 0;
+            }
+
+            // 行星符号
+            const planetSymbols = {'太阳':'☉','月亮':'☽','水星':'☿','金星':'♀','火星':'♂','木星':'♃','土星':'♄','天王星':'♅','海王星':'♆','冥王星':'♇'};
+            const planetColors = {'太阳':'#ffd93d','月亮':'#e8e8e8','水星':'#4ecdc4','金星':'#ff9ff3','火星':'#ff6b6b','木星':'#a78bfa','土星':'#6ea8fe','天王星':'#4ecdc4','海王星':'#6ea8fe','冥王星':'#a78bfa'};
+
+            let svg = `<svg width="${wheelSize}" height="${wheelSize}" viewBox="0 0 ${wheelSize} ${wheelSize}" style="display:block;margin:0 auto;">`;
+
+            // 外圈12宫
+            for (let i = 0; i < 12; i++) {
+                const a1 = (i * 30 - 90) * Math.PI / 180;
+                const a2 = ((i + 1) * 30 - 90) * Math.PI / 180;
+                const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+                const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+                const xm = cx + (r - 18) * Math.cos((i * 30 + 15 - 90) * Math.PI / 180);
+                const ym = cy + (r - 18) * Math.sin((i * 30 + 15 - 90) * Math.PI / 180);
+                svg += `<line x1="${cx}" y1="${cy}" x2="${x1}" y2="${y1}" stroke="rgba(212,165,116,0.2)" stroke-width="0.5"/>`;
+                svg += `<text x="${xm}" y="${ym}" fill="${signColors[i]}" font-size="9" text-anchor="middle" dominant-baseline="middle">${signs[i]}</text>`;
+            }
+            svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(212,165,116,0.4)" stroke-width="1.5"/>`;
+            svg += `<circle cx="${cx}" cy="${cy}" r="${r-25}" fill="none" stroke="rgba(212,165,116,0.15)" stroke-width="0.5"/>`;
+
+            // 上升点标记
+            if (astro.ascendant_sign) {
+                const ascAngle = (signToAngle(astro.ascendant_sign) + (astro.ascendant % 30) - 90) * Math.PI / 180;
+                const ax = cx + (r + 12) * Math.cos(ascAngle);
+                const ay = cy + (r + 12) * Math.sin(ascAngle);
+                svg += `<text x="${ax}" y="${ay}" fill="var(--accent-gold)" font-size="11" text-anchor="middle" dominant-baseline="middle" font-weight="bold">ASC</text>`;
+            }
+
+            // 行星
+            const planets = astro.planets || {};
+            const placedPlanets = [];
+            for (const [name, info] of Object.entries(planets)) {
+                const angle = (info.longitude - 90) * Math.PI / 180;
+                // 避免重叠：微调位置
+                let pr = r - 40;
+                const sym = planetSymbols[name] || name[0];
+                const color = planetColors[name] || 'var(--text-primary)';
+                let px = cx + pr * Math.cos(angle);
+                let py = cy + pr * Math.sin(angle);
+                // 简单防重叠
+                for (const pp of placedPlanets) {
+                    const dist = Math.hypot(px - pp.x, py - pp.y);
+                    if (dist < 14) {
+                        pr -= 12;
+                        px = cx + pr * Math.cos(angle);
+                        py = cy + pr * Math.sin(angle);
+                    }
+                }
+                placedPlanets.push({x: px, y: py});
+                svg += `<text x="${px}" y="${py}" fill="${color}" font-size="13" text-anchor="middle" dominant-baseline="middle">${sym}</text>`;
+            }
+
+            svg += '</svg>';
+
+            // 行星列表
+            let planetListHtml = '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.3rem;font-size:0.75rem;margin-top:0.5rem;">';
+            for (const [name, info] of Object.entries(planets)) {
+                const sym = planetSymbols[name] || '';
+                const color = planetColors[name] || 'var(--text-primary)';
+                planetListHtml += `<div style="background:var(--bg-card);padding:0.3rem 0.5rem;border-radius:4px;"><span style="color:${color};">${sym}</span> ${name} <span style="color:var(--accent-gold);">${info.sign||''}</span> ${info.degree?.toFixed(1)||''}°</div>`;
+            }
+            planetListHtml += '</div>';
+
+            section.innerHTML += svg;
+            section.innerHTML += planetListHtml;
+
+            // 相位
+            if (astro.aspects && astro.aspects.length > 0) {
+                const aspectSymbols = {'合相':'☌','六合':'⚹','刑':'□','三相':'△','冲':'☍'};
+                let aspHtml = '<div style="margin-top:0.5rem;font-size:0.7rem;color:var(--text-muted);">相位：';
+                astro.aspects.slice(0, 6).forEach(a => {
+                    const sym = aspectSymbols[a.aspect] || a.aspect;
+                    aspHtml += `<span style="margin-left:0.5rem;">${a.p1}${sym}${a.p2}(${a.orb?.toFixed(1)||''}°)</span>`;
+                });
+                aspHtml += '</div>';
+                section.innerHTML += aspHtml;
+            }
+
+            return section;
+        }
+
+        function createXingmingSection(xm, name) {
+            const section = createSection('姓名学');
+
+            // 姓名大字
+            if (name) {
+                section.innerHTML += `<div style="text-align:center;font-size:2rem;font-weight:bold;color:var(--accent-gold);margin-bottom:0.5rem;letter-spacing:0.3em;">${name}</div>`;
+            }
+
+            // 五格
+            const wuge = xm.wuge || {};
+            const wugeOrder = ['天格','人格','地格','外格','总格'];
+            const jixiongColors = {'大吉':'#4ecdc4','吉':'#4ecdc4','半吉':'#ffd93d','凶':'#ff6b6b','大凶':'#ff6b6b'};
+
+            let wugeHtml = '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:center;margin-bottom:0.8rem;">';
+            wugeOrder.forEach(g => {
+                const info = wuge[g] || {};
+                const jx = info.吉凶 || '';
+                const color = jixiongColors[jx] || 'var(--text-muted)';
+                wugeHtml += `<div style="background:var(--bg-card);padding:0.4rem 0.6rem;border-radius:6px;text-align:center;min-width:60px;border-left:3px solid ${color};">`;
+                wugeHtml += `<div style="font-size:0.7rem;color:var(--text-muted);">${g}</div>`;
+                wugeHtml += `<div style="font-size:1.1rem;font-weight:600;color:var(--text-primary);">${info.笔画||'?'}画</div>`;
+                wugeHtml += `<div style="font-size:0.7rem;color:${color};">${info.数理||''}（${jx}）</div>`;
+                wugeHtml += '</div>';
+            });
+            wugeHtml += '</div>';
+            section.innerHTML += wugeHtml;
+
+            // 三才
+            if (xm.sancai) {
+                const sc = xm.sancai;
+                const scColor = (sc.吉凶||'').includes('吉') ? '#4ecdc4' : '#ff6b6b';
+                section.innerHTML += `
+                    <div style="text-align:center;padding:0.5rem;background:var(--bg-card);border-radius:6px;margin-bottom:0.5rem;">
+                        <div style="font-size:0.8rem;color:var(--text-muted);">三才配置</div>
+                        <div style="font-size:1.1rem;font-weight:600;color:${scColor};">${sc.配置||''}（${sc.吉凶||''}）</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${sc.含义||''}</div>
+                    </div>
+                `;
+            }
+
+            // 综合评分
+            if (xm.score) {
+                section.innerHTML += `<div style="text-align:center;font-size:1.2rem;color:var(--accent-gold);">综合评分：${xm.score}分</div>`;
+            }
+
+            return section;
+        }
+
+        function createLiuyaoSection(liuyao) {
+            const section = createSection('六爻');
+            const ben = liuyao.ben_gua || {};
+            const bian = liuyao.bian_gua || {};
+            const lines = liuyao.lines || [];
+            const bianLines = liuyao.bian_lines || [];
+            const liuShen = liuyao.liu_shen || [];
+
+            section.innerHTML += `
+                <div style="text-align:center;margin-bottom:1rem;">
+                    <div style="font-size:1.3rem;color:var(--accent-gold);margin-bottom:0.3rem;">${ben.name || ''}</div>
+                    <div style="color:var(--text-muted);font-size:0.85rem;">${ben.shang||''}上${ben.xia||''}下 · 卦宫五行：${liuyao.gua_gong_wuxing||''}</div>
+                    <div style="color:var(--text-muted);font-size:0.85rem;">变卦：${bian.name || ''}</div>
+                    <div style="margin-top:0.5rem;">
+                        <span style="color:var(--accent-gold);">世爻：第${liuyao.shi||0}爻</span>
+                        <span style="margin-left:1rem;color:var(--accent-jade);">应爻：第${liuyao.ying||0}爻</span>
+                        <span style="margin-left:1rem;">动爻：第${liuyao.dong_yao||0}爻</span>
+                    </div>
+                </div>
+            `;
+
+            // 六爻详情表
+            if (lines.length > 0) {
+                let tableHtml = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;text-align:center;font-size:0.8rem;">';
+                tableHtml += '<tr style="border-bottom:1px solid var(--border-color);color:var(--text-muted);">';
+                tableHtml += '<th style="padding:0.3rem;">爻位</th><th>阴阳</th><th>六亲</th><th>地支</th><th>五行</th><th>六神</th><th>状态</th></tr>';
+
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    const yao = lines[i];
+                    const shenIdx = i; // 六神从初爻到上爻
+                    const shen = liuShen[shenIdx] || '';
+                    const isDong = yao.is_dong ? '⚡' : '';
+                    const isShi = yao.is_shi ? '世' : '';
+                    const isYing = yao.is_ying ? '应' : '';
+                    const status = [isDong, isShi, isYing].filter(Boolean).join(' ');
+                    const yinyang = yao.yinyang === '阳' ? '—▅▅▅—' : '—▅▅ ▅▅—';
+                    const rowBg = yao.is_dong ? 'background:rgba(255,107,107,0.1);' : '';
+
+                    tableHtml += `<tr style="border-bottom:1px solid var(--border-color);${rowBg}">`;
+                    tableHtml += `<td style="padding:0.3rem;color:var(--accent-gold);">${i+1}${yao.is_shi?'<span style="color:#ff6b6b;">世</span>':''}${yao.is_ying?'<span style="color:#4ecdc4;">应</span>':''}</td>`;
+                    tableHtml += `<td>${yinyang}</td>`;
+                    tableHtml += `<td style="font-weight:600;">${yao.liuqin||''}</td>`;
+                    tableHtml += `<td>${yao.zhi||''}</td>`;
+                    tableHtml += `<td>${yao.wuxing||''}</td>`;
+                    tableHtml += `<td style="color:var(--text-muted);">${shen}</td>`;
+                    tableHtml += `<td>${yao.is_dong?'<span style="color:#ff6b6b;">动</span>':''}</td>`;
+                    tableHtml += '</tr>';
+                }
+                tableHtml += '</table></div>';
+                section.innerHTML += tableHtml;
+            }
+            return section;
+        }
+
+        function createQimenSection(qimen) {
+            const section = createSection('奇门遁甲');
+            section.innerHTML += `<div class="info-line" style="text-align:center; font-size:1rem;"><span class="label">${qimen.ju_name || ''}</span></div>`;
+
+            const grid = document.createElement('div');
+            grid.className = 'qimen-mini';
+            const order = ['巽四', '离九', '坤二', '震三', '中五', '兑七', '艮八', '坎一', '乾六'];
+            order.forEach(gong => {
+                grid.innerHTML += `
+                    <div class="qimen-mini-cell">
+                        <div class="qimen-mini-gong">${gong}</div>
+                        <div class="qimen-mini-gan">${qimen.di_pan?.[gong] || ''}</div>
+                        <div class="qimen-mini-men">${qimen.ba_men?.[gong] || ''}</div>
+                    </div>
+                `;
+            });
+            section.appendChild(grid);
+            return section;
+        }
+
+        function createLiurenSection(liuren) {
+            const section = createSection('大六壬');
+            section.innerHTML += `<div class="info-line"><span class="label">月将：</span>${liuren.yue_jiang || ''}</div>`;
+
+            const keDiv = document.createElement('div');
+            keDiv.className = 'liuren-ke';
+            (liuren.si_ke || []).forEach(k => {
+                keDiv.innerHTML += `<div class="liuren-ke-item">${k.ke || ''}</div>`;
+            });
+            section.appendChild(keDiv);
+
+            section.innerHTML += `<div class="info-line"><span class="label">三传：</span>${(liuren.san_chuan || []).map(c => c.name).join(' &rarr; ')}</div>`;
+            return section;
+        }
+
+        function createTaiyiSection(taiyi) {
+            const section = createSection('太乙神数');
+            section.innerHTML += `
+                <div class="taiyi-info">
+                    <div class="taiyi-gong">${taiyi.taiyi_gong || ''}</div>
+                    <div class="info-line" style="margin-top:0.5rem;"><span class="label">积年数：</span>${taiyi.ji_nian || 0}</div>
+                    <div class="info-line"><span class="label">阴阳遁：</span>${taiyi.yin_yang || ''}</div>
+                </div>
+            `;
+            return section;
+        }
+
+        async function askQuestion() {
+            const question = document.getElementById('qaQuestion').value;
+            if (!question) return;
+
+            const resultDiv = document.getElementById('qaResult');
+            resultDiv.classList.remove('active');
+
+            try {
+                // 调用问答API（通过 api.js 封装，带超时处理）
+                const data = await api.ask(birth, location, gender, question);
+
+                document.getElementById('qaType').textContent = data.question_type || '';
+                const confBadge = document.getElementById('qaConfidence');
+                confBadge.textContent = (data.confidence || '') + '置信度';
+                confBadge.className = 'qa-confidence confidence-' + (data.confidence || 'low').toLowerCase();
+
+                document.getElementById('qaAnswer').textContent = data.answer || '';
+
+                const kpDiv = document.getElementById('qaKeypoints');
+                kpDiv.innerHTML = '';
+                (data.key_points || []).forEach(p => {
+                    kpDiv.innerHTML += `<div class="qa-keypoint">${p}</div>`;
+                });
+
+                resultDiv.classList.add('active');
+            } catch (e) {
+                showError(e.message);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.style.display = 'block';
+        }
+
+        // 加载
+        loadChart();
+        } catch(e) { document.body.innerHTML = '<div style="padding:2rem;color:#ff6b6b;font-size:1rem;background:#1a1a2e;min-height:100vh;"><b>JS错误:</b> ' + e.message + '<br><b>文件:</b> ' + (e.filename||'') + '<br><b>行:</b> ' + (e.lineno||'') + '<br><b>列:</b> ' + (e.colno||'') + '</div>'; }
+    </script>
+</body>
+</html>

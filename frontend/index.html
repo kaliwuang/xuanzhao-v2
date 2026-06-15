@@ -61,7 +61,7 @@
                 </div>
                 <div class="form-group">
                     <label>出生地点</label>
-                    <input type="text" id="location" aria-label="出生地点" value="" placeholder="如 呼和浩特">
+                    <input type="text" id="location" aria-label="出生地点" value="北京" placeholder="如 呼和浩特">
                 </div>
                 <div class="form-group">
                     <label>性别</label>
@@ -121,7 +121,7 @@
             var daySel = document.getElementById('birthDay');
             var cur = daySel.value;
             var y = parseInt(yearSel.value), m = parseInt(monthSel.value);
-            var max = m === 2 ? (y && y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0) ? 29 : 28)
+            var max = m === 2 ? (y && y > 0 && y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0) ? 29 : 28)
                 : ([4,6,9,11].indexOf(m) >= 0 ? 30 : 31);
             daySel.innerHTML = '<option value="">-- 日 --</option>';
             for (var d = 1; d <= (max || 31); d++) {

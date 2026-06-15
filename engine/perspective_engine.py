@@ -493,7 +493,10 @@ class PerspectiveEngine:
             if udm.liuyao_chart:
                 data["ben_gua"] = udm.liuyao_chart.get("ben_gua", {})
                 data["bian_gua"] = udm.liuyao_chart.get("bian_gua", {})
-                data["dong_yao"] = udm.liuyao_chart.get("dong_yao", 0)
+                data["dong_yao"] = udm.liuyao_chart.get("dong_yao", [])
+                data["shi"] = udm.liuyao_chart.get("shi", 0)
+                data["ying"] = udm.liuyao_chart.get("ying", 0)
+                data["gua_gong_wuxing"] = udm.liuyao_chart.get("gua_gong_wuxing", "")
 
         elif method == "奇门":
             if udm.qimen_chart:
@@ -502,17 +505,30 @@ class PerspectiveEngine:
                 data["tian_pan"] = udm.qimen_chart.get("tian_pan", {})
                 data["ba_men"] = udm.qimen_chart.get("ba_men", {})
                 data["jiu_xing"] = udm.qimen_chart.get("jiu_xing", {})
+                data["ba_shen"] = udm.qimen_chart.get("ba_shen", {})
+                data["zhi_fu"] = udm.qimen_chart.get("zhi_fu", {})
+                data["zhi_shi"] = udm.qimen_chart.get("zhi_shi", {})
+                data["palaces"] = udm.qimen_chart.get("palaces", [])
 
         elif method == "大六壬":
             if udm.liuren_chart:
                 data["yue_jiang"] = udm.liuren_chart.get("yue_jiang", "")
                 data["si_ke"] = udm.liuren_chart.get("si_ke", [])
                 data["san_chuan"] = udm.liuren_chart.get("san_chuan", [])
+                data["tian_jiang"] = udm.liuren_chart.get("tian_jiang", {})
+                data["ge_ju"] = udm.liuren_chart.get("ge_ju", "")
+                data["yong_shen"] = udm.liuren_chart.get("yong_shen", {})
 
         elif method == "太乙":
             if udm.taiyi_chart:
                 data["taiyi_gong"] = udm.taiyi_chart.get("taiyi_gong", "")
                 data["ji_nian"] = udm.taiyi_chart.get("ji_nian", 0)
+                data["ju_name"] = udm.taiyi_chart.get("ju_name", "")
+                data["yin_yang"] = udm.taiyi_chart.get("yin_yang", "")
+                data["san_ji"] = udm.taiyi_chart.get("san_ji", {})
+                data["zhu_suan"] = udm.taiyi_chart.get("zhu_suan", [])
+                data["ke_suan"] = udm.taiyi_chart.get("ke_suan", [])
+                data["suan_analysis"] = udm.taiyi_chart.get("suan_analysis", {})
 
         elif method == "占星":
             if udm.astro_chart:
@@ -584,7 +600,7 @@ class PerspectiveEngine:
         """应用思维模型生成推理 — 默认用模板推理（108人不用LLM避免超时），仅精选人物用LLM"""
 
         # 精选用LLM的人物（最多5人），其余全部用模板
-        LLM_FIGURES = {"zhuge-liang", "jung", "taleb", "sunzi", "kongzi"}
+        LLM_FIGURES = {"zhuge-liang", "jung", "taleb", "sunzi", "shao-yong"}
 
         if figure.id not in LLM_FIGURES:
             return self._fallback_reasoning(figure, method_data, question)
@@ -861,18 +877,31 @@ class PerspectiveEngine:
         }
 
     def _classify_question(self, question: str) -> str:
-        """分类问题类型"""
-        keywords = {
-            "事业": ["事业", "工作", "职业", "升职", "跳槽", "创业", "生意"],
+        """分类问题类型（精确匹配优先，避免子串误命中）"""
+        # 优先精确短语匹配
+        exact_keywords = {
+            "事业": ["事业", "工作", "职业", "升职", "跳槽", "创业", "做生意", "经商"],
             "感情": ["感情", "婚姻", "恋爱", "桃花", "对象", "另一半", "分手", "复合"],
-            "财运": ["财", "钱", "收入", "投资", "理财", "赚钱", "亏损"],
-            "健康": ["健康", "病", "身体", "体质", "养生", "医疗"],
-            "学业": ["学", "考试", "升学", "考研", "证书", "读书"],
-            "人际": ["人际", "关系", "朋友", "同事", "上司", "下属", "社交", "合伙"],
+            "财运": ["财运", "钱财", "收入", "投资", "理财", "赚钱", "亏损", "财富"],
+            "健康": ["健康", "生病", "身体", "体质", "养生", "医疗", "疾病"],
+            "学业": ["学业", "考试", "升学", "考研", "证书", "读书", "学习", "高考"],
+            "人际": ["人际关系", "朋友", "同事", "上司", "下属", "社交", "合伙"],
         }
 
-        for qtype, words in keywords.items():
+        for qtype, words in exact_keywords.items():
             if any(w in question for w in words):
+                return qtype
+
+        # 回退：单字匹配（仅在精确匹配未命中时）
+        fallback = {
+            "事业": ["业"],
+            "感情": ["情", "爱"],
+            "财运": ["财", "钱", "富"],
+            "健康": ["病", "医"],
+            "学业": ["考", "学"],
+        }
+        for qtype, chars in fallback.items():
+            if any(c in question for c in chars):
                 return qtype
 
         return "综合"

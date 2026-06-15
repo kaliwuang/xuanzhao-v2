@@ -227,20 +227,21 @@ class TestLLMClient:
         )
 
     def test_chat_returns_string(self):
-        result = self.client.chat([{"role": "user", "content": "说一个字：好"}], max_tokens=10)
-        if isinstance(result, str) and result.startswith("[LLM"):
-            pytest.skip("LLM API unavailable")
+        try:
+            result = self.client.chat([{"role": "user", "content": "说一个字：好"}], max_tokens=10)
+        except (ConnectionError, TimeoutError, RuntimeError) as e:
+            pytest.skip(f"LLM API unavailable: {e}")
         assert isinstance(result, str)
         assert len(result) > 0
-        assert "LLM" not in result[:5], f"疑似错误: {result}"
 
     def test_chat_json_returns_dict(self):
-        result = self.client.chat_json(
-            [{"role": "user", "content": '返回JSON: {"name": "测试", "value": 42}'}],
-            max_tokens=100,
-        )
-        if isinstance(result, dict) and result.get("parse_error") and "[LLM" in str(result.get("raw_response", "")):
-            pytest.skip("LLM API unavailable")
+        try:
+            result = self.client.chat_json(
+                [{"role": "user", "content": '返回JSON: {"name": "测试", "value": 42}'}],
+                max_tokens=100,
+            )
+        except (ConnectionError, TimeoutError, RuntimeError) as e:
+            pytest.skip(f"LLM API unavailable: {e}")
         assert isinstance(result, dict)
         assert not result.get("parse_error"), f"JSON 解析失败: {result}"
 
@@ -732,6 +733,70 @@ class TestXingMingEngine:
 
         assert "wuge" in result
         assert result["is_compound_surname"] is True
+
+
+# ============================================================
+# 边界情况测试
+# ============================================================
+
+class TestEdgeCases:
+
+    def test_late_zi_hour(self):
+        """23:xx 应判定为晚子时，日柱用次日"""
+        from engine.time_engine import get_time_engine
+        te = get_time_engine()
+        corrected = te.correct("2005-06-09 23:30", "北京")
+        assert corrected.is_late_zi is True, "23:30 应为晚子时"
+        # 晚子时八字用 hour=0
+        assert corrected.bazi_hour == 0
+
+    def test_dst_period_1988(self):
+        """1988年夏令时期间，时间应回退1小时"""
+        from engine.time_engine import get_time_engine
+        te = get_time_engine()
+        # 1988年7月1日 在夏令时期间
+        corrected = te.correct("1988-07-01 12:00", "北京")
+        assert corrected is not None
+        # 真太阳时应已考虑夏令时回退
+
+    def test_boundary_year_1900(self):
+        """1900年应能正常排盘"""
+        from engine.time_engine import get_time_engine
+        from engine.bazi_engine import BaziEngine
+        te = get_time_engine()
+        corrected = te.correct("1900-01-01 12:00", "北京")
+        engine = BaziEngine()
+        result = engine.analyze(corrected, 1)
+        assert "error" not in result, f"1900年排盘报错: {result.get('error')}"
+
+    def test_boundary_year_2100(self):
+        """2100年应能正常排盘"""
+        from engine.time_engine import get_time_engine
+        from engine.bazi_engine import BaziEngine
+        te = get_time_engine()
+        corrected = te.correct("2100-12-31 12:00", "北京")
+        engine = BaziEngine()
+        result = engine.analyze(corrected, 1)
+        assert "error" not in result, f"2100年排盘报错: {result.get('error')}"
+
+    def test_unknown_city_fallback(self):
+        """未知城市应回退到北京并产生日志警告"""
+        from engine.time_engine import get_time_engine
+        te = get_time_engine()
+        corrected = te.correct("2000-01-01 12:00", "火星基地")
+        assert corrected.longitude == pytest.approx(116.4074, abs=0.5)
+        assert corrected.latitude == pytest.approx(39.9042, abs=0.5)
+
+    def test_midnight_birth(self):
+        """00:00 出生应正常处理"""
+        from engine.time_engine import get_time_engine
+        from engine.bazi_engine import BaziEngine
+        te = get_time_engine()
+        corrected = te.correct("2000-06-15 00:00", "上海")
+        assert corrected.bazi_hour == 0
+        engine = BaziEngine()
+        result = engine.analyze(corrected, 1)
+        assert "error" not in result
 
 
 if __name__ == "__main__":

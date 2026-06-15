@@ -136,13 +136,8 @@ class DebateEngine:
 
         # 1. 观点聚类
         clusters = self._cluster_opinions(opinions)
-
-        # 2. 构建发言队列：按阵营分组排序
-        faction_order = {"儒家": 0, "道家": 1, "兵家": 2, "法家": 3, "纵横家": 4,
-                         "佛家": 5, "心理学": 6, "投资": 7, "医学": 8, "科学": 9, "其他": 10}
-
-        opinion_map = {o.figure_id: o for o in opinions}
-        queue = list(range(len(opinions)))  # 发言队列（opinions的索引）
+        # 2. 构建发言队列
+        queue = list(range(len(opinions)))
         spoken = set()  # 已发言的figure_id
         exchanges = []
         speech_history = []  # 所有发言记录
@@ -228,6 +223,244 @@ class DebateEngine:
             "xuanzhao_perspective": xuanzhao,
         }
 
+    def debate_stream(self, opinions: List[PerspectiveOpinion], question: str):
+        """流式辩论 — 108人全员轮流发言+插队反驳，yield SSE事件"""
+        import time as _time
+
+        clusters = self._cluster_opinions(opinions)
+        queue = list(range(len(opinions)))
+        spoken = set()
+        exchanges = []
+        speech_history = []
+
+        yield {"event": "start", "data": {
+            "total_speakers": len(opinions),
+            "question": question,
+        }}
+
+        turn = 0
+        max_turns = len(opinions) * 2
+        idx_counter = 0
+
+        while queue and turn < max_turns:
+            turn += 1
+            idx = queue.pop(0)
+            speaker = opinions[idx]
+
+            if speaker.figure_id in spoken:
+                continue
+            spoken.add(speaker.figure_id)
+            idx_counter += 1
+
+            yield {"event": "speaker_start", "data": {
+                "index": idx_counter,
+                "total": len(opinions),
+                "speaker": speaker.figure_name,
+                "method": speaker.primary_method,
+            }}
+
+            speech = self._compose_speech(speaker, speech_history, question)
+            rebuttal = _detect_rebuttal(speaker, exchanges)
+
+            exchange = Exchange(
+                round_num=1,
+                speaker=speaker.figure_name,
+                speaker_method=speaker.primary_method,
+                target=rebuttal.target if rebuttal else "",
+                target_method=rebuttal.target_method if rebuttal else "",
+                argument=speech,
+                rebuttal_type=rebuttal.rebuttal_type if rebuttal else "陈述"
+            )
+            exchanges.append(exchange)
+            speech_history.append({
+                "speaker": speaker.figure_name,
+                "method": speaker.primary_method,
+                "stance": speaker.stance,
+                "key_points": speaker.key_points[:2],
+            })
+
+            if rebuttal:
+                exchanges.append(rebuttal)
+
+            # 发言事件
+            yield {"event": "statement", "data": {
+                "speaker": speaker.figure_name,
+                "attempt": 1,
+                "text": speech,
+                "statement": speech,  # 前端用 data.statement
+            }}
+
+            # 个性化审判：每个审判者根据自己的术法和立场给出反馈
+            judges = [{"name": opinions[i].figure_name, "method": opinions[i].primary_method,
+                       "stance": opinions[i].stance, "key_points": opinions[i].key_points[:2]}
+                      for i in range(len(opinions)) if opinions[i].figure_id in spoken
+                      and opinions[i].figure_id != speaker.figure_id]
+
+            for j_idx, judge in enumerate(judges):
+                # 生成个性化反馈
+                feedback = self._generate_judge_feedback(judge, speaker, speech)
+                score = feedback["score"]
+                passed = score >= 85
+                judge["_cached_score"] = score  # 缓存分数避免重复计算
+                if (j_idx + 1) % 5 == 0 or j_idx == len(judges) - 1:
+                    yield {"event": "judgment_progress", "data": {
+                        "speaker": speaker.figure_name,
+                        "attempt": 1,
+                        "judge": judge["name"],
+                        "judge_index": j_idx + 1,
+                        "total_judges": len(judges),
+                        "passed": passed,
+                        "score": score,
+                        "feedback": feedback["comment"][:80],
+                        "pass_rate": round(sum(1 for j in judges[:j_idx+1] if j.get("_cached_score", 0) >= 85) / (j_idx+1) * 100, 1),
+                    }}
+            # 计算最终通过率
+            all_scores = [j.get("_cached_score", 85) for j in judges]
+            final_pass_rate = round(sum(1 for s in all_scores if s >= 85) / len(all_scores) * 100, 1) if all_scores else 100
+            avg_score = round(sum(all_scores) / len(all_scores), 1) if all_scores else 90
+
+            yield {"event": "speaker_passed", "data": {
+                "speaker": speaker.figure_name,
+                "attempt": 1,
+                "pass_rate": final_pass_rate,
+                "avg_score": avg_score,
+                "text": speech,
+                "statement": speech,
+            }}
+
+            # 冲突检测：插队
+            remaining = [(i, opinions[i]) for i in range(len(opinions))
+                         if opinions[i].figure_id not in spoken]
+            conflict_idx = _find_conflict_target(speaker.stance, remaining)
+            if conflict_idx is not None:
+                jump_idx = remaining[conflict_idx][0]
+                queue.insert(0, jump_idx)
+
+        # 共识/分歧
+        consensus = self._extract_consensus(opinions, exchanges)
+        disagreements = self._extract_disagreements(opinions, exchanges)
+        summary = self._generate_summary(opinions, consensus, disagreements)
+
+        # 玄照综合（唯一LLM调用）
+        yield {"event": "xuanzhao_start", "data": {"message": "玄照综合推理中..."}}
+        xuanzhao = self.generate_xuanzhao_perspective(opinions, consensus, disagreements, question)
+        yield {"event": "xuanzhao_result", "data": xuanzhao}
+
+        # 溟玄终审：审查并改写结论
+        yield {"event": "mingxuan_start", "data": {"message": "溟玄审查结论中..."}}
+        try:
+            from engine.mingxuan_observer import build_mingxuan_review_result, check_ai_slop
+            from engine.llm_client import get_llm_client
+            llm = get_llm_client()
+            mingxuan = build_mingxuan_review_result(llm, xuanzhao, question)
+            yield {"event": "mingxuan_result", "data": {
+                "text": mingxuan["mingxuan_text"],
+                "original_pass": mingxuan["original_pass"],
+                "issues": mingxuan["issues"],
+            }}
+        except Exception as e:
+            logger.warning(f"溟玄审查失败: {e}")
+            yield {"event": "mingxuan_result", "data": {
+                "text": xuanzhao.get("stance", "综合分析完成"),
+                "original_pass": False,
+                "issues": [f"审查异常: {str(e)}"],
+            }}
+
+        yield {"event": "debate_end", "data": {
+            "total_speakers": len(spoken),
+            "summary": summary,
+            "consensus": consensus,
+            "disagreements": disagreements[:10],
+        }}
+
+    def _generate_judge_feedback(self, judge: dict, speaker: PerspectiveOpinion, speech: str) -> dict:
+        """根据审判者的术法和立场生成个性化反馈（确定性评分）"""
+        method = judge["method"]
+        judge_stance = judge.get("stance", "")
+        judge_points = judge.get("key_points", [])
+
+        # 确定性基础分数：基于发言内容哈希
+        content_hash = hash(speech + judge.get("name", "")) % 11  # 0-10
+        base_score = 85 + content_hash  # 85-95
+
+        # 术法视角的评论模板
+        method_comments = {
+            "八字": [
+                f"从八字角度看，日主{speaker.key_points[0] if speaker.key_points else '甲木'}的论述有理",
+                f"此论契合{method}之理，财官印绶的分析到位",
+                f"八字格局判断准确，但大运流年的细节可再深究",
+                f"十神取用得当，唯调候用神的论述略显不足",
+            ],
+            "奇门": [
+                f"奇门遁甲看，值符值使的分析符合{method}要义",
+                f"九宫八门的格局判断有据，但星神的论述可再精炼",
+                f"此论深得{method}三盘合一之妙",
+                f"门星神的配合分析到位，唯时干格局可再推敲",
+            ],
+            "紫微": [
+                f"紫微斗数论命，命宫主星的取用正确",
+                f"四化飞星的论述符合{method}之理",
+                f"此论抓住了命盘核心，但大限流年的细节可补充",
+                f"星曜组合的分析有深度，格局判断准确",
+            ],
+            "占星": [
+                f"从星盘角度看，行星落宫的分析到位",
+                f"相位角度的论述符合{method}要义",
+                f"此论抓住了星盘的核心张力，但容许度的细节可再考",
+                f"宫位主星的取用正确，格局判断有据",
+            ],
+            "六爻": [
+                f"六爻纳甲论卦，用神取用正确",
+                f"动变爻的分析符合{method}之理",
+                f"此论抓住了卦的核心，但日建月建的影响可再推敲",
+                f"世应关系的论述到位，格局判断准确",
+            ],
+            "梅花易数": [
+                f"梅花易数论卦，体用关系的分析到位",
+                f"卦象取用符合{method}之理",
+                f"此论抓住了卦的核心意象，但互变卦的细节可补充",
+                f"五行生克的论述准确，格局判断有据",
+            ],
+            "反脆弱": [
+                f"从反脆弱角度看，杠铃策略的论述有深度",
+                f"风险收益不对称的分析符合{method}要义",
+                f"此论抓住了反脆弱的核心，但凸性机会的细节可再展开",
+                f"黑天鹅应对策略的论述到位",
+            ],
+            "心理学": [
+                f"从心理学角度看，潜意识模式的分析有洞察",
+                f"认知偏差的论述符合{method}要义",
+                f"此论抓住了心理的核心张力，但防御机制的细节可补充",
+                f"人格特质的判断准确，分析有据",
+            ],
+            "兵法": [
+                f"兵法论势，知己知彼的分析到位",
+                f"虚实之道的论述符合{method}要义",
+                f"此论抓住了兵法的核心，但时机判断的细节可再推敲",
+                f"攻守策略的论述有深度，格局判断准确",
+            ],
+        }
+
+        # 获取评论（确定性选择）
+        comments = method_comments.get(method, [
+            f"从{method}角度看，此论有理有据",
+            f"{method}的分析到位，观点鲜明",
+            f"此论符合{method}之理，判断准确",
+        ])
+        comment_idx = hash(speech + judge.get("name", "") + method) % len(comments)
+        comment = comments[comment_idx]
+
+        # 如果审判者立场与发言者相反，扣分并加评论
+        opposing_keywords = [("动", "稳"), ("进", "守"), ("突破", "保守"), ("积极", "谨慎")]
+        for pos, neg in opposing_keywords:
+            if (pos in judge_stance and neg in speaker.stance) or \
+               (neg in judge_stance and pos in speaker.stance):
+                base_score = max(75, base_score - 10)
+                comment += f"，但{judge['name']}认为立场需再斟酌"
+                break
+
+        return {"score": base_score, "comment": comment}
+
     def _compose_speech(self, speaker: PerspectiveOpinion,
                         speech_history: List[dict], question: str) -> str:
         """构建发言内容，引用前面人的发言"""
@@ -267,6 +500,8 @@ class DebateEngine:
             "谨慎保守": [],
             "顺其自然": [],
             "转型突破": [],
+            "贵人扶持": [],
+            "智慧谋略": [],
             "综合平衡": [],
         }
 
@@ -275,6 +510,8 @@ class DebateEngine:
             "谨慎保守": {"稳": 1, "守": 1, "防": 1, "静": 1, "韬": 1, "隐": 1, "退": 1, "藏": 1},
             "顺其自然": {"顺": 1, "自然": 2, "无为": 2, "等": 1, "水到渠成": 2, "随缘": 2},
             "转型突破": {"转": 1, "变": 1, "破": 1, "革": 1, "新": 1, "换": 1, "改": 1},
+            "贵人扶持": {"贵人": 2, "助力": 1, "提携": 2, "帮扶": 1, "辅佐": 1},
+            "智慧谋略": {"谋": 1, "智": 1, "策略": 2, "算": 1, "布局": 2, "筹": 1},
         }
 
         for o in opinions:

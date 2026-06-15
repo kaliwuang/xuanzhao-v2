@@ -68,7 +68,12 @@ class LLMClient:
                     # 成功响应
                     if resp.status_code < 400:
                         data = resp.json()
-                        return data["choices"][0]["message"]["content"]
+                        msg = data["choices"][0]["message"]
+                        content = msg.get("content") or ""
+                        # mimo 推理模型：content 为空时检查 reasoning_content
+                        if not content.strip():
+                            content = msg.get("reasoning_content") or ""
+                        return content
 
                     # 可重试的 HTTP 错误
                     if resp.status_code in RETRYABLE_STATUS_CODES and attempt < self.max_retries:
@@ -83,7 +88,7 @@ class LLMClient:
 
                     # 不可重试或重试耗尽
                     logger.error(f"LLM HTTP error: {resp.status_code} - {resp.text[:200]}")
-                    return f"[LLM 错误: {resp.status_code}]"
+                    raise ConnectionError(f"LLM HTTP {resp.status_code}")
 
             except httpx.TimeoutException:
                 last_error = "timeout"
@@ -97,7 +102,7 @@ class LLMClient:
                     time.sleep(delay)
                     continue
                 logger.error(f"LLM request timed out after {self.timeout}s (已重试 {self.max_retries} 次)")
-                return "[LLM 超时]"
+                raise TimeoutError(f"LLM 超时 {self.timeout}s（重试{self.max_retries}次）")
 
             except (httpx.ConnectError, httpx.ReadError, httpx.WriteError) as e:
                 last_error = str(e)
@@ -111,15 +116,15 @@ class LLMClient:
                     time.sleep(delay)
                     continue
                 logger.error(f"LLM network error after {self.max_retries} retries: {e}")
-                return f"[LLM 网络异常: {type(e).__name__}]"
+                raise ConnectionError(f"LLM 网络异常: {type(e).__name__}")
 
             except Exception as e:
                 logger.error(f"LLM request failed: {e}")
-                return f"[LLM 异常: {type(e).__name__}]"
+                raise RuntimeError(f"LLM 异常: {type(e).__name__}: {e}")
 
         # 防御性兜底
         logger.error(f"LLM 重试耗尽: {last_error}")
-        return "[LLM 重试失败]"
+        raise RuntimeError(f"LLM 重试失败: {last_error}")
 
     def chat_json(
         self,

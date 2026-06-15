@@ -210,7 +210,7 @@
     <nav class="nav" class="nav-sticky" aria-label="主导航">
         <a href="/" class="nav-brand">玄照 <span>v2.0</span></a>
         <div class="nav-links">
-            <a href="/">排盘</a>
+            <a href="/" aria-label="排盘入口">排盘</a>
             <a href="/perspectives" aria-label="108视角分析">108视角</a>
             <a href="/debate" aria-label="辩论台">辩论台</a>
         </div>
@@ -385,7 +385,7 @@
                 }
                 if (expandedDayunIdx !== null) {
                     const dy = dayunList[expandedDayunIdx];
-                    cols.push({type:'dayun', ganzhi: dy.ganzhi, label: dy.start_age+'岁', sub: String(dy.start_year), isCurrent: currentYear >= dy.start_year && currentYear <= dy.start_year + 9, shensha: dy.shensha || [], nayin: dy.nayin || '', changsheng: dy.changsheng || ''});
+                    cols.push({type:'dayun', ganzhi: dy.ganzhi, label: dy.start_age+'岁', sub: String(dy.start_year), isCurrent: dy.is_current || (currentYear >= dy.start_year && currentYear <= dy.start_year + 9), shensha: dy.shensha || [], nayin: dy.nayin || '', changsheng: dy.changsheng || ''});
                 }
                 pillars.forEach((p, i) => {
                     cols.push({type:'natal', ganzhi: bazi[p], label: labels[i], pillar: p, shensha: shenshaPerPillar[p] || [], nayin: nayin[p] || '', changsheng: changshengData[p] || ''});
@@ -718,6 +718,8 @@
             detailHtml += '<th style="padding:0.4rem;border:1px solid var(--border-color);">大限</th>';
             detailHtml += '<th style="padding:0.4rem;border:1px solid var(--border-color);">长生</th>';
             detailHtml += '<th style="padding:0.4rem;border:1px solid var(--border-color);">博士</th>';
+            detailHtml += '<th style="padding:0.4rem;border:1px solid var(--border-color);">将前</th>';
+            detailHtml += '<th style="padding:0.4rem;border:1px solid var(--border-color);">岁前</th>';
             detailHtml += '<th style="padding:0.4rem;border:1px solid var(--border-color);">自化</th>';
             detailHtml += '</tr>';
             palaces.forEach(p => {
@@ -728,6 +730,8 @@
                 const dxText = dx.ganzhi || '-';
                 const cs = p.changsheng || '-';
                 const bs = p.boshi || '-';
+                const jq = p.jiangqian || '-';
+                const sq = p.suiqian || '-';
                 const selfHua = (p.self_hua||[]).map(h => typeof h === 'string' ? h : (h.hua + h.star)).join('') || '-';
                 detailHtml += '<tr>';
                 detailHtml += '<td style="padding:0.3rem;border:1px solid var(--border-color);color:var(--accent-gold);">'+p.name+'</td>';
@@ -738,6 +742,8 @@
                 detailHtml += '<td style="padding:0.3rem;border:1px solid var(--border-color);">'+dxText+'</td>';
                 detailHtml += '<td style="padding:0.3rem;border:1px solid var(--border-color);">'+cs+'</td>';
                 detailHtml += '<td style="padding:0.3rem;border:1px solid var(--border-color);">'+bs+'</td>';
+                detailHtml += '<td style="padding:0.3rem;border:1px solid var(--border-color);">'+jq+'</td>';
+                detailHtml += '<td style="padding:0.3rem;border:1px solid var(--border-color);">'+sq+'</td>';
                 detailHtml += '<td style="padding:0.3rem;border:1px solid var(--border-color);color:#ff6b6b;">'+selfHua+'</td>';
                 detailHtml += '</tr>';
             });
@@ -862,6 +868,34 @@
                 });
                 aspHtml += '</div></div>';
                 section.innerHTML += aspHtml;
+            }
+
+            // 相位摘要
+            if (astro.aspects_summary) {
+                const as = astro.aspects_summary;
+                let asHtml = '<div style="margin-top:0.5rem;padding:0.5rem;background:var(--bg-card);border-radius:6px;font-size:0.8rem;">';
+                asHtml += `<span style="color:var(--accent-gold);">相位统计：</span>`;
+                asHtml += `<span style="color:#4ecdc4;">和谐${as.harmonious||0}</span>　`;
+                asHtml += `<span style="color:#ff6b6b;">挑战${as.challenging||0}</span>`;
+                asHtml += '</div>';
+                section.innerHTML += asHtml;
+            }
+
+            // 宫主星
+            if (astro.house_rulers && Object.keys(astro.house_rulers).length > 0) {
+                const hr = astro.house_rulers;
+                let hrHtml = '<details style="margin-top:0.5rem;"><summary style="cursor:pointer;color:var(--accent-gold);font-size:0.8rem;">宫主星</summary>';
+                hrHtml += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.3rem;margin-top:0.3rem;">';
+                const houseNames = ['命宫','财帛','兄弟','田宅','子女','奴仆','夫妻','疾厄','迁移','官禄','福德','父母'];
+                for (const [num, info] of Object.entries(hr)) {
+                    const idx = parseInt(num) - 1;
+                    hrHtml += `<div style="background:var(--bg-card);padding:0.3rem;border-radius:4px;font-size:0.7rem;text-align:center;">
+                        <div style="color:var(--accent-gold);">${houseNames[idx]||'第'+num+'宫'}</div>
+                        <div>${info.sign||''}→${info.ruler||''}</div>
+                    </div>`;
+                }
+                hrHtml += '</div></details>';
+                section.innerHTML += hrHtml;
             }
 
             // 宫位
@@ -1124,6 +1158,25 @@
                 section.innerHTML += `<div style="margin-top:0.5rem;font-size:0.8rem;color:var(--text-muted);padding:0.5rem;background:var(--bg-card);border-radius:6px;">
                     <span style="color:var(--accent-gold);">用神：</span>${yongShen.chu_chuan_zhi||''} ${yongShen.chu_chuan_jiang||''} ${yongShen.chu_chuan_liuqin||''} — ${yongShen.jiang_ji_xiong||''} ${yongShen.jiang_han_yi||''}
                 </div>`;
+            }
+
+            // 四课分析
+            const siKeAnalysis = liuren.si_ke_analysis || {};
+            if (Object.keys(siKeAnalysis).length > 0) {
+                let skaHtml = '<details style="margin-top:0.5rem;"><summary style="cursor:pointer;color:var(--accent-gold);font-size:0.8rem;">四课详析</summary>';
+                skaHtml += '<div style="margin-top:0.3rem;">';
+                for (const [key, info] of Object.entries(siKeAnalysis)) {
+                    if (typeof info === 'object') {
+                        skaHtml += `<div style="background:var(--bg-card);padding:0.3rem 0.5rem;border-radius:4px;font-size:0.75rem;margin-bottom:0.2rem;">
+                            <span style="color:var(--accent-gold);">${info.name||key}</span>：
+                            <span>${info.gan_zhi||''}</span>
+                            <span style="color:var(--text-muted);">${info.tian_jiang||''}</span>
+                            <span style="color:#4ecdc4;">${info.relation_to_day||''}</span>
+                        </div>`;
+                    }
+                }
+                skaHtml += '</div></details>';
+                section.innerHTML += skaHtml;
             }
 
             return section;

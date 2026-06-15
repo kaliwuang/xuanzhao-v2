@@ -65,7 +65,7 @@ class LiuRenEngine(DivinationEngine):
 
         使用 kinliuren 库进行排盘，返回标准化结构化数据。
         """
-        orig = time.original
+        orig = time.true_solar
 
         # ── 1. 获取四柱干支和节气（通过 lunar_python） ──
         try:
@@ -280,11 +280,11 @@ class LiuRenEngine(DivinationEngine):
         2. 三传不为空
         """
         si_ke = data.get("si_ke")
-        if not si_ke or all(not k for k in si_ke):
+        if not si_ke or (isinstance(si_ke, list) and all(not k for k in si_ke)):
             return False, "四课为空"
 
         san_chuan = data.get("san_chuan")
-        if not san_chuan or all(not c for c in san_chuan):
+        if not san_chuan or (isinstance(san_chuan, list) and all(not c for c in san_chuan)):
             return False, "三传为空"
 
         return True, None

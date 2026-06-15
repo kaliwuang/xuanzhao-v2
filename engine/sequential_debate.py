@@ -230,23 +230,57 @@ class SequentialDebateEngine:
             for i, s in enumerate(previous[-10:], 1):
                 prev_context += f"{i}. {s[:100]}\n"
 
-        prompt = f"""你正在扮演{speaker.figure_name}（{speaker.primary_method}）参与一场关于"{question}"的辩论。
-
-你的立场：{speaker.stance}
-核心观点：{'；'.join(speaker.key_points[:3])}
+        prompt = f"""角色：{speaker.figure_name}（{speaker.primary_method}）
+问题：{question}
+立场：{speaker.stance}
+观点：{'；'.join(speaker.key_points[:3])}
 {prev_context}
-
-请发表你的观点。要求：
-1. 必须提出新观点，不得与前人重复
-2. 结合{speaker.primary_method}术法分析
-3. 直接给观点，200字以内"""
+要求：直接发表200字以内的观点，结合{speaker.primary_method}分析，不要解释思考过程。"""
 
         try:
-            return self.llm.chat([{"role": "user", "content": prompt}],
-                                 temperature=0.8, max_tokens=500).strip()
+            result = self.llm.chat([{"role": "user", "content": prompt}],
+                                   temperature=0.8, max_tokens=500).strip()
+            # 清理：移除推理模型的思考过程
+            result = self._clean_llm_output(result)
+            return result
         except Exception as e:
             logger.warning(f"发言失败: {e}")
             return f"【{speaker.figure_name}】{speaker.stance}。{'；'.join(speaker.key_points[:2])}"
+
+    @staticmethod
+    def _clean_llm_output(text: str) -> str:
+        """清理推理模型输出的思考过程，保留最终观点"""
+        if not text:
+            return text
+        # 常见思考过程标记
+        markers = [
+            "草拟回应：", "草拟回答：", "最终回应：", "最终回答：",
+            "最终观点：", "综合分析：", "总结：",
+            "确保在200字以内", "确保在", "字数", "计算一下",
+            "保持简洁", "语气：", "符合", "的形象",
+            "例如：", "以下是", "我需要", "首先，",
+            "用户要求", "用户的问题", "用户的查询",
+            "- 保持", "- 语气", "- 直接",
+        ]
+        lines = text.split('\n')
+        # 找到第一个看起来像正式发言的行
+        for i, line in enumerate(lines):
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+            # 检查是否是思考过程
+            is_thinking = False
+            for marker in markers:
+                if marker in line_stripped:
+                    is_thinking = True
+                    break
+            if not is_thinking and len(line_stripped) > 10:
+                # 找到正式内容，返回从这行开始的所有内容
+                return '\n'.join(lines[i:]).strip()
+        # 如果都是思考过程，取最后几行
+        if len(lines) > 3:
+            return '\n'.join(lines[-3:]).strip()
+        return text.strip()
 
     def _speaker_revise(self, speaker: PerspectiveOpinion,
                         question: str, paper: 'Paper',
@@ -295,20 +329,12 @@ class SequentialDebateEngine:
                 status = "通过" if fb.passed else "需修正"
                 paper_text += f"[{fb.judge_name}（{fb.judge_method}）{fb.score}分 {status}] {fb.feedback}\n"
 
-        prompt = f"""你正在扮演{judge.figure_name}（{judge.primary_method}）审核一张辩论发言纸。
-
+        prompt = f"""角色：{judge.figure_name}（{judge.primary_method}）
 问题：{question}
-
-以下是这张纸的内容（原文在上，之前审核者的意见在下）：
+审核内容：
 {paper_text}
-
-你是第{len(paper.feedbacks)+1}位审核者。你的任务：
-1. 从{judge.figure_name}的角度审核这段发言是否正确
-2. 你的意见必须与之前审核者不同，提出新角度
-3. 如果你没有新补充，就说"无新补充，同意通过"
-4. 给出准确分数（0-100，90以上算通过）
-
-严格按JSON返回：{{"passed": true/false, "score": 85, "feedback": "你的意见"}}"""
+你是第{len(paper.feedbacks)+1}位审核者。如果没新补充就说"无新补充，同意通过"。
+请返回JSON：{{"passed":true,"score":90,"feedback":"意见"}}"""
 
         try:
             resp = self.llm.chat([{"role": "user", "content": prompt}],

@@ -166,7 +166,6 @@ class CrossValidator:
         # 检查紫微当前大限
         try:
             if bazi_xiyong and ziwei_dayun:
-                from datetime import datetime
                 current_year = datetime.now().year
                 birth_year = getattr(self.udm, 'birth_year', 0) or 2005
                 age = current_year - birth_year
@@ -186,8 +185,7 @@ class CrossValidator:
 
         # ── 新增：利用八字详细大运数据做深层互证 ──
         if bazi_dayun:
-            from datetime import datetime as _dt
-            current_year = _dt.now().year
+            current_year = datetime.now().year
             birth_year = getattr(self.udm, 'birth_year', 0) or 2005
             age = current_year - birth_year
 
@@ -584,7 +582,7 @@ class CrossValidator:
         if self.udm.astro_chart:
             aspects = self.udm.astro_chart.get("aspects", [])
             for asp in aspects:
-                p1, p2 = asp.get("p1", ""), asp.get("p2", "")
+                p1, p2 = asp.get("planet1", ""), asp.get("planet2", "")
                 asp_type = asp.get("aspect", "")
                 if asp_type == "刑" and "火星" in (p1, p2):
                     items.append(ConsensusItem(

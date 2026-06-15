@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from api.routes import router
+from config import HOST, PORT, WORKERS, validate_config
 
 # 前端目录
 frontend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
@@ -53,6 +54,17 @@ async def no_cache_html(request, call_response):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
+    return response
+
+
+@app.middleware("http")
+async def add_process_time_header(request, call_response):
+    """添加请求处理时间头（调试用）"""
+    import time as _time
+    start = _time.time()
+    response = await call_response(request)
+    duration = _time.time() - start
+    response.headers["X-Process-Time"] = f"{duration:.3f}"
     return response
 
 
@@ -148,4 +160,8 @@ def serve_chart_result():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # 启动前校验配置
+    warnings = validate_config()
+    for w in warnings:
+        logger.warning(w)
+    uvicorn.run(app, host=HOST, port=PORT, workers=WORKERS)

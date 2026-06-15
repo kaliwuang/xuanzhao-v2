@@ -9,7 +9,7 @@ iztro-py 是经过验证的开源紫微斗数库，安星准确。
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 from datetime import datetime
 
 
@@ -29,7 +29,7 @@ STEM_MAP = {
 
 # 宫位英文→中文映射
 PALACE_NAME_MAP = {
-    'soulPalace': '福德', 'spiritPalace': '命宫',
+    'soulPalace': '命宫', 'spiritPalace': '身宫',
     'siblingsPalace': '兄弟', 'spousePalace': '夫妻',
     'childrenPalace': '子女', 'wealthPalace': '财帛',
     'healthPalace': '疾厄', 'surfacePalace': '迁移',
@@ -96,12 +96,8 @@ TIAN_GAN_SIHUA = {
     '癸': {'禄': '破军', '权': '巨门', '科': '太阴', '忌': '贪狼'},
 }
 
-# 天干英文→中文映射（简化版，用于四化查表）
-STEM_EN_TO_CN = {
-    'jiaHeavenly': '甲', 'yiHeavenly': '乙', 'bingHeavenly': '丙', 'dingHeavenly': '丁',
-    'wuHeavenly': '戊', 'jiHeavenly': '己', 'gengHeavenly': '庚', 'xinHeavenly': '辛',
-    'renHeavenly': '壬', 'guiHeavenly': '癸',
-}
+# 天干英文→中文映射（复用 STEM_MAP，消除重复定义）
+STEM_EN_TO_CN = STEM_MAP
 
 
 def _cn_branch(en: str) -> str:
@@ -146,8 +142,8 @@ class ZiWeiEngine(DivinationEngine):
         return 2
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        # 用原始出生时间（时辰取决于出生时间，非真太阳时）
-        orig = time.original
+        # 使用真太阳时排盘（时辰应基于出生地的真太阳时）
+        orig = time.true_solar
         hour = orig.hour
 
         # 计算时辰索引（iztro格式：0=早子,1=丑,...,11=亥,12=晚子）
@@ -375,6 +371,30 @@ class ZiWeiEngine(DivinationEngine):
             dou_jun_idx = (2 + (birth_dt.month - 1) + time_index) % 12
             zi_dou = BRANCH_ORDER[dou_jun_idx]
 
+        # 流年分析（当年太岁四化、流年命宫等）
+        liunian_info = {}
+        if birth_dt:
+            try:
+                current_year = datetime.now().year
+                h = r.horoscope(f'{current_year}-{birth_dt.month:02d}-{birth_dt.day:02d}', time_index)
+                liunian_palace_names = []
+                if hasattr(h, 'palace_names') and h.palace_names:
+                    liunian_palace_names = [PALACE_NAME_MAP.get(n, n) for n in h.palace_names]
+                liunian_stars = []
+                if hasattr(h, 'mutagen') and h.mutagen:
+                    MUTAGEN_LABELS = ['禄', '权', '科', '忌']
+                    for i, star_en in enumerate(h.mutagen):
+                        if i < 4:
+                            star_cn = _cn_star(star_en, 'major') if star_en in MAJOR_STAR_MAP else _cn_star(star_en, 'minor')
+                            liunian_stars.append({'hua': MUTAGEN_LABELS[i], 'star': star_cn})
+                liunian_info = {
+                    'year': current_year,
+                    'palace_names': liunian_palace_names,
+                    'sihua': liunian_stars,
+                }
+            except Exception:
+                pass
+
         return {
             'ming_gong': ming_gong_branch,
             'shen_gong': shen_gong_branch,
@@ -393,6 +413,7 @@ class ZiWeiEngine(DivinationEngine):
             'dai_xian': dai_xian,
             'nominal_age': datetime.now().year - birth_dt.year + 1 if birth_dt else 0,
             'zi_dou': zi_dou,
+            'liunian': liunian_info,
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:

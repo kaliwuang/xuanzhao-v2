@@ -11,7 +11,7 @@
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from typing import Optional, Dict, List
+from typing import Optional
 import hashlib
 import logging
 
@@ -235,7 +235,7 @@ class LiuYaoEngine(DivinationEngine):
             ZHI5, ZHIS, XING5, GUA5, GUAS, GUA64, GANS
         )
 
-        orig = time.original
+        orig = time.true_solar
 
         # 1. 确定性起卦
         params = self._generate_params(orig)
@@ -265,12 +265,16 @@ class LiuYaoEngine(DivinationEngine):
             dizhi = gz[1]
             wz_idx = ZHIS.index(dizhi)
             wuxing = XING5[ZHI5[wz_idx]]
+            # 判断阴阳：根据地支奇偶（子寅辰午申戌为阳，丑卯巳未酉亥为阴）
+            yang_zhis = set('子寅辰午申戌')
+            yinyang = '阳' if dizhi in yang_zhis else '阴'
             lines.append({
                 'liu_qin': qin6[i],
                 'liu_shen': god6[i],
                 'wuxing': wuxing,
                 'dizhi': dizhi,
                 'gan': gan,
+                'yinyang': yinyang,
                 'position': i + 1,
                 'is_dong': i in dong,
                 'is_shi': (i + 1) == shi_ying[0],
@@ -474,7 +478,7 @@ class LiuYaoEngine(DivinationEngine):
 
     def _analyze_builtin(self, time: CorrectedTime, gender: int) -> dict:
         """自包含的梅花易数 + 京房纳甲排盘（无需外部库）"""
-        orig = time.original
+        orig = time.true_solar
 
         # 获取农历信息用于起卦
         try:
@@ -563,6 +567,7 @@ class LiuYaoEngine(DivinationEngine):
                 'is_dong': yao['is_dong'],
                 'is_shi': yao['is_shi'],
                 'is_ying': yao['is_ying'],
+                'yinyang': yao.get('yinyang', ''),
             })
 
         bian_lines = []
@@ -573,6 +578,7 @@ class LiuYaoEngine(DivinationEngine):
                 'dizhi': yao['zhi'],
                 'gan': yao['gan'],
                 'position': yao['position'],
+                'yinyang': yao.get('yinyang', ''),
             })
 
         return {

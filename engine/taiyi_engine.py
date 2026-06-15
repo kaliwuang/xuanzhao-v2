@@ -50,8 +50,8 @@ class TaiYiEngine(DivinationEngine):
         return 7
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        # 用原始出生时间排盘
-        orig = time.original
+        # 使用真太阳时排盘
+        orig = time.true_solar
         year = orig.year
         month = orig.month
         day = orig.day

@@ -136,6 +136,38 @@
                 <div class="judge-list" id="judgeList"></div>
             </div>
         </div>
+
+        <!-- 结论面板 -->
+        <div id="conclusionPanel" style="display:none;margin-top:1.5rem;">
+            <div class="card" style="border:2px solid var(--accent-gold);border-radius:12px;padding:1.5rem;">
+                <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;">
+                    <span style="font-size:1.5rem;">🔮</span>
+                    <span style="font-size:1.2rem;font-weight:700;color:var(--accent-gold);">玄照综合判定</span>
+                    <span id="conclusionConfidence" style="font-size:0.8rem;padding:0.2rem 0.6rem;border-radius:12px;background:var(--bg-card);"></span>
+                </div>
+                <div id="conclusionStance" style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;line-height:1.6;"></div>
+                <div id="conclusionKeyPoints" style="margin-bottom:1rem;"></div>
+                <div id="conclusionConsensus" style="margin-bottom:0.8rem;"></div>
+                <div id="conclusionDisagreements"></div>
+                <div id="conclusionSummary" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border-subtle);color:var(--text-muted);font-size:0.85rem;"></div>
+                <div style="margin-top:1.2rem;display:flex;gap:0.8rem;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="downloadReport()" style="font-size:0.85rem;">📥 下载报告 (Markdown)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 溟玄终审面板 -->
+        <div id="mingxuanPanel" style="display:none;margin-top:1.5rem;">
+            <div class="card" style="border:2px solid #8b5cf6;border-radius:12px;padding:1.5rem;background:linear-gradient(135deg,rgba(139,92,246,0.05),rgba(30,30,40,0.95));">
+                <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;">
+                    <span style="font-size:1.5rem;">👁</span>
+                    <span style="font-size:1.2rem;font-weight:700;color:#8b5cf6;">溟玄终审</span>
+                    <span id="mingxuanStatus" style="font-size:0.8rem;padding:0.2rem 0.6rem;border-radius:12px;background:var(--bg-card);"></span>
+                </div>
+                <div id="mingxuanText" style="font-size:1rem;line-height:1.8;white-space:pre-wrap;color:var(--text-primary);"></div>
+                <div id="mingxuanIssues" style="margin-top:0.8rem;font-size:0.8rem;color:var(--text-muted);"></div>
+            </div>
+        </div>
     </div>
 
     <footer class="footer">
@@ -210,6 +242,8 @@
         document.getElementById('historyContent').innerHTML = '';
         document.getElementById('logContent').innerHTML = '';
         document.getElementById('judgeList').innerHTML = '';
+        document.getElementById('conclusionPanel').style.display = 'none';
+        document.getElementById('mingxuanPanel').style.display = 'none';
 
         // 显示面板
         document.getElementById('statsBar').style.display = 'flex';
@@ -221,9 +255,9 @@
 
         addLog('辩论开始...', 'info');
 
-        // SSE连接
+        // SSE连接 - 使用快速端点（108人模板推理，实时流式）
         const params = new URLSearchParams({ birth, location, gender, question });
-        eventSource = new EventSource('/api/debate/stream?' + params);
+        eventSource = new EventSource('/api/debate/stream-fast?' + params);
 
         eventSource.addEventListener('start', function(e) {
             const data = JSON.parse(e.data);
@@ -306,12 +340,106 @@
             addLog(`⏩ ${data.speaker} 审判提前结束（${data.reason}）`, 'info');
         });
 
+        eventSource.addEventListener('xuanzhao_start', function(e) {
+            addLog('🔮 玄照综合推理中...', 'info');
+        });
+
+        eventSource.addEventListener('xuanzhao_result', function(e) {
+            const data = JSON.parse(e.data);
+            addLog(`🔮 玄照判定：${data.stance || '综合分析完成'}（置信度${Math.round((data.confidence||0)*100)}%）`, 'pass');
+
+            // 填充结论面板
+            const panel = document.getElementById('conclusionPanel');
+            panel.style.display = 'block';
+
+            document.getElementById('conclusionConfidence').textContent = `置信度 ${Math.round((data.confidence||0)*100)}%`;
+            document.getElementById('conclusionStance').textContent = data.stance || '综合分析完成';
+
+            // 核心观点
+            const kp = data.key_points || [];
+            const kpHtml = kp.length ? '<div style="font-weight:600;margin-bottom:0.5rem;">核心观点：</div>' +
+                '<ul style="margin:0;padding-left:1.5rem;">' +
+                kp.map(p => `<li style="margin-bottom:0.3rem;line-height:1.5;">${p}</li>`).join('') +
+                '</ul>' : '';
+            document.getElementById('conclusionKeyPoints').innerHTML = kpHtml;
+
+            // 共识
+            const consensus = data.consensus || [];
+            if (consensus.length) {
+                document.getElementById('conclusionConsensus').innerHTML =
+                    '<div style="font-weight:600;margin-bottom:0.3rem;">✅ 共识：</div>' +
+                    '<ul style="margin:0;padding-left:1.5rem;">' +
+                    consensus.map(c => `<li style="color:#4ecdc4;margin-bottom:0.2rem;">${typeof c === 'string' ? c : c.finding || JSON.stringify(c)}</li>`).join('') +
+                    '</ul>';
+            }
+
+            // 分歧
+            const disagreements = data.disagreements || [];
+            if (disagreements.length) {
+                document.getElementById('conclusionDisagreements').innerHTML =
+                    '<div style="font-weight:600;margin-bottom:0.3rem;">⚡ 分歧：</div>' +
+                    '<ul style="margin:0;padding-left:1.5rem;">' +
+                    disagreements.slice(0, 5).map(d => {
+                        const names = d.between ? d.between.join(' vs ') : '';
+                        return `<li style="color:#ff6b6b;margin-bottom:0.2rem;">${names}：${d.aspect || ''}</li>`;
+                    }).join('') +
+                    '</ul>';
+            }
+        });
+
+        eventSource.addEventListener('mingxuan_start', function(e) {
+            addLog('👁 溟玄审查结论中...', 'info');
+            document.getElementById('mingxuanPanel').style.display = 'block';
+            document.getElementById('mingxuanText').textContent = '审查中...';
+            document.getElementById('mingxuanStatus').textContent = '审查中';
+            document.getElementById('mingxuanStatus').style.color = '#ffd93d';
+        });
+
+        eventSource.addEventListener('mingxuan_result', function(e) {
+            const data = JSON.parse(e.data);
+            const panel = document.getElementById('mingxuanPanel');
+            panel.style.display = 'block';
+
+            document.getElementById('mingxuanText').textContent = data.text || '审查完成';
+
+            const status = document.getElementById('mingxuanStatus');
+            if (data.original_pass) {
+                status.textContent = '原文通过';
+                status.style.color = '#4ecdc4';
+                addLog('👁 溟玄：原文通过审查', 'pass');
+            } else {
+                status.textContent = '已改写';
+                status.style.color = '#8b5cf6';
+                addLog('👁 溟玄：结论已改写为溟玄风格', 'info');
+            }
+
+            // 显示问题
+            const issues = data.issues || [];
+            if (issues.length) {
+                document.getElementById('mingxuanIssues').innerHTML =
+                    '<div style="color:#ff6b6b;font-weight:600;">检测到的问题：</div>' +
+                    issues.map(i => `<div style="color:#ff6b6b;">• ${i}</div>`).join('');
+            }
+
+            // 滚动到溟玄面板
+            panel.scrollIntoView({ behavior: 'smooth' });
+        });
+
         eventSource.addEventListener('debate_end', function(e) {
             const data = JSON.parse(e.data);
             addLog(`辩论结束！${data.summary}`, 'info');
             document.getElementById('currentPanel').style.display = 'none';
             document.getElementById('btnStart').style.display = 'inline-block';
             document.getElementById('btnStop').style.display = 'none';
+
+            // 更新总结
+            if (data.summary) {
+                document.getElementById('conclusionSummary').textContent = data.summary;
+            }
+
+            // 滚动到结论面板
+            document.getElementById('conclusionPanel').scrollIntoView({ behavior: 'smooth' });
+
             eventSource.close();
             eventSource = null;
         });
@@ -327,6 +455,15 @@
             if (eventSource && eventSource.readyState === EventSource.CLOSES) return;
             // SSE会自动重连，不处理
         };
+    }
+
+    function downloadReport() {
+        const birth = getBirth();
+        const location = document.getElementById('location').value;
+        const gender = document.getElementById('gender').value;
+        const question = document.getElementById('question').value;
+        const params = new URLSearchParams({ birth, location, gender, question });
+        window.open('/api/debate/report?' + params, '_blank');
     }
 
     function stopDebate() {

@@ -99,7 +99,7 @@ class QiMenEngine(DivinationEngine):
         tian_pan, ba_men, jiu_xing = self._build_tian_pan(di_pan, hour_gan_zhi, ju, yin_yang)
 
         # 5. 值符 & 值使
-        zhi_fu_gong = self._find_gong_for_gan(di_pan, time_gan)
+        zhi_fu_gong = self._find_gong_for_gan(di_pan, hour_gan_zhi)
         zhi_fu_star = jiu_xing.get(zhi_fu_gong, '天蓬')
         zhi_shi_door = ba_men.get(1, '休门')
 
@@ -276,9 +276,15 @@ class QiMenEngine(DivinationEngine):
             ba_men[palace] = doors[i]
 
         # 天盘旋转：找到时干在地盘中的宫位
+        # 甲不直接出现在地盘（三奇六仪），需查找其隐遁的六仪
+        JIA_HIDE = {'子': '戊', '丑': '己', '寅': '庚', '卯': '辛', '辰': '壬', '巳': '癸',
+                     '午': '戊', '未': '己', '申': '庚', '酉': '辛', '戌': '壬', '亥': '癸'}
+        lookup_gan = hour_gan
+        if hour_gan == '甲' and len(hour_gan_zhi) > 1:
+            lookup_gan = JIA_HIDE.get(hour_gan_zhi[1], '戊')
         hour_gan_gong = None
         for gong, yi in di_pan.items():
-            if yi == hour_gan:
+            if yi == lookup_gan:
                 hour_gan_gong = gong
                 break
 
@@ -330,21 +336,30 @@ class QiMenEngine(DivinationEngine):
         return tian_pan, ba_men, jiu_xing
 
     def _build_ba_shen(self, yin_yang: str, zhi_fu_gong: int) -> dict:
-        """分配八神"""
+        """分配八神（阳遁顺排，阴遁逆排）"""
         luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
         start = luo8.index(zhi_fu_gong) if zhi_fu_gong in luo8 else 0
         gods = self.EIGHT_GODS
 
         ba_shen = {}
         for i, palace in enumerate(luo8):
-            god_idx = (i - start) % len(gods)
+            if yin_yang == '阳遁':
+                god_idx = (i - start) % len(gods)
+            else:
+                # 阴遁：八神逆排（值符起始反向旋转）
+                god_idx = (start - i) % len(gods)
             ba_shen[palace] = gods[god_idx]
         return ba_shen
 
-    def _find_gong_for_gan(self, di_pan: dict, gan: str) -> int:
-        """在地盘中找到天干所在宫位"""
+    def _find_gong_for_gan(self, di_pan: dict, gan_zhi: str) -> int:
+        """在地盘中找到天干所在宫位（甲需查找隐遁的六仪）"""
+        gan = gan_zhi[0] if gan_zhi else ''
+        JIA_HIDE = {'子': '戊', '丑': '己', '寅': '庚', '卯': '辛', '辰': '壬', '巳': '癸',
+                     '午': '戊', '未': '己', '申': '庚', '酉': '辛', '戌': '壬', '亥': '癸'}
+        zhi = gan_zhi[1] if len(gan_zhi) > 1 else ''
+        lookup = JIA_HIDE.get(zhi, '戊') if gan == '甲' else gan
         for gong, yi in di_pan.items():
-            if yi == gan:
+            if yi == lookup:
                 return gong
         return 1  # fallback
 
@@ -451,12 +466,28 @@ class QiMenEngine(DivinationEngine):
                 xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{XING_MAP.get(g, "中")}宫，刑伤之象'})
 
         # 6. 入墓：天干落墓宫
-        GAN_MU = {'乙': 6, '丁': 8, '己': 8, '辛': 4, '壬': 4}  # 简化版
+        # 天干入墓表：丙→戌(6), 丁→丑(8), 戊→辰(4), 己→丑(8), 库→辰(4), 辛→辰(4), 壬→辰(4), 癸→未(2)
+        GAN_MU = {'乙': 6, '丙': 6, '丁': 8, '己': 8, '庚': 4, '辛': 4, '壬': 4, '癸': 2}
         for p in palaces:
             g = p['gong']
             tp = p.get('tian_pan', '')
             if tp in GAN_MU and GAN_MU[tp] == g:
                 xiong_ge.append({'name': '入墓', 'gong': g, 'desc': f'{tp}入墓，事有阻碍'})
+
+        # 7. 欢怡：天盘丙+地盘辛（丙辛合化水，谋事有成）
+        for p in palaces:
+            if p.get('tian_pan') == '丙' and p.get('di_pan') == '辛':
+                ji_ge.append({'name': '欢怡', 'gong': p['gong'], 'desc': '丙辛合化水，谋事有成'})
+
+        # 8. 奇合：天盘乙+地盘庚（乙庚合化金，合作有利）
+        for p in palaces:
+            if p.get('tian_pan') == '乙' and p.get('di_pan') == '庚':
+                ji_ge.append({'name': '奇合', 'gong': p['gong'], 'desc': '乙庚合化金，合作有利'})
+
+        # 9. 小格：庚+癸
+        for p in palaces:
+            if p.get('tian_pan') == '庚' and p.get('di_pan') == '癸':
+                xiong_ge.append({'name': '小格', 'gong': p['gong'], 'desc': '庚加癸，格局不通'})
 
         # 旬空宫
         kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
