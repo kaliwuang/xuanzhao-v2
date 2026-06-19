@@ -382,7 +382,7 @@ class LiuYaoEngine(DivinationEngine):
         result = {
             'ben_gua': ben_gua,
             'bian_gua': bian_gua,
-            'dong_yao': list(dong),
+            'dong_yao': [d + 1 for d in dong],  # najia 0-indexed → 统一为 1-indexed
             'shi': shi_ying[0],
             'ying': shi_ying[1],
             'lines': lines,
