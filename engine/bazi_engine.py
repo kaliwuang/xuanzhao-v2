@@ -109,6 +109,12 @@ ZHI_XING_MOD = {'子':'卯','卯':'子','寅':'巳','巳':'申','申':'寅','丑
 ZHI_HAI_MOD = {'子':'未','未':'子','丑':'午','午':'丑','寅':'巳','巳':'寅','卯':'辰','辰':'卯','申':'亥','亥':'申','酉':'戌','戌':'酉'}
 ZHI_PO_MOD = {'子':'酉','酉':'子','丑':'辰','辰':'丑','寅':'亥','亥':'寅','卯':'午','午':'卯','巳':'申','申':'巳','未':'戌','戌':'未'}
 
+# ─── 五行生克关系（模块级常量）──────────────────────
+WUXING_KE = {'木':'土', '土':'水', '水':'火', '火':'金', '金':'木'}      # 我克=财
+WUXING_SHENG = {'木':'火', '火':'土', '土':'金', '金':'水', '水':'木'}    # 我生=食伤
+WUXING_BEI_KE = {'木':'金', '金':'火', '火':'水', '水':'土', '土':'木'}   # 克我=官杀
+WUXING_BEI_SHENG = {v: k for k, v in WUXING_SHENG.items()}               # 生我=印
+
 
 class BaziEngine(DivinationEngine):
     """八字引擎"""
@@ -1218,18 +1224,13 @@ class BaziEngine(DivinationEngine):
         day_score = wuxing_score.get(day_wx, 0)
         ratio = day_score / total if total > 0 else 0
         
-        # 五行生克关系（动态推导用神，不硬编码）
-        KE = {'木':'土', '土':'水', '水':'火', '火':'金', '金':'木'}  # 我克=财
-        SHENG = {'木':'火', '火':'土', '土':'金', '金':'水', '水':'木'}  # 我生=食伤
-        BEI_KE = {'木':'金', '金':'火', '火':'水', '水':'土', '土':'木'}  # 克我=官杀
-        
-        # 普通旺衰判断
+        # 普通旺衰判断（使用模块级五行生克常量）
         if ratio >= 0.40:
             strength = '身强'
             # 喜：克我(官杀) + 我克(财) + 我生(食伤泄)
-            base_xi = [BEI_KE[day_wx], KE[day_wx], SHENG[day_wx]]
+            base_xi = [WUXING_BEI_KE[day_wx], WUXING_KE[day_wx], WUXING_SHENG[day_wx]]
             # 忌：生我(印) + 同我(比劫)
-            base_ji = [day_wx, {v:k for k,v in SHENG.items()}[day_wx]]  # 同我 + 生我
+            base_ji = [day_wx, WUXING_BEI_SHENG[day_wx]]  # 同我 + 生我
         elif ratio >= 0.25:
             strength = '中和'
             base_xi = []
@@ -1237,9 +1238,9 @@ class BaziEngine(DivinationEngine):
         else:
             strength = '身弱'
             # 喜：生我(印) + 同我(比劫)
-            base_xi = [{v:k for k,v in SHENG.items()}[day_wx], day_wx]
+            base_xi = [WUXING_BEI_SHENG[day_wx], day_wx]
             # 忌：克我(官杀) + 我克(财) + 我生(食伤)
-            base_ji = [BEI_KE[day_wx], KE[day_wx], SHENG[day_wx]]
+            base_ji = [WUXING_BEI_KE[day_wx], WUXING_KE[day_wx], WUXING_SHENG[day_wx]]
         
         # 调候用神（优先于普通旺衰）
         # 从 data/tiaohou.json 读取完整逐月调候用神
