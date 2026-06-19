@@ -80,15 +80,8 @@ class AstroEngine(DivinationEngine):
         swe.set_ephe_path(ephe_path)
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        # Convert true_solar to UTC for planet calculations
-        true_solar = time.true_solar
-        if true_solar.tzinfo is None:
-            # Assume true_solar is local apparent solar time at the given longitude
-            # Convert to UTC by subtracting the longitude-based offset
-            offset_hours = time.longitude / 15.0
-            utc_dt = true_solar - timedelta(hours=offset_hours)
-        else:
-            utc_dt = true_solar.astimezone(timezone.utc)
+        # 直接使用已校正的UTC时间，避免从真太阳时逆推引入均时差误差
+        utc_dt = time.utc
 
         jd_utc = _jd(utc_dt)
 
