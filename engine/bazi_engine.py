@@ -792,15 +792,8 @@ class BaziEngine(DivinationEngine):
                     shensha.append(f'月德（{pos}干{g}）')
                     break
 
-        # 13. 太极贵人（以日干查四支）
-        taiji_map = {
-            '甲': ['子','午'], '乙': ['子','午'],
-            '丙': ['卯','酉'], '丁': ['卯','酉'],
-            '戊': ['辰','戌','丑','未'], '己': ['辰','戌','丑','未'],
-            '庚': ['寅','亥'], '辛': ['寅','亥'],
-            '壬': ['巳','申'], '癸': ['巳','申'],
-        }
-        taiji_zhis = taiji_map.get(day_gan, [])
+        # 13. 太极贵人（以日干查四支，复用模块级 SHENSHA_TAIJI_MAP）
+        taiji_zhis = SHENSHA_TAIJI_MAP.get(day_gan, [])
         for pos_idx, z in enumerate(all_zhis):
             if z in taiji_zhis:
                 pos = ['年','月','日','时'][pos_idx]
