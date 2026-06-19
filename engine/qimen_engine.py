@@ -40,6 +40,9 @@ class QiMenEngine(DivinationEngine):
         '子': '戊', '戌': '己', '申': '庚', '午': '辛', '辰': '壬', '寅': '癸',
     }
 
+    # 洛书八宫顺序（不含中宫5）
+    LUO_SHU_8 = [1, 8, 3, 4, 9, 2, 7, 6]
+
     # 地支→九宫映射
     ZHI_TO_GONG_NUM = {
         '子': 1, '丑': 8, '寅': 8, '卯': 3, '辰': 4, '巳': 4,
@@ -288,7 +291,7 @@ class QiMenEngine(DivinationEngine):
         jiu_xing = dict(self.GONG_TO_STAR)
 
         # 八门按洛书顺序（中宫5不排门，仅8门对应8宫）
-        luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
+        luo8 = self.LUO_SHU_8
         doors = ['休门', '生门', '伤门', '杜门', '景门', '死门', '惊门', '开门']
         ba_men = {}
         for i, palace in enumerate(luo8):
@@ -354,7 +357,7 @@ class QiMenEngine(DivinationEngine):
 
     def _build_ba_shen(self, yin_yang: str, zhi_fu_gong: int) -> dict:
         """分配八神（阳遁顺排，阴遁逆排）"""
-        luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
+        luo8 = self.LUO_SHU_8
         # 中宫5寄坤二宫（传统规则）
         effective_gong = 2 if zhi_fu_gong == 5 else zhi_fu_gong
         start = luo8.index(effective_gong) if effective_gong in luo8 else 0
