@@ -775,12 +775,7 @@ class BaziEngine(DivinationEngine):
                 shensha.append(f'天喜（{pos}支{z}）')
 
         # 12. 月德（以月支查天干）
-        yuede_map = {
-            '子':'壬','丑':'庚','寅':'丙','卯':'甲',
-            '辰':'壬','巳':'庚','午':'丙','未':'甲',
-            '申':'壬','酉':'庚','戌':'丙','亥':'甲',
-        }
-        yuede = yuede_map.get(month_pillar.zhi, '')
+        yuede = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
         if yuede:
             for g_pos_idx, g in enumerate(all_gans):
                 if g == yuede:
@@ -853,9 +848,8 @@ class BaziEngine(DivinationEngine):
                             break
 
         # 17. 月德合（以月支查天干，月德的六合）
-        yuede_map = {'子':'壬','丑':'庚','寅':'丙','卯':'甲','辰':'壬','巳':'庚','午':'丙','未':'甲','申':'壬','酉':'庚','戌':'丙','亥':'甲'}
         yuede_he_map = {'甲':'己','乙':'庚','丙':'辛','丁':'壬','戊':'癸','己':'甲','庚':'乙','辛':'丙','壬':'丁','癸':'戊'}
-        yuede = yuede_map.get(month_pillar.zhi, '')
+        yuede = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
         yuede_he = yuede_he_map.get(yuede, '')
         if yuede_he:
             for g_pos_idx, g in enumerate(all_gans):
