@@ -1276,11 +1276,14 @@ class BaziEngine(DivinationEngine):
             xian = []
             reason = f"中和命局，以调候用神为主：喜{'+'.join(xi)}"
         elif tiaohou_xi:
-            # 有调候时，取调候与普通旺衰的交集
-            xi = list(set(base_xi) | set(tiaohou_xi))
-            ji = [w for w in ['木', '火', '土', '金', '水'] if w not in xi]
+            # 扶抑为主，调候为辅
+            # 调候用神如果与扶抑一致，增强权重；不一致时以扶抑为准
+            xi = base_xi if base_xi else []
+            # 如果调候提到的元素不在扶抑喜用中，不加入（避免泛喜）
+            # 但如果调候忌的元素在扶抑喜用中，也不移除（扶抑优先）
+            ji = base_ji if base_ji else [w for w in ['木', '火', '土', '金', '水'] if w not in xi]
             xian = []
-            reason = f"{strength}，调候+普通旺衰综合：喜{'+'.join(xi)}"
+            reason = f"{strength}，扶抑为主(喜{'+'.join(xi)})，调候参考(调{'+'.join(tiaohou_xi)})"
         else:
             xi = base_xi if base_xi else ['木', '火', '土', '金', '水']
             ji = base_ji
