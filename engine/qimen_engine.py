@@ -493,7 +493,7 @@ class QiMenEngine(DivinationEngine):
         kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
         kong_gongs = []
         ZHI_TO_GONG = {
-            '子': 1, '丑': 8, '寅': 3, '卯': 3, '辰': 4, '巳': 4,
+            '子': 1, '丑': 8, '寅': 8, '卯': 3, '辰': 4, '巳': 4,
             '午': 9, '未': 2, '申': 2, '酉': 7, '戌': 6, '亥': 6,
         }
         for zhi in kong_wang:
@@ -544,7 +544,7 @@ class QiMenEngine(DivinationEngine):
 
             # 太岁地支→宫位
             ZHI_TO_GONG_NUM = {
-                '子': 1, '丑': 8, '寅': 3, '卯': 3, '辰': 4, '巳': 4,
+                '子': 1, '丑': 8, '寅': 8, '卯': 3, '辰': 4, '巳': 4,
                 '午': 9, '未': 2, '申': 2, '酉': 7, '戌': 6, '亥': 6,
             }
             tai_sui_gong = ZHI_TO_GONG_NUM.get(year_zhi, 0)
