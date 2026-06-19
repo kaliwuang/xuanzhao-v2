@@ -488,6 +488,83 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
+        # 六爻：看官鬼爻（事业权威）、子孙爻（克官→创业）、财爻生官（财助事业）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            # 找官鬼爻（事业权威/领导运）
+            guangui_yaos = [l for l in lines if l.get("liu_qin") == "官鬼"]
+            # 找子孙爻（克官鬼，代表创业/自由职业倾向）
+            zisun_yaos = [l for l in lines if l.get("liu_qin") == "子孙"]
+            # 找财爻（生官鬼，财助事业）
+            cai_yaos = [l for l in lines if l.get("liu_qin") == "妻财"]
+
+            # 官鬼爻旺相 → 事业有权威、晋升机会
+            guangui_handled = False
+            for gg in guangui_yaos:
+                gg_wx = gg.get("wuxing", "")
+                gg_dizhi = gg.get("dizhi", "")
+                gg_is_shi = gg.get("is_shi", False)
+                gg_wang = ri_ws.get(gg_wx, "") in ("旺", "相") if gg_wx and ri_ws else False
+
+                if gg_wang:
+                    methods.append("六爻")
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺相，事业有权威，有晋升或领导机会",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                    guangui_handled = True
+                    break
+
+            if not guangui_handled:
+                for gg in guangui_yaos:
+                    if gg.get("is_shi", False):
+                        methods.append("六爻")
+                        items.append(ConsensusItem(
+                            aspect="事业方向",
+                            finding=f"六爻官鬼爻{gg.get('dizhi', '')}持世，事业自主性强，适合独立决策",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.MEDIUM,
+                        ))
+                        break
+
+            # 子孙爻旺相 → 克官鬼，适合创业或自由职业
+            for zs in zisun_yaos:
+                zs_wx = zs.get("wuxing", "")
+                zs_dizhi = zs.get("dizhi", "")
+                zs_wang = ri_ws.get(zs_wx, "") in ("旺", "相") if zs_wx and ri_ws else False
+                if zs_wang:
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=f"六爻子孙爻{zs_dizhi}（{zs_wx}）旺相克官，适合创业、自由职业或技术路线",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+
+            # 财爻旺相且生官鬼 → 财助事业，利于升职加薪
+            _SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
+            for cy in cai_yaos:
+                cy_wx = cy.get("wuxing", "")
+                cy_dizhi = cy.get("dizhi", "")
+                cy_wang = ri_ws.get(cy_wx, "") in ("旺", "相") if cy_wx and ri_ws else False
+                cai_sheng_guangui = any(
+                    _SHENG.get(cy_wx) == gg.get("wuxing", "") for gg in guangui_yaos
+                )
+                if cy_wang and cai_sheng_guangui:
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=f"六爻财爻{cy_dizhi}（{cy_wx}）旺相生官鬼，财助事业，利于升职加薪",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                    break
+
         return items
 
     def _validate_relationship(self) -> List[ConsensusItem]:
