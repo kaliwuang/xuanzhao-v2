@@ -618,11 +618,10 @@ class BaziEngine(DivinationEngine):
 
         # 1. 冲
         zhis = [p.zhi for p in [year, month, day, time]]
-        chong_pairs = [("子","午"), ("丑","未"), ("寅","申"), ("卯","酉"), ("辰","戌"), ("巳","亥")]
+        pos_names = ["年","月","日","时"]
         for i, z1 in enumerate(zhis):
             for j, z2 in enumerate(zhis[i+1:], i+1):
-                if (z1, z2) in chong_pairs or (z2, z1) in chong_pairs:
-                    pos_names = ["年","月","日","时"]
+                if ZHI_CHONG_MOD.get(z1) == z2:
                     features.append(f"{z1}{z2}冲 — {pos_names[i]}支与{pos_names[j]}支相冲")
 
         # 2. 合
@@ -630,7 +629,6 @@ class BaziEngine(DivinationEngine):
             for j, z2 in enumerate(zhis[i+1:], i+1):
                 # 六合（复用模块级 ZHI_HE_MOD 常量）
                 if ZHI_HE_MOD.get(z1) == z2:
-                    pos_names = ["年","月","日","时"]
                     features.append(f"{z1}{z2}合 — {pos_names[i]}支与{pos_names[j]}支相合")
 
         # 3. 七杀透干
