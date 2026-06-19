@@ -112,7 +112,9 @@ def _validate_birth(birth: str):
         raise ValueError("出生时间不能为空")
     # 支持格式：2005-06-09 11:50 或 2005/06/09 11:50
     patterns = [
+        r'^\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$',
         r'^\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}$',
+        r'^\d{4}/\d{1,2}/\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$',
         r'^\d{4}/\d{1,2}/\d{1,2}\s+\d{1,2}:\d{2}$',
     ]
     if not any(re.match(p, birth.strip()) for p in patterns):
@@ -133,6 +135,10 @@ def _validate_birth(birth: str):
     minute = int(hour_min[1])
     if not (0 <= minute <= 59):
         raise ValueError(f"分钟错误: {minute}")
+    if len(hour_min) > 2:
+        second = int(hour_min[2])
+        if not (0 <= second <= 59):
+            raise ValueError(f"秒数错误: {second}")
 
 
 def _sanitize_name(name: str) -> str:
