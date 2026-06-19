@@ -386,8 +386,8 @@ class QiMenEngine(DivinationEngine):
 
     def _calc_xun_kong(self, day_gan_zhi: str) -> dict:
         """计算日柱旬空（空亡地支）和旬首奇仪"""
-        TIANGAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']
-        DIZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
+        TIANGAN = self.TIAN_GAN
+        DIZHI = self.DI_ZHI
         # 旬首对应的奇仪（甲子→戊, 甲戌→己, 甲申→庚, 甲午→辛, 甲辰→壬, 甲寅→癸）
         XUN_HIDDEN_YI = {'子': '戊', '戌': '己', '申': '庚', '午': '辛', '辰': '壬', '寅': '癸'}
         if len(day_gan_zhi) < 2:
