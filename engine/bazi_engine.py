@@ -881,14 +881,14 @@ class BaziEngine(DivinationEngine):
                 shensha.append('天赦')
 
         # 19. 天医（以月支查）
-        tianyi_map = {
+        tianyi_medical_map = {
             '子':'丑','丑':'寅','寅':'卯','卯':'辰',
             '辰':'巳','巳':'午','午':'未','未':'申',
             '申':'酉','酉':'戌','戌':'亥','亥':'子',
         }
-        tianyi_zhi = tianyi_map.get(month_pillar.zhi, '')
+        tianyi_medical_zhi = tianyi_medical_map.get(month_pillar.zhi, '')
         for pos_idx, z in enumerate(all_zhis):
-            if z == tianyi_zhi:
+            if z == tianyi_medical_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天医（{pos}支{z}）')
 
