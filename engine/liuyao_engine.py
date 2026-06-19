@@ -266,9 +266,8 @@ class LiuYaoEngine(DivinationEngine):
             dizhi = gz[1]
             wz_idx = ZHIS.index(dizhi)
             wuxing = XING5[ZHI5[wz_idx]]
-            # 判断阴阳：根据地支奇偶（子寅辰午申戌为阳，丑卯巳未酉亥为阴）
-            yang_zhis = set('子寅辰午申戌')
-            yinyang = '阳' if dizhi in yang_zhis else '阴'
+            # 阴阳由卦码mark决定（1=阳爻，0=阴爻），而非地支奇偶
+            yinyang = '阳' if i < len(mark) and mark[i] == '1' else '阴'
             lines.append({
                 'liu_qin': qin6[i],
                 'liu_shen': god6[i],
