@@ -1245,11 +1245,15 @@ class BaziEngine(DivinationEngine):
         tiaohou_xi = []
         tiaohou_ji = []
         
+        # 优先从缓存读取，回退到_calc_tiaohou（含硬编码回退表）
+        tiaohou_str = ''
         if BaziEngine._tiaohou_cache:
             tiaohou_str = BaziEngine._tiaohou_cache.get(day_gan, {}).get(month_zhi, "")
-            if tiaohou_str:
-                # 调候用神天干 → 五行
-                tiaohou_xi = list(dict.fromkeys(GAN_WUXING_STR.get(g, '') for g in tiaohou_str if GAN_WUXING_STR.get(g, '')))
+        if not tiaohou_str:
+            tiaohou_str = self._calc_tiaohou(day_gan, month_zhi)
+        if tiaohou_str:
+            # 调候用神天干 → 五行
+            tiaohou_xi = list(dict.fromkeys(GAN_WUXING_STR.get(g, '') for g in tiaohou_str if GAN_WUXING_STR.get(g, '')))
         
         # 综合判断
         if strength == '中和' and tiaohou_xi:
