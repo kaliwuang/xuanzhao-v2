@@ -1773,6 +1773,54 @@ class CrossValidator:
                 suggestion="八字比劫透干代表人际关系活跃但有竞争，紫微兄弟宫吉代表有贵人助力。活跃社交中需注意利益边界，贵人运可化解比劫之弊。"
             ))
 
+        # === 11. 六爻-八字喜用神冲突：卦宫五行 vs 命局喜忌 ===
+        # 六爻卦宫五行代表当前事件的大环境五行属性，
+        # 八字喜用神代表命主最需要的五行能量。
+        # 若卦宫五行恰好是八字忌神，说明当前大环境与命主需求相悖。
+        if self.udm.liuyao_chart and self.udm.xi_yong:
+            ly = self.udm.liuyao_chart
+            gua_gong_wx = ly.get('gua_gong_wuxing', '')
+            xi_list = self.udm.xi_yong.get('xi', []) if isinstance(self.udm.xi_yong, dict) else []
+            ji_list = self.udm.xi_yong.get('ji', []) if isinstance(self.udm.xi_yong, dict) else []
+            strength = self.udm.xi_yong.get('strength', '') if isinstance(self.udm.xi_yong, dict) else ''
+
+            if gua_gong_wx and ji_list:
+                if gua_gong_wx in ji_list:
+                    # 卦宫五行是八字忌神——逆势
+                    ben_name = ly.get('ben_gua', {}).get('name', '')
+                    xi_hint = '、'.join(xi_list) if xi_list else '参考调候'
+                    conflicts.append(ConflictItem(
+                        aspect="运势",
+                        method_a="八字",
+                        finding_a=f"{strength}，忌{'+'.join(ji_list)}",
+                        method_b="六爻",
+                        finding_b=f"卦宫五行属{gua_gong_wx}（{ben_name}），恰为八字忌神",
+                        suggestion=f"八字忌神五行与六爻卦宫五行一致，说明当前时势与命主所需能量相悖。"
+                                   f"此时宜守不宜攻，避免在忌神旺的时间段做重大决策。"
+                                   f"可借助喜用五行（{xi_hint}）来化解。"
+                    ))
+
+                elif gua_gong_wx in xi_list:
+                    # 卦宫五行是八字喜用——顺势（不产生冲突，但增强共识）
+                    pass
+
+            # 世爻五行 vs 八字喜忌
+            shi_yao = next((l for l in ly.get('lines', []) if l.get('is_shi')), None)
+            if shi_yao and ji_list:
+                shi_wx = shi_yao.get('wuxing', '')
+                if shi_wx and shi_wx in ji_list:
+                    dizhi = shi_yao.get('dizhi', '')
+                    liuqin = shi_yao.get('liu_qin', '')
+                    conflicts.append(ConflictItem(
+                        aspect="运势",
+                        method_a="八字",
+                        finding_a=f"{strength}，忌{'+'.join(ji_list)}",
+                        method_b="六爻",
+                        finding_b=f"世爻为{dizhi}（{shi_wx}），六亲{liuqin}，五行属{shi_wx}恰为八字忌神",
+                        suggestion="六爻世爻代表求测者自身状态，世爻五行属忌神说明当下自身状态与命局喜用不一致。"
+                                   "需警惕此时的判断可能偏离最佳选择，宜多参考他人意见或等待更好的时机。"
+                    ))
+
         return conflicts
 
     def _calc_overall_confidence(self, results: dict) -> ConfidenceLevel:
