@@ -91,8 +91,11 @@ class AstroEngine(DivinationEngine):
             utc_dt = true_solar.astimezone(timezone.utc)
 
         jd_utc = _jd(utc_dt)
-        # For houses, use true solar time (local apparent solar time)
-        jd_solar = _jd(true_solar) if true_solar.tzinfo is None else _jd(true_solar.astimezone(timezone.utc) - timedelta(hours=time.longitude / 15.0))
+        # For houses, use true solar time converted to UT
+        # true_solar is local apparent solar time (naive, no tzinfo)
+        # swe.houses() expects UT, so subtract longitude-based offset
+        utc_for_houses = true_solar - timedelta(hours=time.longitude / 15.0)
+        jd_solar = _jd(utc_for_houses)
 
         lat = time.latitude
         lon = time.longitude
