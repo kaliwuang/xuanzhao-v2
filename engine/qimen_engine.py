@@ -531,6 +531,52 @@ class QiMenEngine(DivinationEngine):
             if p.get('tian_pan') == '辛' and p.get('di_pan') == '乙':
                 xiong_ge.append({'name': '白虎猖狂', 'gong': p['gong'], 'desc': '辛加乙，金木相克，主伤灾破败'})
 
+        # 13. 三奇入墓：乙(木)入辰(4)、丙(火)入戌(6)、丁(火)入戌(6)
+        # 三奇为乙丙丁，入墓则奇不显灵，百事不顺
+        SAN_QI_MU = {'乙': 4, '丙': 6, '丁': 6}
+        for p in palaces:
+            g = p['gong']
+            tp = p.get('tian_pan', '')
+            if tp in SAN_QI_MU and SAN_QI_MU[tp] == g:
+                xiong_ge.append({'name': '三奇入墓', 'gong': g, 'desc': f'{tp}奇入墓，奇不显灵，百事不顺'})
+
+        # 14. 悖格：天盘天干五行克制地盘天干五行（排除已检测的特殊格局）
+        # 天克地为"悖"，行事多阻，进退维谷
+        WUXING = {'甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
+                   '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水'}
+        KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
+        ALREADY_CHECKED = {('庚', '丙'), ('丙', '庚'), ('庚', '癸'), ('戊', '丙'),
+                           ('丙', '戊'), ('辛', '乙'), ('丙', '辛'), ('乙', '庚'),
+                           # 天干五合（合不为悖）：甲己、乙庚、丙辛、丁壬、戊癸
+                           ('甲', '己'), ('己', '甲'), ('丁', '壬'), ('壬', '丁'),
+                           ('戊', '癸'), ('癸', '戊')}
+        for p in palaces:
+            tp = p.get('tian_pan', '')
+            dp = p.get('di_pan', '')
+            if tp and dp and (tp, dp) not in ALREADY_CHECKED:
+                tp_wx = WUXING.get(tp, '')
+                dp_wx = WUXING.get(dp, '')
+                if tp_wx and dp_wx and KE.get(tp_wx) == dp_wx:
+                    xiong_ge.append({'name': '悖格', 'gong': p['gong'],
+                                     'desc': f'{tp}({tp_wx})克{dp}({dp_wx})，天克地，行事多阻'})
+
+        # 15. 玉女守门：天盘丁奇与门同宫（丁为玉女，守门则百事皆宜）
+        for p in palaces:
+            if p.get('tian_pan') == '丁' and p.get('men') and p['men'] != '':
+                ji_ge.append({'name': '玉女守门', 'gong': p['gong'],
+                              'desc': f'丁奇守{p["men"]}，百事皆宜，利于文书'})
+
+        # 16. 天地合德：天盘地盘天干相合（排除已有专用名称的组合）
+        # 甲己、丁壬、戊癸 合（乙庚→奇合、丙辛→欢怡已有独立条目，不重复）
+        GAN_HE = {'甲': '己', '己': '甲', '丁': '壬', '壬': '丁',
+                   '戊': '癸', '癸': '戊'}
+        for p in palaces:
+            tp = p.get('tian_pan', '')
+            dp = p.get('di_pan', '')
+            if tp and dp and GAN_HE.get(tp) == dp:
+                ji_ge.append({'name': '天地合德', 'gong': p['gong'],
+                              'desc': f'{tp}{dp}合，天地和合，谋事易成'})
+
         # 旬空宫
         kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
         kong_gongs = []
