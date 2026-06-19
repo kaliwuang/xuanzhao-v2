@@ -1083,14 +1083,7 @@ class BaziEngine(DivinationEngine):
                     shensha.append(f'空亡（{pos}支{z}）')
 
         # 36. 天乙贵人（完整版，多个位置都算）
-        tianyi_map = {
-            '甲': ['丑','未'], '戊': ['丑','未'], '庚': ['丑','未'],
-            '乙': ['子','申'], '己': ['子','申'],
-            '丙': ['亥','酉'], '丁': ['亥','酉'],
-            '壬': ['卯','巳'], '癸': ['卯','巳'],
-            '辛': ['午','寅'],
-        }
-        tianyi_zhis = tianyi_map.get(day_gan, [])
+        tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
         tianyi_count = 0
         for pos_idx, z in enumerate(all_zhis):
             if z in tianyi_zhis:
@@ -1099,15 +1092,13 @@ class BaziEngine(DivinationEngine):
             shensha.append(f'双天乙贵人')
 
         # 37. 双华盖
-        huagai_map = {'子':'辰','丑':'丑','寅':'戌','卯':'未','辰':'辰','巳':'丑','午':'戌','未':'未','申':'辰','酉':'丑','戌':'戌','亥':'未'}
-        huagai_zhi = huagai_map.get(year_zhi, '')
+        huagai_zhi = SHENSHA_HUAGAI_MAP.get(year_zhi, '')
         huagai_count = sum(1 for z in all_zhis if z == huagai_zhi)
         if huagai_count >= 2:
             shensha.append('双华盖')
 
         # 38. 双桃花
-        taohua_map = {'子':'酉','丑':'午','寅':'卯','卯':'子','辰':'酉','巳':'午','午':'卯','未':'子','申':'酉','酉':'午','戌':'卯','亥':'子'}
-        taohua_zhi = taohua_map.get(year_zhi, '')
+        taohua_zhi = SHENSHA_TAOHUA_MAP.get(year_zhi, '')
         taohua_count = sum(1 for z in all_zhis if z == taohua_zhi)
         if taohua_count >= 2:
             shensha.append('双桃花')
