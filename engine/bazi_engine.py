@@ -468,7 +468,8 @@ class BaziEngine(DivinationEngine):
                     zhi_relations.append(f'{z1}{z2}冲')
                 if ZHI_HE.get(z1) == z2:
                     zhi_relations.append(f'{z1}{z2}合')
-                if ZHI_XING.get(z1) == z2:
+                # 三刑是三元循环(寅→巳→申→寅等)，需双向检测避免遗漏
+                if ZHI_XING.get(z1) == z2 or ZHI_XING.get(z2) == z1:
                     zhi_relations.append(f'{z1}{z2}刑')
                 if ZHI_HAI.get(z1) == z2:
                     zhi_relations.append(f'{z1}{z2}害')
