@@ -1270,10 +1270,17 @@ class BaziEngine(DivinationEngine):
             xian = []
             reason = f"{strength}，扶抑为主(喜{'+'.join(xi)})，调候参考(调{'+'.join(tiaohou_xi)})"
         else:
-            xi = base_xi if base_xi else ['木', '火', '土', '金', '水']
-            ji = base_ji
-            xian = [w for w in ['木', '火', '土', '金', '水'] if w not in xi and w not in ji]
-            reason = f"{strength}，无特殊调候：喜{'+'.join(xi)}"
+            # 中和无调候：无需特别扶抑，五行归入闲神
+            if strength == '中和':
+                xi = []
+                ji = []
+                xian = ['木', '火', '土', '金', '水']
+                reason = f"中和命局，五行均衡，无需特别扶抑"
+            else:
+                xi = base_xi if base_xi else ['木', '火', '土', '金', '水']
+                ji = base_ji
+                xian = [w for w in ['木', '火', '土', '金', '水'] if w not in xi and w not in ji]
+                reason = f"{strength}，无特殊调候：喜{'+'.join(xi)}"
         
         return {
             'xi': xi,
