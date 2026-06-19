@@ -798,7 +798,13 @@ class PerspectiveEngine:
                 key_points.append(f"月将{yj}")
             sc = method_data.get("san_chuan", [])
             if sc:
-                key_points.append(f"三传{'→'.join(str(s.get('name','')) for s in sc[:3])}")
+                def _sc_name(s):
+                    if isinstance(s, dict):
+                        return str(s.get('name', ''))
+                    if isinstance(s, (list, tuple)) and s:
+                        return str(s[0])
+                    return str(s)
+                key_points.append(f"三传{'→'.join(_sc_name(s) for s in sc[:3])}")
 
         elif method == "太乙":
             tg = method_data.get("taiyi_gong", "")
@@ -811,37 +817,43 @@ class PerspectiveEngine:
         name = figure.name
 
         # 按阵营生成不同风格的stance
+        # key 必须与 figures.yaml 中的 faction 值一致：orthodox/daoist/rational/western/system
         faction_stance_templates = {
-            "儒家": [
+            "orthodox": [
                 f"君子务本，{name}认为事业当以德行为先，厚积薄发",
                 f"中庸之道，{name}主张不偏不倚，稳中求进",
                 f"仁者乐山，{name}建议以仁德立身，事业自然亨通",
-            ],
-            "道家": [
-                f"上善若水，{name}认为顺势而为方为上策",
-                f"无为而治，{name}主张不强求，让事业自然生长",
-                f"反者道之动，{name}提醒逆境中往往蕴含转机",
-            ],
-            "兵家": [
                 f"知己知彼，{name}认为事业需审时度势，择机而动",
                 f"以正合以奇胜，{name}主张守正出奇",
                 f"不战而屈人之兵，{name}建议以智取胜，避免正面冲突",
-            ],
-            "法家": [
-                f"法术势并重，{name}认为事业需制度+策略+权威三者兼备",
-                f"因时变法，{name}主张顺应时势调整策略",
-            ],
-            "纵横家": [
                 f"捭阖之术，{name}认为事业关键在于把握开合时机",
                 f"顺势而为，{name}主张借力打力，四两拨千斤",
+                f"法术势并重，{name}认为事业需制度+策略+权威三者兼备",
             ],
-            "心理学": [
-                f"个体化进程，{name}认为事业发展的关键是自我整合与成长",
-                f"潜意识驱动，{name}提醒要关注内心真正的渴望",
+            "daoist": [
+                f"上善若水，{name}认为顺势而为方为上策",
+                f"无为而治，{name}主张不强求，让事业自然生长",
+                f"反者道之动，{name}提醒逆境中往往蕴含转机",
+                f"道法自然，{name}认为最高智慧是顺应而非对抗",
+                f"柔弱胜刚强，{name}主张以柔克刚、以静制动",
             ],
-            "投资": [
+            "rational": [
+                f"第一性原理，{name}主张从最基本的事实出发推理",
+                f"逆向思考，{name}建议反过来想问题，往往更清晰",
                 f"价值投资，{name}主张选择有护城河的事业方向长期深耕",
                 f"安全边际，{name}建议留足余地，不把鸡蛋放一个篮子里",
+                f"反脆弱，{name}认为真正的强大是在冲击中成长",
+                f"个体化进程，{name}认为事业发展的关键是自我整合与成长",
+            ],
+            "western": [
+                f"星象指引，{name}认为天体运行映射人间变化",
+                f"原型与象征，{name}提醒要关注集体无意识中的深层模式",
+                f"个体化进程，{name}认为自我认知是改变命运的第一步",
+                f"共时性，{name}认为有意义的巧合揭示命运的深层联系",
+            ],
+            "system": [
+                f"综合七术，{name}以全维度数据交叉验证，追求最高精度",
+                f"共振分析，{name}认为多术法共识处即命运真相",
             ],
         }
 
