@@ -61,6 +61,9 @@ class QiMenEngine(DivinationEngine):
     # 洛书飞宫顺序（中五寄坤二）
     LUO_SHU_ORDER = [1, 8, 3, 4, 9, 2, 7, 6, 5]
 
+    # 九宫→九星直接映射（标准洛书配九星：1蓬2芮3冲4辅5禽6心7柱8任9英）
+    GONG_TO_STAR = {1: '天蓬', 2: '天芮', 3: '天冲', 4: '天辅', 5: '天禽', 6: '天心', 7: '天柱', 8: '天任', 9: '天英'}
+
     # ---- abstract property implementations ----
 
     @property
@@ -276,11 +279,8 @@ class QiMenEngine(DivinationEngine):
         """
         hour_gan = hour_gan_zhi[0] if hour_gan_zhi else '甲'
 
-        # 九星按洛书飞宫顺序（含中宫5，9星对应9宫）
-        luo9 = self.LUO_SHU_ORDER  # [1, 8, 3, 4, 9, 2, 7, 6, 5]
-        jiu_xing = {}
-        for i, palace in enumerate(luo9):
-            jiu_xing[palace] = self.NINE_STARS[i]
+        # 九星按标准洛书配九星直接映射（1蓬2芮3冲4辅5禽6心7柱8任9英）
+        jiu_xing = dict(self.GONG_TO_STAR)
 
         # 八门按洛书顺序（中宫5不排门，仅8门对应8宫）
         luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
