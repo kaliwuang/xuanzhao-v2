@@ -684,6 +684,7 @@ class BaziEngine(DivinationEngine):
         year_gan = year_pillar.gan
         all_zhis = [year_pillar.zhi, month_pillar.zhi, day_pillar.zhi, time_pillar.zhi]
         all_gans = [year_pillar.gan, month_pillar.gan, day_pillar.gan, time_pillar.gan]
+        day_gz = day_pillar.gan + day_pillar.zhi  # 日柱干支（复用，消除重复计算）
 
         # 1. 天乙贵人（以日干查四支）
         tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
@@ -868,7 +869,6 @@ class BaziEngine(DivinationEngine):
         }
         tianshe = tianshe_map.get(month_pillar.zhi, '')
         if tianshe:
-            day_gz = day_pillar.gan + day_pillar.zhi
             if day_gz == tianshe:
                 shensha.append('天赦')
 
@@ -1047,7 +1047,6 @@ class BaziEngine(DivinationEngine):
 
         # 33. 十恶大败（以日柱查）
         eba_map = ['甲辰','乙巳','丙申','丁亥','戊戌','己丑','庚辰','辛巳','壬申','癸亥']
-        day_gz = day_pillar.gan + day_pillar.zhi
         if day_gz in eba_map:
             shensha.append('十恶大败')
 
@@ -1167,7 +1166,6 @@ class BaziEngine(DivinationEngine):
             '丙子','丁丑','戊寅','辛卯','壬辰','癸巳',
             '丙午','丁未','戊申','辛酉','壬戌','癸亥'
         ]
-        day_gz = day_pillar.gan + day_pillar.zhi
         if day_gz in yinyang_chacuo:
             shensha.append('阴阳差错')
 
