@@ -1299,8 +1299,8 @@ class BaziEngine(DivinationEngine):
         """
         score: Dict[str, float] = {"木": 0.0, "火": 0.0, "土": 0.0, "金": 0.0, "水": 0.0}
 
-        # 天干五行映射
-        gan_wuxing_map = {k: v[0].value for k, v in GAN_WUXING.items()}
+        # 复用模块级常量 GAN_WUXING_STR（避免每次调用重复构建字典）
+        gan_wuxing_map = GAN_WUXING_STR
 
         for pillar in pillars:
             if not pillar:
