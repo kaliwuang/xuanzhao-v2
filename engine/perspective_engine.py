@@ -582,7 +582,7 @@ class PerspectiveEngine:
             data["liuyao"] = {
                 "ben_gua": udm.liuyao_chart.get("ben_gua", {}),
                 "bian_gua": udm.liuyao_chart.get("bian_gua", {}),
-                "dong_yao": udm.liuyao_chart.get("dong_yao", 0),
+                "dong_yao": udm.liuyao_chart.get("dong_yao", []),
             } if udm.liuyao_chart else {}
             data["liuren"] = {
                 "yue_jiang": udm.liuren_chart.get("yue_jiang", ""),
@@ -771,15 +771,16 @@ class PerspectiveEngine:
 
         elif method == "六爻":
             ben = method_data.get("ben_gua", {})
-            dong = method_data.get("dong_yao", 0)
+            dong = method_data.get("dong_yao", [])
             if ben:
                 gua_name = ben.get("name", "")
                 if gua_name:
                     reasoning_parts.append(f"本卦{gua_name}")
                     key_points.append(f"本卦{gua_name}")
             if dong:
-                reasoning_parts.append(f"动爻第{dong}爻")
-                key_points.append(f"动爻第{dong}爻")
+                dong_str = ','.join(str(d) for d in dong) if isinstance(dong, list) else str(dong)
+                reasoning_parts.append(f"动爻第{dong_str}爻")
+                key_points.append(f"动爻第{dong_str}爻")
 
         elif method == "奇门":
             ju = method_data.get("ju_name", "")
