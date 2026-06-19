@@ -509,6 +509,7 @@ class PerspectiveEngine:
                 data["zhi_fu"] = udm.qimen_chart.get("zhi_fu", {})
                 data["zhi_shi"] = udm.qimen_chart.get("zhi_shi", {})
                 data["palaces"] = udm.qimen_chart.get("palaces", [])
+                data["ge_ju_analysis"] = udm.qimen_chart.get("ge_ju_analysis", {})
 
         elif method == "大六壬":
             if udm.liuren_chart:
@@ -787,11 +788,42 @@ class PerspectiveEngine:
             if ju:
                 reasoning_parts.append(f"格局：{ju}")
                 key_points.append(ju)
+            # 值符值使——奇门核心信息
+            zhi_fu = method_data.get("zhi_fu", {})
+            zhi_shi = method_data.get("zhi_shi", {})
+            if zhi_fu:
+                zf_star = zhi_fu.get("star", "")
+                zf_gong = zhi_fu.get("gong", "")
+                if zf_star:
+                    reasoning_parts.append(f"值符{zf_star}落{zf_gong}宫")
+                    key_points.append(f"值符{zf_star}")
+            if zhi_shi:
+                zs_door = zhi_shi.get("door", "")
+                if zs_door:
+                    reasoning_parts.append(f"值使{zs_door}")
+                    key_points.append(f"值使{zs_door}")
+            # 八门吉凶
             men = method_data.get("ba_men", {})
             if men:
-                ji_men = [k for k, v in men.items() if v in ("开门", "生门", "休门")]
+                ji_men = [str(k) for k, v in men.items() if v in ("开门", "生门", "休门")]
+                xiong_men = [str(k) for k, v in men.items() if v in ("死门", "惊门", "伤门")]
                 if ji_men:
-                    key_points.append(f"吉门{', '.join(ji_men)}")
+                    key_points.append(f"吉门{', '.join(ji_men)}宫")
+                if xiong_men:
+                    key_points.append(f"凶门{', '.join(xiong_men)}宫")
+            # 格局分析
+            ge_ju = method_data.get("ge_ju_analysis", {})
+            if ge_ju:
+                ji_ge = ge_ju.get("ji_ge", [])
+                xiong_ge = ge_ju.get("xiong_ge", [])
+                if ji_ge:
+                    ge_names = "、".join(g.get("name", "") for g in ji_ge[:3])
+                    reasoning_parts.append(f"吉格：{ge_names}")
+                    key_points.append(f"吉格{ge_names}")
+                if xiong_ge:
+                    ge_names = "、".join(g.get("name", "") for g in xiong_ge[:3])
+                    reasoning_parts.append(f"凶格：{ge_names}")
+                    key_points.append(f"凶格{ge_names}")
 
         elif method == "大六壬":
             yj = method_data.get("yue_jiang", "")
