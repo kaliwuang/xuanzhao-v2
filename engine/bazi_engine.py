@@ -6,7 +6,7 @@
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as _ZHI_LIUHE
+from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as _ZHI_LIUHE, ZHI_CHONG as ZHI_CHONG_MOD, ZHI_LIUHE as ZHI_HE_MOD
 import logging
 from datetime import datetime
 
@@ -104,8 +104,7 @@ GAN_HE = {'甲':'己','己':'甲','乙':'庚','庚':'乙','丙':'辛','辛':'丙
 GAN_LIUHE = GAN_HE  # 天干六合（天德合、月德合复用此常量）
 
 # ─── 地支关系表（模块级常量）──────────────────────────
-ZHI_CHONG_MOD = {'子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'}
-ZHI_HE_MOD = {'子':'丑','丑':'子','寅':'亥','亥':'寅','卯':'戌','戌':'卯','辰':'酉','酉':'辰','巳':'申','申':'巳','午':'未','未':'午'}
+# ZHI_CHONG_MOD 和 ZHI_HE_MOD 已从 udm 导入（见上方 import）
 ZHI_XING_MOD = {'子':'卯','卯':'子','寅':'巳','巳':'申','申':'寅','丑':'未','未':'戌','戌':'丑','辰':'辰','午':'午','酉':'酉','亥':'亥'}
 ZHI_HAI_MOD = {'子':'未','未':'子','丑':'午','午':'丑','寅':'巳','巳':'寅','卯':'辰','辰':'卯','申':'亥','亥':'申','酉':'戌','戌':'酉'}
 ZHI_PO_MOD = {'子':'酉','酉':'子','丑':'辰','辰':'丑','寅':'亥','亥':'寅','卯':'午','午':'卯','巳':'申','申':'巳','未':'戌','戌':'未'}
