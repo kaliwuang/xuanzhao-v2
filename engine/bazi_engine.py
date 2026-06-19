@@ -400,6 +400,15 @@ class BaziEngine(DivinationEngine):
         # 喜用神计算
         xi_yong = self._calc_xi_yong(day_master, month_pillar.zhi, wuxing_score)
 
+        # 将身强/身弱判断注入特征列表（cross_validator 和生成报告依赖此特征）
+        strength = xi_yong.get('strength', '')
+        if strength == '身强':
+            features.insert(0, f'身强—日主{day_master}（{day_master_wuxing}）得令得地，可任财官')
+        elif strength == '身弱':
+            features.insert(0, f'身弱—日主{day_master}（{day_master_wuxing}）失令失地，需印比扶助')
+        elif strength == '中和':
+            features.insert(0, f'中和—日主{day_master}（{day_master_wuxing}）力量均衡')
+
         # 长生十二宫（每柱）
         changsheng = {}
         for pillar_name, pillar in [('year', year_pillar), ('month', month_pillar), ('day', day_pillar), ('time', time_pillar)]:
