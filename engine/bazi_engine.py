@@ -809,7 +809,7 @@ class BaziEngine(DivinationEngine):
             '戊': ['未'], '己': ['申'], '庚': ['戌'], '辛': ['亥'],
             '壬': ['丑'], '癸': ['寅'],
         }
-        jinyu_zhi = jinyu_map.get(day_gan, '')
+        jinyu_zhi = jinyu_map.get(day_gan, [])
         for pos_idx, z in enumerate(all_zhis):
             if z in jinyu_zhi:
                 pos = ['年','月','日','时'][pos_idx]
