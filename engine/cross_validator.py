@@ -871,7 +871,7 @@ class CrossValidator:
         return items
 
     def _validate_academic(self) -> List[ConsensusItem]:
-        """学业交叉验证——八字印星、紫微父母宫/官禄宫、占星水星"""
+        """学业交叉验证——八字印星、紫微父母宫/官禄宫、占星水星、奇门天辅景门、六爻父母爻"""
         items = []
 
         # 八字：看印星（正印/偏印代表学习能力）
@@ -937,6 +937,105 @@ class CrossValidator:
                         supporting_methods=["占星"],
                         confidence=ConfidenceLevel.MEDIUM,
                     ))
+
+        # 奇门遁甲：天辅星（文昌星）+ 景门（文书门）
+        if self.udm.qimen_chart:
+            qm = self.udm.qimen_chart
+            palaces = qm.get("palaces", [])
+            ba_men = qm.get("ba_men", {})
+            jiu_xing = qm.get("jiu_xing", {})
+
+            # 天辅星落宫（文昌星——学业贵人、学习能力强）
+            tianfu_gong = None
+            for g, star in jiu_xing.items():
+                if star == "天辅":
+                    tianfu_gong = int(g) if str(g).isdigit() else 0
+                    break
+            if tianfu_gong:
+                gong_name = ""
+                for p in palaces:
+                    if p.get("gong") == tianfu_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="学业",
+                    finding=f"天辅星（文昌星）落{gong_name}，学业有贵人助力，学习能力强",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.HIGH,
+                ))
+
+            # 景门落宫（文书门——考试文书运佳）
+            jing_gong = None
+            for g, men in ba_men.items():
+                if men == "景门":
+                    jing_gong = int(g) if str(g).isdigit() else 0
+                    break
+            if jing_gong:
+                gong_name = ""
+                for p in palaces:
+                    if p.get("gong") == jing_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="学业",
+                    finding=f"景门（文书门）落{gong_name}，考试文书运佳，适合笔试考核",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 天辅星与景门同宫（学业大吉）
+            if tianfu_gong and jing_gong and tianfu_gong == jing_gong:
+                gong_name = ""
+                for p in palaces:
+                    if p.get("gong") == tianfu_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="学业",
+                    finding=f"天辅文昌星与景门同落{gong_name}宫，学业考试大吉之象",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.HIGH,
+                ))
+
+        # 六爻：看父母爻（文书学业爻）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            lines = ly.get("lines", [])
+            shi = ly.get("shi")
+
+            # 找所有父母爻
+            fumu_yaos = [l for l in lines if l.get("liu_qin") == "父母"]
+            if fumu_yaos:
+                # 父母爻旺相判断：看日月建旺衰
+                ri_yue = ly.get("ri_yue_jian", {})
+                ri_ws = ri_yue.get("ri_wangshuai", {})
+
+                for fy in fumu_yaos:
+                    fy_wx = fy.get("wuxing", "")
+                    fy_pos = fy.get("position", 0)
+                    fy_dizhi = fy.get("dizhi", "")
+                    is_shi = fy.get("is_shi", False)
+
+                    # 父母爻是否旺相
+                    is_wang = ri_ws.get(fy_wx, "") in ("旺", "相") if fy_wx and ri_ws else False
+
+                    if is_shi:
+                        # 父母爻持世——重视学业，学习态度端正
+                        items.append(ConsensusItem(
+                            aspect="学业",
+                            finding=f"六爻父母爻{fy_dizhi}持世，学业态度端正，重视文书学习",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.MEDIUM,
+                        ))
+
+                    if is_wang:
+                        items.append(ConsensusItem(
+                            aspect="学业",
+                            finding=f"六爻父母爻{fy_dizhi}（{fy_wx}）旺相，学业根基扎实，考试有成",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.HIGH,
+                        ))
+                        break  # 取第一个旺相的即可
 
         return items
 
