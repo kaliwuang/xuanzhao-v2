@@ -30,6 +30,18 @@ class QiMenEngine(DivinationEngine):
     # 八神
     EIGHT_GODS = ['值符', '腾蛇', '太阴', '六合', '白虎', '玄武', '九地', '九天']
 
+    # 甲隐遁六仪映射（甲子→戊, 甲戌→己, 甲申→庚, 甲午→辛, 甲辰→壬, 甲寅→癸）
+    JIA_HIDE = {
+        '子': '戊', '丑': '己', '寅': '庚', '卯': '辛', '辰': '壬', '巳': '癸',
+        '午': '戊', '未': '己', '申': '庚', '酉': '辛', '戌': '壬', '亥': '癸',
+    }
+
+    # 地支→九宫映射
+    ZHI_TO_GONG_NUM = {
+        '子': 1, '丑': 8, '寅': 8, '卯': 3, '辰': 4, '巳': 4,
+        '午': 9, '未': 2, '申': 2, '酉': 7, '戌': 6, '亥': 6,
+    }
+
     # 阳遁局数（节气 -> 局）
     YANG_JU = {
         '冬至': 1, '小寒': 2, '大寒': 3,
@@ -277,11 +289,9 @@ class QiMenEngine(DivinationEngine):
 
         # 天盘旋转：找到时干在地盘中的宫位
         # 甲不直接出现在地盘（三奇六仪），需查找其隐遁的六仪
-        JIA_HIDE = {'子': '戊', '丑': '己', '寅': '庚', '卯': '辛', '辰': '壬', '巳': '癸',
-                     '午': '戊', '未': '己', '申': '庚', '酉': '辛', '戌': '壬', '亥': '癸'}
         lookup_gan = hour_gan
         if hour_gan == '甲' and len(hour_gan_zhi) > 1:
-            lookup_gan = JIA_HIDE.get(hour_gan_zhi[1], '戊')
+            lookup_gan = self.JIA_HIDE.get(hour_gan_zhi[1], '戊')
         hour_gan_gong = None
         for gong, yi in di_pan.items():
             if yi == lookup_gan:
@@ -354,10 +364,8 @@ class QiMenEngine(DivinationEngine):
     def _find_gong_for_gan(self, di_pan: dict, gan_zhi: str) -> int:
         """在地盘中找到天干所在宫位（甲需查找隐遁的六仪）"""
         gan = gan_zhi[0] if gan_zhi else ''
-        JIA_HIDE = {'子': '戊', '丑': '己', '寅': '庚', '卯': '辛', '辰': '壬', '巳': '癸',
-                     '午': '戊', '未': '己', '申': '庚', '酉': '辛', '戌': '壬', '亥': '癸'}
         zhi = gan_zhi[1] if len(gan_zhi) > 1 else ''
-        lookup = JIA_HIDE.get(zhi, '戊') if gan == '甲' else gan
+        lookup = self.JIA_HIDE.get(zhi, '戊') if gan == '甲' else gan
         for gong, yi in di_pan.items():
             if yi == lookup:
                 return gong
@@ -507,13 +515,9 @@ class QiMenEngine(DivinationEngine):
         # 旬空宫
         kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
         kong_gongs = []
-        ZHI_TO_GONG = {
-            '子': 1, '丑': 8, '寅': 8, '卯': 3, '辰': 4, '巳': 4,
-            '午': 9, '未': 2, '申': 2, '酉': 7, '戌': 6, '亥': 6,
-        }
         for zhi in kong_wang:
-            if zhi in ZHI_TO_GONG:
-                kong_gongs.append(ZHI_TO_GONG[zhi])
+            if zhi in self.ZHI_TO_GONG_NUM:
+                kong_gongs.append(self.ZHI_TO_GONG_NUM[zhi])
 
         return {
             'ji_ge': ji_ge,
@@ -558,11 +562,7 @@ class QiMenEngine(DivinationEngine):
             year_ganzhi = f'{year_gan}{year_zhi}'
 
             # 太岁地支→宫位
-            ZHI_TO_GONG_NUM = {
-                '子': 1, '丑': 8, '寅': 8, '卯': 3, '辰': 4, '巳': 4,
-                '午': 9, '未': 2, '申': 2, '酉': 7, '戌': 6, '亥': 6,
-            }
-            tai_sui_gong = ZHI_TO_GONG_NUM.get(year_zhi, 0)
+            tai_sui_gong = self.ZHI_TO_GONG_NUM.get(year_zhi, 0)
 
             # 找到太岁宫的信息
             tai_sui_palace = None
