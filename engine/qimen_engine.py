@@ -381,6 +381,7 @@ class QiMenEngine(DivinationEngine):
         for gong, yi in di_pan.items():
             if yi == lookup:
                 return gong
+        logger.warning(f"_find_gong_for_gan: 天干'{gan_zhi}'（查找'{lookup}'）未在地盘中找到，回退到坎一宫")
         return 1  # fallback
 
     def _calc_xun_kong(self, day_gan_zhi: str) -> dict:
