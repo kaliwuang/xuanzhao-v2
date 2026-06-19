@@ -562,10 +562,11 @@ class QiMenEngine(DivinationEngine):
         return summary
 
     def _build_liunian(self, solar_dt: datetime, di_pan: dict, tian_pan: dict, palaces: list) -> dict:
-        """流年太岁分析 — 当前年份太落在哪个宫，与各宫的关系"""
+        """流年太岁分析 — 当前年份太岁落在哪个宫，与各宫的关系"""
         try:
             from lunar_python import Solar
-            solar = Solar.fromYmdHms(solar_dt.year, solar_dt.month, solar_dt.day, solar_dt.hour, solar_dt.minute, 0)
+            now = datetime.now()
+            solar = Solar.fromYmdHms(now.year, now.month, now.day, now.hour, now.minute, 0)
             lunar = solar.getLunar()
             year_gan = lunar.getYearGan()
             year_zhi = lunar.getYearZhi()
@@ -582,7 +583,7 @@ class QiMenEngine(DivinationEngine):
                     break
 
             return {
-                'year': solar_dt.year,
+                'year': now.year,
                 'year_ganzhi': year_ganzhi,
                 'year_gan': year_gan,
                 'year_zhi': year_zhi,
