@@ -219,6 +219,7 @@ class CrossValidator:
                     _KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
                     _ss_wx_map = {}
                     if _day_wx:
+                        _bei_ke = {v:k for k,v in _KE.items()}  # 克我→我(被克之五行)
                         _ss_wx_map = {
                             '正印': {v:k for k,v in _SHENG.items()}[_day_wx],
                             '偏印': {v:k for k,v in _SHENG.items()}[_day_wx],
@@ -229,15 +230,10 @@ class CrossValidator:
                             '伤官': _SHENG[_day_wx], '伤': _SHENG[_day_wx],
                             '正财': _KE[_day_wx], '财': _KE[_day_wx],
                             '偏财': _KE[_day_wx],
-                            '正官': _KE.get(_KE.get(_day_wx,''), _day_wx),  # 克我
-                            '七杀': _KE.get(_KE.get(_day_wx,''), _day_wx), '杀': _KE.get(_KE.get(_day_wx,''), _day_wx),
+                            '正官': _bei_ke.get(_day_wx, ''),
+                            '七杀': _bei_ke.get(_day_wx, ''),
+                            '杀': _bei_ke.get(_day_wx, ''),
                         }
-                    # 官杀是"克我"的五行
-                    _bei_ke = {v:k for k,v in _KE.items()}
-                    if _day_wx:
-                        _ss_wx_map['正官'] = _bei_ke.get(_day_wx, '')
-                        _ss_wx_map['七杀'] = _bei_ke.get(_day_wx, '')
-                        _ss_wx_map['杀'] = _bei_ke.get(_day_wx, '')
                     _ss_wx = _ss_wx_map.get(shishen, '')
                     xi_list = bazi_xiyong if isinstance(bazi_xiyong, list) else [bazi_xiyong]
                     is_favorable = _ss_wx in xi_list if _ss_wx else False
