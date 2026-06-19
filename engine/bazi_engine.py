@@ -218,6 +218,7 @@ class BaziEngine(DivinationEngine):
         # 空亡
         xunkong = {
             "year": ec.getYearXunKong(),
+            "month": ec.getMonthXunKong(),
             "day": ec.getDayXunKong(),
             "time": ec.getTimeXunKong(),
         }
