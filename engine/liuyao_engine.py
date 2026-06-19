@@ -460,19 +460,13 @@ class LiuYaoEngine(DivinationEngine):
 
         return result
 
-    @staticmethod
-    def _zhi_liuhe(zhi: str) -> str:
+    def _zhi_liuhe(self, zhi: str) -> str:
         """地支六合"""
-        pairs = {'子': '丑', '丑': '子', '寅': '亥', '亥': '寅', '卯': '戌', '戌': '卯',
-                 '辰': '酉', '酉': '辰', '巳': '申', '申': '巳', '午': '未', '未': '午'}
-        return pairs.get(zhi, '')
+        return self.ZHI_HE.get(zhi, '')
 
-    @staticmethod
-    def _zhi_liuchong(zhi: str) -> str:
+    def _zhi_liuchong(self, zhi: str) -> str:
         """地支六冲"""
-        pairs = {'子': '午', '午': '子', '丑': '未', '未': '丑', '寅': '申', '申': '寅',
-                 '卯': '酉', '酉': '卯', '辰': '戌', '戌': '辰', '巳': '亥', '亥': '巳'}
-        return pairs.get(zhi, '')
+        return self.ZHI_CHONG.get(zhi, '')
 
     # ─── 自包含引擎（回退）──────────────────────────────
 
@@ -720,53 +714,56 @@ class LiuYaoEngine(DivinationEngine):
         "巳": "申", "申": "巳", "午": "未", "未": "午",
     }
 
+    SHENG = {'木': '火', '火': '土', '土': '金', '金': '水', '水': '木'}
+    KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
+
+    LIUQIN_TABLE = {
+        ("金", "金"): "兄弟", ("金", "木"): "妻财", ("金", "水"): "子孙",
+        ("金", "火"): "官鬼", ("金", "土"): "父母",
+        ("木", "木"): "兄弟", ("木", "土"): "妻财", ("木", "火"): "子孙",
+        ("木", "金"): "官鬼", ("木", "水"): "父母",
+        ("水", "水"): "兄弟", ("水", "火"): "妻财", ("水", "土"): "官鬼",
+        ("水", "木"): "子孙", ("水", "金"): "父母",
+        ("火", "火"): "兄弟", ("火", "金"): "妻财", ("火", "水"): "官鬼",
+        ("火", "土"): "子孙", ("火", "木"): "父母",
+        ("土", "土"): "兄弟", ("土", "水"): "妻财", ("土", "木"): "官鬼",
+        ("土", "火"): "父母", ("土", "金"): "子孙",
+    }
+
     def _calc_liuqin(self, gua_wuxing: str, yao_wuxing: str) -> str:
         """计算六亲"""
-        relations = {
-            ("金", "金"): "兄弟", ("金", "木"): "妻财", ("金", "水"): "子孙",
-            ("金", "火"): "官鬼", ("金", "土"): "父母",
-            ("木", "木"): "兄弟", ("木", "土"): "妻财", ("木", "火"): "子孙",
-            ("木", "金"): "官鬼", ("木", "水"): "父母",
-            ("水", "水"): "兄弟", ("水", "火"): "妻财", ("水", "土"): "官鬼",
-            ("水", "木"): "子孙", ("水", "金"): "父母",
-            ("火", "火"): "兄弟", ("火", "金"): "妻财", ("火", "水"): "官鬼",
-            ("火", "土"): "子孙", ("火", "木"): "父母",
-            ("土", "土"): "兄弟", ("土", "水"): "妻财", ("土", "木"): "官鬼",
-            ("土", "火"): "父母", ("土", "金"): "子孙",
-        }
-        return relations.get((gua_wuxing, yao_wuxing), "兄弟")
+        return self.LIUQIN_TABLE.get((gua_wuxing, yao_wuxing), "兄弟")
 
     def _get_wuxing_relation(self, wx_a: str, wx_b: str) -> str:
         """计算两个五行之间的关系（A 对 B）"""
-        SHENG = {'木': '火', '火': '土', '土': '金', '金': '水', '水': '木'}
         if not wx_a or not wx_b:
             return '未知'
         if wx_a == wx_b:
             return '比和'
-        if SHENG.get(wx_a) == wx_b:
+        if self.SHENG.get(wx_a) == wx_b:
             return f'{wx_a}生{wx_b}（我生）'
-        if SHENG.get(wx_b) == wx_a:
+        if self.SHENG.get(wx_b) == wx_a:
             return f'{wx_b}生{wx_a}（生我）'
         # 克: A克B
-        KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
-        if KE.get(wx_a) == wx_b:
+        if self.KE.get(wx_a) == wx_b:
             return f'{wx_a}克{wx_b}（我克）'
-        if KE.get(wx_b) == wx_a:
+        if self.KE.get(wx_b) == wx_a:
             return f'{wx_b}克{wx_a}（克我）'
         return '未知'
 
+    DONG_YAO_MEANINGS = {
+        0: '无动爻，卦象静止，事情稳定不变',
+        1: '一爻动，事有专主，变化明确，易断',
+        2: '二爻动，事情有两方面变化，需看动爻关系',
+        3: '三爻动，事情变化较多，以中间动爻为主',
+        4: '四爻动，变化纷繁，以不变之爻为主断',
+        5: '五爻动，以唯一静爻为主断',
+        6: '六爻全动，事情剧变，需看变卦整体',
+    }
+
     def _get_dong_yao_meaning(self, count: int) -> str:
         """解释动爻数量的含义"""
-        meanings = {
-            0: '无动爻，卦象静止，事情稳定不变',
-            1: '一爻动，事有专主，变化明确，易断',
-            2: '二爻动，事情有两方面变化，需看动爻关系',
-            3: '三爻动，事情变化较多，以中间动爻为主',
-            4: '四爻动，变化纷繁，以不变之爻为主断',
-            5: '五爻动，以唯一静爻为主断',
-            6: '六爻全动，事情剧变，需看变卦整体',
-        }
-        return meanings.get(count, '动爻异常')
+        return self.DONG_YAO_MEANINGS.get(count, '动爻异常')
 
     def _identify_ge_ju(self, ben_name: str, bian_name: str,
                         lines: list, bian_lines: list,
@@ -911,21 +908,19 @@ class LiuYaoEngine(DivinationEngine):
         yue_wx = self.ZHI_WUXING.get(yue_jian, '')
         
         # 旺衰关系分析
-        SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
-        KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
-        SHENG_REV = {v:k for k,v in SHENG.items()}
-        KE_REV = {v:k for k,v in KE.items()}
+        SHENG_REV = {v:k for k,v in self.SHENG.items()}
+        KE_REV = {v:k for k,v in self.KE.items()}
 
         def _wx_relation(wx: str, ref_wx: str) -> str:
             if not wx or not ref_wx:
                 return '无'
             if wx == ref_wx:
                 return '旺（比和）'
-            if SHENG.get(ref_wx) == wx:
+            if self.SHENG.get(ref_wx) == wx:
                 return '相（被生）'
             if SHENG_REV.get(ref_wx) == wx:
                 return '休（生出）'
-            if KE.get(ref_wx) == wx:
+            if self.KE.get(ref_wx) == wx:
                 return '囚（被克）'
             if KE_REV.get(ref_wx) == wx:
                 return '死（克出）'
