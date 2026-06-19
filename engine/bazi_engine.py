@@ -1038,12 +1038,12 @@ class BaziEngine(DivinationEngine):
         # 32. 天罗地网（以年支或日支查）
         tianluo_map = {'戌':'亥','亥':'戌'}
         diwang_map = {'辰':'巳','巳':'辰'}
-        for pos_idx, z in enumerate(all_zhis):
-            if z in tianluo_map and tianluo_map[z] in all_zhis:
-                shensha.append('天罗')
-        for pos_idx, z in enumerate(all_zhis):
-            if z in diwang_map and diwang_map[z] in all_zhis:
-                shensha.append('地网')
+        has_tianluo = any(z in tianluo_map and tianluo_map[z] in all_zhis for z in all_zhis)
+        if has_tianluo:
+            shensha.append('天罗')
+        has_diwang = any(z in diwang_map and diwang_map[z] in all_zhis for z in all_zhis)
+        if has_diwang:
+            shensha.append('地网')
 
         # 33. 十恶大败（以日柱查）
         eba_map = ['甲辰','乙巳','丙申','丁亥','戊戌','己丑','庚辰','辛巳','壬申','癸亥']
