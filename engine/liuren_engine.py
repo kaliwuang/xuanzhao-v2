@@ -10,6 +10,9 @@
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LiuRenEngine(DivinationEngine):
@@ -114,7 +117,8 @@ class LiuRenEngine(DivinationEngine):
 
             # 节气（用于月将判定）
             jieqi_name = self._get_current_jieqi(lunar)
-        except Exception:
+        except Exception as e:
+            logger.warning(f"lunar_python获取四柱干支失败，使用默认值: {e}")
             year_gan, year_zhi = "甲", "子"
             month_gan, month_zhi = "甲", "子"
             day_gan, day_zhi = "甲", "子"
@@ -219,8 +223,9 @@ class LiuRenEngine(DivinationEngine):
             # 四课详细解读
             si_ke_analysis = self._analyze_si_ke(si_ke_raw, day_gan, tian_jiang)
 
-        except Exception:
+        except Exception as e:
             # kinliuren 不可用时，返回最小可用结构
+            logger.warning(f"kinliuren排盘失败，使用最小可用结构: {e}")
             si_ke = ([], [], [], [])
             san_chuan = ([], [], [])
             tian_pan = {zhi: zhi for zhi in list("子丑寅卯辰巳午未申酉戌亥")}
