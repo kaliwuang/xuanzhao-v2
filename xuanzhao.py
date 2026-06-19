@@ -102,7 +102,7 @@ def cmd_analyze(args):
         print(f"  命宫: {zw.get('ming_gong', '?')}")
         wj = zw.get("wuxing_ju", {})
         if isinstance(wj, dict):
-            print(f"  五行局: {wj.get('name', '?')}")
+            print(f"  五行局: {wj.get('wuxing', '?')}{wj.get('ju_shu', '?')}局")
         sihua = zw.get("sihua", {})
         if sihua:
             print(f"  四化: {json.dumps(sihua, ensure_ascii=False)}")
