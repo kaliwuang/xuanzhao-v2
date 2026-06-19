@@ -475,6 +475,7 @@ class LiuYaoEngine(DivinationEngine):
         orig = time.true_solar
 
         # 获取农历信息用于起卦
+        lunar = None
         try:
             from lunar_python import Solar
             solar = Solar.fromYmdHms(orig.year, orig.month, orig.day, orig.hour, orig.minute, 0)
@@ -602,7 +603,7 @@ class LiuYaoEngine(DivinationEngine):
             'ge_ju': self._identify_ge_ju(
                 ben_name, bian_name, lines, bian_lines, shi_pos, ying_pos
             ),
-            'ri_yue_jian': self._calc_ri_yue_jian(day_gan, day_zhi, lunar.getMonthZhi() if 'lunar' in dir() else '子'),
+            'ri_yue_jian': self._calc_ri_yue_jian(day_gan, day_zhi, lunar.getMonthZhi() if lunar else '子'),
         }
 
     # ─── 自包含工具方法 ──────────────────────────────────
