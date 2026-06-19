@@ -101,6 +101,7 @@ SHENSHA_JIANGXING_MAP = {
 # ─── 天干关系表（模块级常量）──────────────────────────
 GAN_CHONG = {'甲':'庚','庚':'甲','乙':'辛','辛':'乙','丙':'壬','壬':'丙','丁':'癸','癸':'丁'}
 GAN_HE = {'甲':'己','己':'甲','乙':'庚','庚':'乙','丙':'辛','辛':'丙','丁':'壬','壬':'丁','戊':'癸','癸':'戊'}
+GAN_LIUHE = GAN_HE  # 天干六合（天德合、月德合复用此常量）
 
 # ─── 地支关系表（模块级常量）──────────────────────────
 ZHI_CHONG_MOD = {'子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅','卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'}
@@ -824,16 +825,15 @@ class BaziEngine(DivinationEngine):
 
         # 16. 天德合（以月支查天干，天德的六合）
         # tiande_map 已在第6步定义，此处复用
-        ZHI_LIUHE = {'子':'丑','丑':'子','寅':'亥','亥':'寅','卯':'戌','戌':'卯','辰':'酉','酉':'辰','巳':'申','申':'巳','午':'未','未':'午'}
-        tiande_he_map = {'甲':'己','乙':'庚','丙':'辛','丁':'壬','戊':'癸','己':'甲','庚':'乙','辛':'丙','壬':'丁','癸':'戊'}
+        from .udm import ZHI_LIUHE as _ZHI_LIUHE
         tiande = tiande_map.get(month_pillar.zhi, '')
         if tiande:
             tiande_he = ''
             if tiande in TIANGAN_SET:
-                tiande_he = tiande_he_map.get(tiande, '')
+                tiande_he = GAN_LIUHE.get(tiande, '')
             else:
                 # 天德为地支时，天德合取地支六合
-                tiande_he = ZHI_LIUHE.get(tiande, '')
+                tiande_he = _ZHI_LIUHE.get(tiande, '')
             if tiande_he:
                 if tiande_he in TIANGAN_SET:
                     for g_pos_idx, g in enumerate(all_gans):
@@ -849,9 +849,8 @@ class BaziEngine(DivinationEngine):
                             break
 
         # 17. 月德合（以月支查天干，月德的六合）
-        yuede_he_map = {'甲':'己','乙':'庚','丙':'辛','丁':'壬','戊':'癸','己':'甲','庚':'乙','辛':'丙','壬':'丁','癸':'戊'}
         yuede = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
-        yuede_he = yuede_he_map.get(yuede, '')
+        yuede_he = GAN_LIUHE.get(yuede, '')
         if yuede_he:
             for g_pos_idx, g in enumerate(all_gans):
                 if g == yuede_he:
