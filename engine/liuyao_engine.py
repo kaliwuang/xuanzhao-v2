@@ -411,7 +411,7 @@ class LiuYaoEngine(DivinationEngine):
             day_g = ec.getDayGan()
             day_z = ec.getDayZhi()
             month_z = ec.getMonthZhi()
-            result['ri_yue_jian'] = self._calc_ri_yue_jian(day_g, day_z, month_z)
+            result['ri_yue_jian'] = self._calc_ri_yue_jian(day_g, day_z, month_z, gua_gong_wuxing)
         except Exception:
             pass
 
@@ -609,7 +609,7 @@ class LiuYaoEngine(DivinationEngine):
             'ge_ju': self._identify_ge_ju(
                 ben_name, bian_name, lines, bian_lines, shi_pos, ying_pos
             ),
-            'ri_yue_jian': self._calc_ri_yue_jian(day_gan, day_zhi, lunar.getMonthZhi() if lunar else '子'),
+            'ri_yue_jian': self._calc_ri_yue_jian(day_gan, day_zhi, lunar.getMonthZhi() if lunar else '子', gua_gong_wuxing),
         }
 
     # ─── 自包含工具方法 ──────────────────────────────────
@@ -910,7 +910,7 @@ class LiuYaoEngine(DivinationEngine):
     # ─── 验证 ────────────────────────────────────────────
 
 
-    def _calc_ri_yue_jian(self, day_gan: str, day_zhi: str, month_zhi: str) -> dict:
+    def _calc_ri_yue_jian(self, day_gan: str, day_zhi: str, month_zhi: str, gua_gong_wuxing: str = '') -> dict:
         """计算日建月建对各爻的影响"""
         ri_jian = day_zhi  # 日建 = 日支
         yue_jian = month_zhi  # 月建 = 月支
@@ -949,7 +949,7 @@ class LiuYaoEngine(DivinationEngine):
             'yue_jian': yue_jian,
             'yue_jian_wuxing': yue_wx,
             'day_gan': day_gan,
-            'day_shishen': self._calc_liuqin(ri_wx, self.GAN_WUXING.get(day_gan, '')),
+            'day_shishen': self._calc_liuqin(gua_gong_wuxing or ri_wx, self.GAN_WUXING.get(day_gan, '')),
             'ri_wangshuai': ri_wangshuai,
             'yue_wangshuai': yue_wangshuai,
         }
