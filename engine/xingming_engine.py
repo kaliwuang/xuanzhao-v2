@@ -313,11 +313,11 @@ class XingMingEngine:
     def priority(self) -> int:
         return 8
 
-    def validate(self, data: dict) -> tuple:
+    def validate(self, data: dict) -> tuple[bool, Optional[str]]:
         """校验排盘数据"""
         if not data.get('wuge'):
             return False, '五格数据为空'
-        if not data.get('score'):
+        if data.get('score') is None:
             return False, '评分数据为空'
         return True, None
 
