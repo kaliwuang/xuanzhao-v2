@@ -875,10 +875,10 @@ class CrossValidator:
                             confidence=ConfidenceLevel.MEDIUM,
                         ))
 
-        # 紫微：看仆役宫（交友宫）
+        # 紫微：看交友宫（仆役宫）
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
-            p = self._find_palace(palaces, "仆役")
+            p = self._find_palace(palaces, "交友")
             if p:
                 stars = self._get_palace_stars(p)
                 if stars:
