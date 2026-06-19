@@ -6,7 +6,7 @@
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as _ZHI_LIUHE, ZHI_CHONG as ZHI_CHONG_MOD, ZHI_LIUHE as ZHI_HE_MOD
+from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as ZHI_HE_MOD, ZHI_CHONG as ZHI_CHONG_MOD
 import logging
 from datetime import datetime
 
@@ -845,7 +845,7 @@ class BaziEngine(DivinationEngine):
                 tiande_he = GAN_LIUHE.get(tiande, '')
             else:
                 # 天德为地支时，天德合取地支六合
-                tiande_he = _ZHI_LIUHE.get(tiande, '')
+                tiande_he = ZHI_HE_MOD.get(tiande, '')
             if tiande_he:
                 if tiande_he in TIANGAN_SET:
                     for g_pos_idx, g in enumerate(all_gans):
