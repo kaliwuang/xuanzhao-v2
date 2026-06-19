@@ -205,9 +205,9 @@ class LiuYaoEngine(DivinationEngine):
             else:
                 params.append(4)   # 老阴（阴动）
 
-        # 确保至少一个动爻
+        # 确保至少一个动爻（根据哈希值随机选择老阳或老阴）
         if not any(p > 2 for p in params):
-            params[h % 6] = 3
+            params[h % 6] = 3 if (h // 6) % 2 == 0 else 4
 
         return params
 
