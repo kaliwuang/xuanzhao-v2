@@ -489,6 +489,21 @@ class QiMenEngine(DivinationEngine):
             if p.get('tian_pan') == '庚' and p.get('di_pan') == '癸':
                 xiong_ge.append({'name': '小格', 'gong': p['gong'], 'desc': '庚加癸，格局不通'})
 
+        # 10. 飞鸟跌穴：天盘丙+地盘戊（丙奇到位，大吉格局）
+        for p in palaces:
+            if p.get('tian_pan') == '丙' and p.get('di_pan') == '戊':
+                ji_ge.append({'name': '飞鸟跌穴', 'gong': p['gong'], 'desc': '丙加戊，百事吉昌，如飞鸟归巢'})
+
+        # 11. 青龙返首：天盘戊+地盘丙（戊丙相合，大吉格局）
+        for p in palaces:
+            if p.get('tian_pan') == '戊' and p.get('di_pan') == '丙':
+                ji_ge.append({'name': '青龙返首', 'gong': p['gong'], 'desc': '戊加丙，贵人相助，逢凶化吉'})
+
+        # 12. 白虎猖狂：天盘辛+地盘乙（辛金克乙木，大凶格局）
+        for p in palaces:
+            if p.get('tian_pan') == '辛' and p.get('di_pan') == '乙':
+                xiong_ge.append({'name': '白虎猖狂', 'gong': p['gong'], 'desc': '辛加乙，金木相克，主伤灾破败'})
+
         # 旬空宫
         kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
         kong_gongs = []
