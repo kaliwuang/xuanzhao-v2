@@ -183,7 +183,7 @@ class ZiWeiEngine(DivinationEngine):
         ju_shu = CN_DIGITS.get(wuxing_ju_str[1], 6) if len(wuxing_ju_str) > 1 else 6
 
         # 起运年龄（五行局→起运虚岁）
-        JU_START_AGE = {1: 2, 2: 4, 3: 3, 4: 1, 5: 5, 6: 6}
+        JU_START_AGE = {2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
         start_age = JU_START_AGE.get(ju_shu, 6)
 
         # 四柱
