@@ -366,9 +366,14 @@ class ZiWeiEngine(DivinationEngine):
                                     star_cn = _cn_star(star_en, 'major') if star_en in MAJOR_STAR_MAP else _cn_star(star_en, 'minor')
                                     dx_sihua[MUTAGEN_LABELS[i]] = star_cn
 
+                        # 优先使用iztro库提供的精确年龄范围
+                        dx_range = getattr(dx, 'range', None)
+                        actual_start = dx_range[0] if dx_range and len(dx_range) >= 2 else test_age
+                        actual_end = dx_range[1] if dx_range and len(dx_range) >= 2 else test_age + 9
+
                         dai_xian.append({
-                            'start_age': test_age,
-                            'end_age': test_age + 9,
+                            'start_age': actual_start,
+                            'end_age': actual_end,
                             'ganzhi': gz,
                             'palace_name': pal_name,
                             'palace_index': dx.index,
