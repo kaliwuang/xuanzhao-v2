@@ -114,7 +114,7 @@ class QiMenEngine(DivinationEngine):
         # 5. 值符 & 值使
         zhi_fu_gong = self._find_gong_for_gan(di_pan, hour_gan_zhi)
         zhi_fu_star = jiu_xing.get(zhi_fu_gong, '天蓬')
-        zhi_shi_door = ba_men.get(1, '休门')
+        zhi_shi_door = ba_men.get(zhi_fu_gong, '休门')
 
         # 6. 八神
         ba_shen = self._build_ba_shen(yin_yang, zhi_fu_gong)
@@ -143,7 +143,7 @@ class QiMenEngine(DivinationEngine):
             'palaces': palaces,
             'zhi_fu': {'star': zhi_fu_star, 'gong': zhi_fu_gong},
             'zhi_fu_gong': zhi_fu_gong,
-            'zhi_shi': {'door': zhi_shi_door, 'gong': 1},
+            'zhi_shi': {'door': zhi_shi_door, 'gong': zhi_fu_gong},
             'solar_time': solar_dt.isoformat(),
             'gender': gender,
             'xun_kong': xun_kong,
