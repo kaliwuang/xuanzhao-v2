@@ -105,7 +105,12 @@ GAN_LIUHE = GAN_HE  # 天干六合（天德合、月德合复用此常量）
 
 # ─── 地支关系表（模块级常量）──────────────────────────
 # ZHI_CHONG_MOD 和 ZHI_HE_MOD 已从 udm 导入（见上方 import）
-ZHI_XING_MOD = {'子':'卯','卯':'子','寅':'巳','巳':'申','申':'寅','丑':'未','未':'戌','戌':'丑','辰':'辰','午':'午','酉':'酉','亥':'亥'}
+ZHI_XING_MOD = {'子':'卯','卯':'子','辰':'辰','午':'午','酉':'酉','亥':'亥'}
+# 三刑循环组（需三支齐全才算刑，不可拆成两两判断）
+SAN_XING_CYCLES = [
+    frozenset({'寅', '巳', '申'}),  # 无恩之刑
+    frozenset({'丑', '戌', '未'}),  # 恃势之刑
+]
 ZHI_HAI_MOD = {'子':'未','未':'子','丑':'午','午':'丑','寅':'巳','巳':'寅','卯':'辰','辰':'卯','申':'亥','亥':'申','酉':'戌','戌':'酉'}
 ZHI_PO_MOD = {'子':'酉','酉':'子','丑':'辰','辰':'丑','寅':'亥','亥':'寅','卯':'午','午':'卯','巳':'申','申':'巳','未':'戌','戌':'未'}
 
@@ -479,13 +484,18 @@ class BaziEngine(DivinationEngine):
                     zhi_relations.append(f'{z1}{z2}冲')
                 if ZHI_HE_MOD.get(z1) == z2:
                     zhi_relations.append(f'{z1}{z2}合')
-                # 三刑是三元循环(寅→巳→申→寅等)，需双向检测避免遗漏
+                # 子卯刑 + 自刑（辰辰午午酉酉亥亥）通过ZHI_XING_MOD查表
                 if ZHI_XING_MOD.get(z1) == z2 or ZHI_XING_MOD.get(z2) == z1:
                     zhi_relations.append(f'{z1}{z2}刑')
                 if ZHI_HAI_MOD.get(z1) == z2:
                     zhi_relations.append(f'{z1}{z2}害')
                 if ZHI_PO_MOD.get(z1) == z2:
                     zhi_relations.append(f'{z1}{z2}破')
+        # 三刑循环（寅巳申、丑戌未）：需三支齐全才算刑，不可拆成两两判断
+        zhi_set = set(all_zhis)
+        for cycle in SAN_XING_CYCLES:
+            if cycle <= zhi_set:
+                zhi_relations.append(f'{"·".join(cycle)}三刑')
 
         return {
             "engine": self.name,
