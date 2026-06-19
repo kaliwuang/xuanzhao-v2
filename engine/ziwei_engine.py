@@ -99,6 +99,20 @@ TIAN_GAN_SIHUA = {
 # 天干英文→中文映射（复用 STEM_MAP，消除重复定义）
 STEM_EN_TO_CN = STEM_MAP
 
+# 天干拼音→中文映射（iztro horoscope返回格式）
+PINYIN_STEM_MAP = {
+    'jia': '甲', 'yi': '乙', 'bing': '丙', 'ding': '丁',
+    'wu': '戊', 'ji': '己', 'geng': '庚', 'xin': '辛',
+    'ren': '壬', 'gui': '癸',
+}
+
+# 地支拼音→中文映射（iztro horoscope返回格式）
+PINYIN_BRANCH_MAP = {
+    'zi': '子', 'chou': '丑', 'yin': '寅', 'mao': '卯',
+    'chen': '辰', 'si': '巳', 'wu': '午', 'wei': '未',
+    'shen': '申', 'you': '酉', 'xu': '戌', 'hai': '亥',
+}
+
 
 def _cn_branch(en: str) -> str:
     """英文地支→中文"""
@@ -335,10 +349,8 @@ class ZiWeiEngine(DivinationEngine):
                     dx = h.decadal
                     stem_en = dx.heavenly_stem.replace('Heavenly', '')
                     branch_en = dx.earthly_branch.replace('Earthly', '')
-                    STEM_MAP_LOCAL = {'jia':'甲','yi':'乙','bing':'丙','ding':'丁','wu':'戊','ji':'己','geng':'庚','xin':'辛','ren':'壬','gui':'癸'}
-                    BRANCH_MAP_LOCAL = {'zi':'子','chou':'丑','yin':'寅','mao':'卯','chen':'辰','si':'巳','wu':'午','wei':'未','shen':'申','you':'酉','xu':'戌','hai':'亥'}
-                    s = STEM_MAP_LOCAL.get(stem_en, stem_en)
-                    b = BRANCH_MAP_LOCAL.get(branch_en, branch_en)
+                    s = PINYIN_STEM_MAP.get(stem_en, stem_en)
+                    b = PINYIN_BRANCH_MAP.get(branch_en, branch_en)
                     gz = f'{s}{b}'
                     if gz not in seen_palaces:
                         seen_palaces.add(gz)
