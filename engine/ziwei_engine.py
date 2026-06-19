@@ -316,6 +316,13 @@ class ZiWeiEngine(DivinationEngine):
 
         # 大限完整序列（保留原有逻辑用于dai_xian顶层字段）
         dai_xian = []
+
+        import calendar
+        def _safe_date_str(year: int, month: int, day: int) -> str:
+            """安全构造日期字符串，2月29日在非闰年自动回退到28日"""
+            _, last_day = calendar.monthrange(year, month)
+            return f'{year}-{month:02d}-{min(day, last_day):02d}'
+
         try:
             current_year = datetime.now().year
             birth_year = birth_dt.year if birth_dt else datetime.now().year
@@ -324,7 +331,7 @@ class ZiWeiEngine(DivinationEngine):
             for test_age in range(start_age, 100, 10):
                 test_year = birth_year + test_age - 1  # 虚岁
                 try:
-                    h = r.horoscope(f'{test_year}-{birth_dt.month:02d}-{birth_dt.day:02d}', time_index)
+                    h = r.horoscope(_safe_date_str(test_year, birth_dt.month, birth_dt.day), time_index)
                     dx = h.decadal
                     stem_en = dx.heavenly_stem.replace('Heavenly', '')
                     branch_en = dx.earthly_branch.replace('Earthly', '')
@@ -376,7 +383,7 @@ class ZiWeiEngine(DivinationEngine):
         if birth_dt:
             try:
                 current_year = datetime.now().year
-                h = r.horoscope(f'{current_year}-{birth_dt.month:02d}-{birth_dt.day:02d}', time_index)
+                h = r.horoscope(_safe_date_str(current_year, birth_dt.month, birth_dt.day), time_index)
                 liunian_palace_names = []
                 if hasattr(h, 'palace_names') and h.palace_names:
                     liunian_palace_names = [PALACE_NAME_MAP.get(n, n) for n in h.palace_names]
