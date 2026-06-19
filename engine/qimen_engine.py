@@ -3,6 +3,9 @@ Qi Men Dun Jia (奇门遁甲) Engine for XuanZhao v2.0
 """
 from typing import Optional
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
@@ -189,6 +192,8 @@ class QiMenEngine(DivinationEngine):
                     return jq_name, self.YANG_JU[jq_name], '阳遁'
                 elif jq_name in self.YIN_JU:
                     return jq_name, self.YIN_JU[jq_name], '阴遁'
+                else:
+                    logger.warning(f"lunar_python返回的节气'{jq_name}'不在阴阳遁局数表中，回退到近似计算")
         except Exception:
             pass
 
