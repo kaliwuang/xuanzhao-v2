@@ -75,6 +75,16 @@ class CrossValidator:
     def __init__(self, udm: DestinyModel):
         self.udm = udm
 
+    def _get_birth_year(self) -> int:
+        """从UDM获取出生公历年份，优先用birth_year字段，回退到corrected_time"""
+        by = getattr(self.udm, 'birth_year', 0)
+        if by:
+            return by
+        ct = getattr(self.udm, 'corrected_time', None)
+        if ct and hasattr(ct, 'original'):
+            return ct.original.year
+        return datetime.now().year  # 最终回退：用当前年份（影响最小）
+
     def validate(self) -> dict:
         results = {
             "consensus": [],
@@ -176,7 +186,7 @@ class CrossValidator:
         try:
             if bazi_xiyong and ziwei_dayun:
                 current_year = datetime.now().year
-                birth_year = getattr(self.udm, 'birth_year', 0) or 2005
+                birth_year = self._get_birth_year()
                 age = current_year - birth_year
                 for dy in ziwei_dayun:
                     start = dy.get("start_age", 0)
@@ -195,7 +205,7 @@ class CrossValidator:
         # ── 新增：利用八字详细大运数据做深层互证 ──
         if bazi_dayun:
             current_year = datetime.now().year
-            birth_year = getattr(self.udm, 'birth_year', 0) or 2005
+            birth_year = self._get_birth_year()
             age = current_year - birth_year
 
             for dy in bazi_dayun:
