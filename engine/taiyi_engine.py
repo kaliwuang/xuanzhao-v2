@@ -12,6 +12,13 @@ from .base import DivinationEngine
 from .time_engine import CorrectedTime
 from typing import Optional, Dict
 
+# 模块级别预导入kintaiyi（避免在HTTP线程中延迟导入失败）
+try:
+    from kintaiyi.kintaiyi import Taiyi as _TaiyiClass
+    _TAIYI_AVAILABLE = True
+except Exception:
+    _TAIYI_AVAILABLE = False
+
 
 # 地支→九宫映射
 ZHI_TO_GONG = {
@@ -58,8 +65,11 @@ class TaiYiEngine(DivinationEngine):
         hour = orig.hour
 
         try:
-            from kintaiyi.kintaiyi import Taiyi
-            t = Taiyi(year, month, day, hour, orig.minute)
+            if _TAIYI_AVAILABLE:
+                t = _TaiyiClass(year, month, day, hour, orig.minute)
+            else:
+                from kintaiyi.kintaiyi import Taiyi
+                t = Taiyi(year, month, day, hour, orig.minute)
         except Exception as e:
             return {"error": f"kintaiyi初始化失败: {str(e)}"}
 
@@ -225,9 +235,15 @@ class TaiYiEngine(DivinationEngine):
             ding_val = ding_suan[0] if isinstance(ding_suan, list) and ding_suan else ding_suan
             analysis['ding_ji'] = f'定算：{ding_val}'
 
-        # 主客对比
-        zhu_num_safe = int(zhu_suan[0]) if zhu_suan and isinstance(zhu_suan, list) else 0
-        ke_num_safe = int(ke_suan[0]) if ke_suan and isinstance(ke_suan, list) else 0
+        # 主客对比（安全转换，处理numpy类型和非数字值）
+        try:
+            zhu_num_safe = int(zhu_suan[0]) if zhu_suan and isinstance(zhu_suan, list) else 0
+        except (ValueError, TypeError, IndexError):
+            zhu_num_safe = 0
+        try:
+            ke_num_safe = int(ke_suan[0]) if ke_suan and isinstance(ke_suan, list) else 0
+        except (ValueError, TypeError, IndexError):
+            ke_num_safe = 0
         if zhu_num_safe and ke_num_safe:
             if zhu_num_safe > ke_num_safe:
                 analysis['pan_duan'] = f'主强客弱（{zhu_num_safe}>{ke_num_safe}），宜主动出击'
