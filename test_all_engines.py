@@ -94,7 +94,7 @@ except Exception as e:
 try:
     from engine.xingming_engine import XingMingEngine
     xe = XingMingEngine()
-    data = xe.analyze(ct, 1, name="侯惠斌")
+    data = xe.analyze_name("侯", "惠斌", "男")
     if "error" in data:
         print("ERR 姓名:", data["error"])
     else:

@@ -298,7 +298,13 @@ DIZHI_WUXING = {
 
 
 class XingMingEngine:
-    """姓名学引擎 - 五格剖象法"""
+    """姓名学引擎 - 五格剖象法
+
+    注意：姓名学需要额外的姓名输入。
+    使用方式：
+      1. 直接调用 analyze_name(surname, given_name, gender) 获取完整分析
+      2. 通过 set_name(surname, given_name) 设置姓名后，可使用标准 analyze(time, gender) 接口
+    """
 
     # DivinationEngine 兼容属性
     @property
@@ -324,11 +330,25 @@ class XingMingEngine:
     def __init__(self):
         self._81_table = SHUBA_81
         self._sancai_table = SANCAI_TABLE
+        self._surname = ''
+        self._given_name = ''
+
+    def set_name(self, surname: str, given_name: str):
+        """设置待分析的姓名（供标准analyze接口使用）"""
+        self._surname = surname
+        self._given_name = given_name
+
+    def analyze(self, time, gender: int) -> dict:
+        """标准DivinationEngine接口 — 需先通过set_name()设置姓名"""
+        if not self._surname or not self._given_name:
+            return {"error": "姓名未设置，请先调用 set_name(surname, given_name)"}
+        gender_str = '男' if gender == 1 else '女'
+        return self.analyze_name(self._surname, self._given_name, gender_str)
 
     # ─── Public API ────────────────────────────────────────────────────
 
-    def analyze(self, surname: str, given_name: str, gender: str,
-                bazi_info: Optional[dict] = None) -> dict:
+    def analyze_name(self, surname: str, given_name: str, gender: str,
+                     bazi_info: Optional[dict] = None) -> dict:
         """
         Analyze a name using 五格剖象法.
 
