@@ -12,6 +12,7 @@
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
 from typing import Optional
+from datetime import datetime
 import hashlib
 import logging
 
@@ -415,7 +416,8 @@ class LiuYaoEngine(DivinationEngine):
         # 流年太岁分析
         try:
             from lunar_python import Solar as _Solar
-            _solar = _Solar.fromYmdHms(orig.year, orig.month, orig.day, orig.hour, orig.minute, 0)
+            now = datetime.now()
+            _solar = _Solar.fromYmdHms(now.year, now.month, now.day, now.hour, now.minute, 0)
             _lunar = _solar.getLunar()
             _year_zhi = _lunar.getYearZhi()
             _year_gan = _lunar.getYearGan()
@@ -445,7 +447,7 @@ class LiuYaoEngine(DivinationEngine):
                     _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六冲太岁'})
 
             result['liunian'] = {
-                'year': orig.year,
+                'year': now.year,
                 'year_ganzhi': f'{_year_gan}{_year_zhi}',
                 'tai_sui_zhi': _year_zhi,
                 'tai_sui_wuxing': _tai_sui_wx,
