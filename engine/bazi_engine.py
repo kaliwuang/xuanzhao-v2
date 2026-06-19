@@ -265,11 +265,11 @@ class BaziEngine(DivinationEngine):
                     dy_shensha = []
                     if dy_zhi in SHENSHA_TIANYI_MAP.get(day_master, []):
                         dy_shensha.append('天乙贵人')
-                    if dy_zhi == SHENSHA_HUAGAI_MAP.get(year_pillar.zhi, ''):
+                    if dy_zhi == SHENSHA_HUAGAI_MAP.get(year_pillar.zhi, '') or dy_zhi == SHENSHA_HUAGAI_MAP.get(day_pillar.zhi, ''):
                         dy_shensha.append('华盖')
-                    if dy_zhi == SHENSHA_YIMA_MAP.get(year_pillar.zhi, ''):
+                    if dy_zhi == SHENSHA_YIMA_MAP.get(year_pillar.zhi, '') or dy_zhi == SHENSHA_YIMA_MAP.get(day_pillar.zhi, ''):
                         dy_shensha.append('驿马')
-                    if dy_zhi == SHENSHA_TAOHUA_MAP.get(year_pillar.zhi, ''):
+                    if dy_zhi == SHENSHA_TAOHUA_MAP.get(year_pillar.zhi, '') or dy_zhi == SHENSHA_TAOHUA_MAP.get(day_pillar.zhi, ''):
                         dy_shensha.append('桃花')
 
                     # 流年（该大运期间每年）
@@ -285,11 +285,11 @@ class BaziEngine(DivinationEngine):
                                 try:
                                     if ln_zhi in SHENSHA_TIANYI_MAP.get(day_master, []):
                                         ln_shensha.append('天乙贵人')
-                                    if ln_zhi == SHENSHA_HUAGAI_MAP.get(year_pillar.zhi, ''):
+                                    if ln_zhi == SHENSHA_HUAGAI_MAP.get(year_pillar.zhi, '') or ln_zhi == SHENSHA_HUAGAI_MAP.get(day_pillar.zhi, ''):
                                         ln_shensha.append('华盖')
-                                    if ln_zhi == SHENSHA_YIMA_MAP.get(year_pillar.zhi, ''):
+                                    if ln_zhi == SHENSHA_YIMA_MAP.get(year_pillar.zhi, '') or ln_zhi == SHENSHA_YIMA_MAP.get(day_pillar.zhi, ''):
                                         ln_shensha.append('驿马')
-                                    if ln_zhi == SHENSHA_TAOHUA_MAP.get(year_pillar.zhi, ''):
+                                    if ln_zhi == SHENSHA_TAOHUA_MAP.get(year_pillar.zhi, '') or ln_zhi == SHENSHA_TAOHUA_MAP.get(day_pillar.zhi, ''):
                                         ln_shensha.append('桃花')
                                     if ln_zhi == SHENSHA_WENCHANG_MAP.get(day_master, ''):
                                         ln_shensha.append('文昌')
