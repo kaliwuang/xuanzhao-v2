@@ -474,11 +474,14 @@ class QiMenEngine(DivinationEngine):
         # 甲辰壬→巽四(辰自刑)、甲寅癸→巽四(寅刑巳)
         XING_MAP = {1: '子', 8: '丑', 3: '卯', 4: '辰', 9: '午', 2: '未', 7: '酉', 6: '戌'}
         GAN_XING = {'戊': 3, '己': 2, '庚': 8, '辛': 9, '壬': 4, '癸': 4}
+        # 六仪击刑：每个天干所刑之地支（巽四宫有辰巳两支，壬用辰、癸用巳）
+        GAN_XING_BRANCH = {'戊': '卯', '己': '未', '庚': '寅', '辛': '午', '壬': '辰', '癸': '巳'}
         for p in palaces:
             g = p['gong']
             tp = p.get('tian_pan', '')
             if tp in GAN_XING and GAN_XING[tp] == g:
-                xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{XING_MAP.get(g, "中")}宫，刑伤之象'})
+                branch_name = GAN_XING_BRANCH.get(tp, XING_MAP.get(g, '中'))
+                xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{branch_name}宫，刑伤之象'})
 
         # 6. 入墓：天干落墓宫
         # 天干入墓表：乙→辰(4), 丙→戌(6), 丁→丑(8), 戊→辰(4), 己→丑(8), 庚→丑(8), 辛→辰(4), 壬→辰(4), 癸→未(2)
