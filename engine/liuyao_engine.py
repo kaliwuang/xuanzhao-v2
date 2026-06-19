@@ -805,11 +805,14 @@ class LiuYaoEngine(DivinationEngine):
             if all_same:
                 ge_ju.append('伏吟')
 
-            # 反吟：所有爻的地支五行都相冲
-            all_chong = all(
-                self.ZHI_CHONG.get(ben_yinyang[i][1]) == bian_yinyang[i][1]
-                for i in range(6)
+            # 反吟：所有爻的地支五行都相冲（至少需有1对有效地支才判定）
+            chong_pairs = [
+                i for i in range(6)
                 if ben_yinyang[i][1] and bian_yinyang[i][1]
+            ]
+            all_chong = bool(chong_pairs) and all(
+                self.ZHI_CHONG.get(ben_yinyang[i][1]) == bian_yinyang[i][1]
+                for i in chong_pairs
             )
             if all_chong:
                 ge_ju.append('反吟')
