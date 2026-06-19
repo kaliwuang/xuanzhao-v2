@@ -349,7 +349,9 @@ class QiMenEngine(DivinationEngine):
     def _build_ba_shen(self, yin_yang: str, zhi_fu_gong: int) -> dict:
         """分配八神（阳遁顺排，阴遁逆排）"""
         luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
-        start = luo8.index(zhi_fu_gong) if zhi_fu_gong in luo8 else 0
+        # 中宫5寄坤二宫（传统规则）
+        effective_gong = 2 if zhi_fu_gong == 5 else zhi_fu_gong
+        start = luo8.index(effective_gong) if effective_gong in luo8 else 0
         gods = self.EIGHT_GODS
 
         ba_shen = {}
