@@ -717,6 +717,8 @@ class LiuYaoEngine(DivinationEngine):
 
     SHENG = {'木': '火', '火': '土', '土': '金', '金': '水', '水': '木'}
     KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
+    SHENG_REV = {v: k for k, v in SHENG.items()}
+    KE_REV = {v: k for k, v in KE.items()}
 
     LIUQIN_TABLE = {
         ("金", "金"): "兄弟", ("金", "木"): "妻财", ("金", "水"): "子孙",
@@ -909,8 +911,8 @@ class LiuYaoEngine(DivinationEngine):
         yue_wx = self.ZHI_WUXING.get(yue_jian, '')
         
         # 旺衰关系分析
-        SHENG_REV = {v:k for k,v in self.SHENG.items()}
-        KE_REV = {v:k for k,v in self.KE.items()}
+        SHENG_REV = self.SHENG_REV
+        KE_REV = self.KE_REV
 
         def _wx_relation(wx: str, ref_wx: str) -> str:
             if not wx or not ref_wx:
