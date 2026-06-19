@@ -314,11 +314,14 @@ class LiuYaoEngine(DivinationEngine):
                     dizhi = gz[1]
                     wz_idx = ZHIS.index(dizhi)
                     wuxing = XING5[ZHI5[wz_idx]]
+                    # 阴阳由变卦卦码决定（与本卦一致的编码逻辑）
+                    bian_yinyang = '阳' if i < len(bian_mark) and bian_mark[i] == '1' else '阴'
                     bian_lines.append({
                         'liu_qin': bian_qin6[i] if i < len(bian_qin6) else '',
                         'wuxing': wuxing,
                         'dizhi': dizhi,
                         'gan': gan,
+                        'yinyang': bian_yinyang,
                         'position': i + 1,
                     })
 
