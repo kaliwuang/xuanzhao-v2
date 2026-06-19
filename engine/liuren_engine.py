@@ -254,6 +254,9 @@ class LiuRenEngine(DivinationEngine):
         san_chuan_list = [list(c) if isinstance(c, (tuple, list)) else c for c in san_chuan]
 
         return {
+            # 引擎标识
+            "engine": self.name,
+            "engine_en": self.name_en,
             # 四柱
             "year_gan": year_gan,
             "year_zhi": year_zhi,

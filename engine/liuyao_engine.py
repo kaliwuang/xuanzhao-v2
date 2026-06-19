@@ -381,6 +381,8 @@ class LiuYaoEngine(DivinationEngine):
         )
 
         result = {
+            'engine': self.name,
+            'engine_en': self.name_en,
             'ben_gua': ben_gua,
             'bian_gua': bian_gua,
             'dong_yao': [d + 1 for d in dong],  # najia 0-indexed → 统一为 1-indexed
@@ -579,6 +581,8 @@ class LiuYaoEngine(DivinationEngine):
             })
 
         return {
+            'engine': self.name,
+            'engine_en': self.name_en,
             'ben_gua': {
                 'name': ben_name,
                 'shang': shang_gua,

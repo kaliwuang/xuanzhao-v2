@@ -422,6 +422,8 @@ class ZiWeiEngine(DivinationEngine):
                 pass
 
         return {
+            'engine': self.name,
+            'engine_en': self.name_en,
             'ming_gong': ming_gong_branch,
             'shen_gong': shen_gong_branch,
             'soul_star': soul_star,

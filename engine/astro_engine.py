@@ -197,6 +197,8 @@ class AstroEngine(DivinationEngine):
             south_node = {}
 
         return {
+            'engine': self.name,
+            'engine_en': self.name_en,
             'sun_sign': sun_sign,
             'sun_element': sun_element,
             'moon_sign': moon_sign,

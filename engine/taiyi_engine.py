@@ -169,6 +169,8 @@ class TaiYiEngine(DivinationEngine):
         sheng_fu = r.get('推多少以占勝負', '')
 
         return {
+            'engine': self.name,
+            'engine_en': self.name_en,
             'taiyi_gong': taiyi_gong,
             'taiyi_num': taiyi_num,
             'taiyi_gua': taiyi_gua,

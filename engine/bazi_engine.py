@@ -488,6 +488,8 @@ class BaziEngine(DivinationEngine):
                     zhi_relations.append(f'{z1}{z2}破')
 
         return {
+            "engine": self.name,
+            "engine_en": self.name_en,
             "year": year_pillar,
             "month": month_pillar,
             "day": day_pillar,
