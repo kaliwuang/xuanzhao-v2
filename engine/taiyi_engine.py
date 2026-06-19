@@ -119,8 +119,8 @@ class TaiYiEngine(DivinationEngine):
         ju_num = ju_shi.get('數', 0)
         ji_nian = ju_shi.get('積年數', 0)
 
-        # 阴阳遁
-        yin_yang = '阳遁' if '陽遁' in ju_name else '阴遁'
+        # 阴阳遁（兼容繁简体）
+        yin_yang = '阳遁' if ('陽遁' in ju_name or '阳遁' in ju_name) else '阴遁'
 
         # 天乙/地乙/四神
         tian_yi = r.get('天乙', '')
