@@ -688,6 +688,95 @@ class CrossValidator:
                             confidence=ConfidenceLevel.MEDIUM
                         ))
 
+        # 奇门遁甲：天芮星（病星）、死门、天心星（医药星）
+        if self.udm.qimen_chart:
+            qm = self.udm.qimen_chart
+            palaces = qm.get("palaces", [])
+            ba_men = qm.get("ba_men", {})
+            jiu_xing = qm.get("jiu_xing", {})
+
+            # 九宫→身体部位映射（传统奇门健康对应）
+            GONG_BODY = {
+                1: "肾、膀胱、泌尿生殖系统",
+                2: "腹部、脾胃、消化系统",
+                3: "足部、肝胆、神经系统",
+                4: "大腿、肝胆、呼吸神经",
+                5: "脾胃（中宫寄坤）",
+                6: "头部、肺、大肠、骨骼",
+                7: "口腔、肺、呼吸系统",
+                8: "手背、关节、脊椎",
+                9: "眼睛、心脏、小肠、血液循环",
+            }
+
+            # 天芮星落宫（病星——主要健康薄弱点）
+            tianrui_gong = None
+            for g, star in jiu_xing.items():
+                if star == "天芮":
+                    tianrui_gong = int(g) if str(g).isdigit() else 0
+                    break
+            if tianrui_gong and tianrui_gong in GONG_BODY:
+                body = GONG_BODY[tianrui_gong]
+                gong_name = ""
+                for p in palaces:
+                    if p.get("gong") == tianrui_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="健康体质",
+                    finding=f"天芮星（病星）落{gong_name}，健康薄弱区：{body}",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.HIGH,
+                ))
+
+            # 死门落宫（重症/慢性隐患区域）
+            simen_gong = None
+            for g, men in ba_men.items():
+                if men == "死门":
+                    simen_gong = int(g) if str(g).isdigit() else 0
+                    break
+            if simen_gong and simen_gong in GONG_BODY:
+                body = GONG_BODY[simen_gong]
+                gong_name = ""
+                for p in palaces:
+                    if p.get("gong") == simen_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="健康体质",
+                    finding=f"死门落{gong_name}，需关注{body}的慢性隐患",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 天心星落宫（医药星——代表治疗和康复能力）
+            tianxin_gong = None
+            for g, star in jiu_xing.items():
+                if star == "天心":
+                    tianxin_gong = int(g) if str(g).isdigit() else 0
+                    break
+            if tianxin_gong:
+                gong_name = ""
+                for p in palaces:
+                    if p.get("gong") == tianxin_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="健康体质",
+                    finding=f"天心星（医药星）落{gong_name}，有治疗康复之机",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 天芮与死门同宫（严重健康警告）
+            if tianrui_gong and simen_gong and tianrui_gong == simen_gong:
+                body = GONG_BODY.get(tianrui_gong, "相关部位")
+                items.append(ConsensusItem(
+                    aspect="健康体质",
+                    finding=f"天芮病星与死门同宫，{body}健康风险较高，宜早做体检",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.HIGH,
+                ))
+
         return items
 
     def _validate_wealth(self) -> List[ConsensusItem]:
@@ -2075,6 +2164,32 @@ class CrossValidator:
         # 调候用神
         if self.udm.tiaohou:
             health_suggest.append(f"调候用神{self.udm.tiaohou}，养生可参考")
+
+        # 奇门：天芮病星分析
+        if self.udm.qimen_chart:
+            qm = self.udm.qimen_chart
+            jiu_xing = qm.get("jiu_xing", {})
+            ba_men = qm.get("ba_men", {})
+            palaces = qm.get("palaces", [])
+            GONG_BODY = {
+                1: "肾、膀胱、泌尿生殖", 2: "脾胃、消化", 3: "肝胆、足部",
+                4: "肝胆、神经", 5: "脾胃", 6: "肺、大肠、骨骼",
+                7: "肺、呼吸", 8: "关节、脊椎", 9: "心脏、血液循环",
+            }
+            for g, star in jiu_xing.items():
+                if star == "天芮":
+                    gong = int(g) if str(g).isdigit() else 0
+                    body = GONG_BODY.get(gong, "")
+                    if body:
+                        health_trend.append(f"奇门天芮病星落{gong}宫，{body}偏弱")
+                        health_suggest.append(f"注意{body}保养")
+                        health_luck = "凶"
+            for g, men in ba_men.items():
+                if men == "死门":
+                    gong = int(g) if str(g).isdigit() else 0
+                    body = GONG_BODY.get(gong, "")
+                    if body:
+                        health_trend.append(f"死门落{gong}宫，{body}有慢性隐患")
 
         judgment["健康"]["趋势"] = "；".join(health_trend)
         judgment["健康"]["建议"] = "；".join(health_suggest) if health_suggest else "规律作息，适度运动"
