@@ -585,10 +585,10 @@ def debate_stream_fast(
     question: str = Query("此人命运如何？", description="问题"),
     figures: Optional[str] = Query(None, description="人物ID，逗号分隔"),
 ):
-    """快速辩论SSE流（108人模板推理，零LLM，仅玄照综合用1次LLM）"""
+    """快速辩论SSE流（串行审查链：首发推演→逐人审查→溟玄终审）"""
     def event_generator():
         try:
-            from engine.debate_engine import DebateEngine
+            from engine.sequential_review_debate import SequentialReviewDebate
             from engine.perspective_engine import PerspectiveEngine
 
             corrected, udm = _prepare_udm(birth, location, gender)
@@ -596,8 +596,8 @@ def debate_stream_fast(
             pe = PerspectiveEngine()
             opinions = pe.analyze(udm, question, _get_figure_ids(figures))
 
-            engine = DebateEngine()
-            for event in engine.debate_stream(opinions, question):
+            engine = SequentialReviewDebate()
+            for event in engine.run(opinions, question):
                 yield f"event: {event['event']}\ndata: {_json.dumps(event['data'], ensure_ascii=False)}\n\n"
 
         except Exception as e:
@@ -1073,6 +1073,10 @@ def get_hehun(
                 xi1 = "".join(xi1)
             if isinstance(xi2, list):
                 xi2 = "".join(xi2)
+            if isinstance(ji1, list):
+                ji1 = "".join(ji1)
+            if isinstance(ji2, list):
+                ji2 = "".join(ji2)
             if any(c in str(xi2) for c in str(xi1)):
                 complement = "互补型（喜用互生）"
                 complement_score = 90
