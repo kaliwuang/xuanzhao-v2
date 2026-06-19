@@ -44,6 +44,12 @@ GUA_TO_ZHI = {
 class TaiYiEngine(DivinationEngine):
     """太乙神数引擎（kintaiyi后端）"""
 
+    # 八卦→九宫名映射
+    GUA_TO_GONG = {
+        '坎': '坎一宫', '坤': '坤二宫', '震': '震三宫', '巽': '巽四宫',
+        '中': '中五宫', '乾': '乾六宫', '兑': '兑七宫', '艮': '艮八宫', '离': '离九宫',
+    }
+
     @property
     def name(self) -> str:
         return "太乙"
@@ -277,10 +283,7 @@ class TaiYiEngine(DivinationEngine):
 
     def _gua_to_gong(self, gua: str) -> str:
         """八卦→九宫名"""
-        return {
-            '坎': '坎一宫', '坤': '坤二宫', '震': '震三宫', '巽': '巽四宫',
-            '中': '中五宫', '乾': '乾六宫', '兑': '兑七宫', '艮': '艮八宫', '离': '离九宫',
-        }.get(gua, f'{gua}宫')
+        return self.GUA_TO_GONG.get(gua, f'{gua}宫')
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
         if data.get('error'):
