@@ -219,7 +219,6 @@ class ZiWeiEngine(DivinationEngine):
             palace_name = _cn_palace_name(p.name)
             branch = _cn_branch(p.earthly_branch)
             stem = _cn_stem(p.heavenly_stem)
-            stem_cn = STEM_EN_TO_CN.get(p.heavenly_stem, '')
 
             # 主星
             major_stars = []
@@ -256,7 +255,7 @@ class ZiWeiEngine(DivinationEngine):
             dai_xian_palace = {}
             if p.decadal:
                 dx_range = p.decadal.range  # (start_age, end_age)
-                dx_stem_cn = STEM_EN_TO_CN.get(p.decadal.heavenly_stem, '')
+                dx_stem_cn = _cn_stem(p.decadal.heavenly_stem)
                 dx_branch_cn = _cn_branch(p.decadal.earthly_branch)
                 dai_xian_palace = {
                     'start_age': dx_range[0] if dx_range else 0,
@@ -271,8 +270,8 @@ class ZiWeiEngine(DivinationEngine):
 
             # 自化计算：该宫天干引发的四化，是否影响到同宫的星
             self_hua = []
-            if stem_cn and stem_cn in TIAN_GAN_SIHUA:
-                palace_sihua = TIAN_GAN_SIHUA[stem_cn]
+            if stem and stem in TIAN_GAN_SIHUA:
+                palace_sihua = TIAN_GAN_SIHUA[stem]
                 palace_star_names = set()
                 for s in p.major_stars:
                     palace_star_names.add(_cn_star(s.name, 'major'))
