@@ -6,7 +6,7 @@
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING
+from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as _ZHI_LIUHE
 import logging
 from datetime import datetime
 
@@ -825,7 +825,6 @@ class BaziEngine(DivinationEngine):
 
         # 16. 天德合（以月支查天干，天德的六合）
         # tiande_map 已在第6步定义，此处复用
-        from .udm import ZHI_LIUHE as _ZHI_LIUHE
         tiande = tiande_map.get(month_pillar.zhi, '')
         if tiande:
             tiande_he = ''
