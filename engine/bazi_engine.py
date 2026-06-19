@@ -45,6 +45,9 @@ CHANGSHENG_ORDER = ['长生','沐浴','冠带','临官','帝旺','衰','病','�
 CHANGSHENG_START = {'甲':'亥','丙':'寅','戊':'寅','庚':'巳','壬':'申','乙':'午','丁':'酉','己':'酉','辛':'子','癸':'卯'}
 DI_ZHI = '子丑寅卯辰巳午未申酉戌亥'
 
+# 天干五行（字符串形式，从udm.GAN_WUXING派生）
+GAN_WUXING_STR = {k: v[0].value for k, v in GAN_WUXING.items()}
+
 # ─── 神煞查表（模块级常量，消除重复定义）──────────────────
 SHENSHA_TIANYI_MAP = {
     '甲': ['丑','未'], '戊': ['丑','未'], '庚': ['丑','未'],
@@ -355,12 +358,7 @@ class BaziEngine(DivinationEngine):
             logger.warning(f"大运计算异常: {e}")
 
         # 日主五行
-        gan_wuxing = {
-            "甲": "木", "乙": "木", "丙": "火", "丁": "火",
-            "戊": "土", "己": "土", "庚": "金", "辛": "金",
-            "壬": "水", "癸": "水",
-        }
-        day_master_wuxing = gan_wuxing.get(day_master, "")
+        day_master_wuxing = GAN_WUXING_STR.get(day_master, "")
 
         # 调候用神
         tiaohou = self._calc_tiaohou(day_master, month_pillar.zhi)
@@ -1208,12 +1206,7 @@ class BaziEngine(DivinationEngine):
         返回: {xi: [喜用五行], ji: [忌神五行], xian: [闲神五行], reason: str}
         """
         # 五行映射
-        gan_wuxing = {
-            '甲': '木', '乙': '木', '丙': '火', '丁': '火',
-            '戊': '土', '己': '土', '庚': '金', '辛': '金',
-            '壬': '水', '癸': '水',
-        }
-        day_wx = gan_wuxing.get(day_gan, '')
+        day_wx = GAN_WUXING_STR.get(day_gan, '')
         
         # 计算日主得分占比
         total = sum(wuxing_score.values()) if wuxing_score else 1
@@ -1248,14 +1241,11 @@ class BaziEngine(DivinationEngine):
         tiaohou_xi = []
         tiaohou_ji = []
         
-        # 天干→五行映射
-        GAN_WUXING = {'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'}
-        
         if BaziEngine._tiaohou_cache:
             tiaohou_str = BaziEngine._tiaohou_cache.get(day_gan, {}).get(month_zhi, "")
             if tiaohou_str:
                 # 调候用神天干 → 五行
-                tiaohou_xi = list(dict.fromkeys(GAN_WUXING.get(g, '') for g in tiaohou_str if GAN_WUXING.get(g, '')))
+                tiaohou_xi = list(dict.fromkeys(GAN_WUXING_STR.get(g, '') for g in tiaohou_str if GAN_WUXING_STR.get(g, '')))
         
         # 综合判断
         if strength == '中和' and tiaohou_xi:
