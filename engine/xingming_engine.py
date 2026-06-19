@@ -549,19 +549,20 @@ class XingMingEngine:
         # 总格
         zongge = total_surname + total_given
 
-        # 外格（按姓氏类型分公式，2026-06-13 修正）
-        # 单姓双名: 姓笔画 + 末字笔画 - 10
+        # 外格（按姓氏类型分公式）
+        # 标准公式：外格 = 总格 - 人格 + 1
+        # 单姓双名: 末字笔画 + 1
         # 单姓单名: 2
-        # 复姓双名: 末字笔画 + 1
+        # 复姓双名: 姓首字笔画 + 末字笔画 + 1
         # 复姓单名: 姓首字笔画 + 1
         if is_compound or surname_len > 1:
             if given_len >= 2:
-                waige = given_strokes[-1] + 1
+                waige = surname_strokes[0] + given_strokes[-1] + 1
             else:
                 waige = surname_strokes[0] + 1
         else:
             if given_len >= 2:
-                waige = surname_strokes[0] + given_strokes[-1] - 10
+                waige = given_strokes[-1] + 1
             else:
                 waige = 2
         # Ensure minimum of 2
