@@ -15,6 +15,24 @@ from typing import Optional
 class LiuRenEngine(DivinationEngine):
     """大六壬引擎（kinliuren 库驱动）"""
 
+    # 地支五行映射
+    ZHI_WUXING = {
+        "子": "水", "丑": "土", "寅": "木", "卯": "木",
+        "辰": "土", "巳": "火", "午": "火", "未": "土",
+        "申": "金", "酉": "金", "戌": "土", "亥": "水",
+    }
+
+    # 天干五行映射
+    GAN_WUXING = {
+        "甲": "木", "乙": "木", "丙": "火", "丁": "火",
+        "戊": "土", "己": "土", "庚": "金", "辛": "金",
+        "壬": "水", "癸": "水",
+    }
+
+    # 五行生克
+    SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
+    KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+
     @property
     def name(self) -> str:
         return "大六壬"
@@ -216,15 +234,10 @@ class LiuRenEngine(DivinationEngine):
 
         # ── 6. 合并十二宫信息（便于前端渲染） ──
         positions = {}
-        zhi_wuxing = {
-            "子": "水", "丑": "土", "寅": "木", "卯": "木",
-            "辰": "土", "巳": "火", "午": "火", "未": "土",
-            "申": "金", "酉": "金", "戌": "土", "亥": "水",
-        }
         for zhi in list("子丑寅卯辰巳午未申酉戌亥"):
             positions[zhi] = {
                 "zhi": zhi,
-                "wuxing": zhi_wuxing.get(zhi, ""),
+                "wuxing": self.ZHI_WUXING.get(zhi, ""),
                 "di_zhi": zhi,
                 "tian_zhi": di_to_tian.get(zhi, zhi),
                 "tian_jiang": di_to_jiang.get(zhi, ""),
@@ -293,22 +306,9 @@ class LiuRenEngine(DivinationEngine):
         """四课详细解读"""
         analysis = {}
 
-        ZHI_WUXING = {
-            '子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火',
-            '午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'
-        }
-
-        GAN_WUXING = {
-            '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土',
-            '庚':'金','辛':'金','壬':'水','癸':'水'
-        }
-
         KE_NAMES = {'一課': '干上神（日上）', '二課': '干阳神', '三課': '支上神（辰上）', '四課': '支阳神'}
 
-        SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
-        KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
-
-        day_wx = GAN_WUXING.get(day_gan, '')
+        day_wx = self.GAN_WUXING.get(day_gan, '')
 
         for key in ['一課', '二課', '三課', '四課']:
             val = si_ke_raw.get(key, [])
@@ -318,20 +318,20 @@ class LiuRenEngine(DivinationEngine):
             jiang = val[1] if len(val) > 1 else ''
 
             zhi = gz[-1] if gz else ''
-            wx = ZHI_WUXING.get(zhi, '')
+            wx = self.ZHI_WUXING.get(zhi, '')
 
             # 判断该课与日干的关系
             relation = ''
             if wx and day_wx:
                 if wx == day_wx:
                     relation = '比和'
-                elif SHENG.get(day_wx) == wx:
+                elif self.SHENG.get(day_wx) == wx:
                     relation = '我生'
-                elif SHENG.get(wx) == day_wx:
+                elif self.SHENG.get(wx) == day_wx:
                     relation = '生我'
-                elif KE.get(day_wx) == wx:
+                elif self.KE.get(day_wx) == wx:
                     relation = '我克'
-                elif KE.get(wx) == day_wx:
+                elif self.KE.get(wx) == day_wx:
                     relation = '克我'
 
             analysis[key] = {
@@ -377,16 +377,6 @@ class LiuRenEngine(DivinationEngine):
             "后": {"吉凶": "大吉", "含义": "恩泽、庇护、婚姻"},
         }
 
-        # 五行生克
-        SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
-        KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
-
-        zhi_wuxing = {
-            "子": "水", "丑": "土", "寅": "木", "卯": "木",
-            "辰": "土", "巳": "火", "午": "火", "未": "土",
-            "申": "金", "酉": "金", "戌": "土", "亥": "水",
-        }
-
         # 初传信息
         chu_chuan = san_chuan_raw.get("初傳", [])
         chu_zhi = chu_chuan[0] if chu_chuan else ""
@@ -397,24 +387,21 @@ class LiuRenEngine(DivinationEngine):
         jiang_info = JIANG_YI.get(chu_jiang, {"吉凶": "中", "含义": ""})
 
         # 日干五行
-        gan_wuxing = {"甲": "木", "乙": "木", "丙": "火", "丁": "火",
-                      "戊": "土", "己": "土", "庚": "金", "辛": "金",
-                      "壬": "水", "癸": "水"}
-        day_wx = gan_wuxing.get(day_gan, "")
-        chu_wx = zhi_wuxing.get(chu_zhi, "")
+        day_wx = self.GAN_WUXING.get(day_gan, "")
+        chu_wx = self.ZHI_WUXING.get(chu_zhi, "")
 
         # 初传与日干的关系
         relation = ""
         if day_wx and chu_wx:
             if day_wx == chu_wx:
                 relation = "比和"
-            elif SHENG.get(day_wx) == chu_wx:
+            elif self.SHENG.get(day_wx) == chu_wx:
                 relation = "我生（泄气）"
-            elif SHENG.get(chu_wx) == day_wx:
+            elif self.SHENG.get(chu_wx) == day_wx:
                 relation = "生我（得助）"
-            elif KE.get(day_wx) == chu_wx:
+            elif self.KE.get(day_wx) == chu_wx:
                 relation = "我克（得财）"
-            elif KE.get(chu_wx) == day_wx:
+            elif self.KE.get(chu_wx) == day_wx:
                 relation = "克我（受制）"
 
         return {
