@@ -563,7 +563,7 @@ class BaziEngine(DivinationEngine):
             else:
                 BaziEngine._tiaohou_cache = {}
         
-        if BaziEngine._tiaohou_cache is not None:
+        if BaziEngine._tiaohou_cache:
             return BaziEngine._tiaohou_cache.get(day_gan, {}).get(month_zhi, "")
 
         # 回退：硬编码
