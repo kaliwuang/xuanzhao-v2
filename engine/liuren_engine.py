@@ -92,16 +92,15 @@ class LiuRenEngine(DivinationEngine):
         try:
             from lunar_python import Solar
 
-            # 晚子时用次日日期定日柱
-            if time.is_late_zi:
-                from datetime import timedelta
-                pillar_date = orig + timedelta(days=1)
-            else:
-                pillar_date = orig
+            # 晚子时使用bazi引擎统一的日期和时辰处理
+            # bazi_day_pillar_date: 晚子时返回次日日期
+            # bazi_hour: 晚子时返回0（子时），避免lunar_python内部再做一次晚子时判定导致日柱偏移
+            pillar_date = time.bazi_day_pillar_date
+            bazi_hour = time.bazi_hour
 
             solar = Solar.fromYmdHms(
                 pillar_date.year, pillar_date.month, pillar_date.day,
-                orig.hour, orig.minute, 0
+                bazi_hour, orig.minute, 0
             )
             lunar = solar.getLunar()
             ec = lunar.getEightChar()
