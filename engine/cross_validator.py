@@ -584,6 +584,47 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
+        # 八字：日柱长生十二宫看先天元气
+        # 日柱天干坐支的十二长生状态直接反映日主的先天体质根基
+        changsheng = self.udm.changsheng or {}
+        day_cs = changsheng.get("day", "")
+        if day_cs:
+            # 先天元气充沛的状态
+            _CS_STRONG = {"长生", "临官", "帝旺", "冠带"}
+            # 元气衰弱或有健康隐忧的状态
+            _CS_WEAK = {"衰", "病", "死", "绝"}
+            # 潜伏/积蓄状态（墓库，慢性问题易积累）
+            _CS_STORAGE = {"墓"}
+            # 发育中状态
+            _CS_DEVELOPING = {"沐浴", "胎", "养"}
+
+            _CS_HEALTH_DESC = {
+                "长生": "日坐长生，先天元气充沛，生命力旺盛，体质根基好",
+                "临官": "日坐临官，精力充沛，身体素质佳，抗病力强",
+                "帝旺": "日坐帝旺，体能巅峰，但过旺需防亢极则衰，注意劳逸结合",
+                "冠带": "日坐冠带，体质成长良好，青年期精力旺盛",
+                "沐浴": "日坐沐浴（败地），元气初泄，需注意免疫系统和皮肤问题",
+                "衰": "日坐衰地，先天元气开始衰退，中年后需注重养生",
+                "病": "日坐病地，先天体质偏弱，对应脏腑易有慢性隐患，宜早调养",
+                "死": "日坐死地，日主根气薄弱，体质敏感，需格外注意健康管理",
+                "墓": "日坐墓库，能量内收，体质偏内敛，慢性病易积累而不自知，宜定期体检",
+                "绝": "日坐绝地，日主根基最弱，体质敏感易受环境影响，需系统调养",
+                "胎": "日坐胎地，体质如婴儿发育中，后天调养影响大",
+                "养": "日坐养地，体质在孕育中，先天底子一般但后天改善空间大",
+            }
+
+            desc = _CS_HEALTH_DESC.get(day_cs, "")
+            if desc:
+                conf = (ConfidenceLevel.HIGH if day_cs in _CS_STRONG
+                        else ConfidenceLevel.HIGH if day_cs in _CS_WEAK
+                        else ConfidenceLevel.MEDIUM)
+                items.append(ConsensusItem(
+                    aspect="健康体质",
+                    finding=desc,
+                    supporting_methods=["八字"],
+                    confidence=conf,
+                ))
+
         # 占星：看火星、土星相位
         if self.udm.astro_chart:
             aspects = self.udm.astro_chart.get("aspects", [])
