@@ -709,7 +709,9 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'将星（{pos}支{z}）')
 
-        # 6. 天德贵人（以月支查天干）
+        # 6. 天德贵人（以月支查天干或地支）
+        # 注意：天德值可能是天干也可能是地支（如子月→巳、卯月→申）
+        TIANGAN_SET = set('甲乙丙丁戊己庚辛壬癸')
         tiande_map = {
             '子':'巳','丑':'庚','寅':'丁','卯':'申',
             '辰':'壬','巳':'辛','午':'甲','未':'癸',
@@ -717,11 +719,20 @@ class BaziEngine(DivinationEngine):
         }
         tiande = tiande_map.get(month_pillar.zhi, '')
         if tiande:
-            for g_pos_idx, g in enumerate(all_gans):
-                if g == tiande:
-                    pos = ['年','月','日','时'][g_pos_idx]
-                    shensha.append(f'天德贵人（{pos}干{g}）')
-                    break
+            if tiande in TIANGAN_SET:
+                # 天德为天干，查四柱天干
+                for g_pos_idx, g in enumerate(all_gans):
+                    if g == tiande:
+                        pos = ['年','月','日','时'][g_pos_idx]
+                        shensha.append(f'天德贵人（{pos}干{g}）')
+                        break
+            else:
+                # 天德为地支（如巳、申），查四柱地支
+                for pos_idx, z in enumerate(all_zhis):
+                    if z == tiande:
+                        pos = ['年','月','日','时'][pos_idx]
+                        shensha.append(f'天德贵人（{pos}支{z}）')
+                        break
 
         # 7. 文昌贵人（以日干查）
         wenchang_zhi = SHENSHA_WENCHANG_MAP.get(day_gan, '')
@@ -816,16 +827,30 @@ class BaziEngine(DivinationEngine):
                 shensha.append(f'金舆（{pos}支{z}）')
 
         # 16. 天德合（以月支查天干，天德的六合）
-        tiande_map = {'子':'巳','丑':'庚','寅':'丁','卯':'申','辰':'壬','巳':'辛','午':'甲','未':'癸','申':'丙','酉':'乙','戌':'巳','亥':'庚'}
+        # tiande_map 已在第6步定义，此处复用
+        ZHI_LIUHE = {'子':'丑','丑':'子','寅':'亥','亥':'寅','卯':'戌','戌':'卯','辰':'酉','酉':'辰','巳':'申','申':'巳','午':'未','未':'午'}
         tiande_he_map = {'甲':'己','乙':'庚','丙':'辛','丁':'壬','戊':'癸','己':'甲','庚':'乙','辛':'丙','壬':'丁','癸':'戊'}
         tiande = tiande_map.get(month_pillar.zhi, '')
-        tiande_he = tiande_he_map.get(tiande, '')
-        if tiande_he:
-            for g_pos_idx, g in enumerate(all_gans):
-                if g == tiande_he:
-                    pos = ['年','月','日','时'][g_pos_idx]
-                    shensha.append(f'天德合（{pos}干{g}）')
-                    break
+        if tiande:
+            tiande_he = ''
+            if tiande in TIANGAN_SET:
+                tiande_he = tiande_he_map.get(tiande, '')
+            else:
+                # 天德为地支时，天德合取地支六合
+                tiande_he = ZHI_LIUHE.get(tiande, '')
+            if tiande_he:
+                if tiande_he in TIANGAN_SET:
+                    for g_pos_idx, g in enumerate(all_gans):
+                        if g == tiande_he:
+                            pos = ['年','月','日','时'][g_pos_idx]
+                            shensha.append(f'天德合（{pos}干{g}）')
+                            break
+                else:
+                    for pos_idx, z in enumerate(all_zhis):
+                        if z == tiande_he:
+                            pos = ['年','月','日','时'][pos_idx]
+                            shensha.append(f'天德合（{pos}支{z}）')
+                            break
 
         # 17. 月德合（以月支查天干，月德的六合）
         yuede_map = {'子':'壬','丑':'庚','寅':'丙','卯':'甲','辰':'壬','巳':'庚','午':'丙','未':'甲','申':'壬','酉':'庚','戌':'丙','亥':'甲'}
