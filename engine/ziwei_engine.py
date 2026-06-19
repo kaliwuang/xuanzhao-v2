@@ -389,8 +389,8 @@ class ZiWeiEngine(DivinationEngine):
             BRANCH_ORDER = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
             # 逆数到出生月份所在宫位
             month_palace_idx = (3 - birth_dt.month) % 12
-            # 从该宫起子时，顺数到出生时辰
-            dou_jun_idx = (month_palace_idx + time_index) % 12
+            # 从该宫起子时，顺数到出生时辰（晚子时time_index=12需取模12归零）
+            dou_jun_idx = (month_palace_idx + time_index % 12) % 12
             zi_dou = BRANCH_ORDER[dou_jun_idx]
 
         # 流年分析（当年太岁四化、流年命宫等）
