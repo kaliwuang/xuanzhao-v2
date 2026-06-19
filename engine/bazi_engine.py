@@ -667,43 +667,38 @@ class BaziEngine(DivinationEngine):
 
         # 1. 天乙贵人（以日干查四支）
         tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z in tianyi_zhis:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天乙贵人（{pos}支{z}）')
-                break
 
         # 2. 华盖（以年支查四支）
         huagai_zhi = SHENSHA_HUAGAI_MAP.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == huagai_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'华盖（{pos}支{z}）')
-                break
 
         # 3. 驿马（以年支查三合局冲位）
         yima_zhi = SHENSHA_YIMA_MAP.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == yima_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'驿马（{pos}支{z}）')
-                break
 
         # 4. 桃花（以年支查）
         taohua_zhi = SHENSHA_TAOHUA_MAP.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == taohua_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'桃花（{pos}支{z}）')
-                break
 
         # 5. 将星（以年支查）
         jiangxing_zhi = SHENSHA_JIANGXING_MAP.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == jiangxing_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'将星（{pos}支{z}）')
-                break
 
         # 6. 天德贵人（以月支查天干）
         tiande_map = {
@@ -713,19 +708,18 @@ class BaziEngine(DivinationEngine):
         }
         tiande = tiande_map.get(month_pillar.zhi, '')
         if tiande:
-            for g in all_gans:
+            for g_pos_idx, g in enumerate(all_gans):
                 if g == tiande:
-                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    pos = ['年','月','日','时'][g_pos_idx]
                     shensha.append(f'天德贵人（{pos}干{g}）')
                     break
 
         # 7. 文昌贵人（以日干查）
         wenchang_zhi = SHENSHA_WENCHANG_MAP.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == wenchang_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'文昌贵人（{pos}支{z}）')
-                break
 
         # 8. 红艳煞（以日干查）
         hongyan_map = {
@@ -734,35 +728,31 @@ class BaziEngine(DivinationEngine):
             '壬':'子','癸':'申',
         }
         hongyan_zhi = hongyan_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == hongyan_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'红艳煞（{pos}支{z}）')
-                break
 
         # 9. 禄神（以日干查）
         lu_zhi = SHENSHA_LU_MAP.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == lu_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'禄神（{pos}支{z}）')
-                break
 
         # 10. 红鸾（以年支查）
         hongluan_zhi = SHENSHA_HONGLUAN_MAP.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == hongluan_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'红鸾（{pos}支{z}）')
-                break
 
         # 11. 天喜（以年支查，红鸾对冲）
         tianxi_zhi = SHENSHA_TIANXI_MAP.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == tianxi_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天喜（{pos}支{z}）')
-                break
 
         # 12. 月德（以月支查天干）
         yuede_map = {
@@ -772,9 +762,9 @@ class BaziEngine(DivinationEngine):
         }
         yuede = yuede_map.get(month_pillar.zhi, '')
         if yuede:
-            for g in all_gans:
+            for g_pos_idx, g in enumerate(all_gans):
                 if g == yuede:
-                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    pos = ['年','月','日','时'][g_pos_idx]
                     shensha.append(f'月德（{pos}干{g}）')
                     break
 
@@ -787,11 +777,10 @@ class BaziEngine(DivinationEngine):
             '壬': ['巳','申'], '癸': ['巳','申'],
         }
         taiji_zhis = taiji_map.get(day_gan, [])
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z in taiji_zhis:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'太极贵人（{pos}支{z}）')
-                break
 
         # 14. 福星贵人（以日干查）
         fuxing_map = {
@@ -800,11 +789,10 @@ class BaziEngine(DivinationEngine):
             '庚': ['午'], '辛': ['巳'], '壬': ['辰'], '癸': ['卯'],
         }
         fuxing_zhis = fuxing_map.get(day_gan, [])
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z in fuxing_zhis:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'福星贵人（{pos}支{z}）')
-                break
 
         # 15. 金舆（以日干查）
         jinyu_map = {
@@ -813,11 +801,10 @@ class BaziEngine(DivinationEngine):
             '壬': ['丑'], '癸': ['寅'],
         }
         jinyu_zhi = jinyu_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z in jinyu_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'金舆（{pos}支{z}）')
-                break
 
         # 16. 天德合（以月支查天干，天德的六合）
         tiande_map = {'子':'巳','丑':'庚','寅':'丁','卯':'申','辰':'壬','巳':'辛','午':'甲','未':'癸','申':'丙','酉':'乙','戌':'巳','亥':'庚'}
@@ -825,9 +812,9 @@ class BaziEngine(DivinationEngine):
         tiande = tiande_map.get(month_pillar.zhi, '')
         tiande_he = tiande_he_map.get(tiande, '')
         if tiande_he:
-            for g in all_gans:
+            for g_pos_idx, g in enumerate(all_gans):
                 if g == tiande_he:
-                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    pos = ['年','月','日','时'][g_pos_idx]
                     shensha.append(f'天德合（{pos}干{g}）')
                     break
 
@@ -837,9 +824,9 @@ class BaziEngine(DivinationEngine):
         yuede = yuede_map.get(month_pillar.zhi, '')
         yuede_he = yuede_he_map.get(yuede, '')
         if yuede_he:
-            for g in all_gans:
+            for g_pos_idx, g in enumerate(all_gans):
                 if g == yuede_he:
-                    pos = ['年','月','日','时'][all_gans.index(g)]
+                    pos = ['年','月','日','时'][g_pos_idx]
                     shensha.append(f'月德合（{pos}干{g}）')
                     break
 
@@ -863,11 +850,10 @@ class BaziEngine(DivinationEngine):
             '申':'酉','酉':'戌','戌':'亥','亥':'子',
         }
         tianyi_zhi = tianyi_map.get(month_pillar.zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == tianyi_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天医（{pos}支{z}）')
-                break
 
         # 20. 天厨（以日干查）
         tianchu_map = {
@@ -876,11 +862,10 @@ class BaziEngine(DivinationEngine):
             '壬':'寅','癸':'卯',
         }
         tianchu_zhi = tianchu_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == tianchu_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天厨（{pos}支{z}）')
-                break
 
         # 21. 学堂（以日干查长生位）
         xuetang_map = {
@@ -889,11 +874,10 @@ class BaziEngine(DivinationEngine):
             '壬':'申','癸':'卯',
         }
         xuetang_zhi = xuetang_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == xuetang_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'学堂（{pos}支{z}）')
-                break
 
         # 22. 词馆（以日干查临官位）
         ciguan_map = {
@@ -902,33 +886,30 @@ class BaziEngine(DivinationEngine):
             '壬':'亥','癸':'子',
         }
         ciguan_zhi = ciguan_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == ciguan_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'词馆（{pos}支{z}）')
-                break
 
         # 23. 羊刃（以日干查，阳干帝旺位）
         yangren_map = {
             '甲':'卯','丙':'午','戊':'午','庚':'酉','壬':'子',
         }
         yangren_zhi = yangren_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == yangren_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'羊刃（{pos}支{z}）')
-                break
 
         # 24. 飞刃（以日干查，羊刃对冲）
         feiren_map = {
             '甲':'酉','丙':'子','戊':'子','庚':'卯','壬':'午',
         }
         feiren_zhi = feiren_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == feiren_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'飞刃（{pos}支{z}）')
-                break
 
         # 25. 流霞（以日干查）
         liuxia_map = {
@@ -937,11 +918,10 @@ class BaziEngine(DivinationEngine):
             '壬':'亥','癸':'寅',
         }
         liuxia_zhi = liuxia_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == liuxia_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'流霞（{pos}支{z}）')
-                break
 
         # 26. 亡神（以年支查三合局绝位）
         wangshen_map = {
@@ -950,11 +930,10 @@ class BaziEngine(DivinationEngine):
             '申':'巳','酉':'寅','戌':'亥','亥':'申',
         }
         wangshen_zhi = wangshen_map.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == wangshen_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'亡神（{pos}支{z}）')
-                break
 
         # 27. 劫煞（以年支查三合局死位）
         jiesha_map = {
@@ -963,11 +942,10 @@ class BaziEngine(DivinationEngine):
             '申':'巳','酉':'寅','戌':'亥','亥':'申',
         }
         jiesha_zhi = jiesha_map.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == jiesha_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'劫煞（{pos}支{z}）')
-                break
 
         # 28. 灾煞（以年支查三合局墓位）
         zaisha_map = {
@@ -976,11 +954,10 @@ class BaziEngine(DivinationEngine):
             '申':'午','酉':'卯','戌':'酉','亥':'子',
         }
         zaisha_zhi = zaisha_map.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == zaisha_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'灾煞（{pos}支{z}）')
-                break
 
         # 29. 勾煞（以年支查）
         gousha_map = {
@@ -989,11 +966,10 @@ class BaziEngine(DivinationEngine):
             '申':'亥','酉':'子','戌':'丑','亥':'寅',
         }
         gousha_zhi = gousha_map.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == gousha_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'勾煞（{pos}支{z}）')
-                break
 
         # 30. 绞煞（以年支查，勾煞对冲）
         jiaosha_map = {
@@ -1002,11 +978,10 @@ class BaziEngine(DivinationEngine):
             '申':'巳','酉':'午','戌':'未','亥':'申',
         }
         jiaosha_zhi = jiaosha_map.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == jiaosha_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'绞煞（{pos}支{z}）')
-                break
 
         # 31. 孤辰寡宿（以年支查）
         guchen_map = {
@@ -1021,28 +996,24 @@ class BaziEngine(DivinationEngine):
         }
         guchen_zhi = guchen_map.get(year_zhi, '')
         guasu_zhi = guasu_map.get(year_zhi, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == guchen_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'孤辰（{pos}支{z}）')
-                break
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == guasu_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'寡宿（{pos}支{z}）')
-                break
 
         # 32. 天罗地网（以年支或日支查）
         tianluo_map = {'戌':'亥','亥':'戌'}
         diwang_map = {'辰':'巳','巳':'辰'}
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z in tianluo_map and tianluo_map[z] in all_zhis:
                 shensha.append('天罗')
-                break
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z in diwang_map and diwang_map[z] in all_zhis:
                 shensha.append('地网')
-                break
 
         # 33. 十恶大败（以日柱查）
         eba_map = ['甲辰','乙巳','丙申','丁亥','戊戌','己丑','庚辰','辛巳','壬申','癸亥']
@@ -1078,9 +1049,9 @@ class BaziEngine(DivinationEngine):
         }
         xunkong = xunkong_map.get(day_gz, '')
         if xunkong:
-            for z in all_zhis:
+            for pos_idx, z in enumerate(all_zhis):
                 if z in xunkong:
-                    pos = ['年','月','日','时'][all_zhis.index(z)]
+                    pos = ['年','月','日','时'][pos_idx]
                     shensha.append(f'空亡（{pos}支{z}）')
 
         # 36. 天乙贵人（完整版，多个位置都算）
@@ -1093,7 +1064,7 @@ class BaziEngine(DivinationEngine):
         }
         tianyi_zhis = tianyi_map.get(day_gan, [])
         tianyi_count = 0
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z in tianyi_zhis:
                 tianyi_count += 1
         if tianyi_count >= 2:
@@ -1120,11 +1091,10 @@ class BaziEngine(DivinationEngine):
             '壬':'卯','癸':'子',
         }
         tianguan_zhi = tianguan_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == tianguan_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天官贵人（{pos}支{z}）')
-                break
 
         # 40. 天福贵人（以日干查四支）
         tianfu_map = {
@@ -1133,11 +1103,10 @@ class BaziEngine(DivinationEngine):
             '壬':'未','癸':'辰',
         }
         tianfu_zhi = tianfu_map.get(day_gan, '')
-        for z in all_zhis:
+        for pos_idx, z in enumerate(all_zhis):
             if z == tianfu_zhi:
-                pos = ['年','月','日','时'][all_zhis.index(z)]
+                pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天福贵人（{pos}支{z}）')
-                break
 
         # 41. 三奇贵人（天干组合：乙丙丁=天上三奇，甲戊庚=地上三奇，辛壬癸=人中三奇）
         all_gan_str = ''.join(all_gans)
