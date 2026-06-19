@@ -276,13 +276,14 @@ class QiMenEngine(DivinationEngine):
         """
         hour_gan = hour_gan_zhi[0] if hour_gan_zhi else '甲'
 
-        # 九星按洛书顺序
-        luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
+        # 九星按洛书飞宫顺序（含中宫5，9星对应9宫）
+        luo9 = self.LUO_SHU_ORDER  # [1, 8, 3, 4, 9, 2, 7, 6, 5]
         jiu_xing = {}
-        for i, palace in enumerate(luo8):
+        for i, palace in enumerate(luo9):
             jiu_xing[palace] = self.NINE_STARS[i]
 
-        # 八门按洛书顺序
+        # 八门按洛书顺序（中宫5不排门，仅8门对应8宫）
+        luo8 = [1, 8, 3, 4, 9, 2, 7, 6]
         doors = ['休门', '生门', '伤门', '杜门', '景门', '死门', '惊门', '开门']
         ba_men = {}
         for i, palace in enumerate(luo8):
