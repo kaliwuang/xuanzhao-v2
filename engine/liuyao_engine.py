@@ -530,10 +530,8 @@ class LiuYaoEngine(DivinationEngine):
         gua_gong_wuxing = self.GUA_GONG_WUXING.get(ben_name, self.GUA_WUXING.get(shang_gua, "金"))
         yao_list = self._najia_zhuanggua(shang_gua, xia_gua, ben_lines, day_gan, day_zhi, gua_gong_wuxing)
 
-        # 5b. 标记动爻
+        # 5b. 标记动爻（本卦保留原始阴阳，变卦才显示变化后的阴阳）
         yao_list[dong_yao_pos - 1]['is_dong'] = True
-        orig_yinyang = yao_list[dong_yao_pos - 1]['yinyang']
-        yao_list[dong_yao_pos - 1]['yinyang'] = '阴' if orig_yinyang == '阳' else '阳'
 
         # 6. 世应
         shi_ying = self.SHI_YING_TABLE.get(ben_name, (6, 3))
