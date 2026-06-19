@@ -41,6 +41,15 @@ class CrossValidator:
 
     ASPECTS = ["性格", "事业", "财运", "感情", "健康", "学业", "人际关系"]
 
+    # 五行→脏腑对应表（中医传统理论）
+    WUXING_ORGAN = {
+        "木": "肝、胆",
+        "火": "心、小肠",
+        "土": "脾、胃",
+        "金": "肺、大肠",
+        "水": "肾、膀胱",
+    }
+
     @staticmethod
     def _get_palace_stars(palace: dict) -> list:
         """从紫微宫位数据中提取所有星曜名称（兼容major/minor/adjective_stars结构）"""
@@ -564,16 +573,18 @@ class CrossValidator:
             max_wx = max(counts, key=counts.get)
             min_wx = min(counts, key=counts.get)
             if counts[max_wx] >= 4:
+                organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
                 items.append(ConsensusItem(
                     aspect="健康体质",
-                    finding=f"{max_wx}过旺，注意{max_wx}行相关脏腑",
+                    finding=f"{max_wx}过旺（{counts[max_wx]}个），注意{organs}功能",
                     supporting_methods=["八字"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
             if counts[min_wx] == 0:
+                organs = self.WUXING_ORGAN.get(min_wx, "相关脏腑")
                 items.append(ConsensusItem(
                     aspect="健康体质",
-                    finding=f"{min_wx}缺失，注意{min_wx}行相关脏腑",
+                    finding=f"{min_wx}缺失，注意{organs}功能偏弱",
                     supporting_methods=["八字"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
@@ -1463,7 +1474,8 @@ class CrossValidator:
         if wuxing_count:
             max_wx = max(wuxing_count, key=wuxing_count.get)
             bazi_health_issue = wuxing_count[max_wx] >= 4
-            bazi_health_reason = f"{max_wx}过旺（{wuxing_count[max_wx]}个），注意{max_wx}行相关脏腑"
+            organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
+            bazi_health_reason = f"{max_wx}过旺（{wuxing_count[max_wx]}个），注意{organs}功能"
 
             ziwei_health_good = False
             ziwei_health_reason = ""
@@ -1952,12 +1964,14 @@ class CrossValidator:
             max_wx = max(wuxing_count, key=wuxing_count.get)
             min_wx = min(wuxing_count, key=wuxing_count.get)
             if wuxing_count[max_wx] >= 4:
-                health_trend.append(f"{max_wx}过旺，注意相关脏腑")
-                health_suggest.append(f"宜调理{max_wx}行平衡")
+                organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
+                health_trend.append(f"{max_wx}过旺（{wuxing_count[max_wx]}个），注意{organs}功能")
+                health_suggest.append(f"宜调理{max_wx}行平衡，关注{organs}保养")
                 health_luck = "凶"
             if wuxing_count[min_wx] == 0:
-                health_trend.append(f"{min_wx}缺失，体质偏弱")
-                health_suggest.append(f"宜补{min_wx}行")
+                organs = self.WUXING_ORGAN.get(min_wx, "相关脏腑")
+                health_trend.append(f"{min_wx}缺失，{organs}功能偏弱")
+                health_suggest.append(f"宜补{min_wx}行，注意{organs}养护")
                 health_luck = "凶"
 
         if not health_trend:
