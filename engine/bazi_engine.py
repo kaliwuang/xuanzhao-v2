@@ -602,10 +602,10 @@ class BaziEngine(DivinationEngine):
                     features.append(f"{z1}{z2}冲 — {pos_names[i]}支与{pos_names[j]}支相冲")
 
         # 2. 合
+        liuhe = {"子":"丑","丑":"子","寅":"亥","亥":"寅","卯":"戌","戌":"卯","辰":"酉","酉":"辰","巳":"申","申":"巳","午":"未","未":"午"}
         for i, z1 in enumerate(zhis):
             for j, z2 in enumerate(zhis[i+1:], i+1):
                 # 六合
-                liuhe = {"子":"丑","丑":"子","寅":"亥","亥":"寅","卯":"戌","戌":"卯","辰":"酉","酉":"辰","巳":"申","申":"巳","午":"未","未":"午"}
                 if liuhe.get(z1) == z2:
                     pos_names = ["年","月","日","时"]
                     features.append(f"{z1}{z2}合 — {pos_names[i]}支与{pos_names[j]}支相合")
