@@ -213,9 +213,8 @@ class CrossValidator:
 
                 # 大运十神与喜用关系
                 if shishen and bazi_xiyong:
-                    # 根据日主五行和十神关系推导该十神对应的五行，再查喜用
-                    _day_wx = (self.udm.bazi_day or self.udm.bazi_year)
-                    _day_wx = _day_wx.wuxing if _day_wx else ''
+                    # 使用日主天干五行（非纳音五行）推导十神对应五行
+                    _day_wx = self.udm.day_master_wuxing or ''
                     _SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
                     _KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
                     _ss_wx_map = {}
