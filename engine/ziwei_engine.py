@@ -381,13 +381,16 @@ class ZiWeiEngine(DivinationEngine):
             dai_xian = []
 
         # 子斗（斗君）计算
-        # 斗君 = 寅宫起正月，逆数到出生月份，再从该月所到之地支起子时，顺数到出生时辰
-        # 简化公式：斗君地支 = 寅 + (birth_month - 1) + time_index (模12)
+        # 传统规则：寅宫起正月，逆数到出生月份，再从该宫起子时，顺数到出生时辰
+        # 正月→寅(2), 二月→丑(1), 三月→子(0), 四月→亥(11), ...
+        # 月宫索引 = (2 - (month - 1)) % 12 = (3 - month) % 12
         zi_dou = ''
         if birth_dt:
             BRANCH_ORDER = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
-            # 寅为起点(索引2)，正月=寅
-            dou_jun_idx = (2 + (birth_dt.month - 1) + time_index) % 12
+            # 逆数到出生月份所在宫位
+            month_palace_idx = (3 - birth_dt.month) % 12
+            # 从该宫起子时，顺数到出生时辰
+            dou_jun_idx = (month_palace_idx + time_index) % 12
             zi_dou = BRANCH_ORDER[dou_jun_idx]
 
         # 流年分析（当年太岁四化、流年命宫等）
