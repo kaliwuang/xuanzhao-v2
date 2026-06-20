@@ -44,7 +44,7 @@ def _set_cache(key: str, data):
 
 from engine.time_engine import get_time_engine
 from engine.base import EngineOrchestrator
-from engine.bazi_engine import BaziEngine
+from engine.bazi_engine import BaziEngine, GAN_WUXING_STR, WUXING_SHENG, WUXING_KE
 from engine.astro_engine import AstroEngine
 from engine.ziwei_engine import ZiWeiEngine
 from engine.liuyao_engine import LiuYaoEngine
@@ -1026,31 +1026,27 @@ def get_hehun(
             }
         
         # 日干关系
-        wuxing_map = {"甲": "木", "乙": "木", "丙": "火", "丁": "火", "戊": "土", 
-                     "己": "土", "庚": "金", "辛": "金", "壬": "水", "癸": "水"}
-        sheng_map = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
-        ke_map = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
         
         daygan_relation = ""
         daygan_score = 50  # 基础分
         d1 = bazi1.get("day", "")[:1]
         d2 = bazi2.get("day", "")[:1]
-        wx1 = wuxing_map.get(d1, "")
-        wx2 = wuxing_map.get(d2, "")
+        wx1 = GAN_WUXING_STR.get(d1, "")
+        wx2 = GAN_WUXING_STR.get(d2, "")
         if wx1 and wx2:
             if wx1 == wx2:
                 daygan_relation = "比和（同类）"
                 daygan_score = 60
-            elif sheng_map.get(wx1) == wx2:
+            elif WUXING_SHENG.get(wx1) == wx2:
                 daygan_relation = f"{wx1}生{wx2}（相生）"
                 daygan_score = 80
-            elif sheng_map.get(wx2) == wx1:
+            elif WUXING_SHENG.get(wx2) == wx1:
                 daygan_relation = f"{wx2}生{wx1}（相生）"
                 daygan_score = 80
-            elif ke_map.get(wx1) == wx2:
+            elif WUXING_KE.get(wx1) == wx2:
                 daygan_relation = f"{wx1}克{wx2}（相克）"
                 daygan_score = 40
-            elif ke_map.get(wx2) == wx1:
+            elif WUXING_KE.get(wx2) == wx1:
                 daygan_relation = f"{wx2}克{wx1}（相克）"
                 daygan_score = 40
         
