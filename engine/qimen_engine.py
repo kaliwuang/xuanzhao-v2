@@ -535,9 +535,10 @@ class QiMenEngine(DivinationEngine):
             if p.get('tian_pan') == '辛' and p.get('di_pan') == '乙':
                 xiong_ge.append({'name': '白虎猖狂', 'gong': p['gong'], 'desc': '辛加乙，金木相克，主伤灾破败'})
 
-        # 13. 三奇入墓：乙(木)入辰(4)、丙(火)入戌(6)、丁(火)入戌(6)
+        # 13. 三奇入墓：乙(木)入未(坤二=2)、丙(火)入戌(乾六=6)、丁(火)入戌(乾六=6)
         # 三奇为乙丙丁，入墓则奇不显灵，百事不顺
-        SAN_QI_MU = {'乙': 4, '丙': 6, '丁': 6}
+        # 五行墓库：木墓在未(坤二=2)，火墓在戌(乾六=6)
+        SAN_QI_MU = {'乙': 2, '丙': 6, '丁': 6}
         for p in palaces:
             g = p['gong']
             tp = p.get('tian_pan', '')
