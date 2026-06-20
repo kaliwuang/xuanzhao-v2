@@ -980,9 +980,9 @@ class LiuYaoEngine(DivinationEngine):
             if self.SHENG_REV.get(ref_wx) == wx:
                 return '休（我生）'
             if self.KE.get(ref_wx) == wx:
-                return '囚（克我）'
+                return '死（克我）'
             if self.KE_REV.get(ref_wx) == wx:
-                return '死（我克）'
+                return '囚（我克）'
             return '无'
 
         # 为每个五行计算日建/月建旺衰
