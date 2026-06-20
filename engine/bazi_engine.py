@@ -1111,8 +1111,9 @@ class BaziEngine(DivinationEngine):
         if _is_consecutive_4(zhi_indices, 12):
             features.append("地支连珠 — 四地支连续排列，气势连贯，格局特殊")
 
-        # 最多15条基础特征（身强/身弱特征由analyze()方法insert(0,...)注入，不占此名额）
-        MAX_BASE_FEATURES = 15
+        # 最多20条基础特征（身强/身弱特征由analyze()方法insert(0,...)注入，不占此名额）
+        # 原15条上限过低，冲/合/刑/害/三合/三会+十神组合易超限，导致天干连珠/地支连珠等稀有特征丢失
+        MAX_BASE_FEATURES = 20
         return features[:MAX_BASE_FEATURES]
 
     def _calc_shensha(self, day_master: str, day_pillar, year_pillar, month_pillar, time_pillar) -> list:
