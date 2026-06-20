@@ -226,8 +226,12 @@ class QiMenEngine(DivinationEngine):
 
         if current_jieqi in self.YANG_JU:
             return current_jieqi, self.YANG_JU[current_jieqi], '阳遁'
-        else:
+        elif current_jieqi in self.YIN_JU:
             return current_jieqi, self.YIN_JU[current_jieqi], '阴遁'
+        else:
+            # 最终回退：冬至阳遁1局（最安全的默认值）
+            logger.warning(f"节气'{current_jieqi}'不在阴阳遁局数表中，回退到冬至阳遁1局")
+            return '冬至', 1, '阳遁'
 
     def _calc_hour_gan_zhi(self, solar_dt: datetime) -> str:
         """计算时柱天干地支"""
