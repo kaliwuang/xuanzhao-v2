@@ -483,11 +483,15 @@ class LiuYaoEngine(DivinationEngine):
         """自包含的梅花易数 + 京房纳甲排盘（无需外部库）"""
         orig = time.true_solar
 
+        # 晚子时使用八字引擎统一的日期和时辰处理（与其他引擎保持一致）
+        pillar_date = time.bazi_day_pillar_date
+        bazi_hour = time.bazi_hour
+
         # 获取农历信息用于起卦
         lunar = None
         try:
             from lunar_python import Solar
-            solar = Solar.fromYmdHms(orig.year, orig.month, orig.day, orig.hour, orig.minute, 0)
+            solar = Solar.fromYmdHms(pillar_date.year, pillar_date.month, pillar_date.day, bazi_hour, orig.minute, 0)
             lunar = solar.getLunar()
             year_num = lunar.getYear()
             month_num = lunar.getMonth()
@@ -503,7 +507,7 @@ class LiuYaoEngine(DivinationEngine):
             day_gan = "甲"
             day_zhi = "子"
 
-        hour_zhi_idx = (orig.hour + 1) // 2 % 12
+        hour_zhi_idx = (bazi_hour + 1) // 2 % 12
         hour_num = hour_zhi_idx + 1
 
         # 1. 梅花易数起卦
