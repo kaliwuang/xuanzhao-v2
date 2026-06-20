@@ -173,8 +173,8 @@ class LiuYaoEngine(DivinationEngine):
             Najia(verbose=0)
             self._Najia = Najia
             self._najia_available = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"najia 库加载失败，将使用内置引擎: {e}")
 
     # ─── 确定性爻值生成 ──────────────────────────────────
 
