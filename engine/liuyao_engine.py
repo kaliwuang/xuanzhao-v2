@@ -616,7 +616,7 @@ class LiuYaoEngine(DivinationEngine):
             'ge_ju': self._identify_ge_ju(
                 ben_name, bian_name, lines, bian_lines, shi_pos, ying_pos
             ),
-            'ri_yue_jian': self._calc_ri_yue_jian(day_gan, day_zhi, lunar.getMonthZhi() if lunar else '子', gua_gong_wuxing),
+            'ri_yue_jian': self._calc_ri_yue_jian_safe(day_gan, day_zhi, lunar, gua_gong_wuxing),
         }
 
         # 流年太岁分析（与najia路径一致）
@@ -964,6 +964,13 @@ class LiuYaoEngine(DivinationEngine):
 
     # ─── 验证 ────────────────────────────────────────────
 
+    def _calc_ri_yue_jian_safe(self, day_gan: str, day_zhi: str, lunar, gua_gong_wuxing: str = '') -> dict:
+        """安全版日建月建计算：lunar对象可能不完整"""
+        try:
+            month_zhi = lunar.getMonthZhi() if lunar else '子'
+        except Exception:
+            month_zhi = '子'
+        return self._calc_ri_yue_jian(day_gan, day_zhi, month_zhi, gua_gong_wuxing)
 
     def _calc_ri_yue_jian(self, day_gan: str, day_zhi: str, month_zhi: str, gua_gong_wuxing: str = '') -> dict:
         """计算日建月建对各爻的影响"""
