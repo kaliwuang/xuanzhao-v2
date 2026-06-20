@@ -1341,16 +1341,14 @@ class BaziEngine(DivinationEngine):
                     pos = ['年','月','日','时'][pos_idx]
                     shensha.append(f'空亡（{pos}支{z}）')
 
-        # 36. 双华盖（以年支和日支查，与华盖检测一致）
-        huagai_targets = set(filter(None, [SHENSHA_HUAGAI_MAP.get(year_zhi, ''), SHENSHA_HUAGAI_MAP.get(day_zhi, '')]))
+        # 36. 双华盖（以年支和日支查，复用上方第2步的华盖目标地支）
         for huagai_zhi in huagai_targets:
             huagai_count = sum(1 for z in all_zhis if z == huagai_zhi)
             if huagai_count >= 2:
                 shensha.append('双华盖')
                 break
 
-        # 37. 双桃花（以年支和日支查，与桃花检测一致）
-        taohua_targets = set(filter(None, [SHENSHA_TAOHUA_MAP.get(year_zhi, ''), SHENSHA_TAOHUA_MAP.get(day_zhi, '')]))
+        # 37. 双桃花（以年支和日支查，复用上方第4步的桃花目标地支）
         for taohua_zhi in taohua_targets:
             taohua_count = sum(1 for z in all_zhis if z == taohua_zhi)
             if taohua_count >= 2:
