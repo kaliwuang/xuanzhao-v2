@@ -2744,6 +2744,30 @@ class CrossValidator:
                 if stars:
                     career_trend.append(f"官禄宫主星{stars[0]}，事业格局不错")
 
+        # 六爻看官鬼爻（权威/管理运）和子孙爻（创业/自由职业倾向）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            ly_lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+            guangui_yaos = [l for l in ly_lines if l.get("liu_qin") == "官鬼"]
+            zisun_yaos = [l for l in ly_lines if l.get("liu_qin") == "子孙"]
+            gg_wang = any(
+                ri_ws.get(gg.get("wuxing", ""), "").startswith(("旺", "相"))
+                for gg in guangui_yaos
+            ) if ri_ws else False
+            zs_wang = any(
+                ri_ws.get(zs.get("wuxing", ""), "").startswith(("旺", "相"))
+                for zs in zisun_yaos
+            ) if ri_ws else False
+            if gg_wang:
+                career_trend.append("六爻官鬼爻旺相，事业有权威和晋升机会")
+                if career_luck != "凶":
+                    career_luck = "吉"
+            if zs_wang:
+                career_trend.append("六爻子孙爻旺相克官，适合创业或技术路线")
+                career_suggest.append("六爻提示自由发展空间大，可争取更多自主权")
+
         judgment["事业"]["趋势"] = "；".join(career_trend) if career_trend else "平稳发展"
         judgment["事业"]["建议"] = "；".join(career_suggest) if career_suggest else "稳扎稳打，借势而为"
         judgment["事业"]["吉凶"] = career_luck
@@ -2766,6 +2790,26 @@ class CrossValidator:
             if sheng:
                 wealth_trend.append(f"生门在{self.QIMEN_GONG_NAMES.get(sheng[0], sheng[0])}，财运有门路")
                 wealth_luck = "吉"
+
+        # 六爻看妻财爻（钱财、资产、收入核心爻位）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            ly_lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+            cai_yaos = [l for l in ly_lines if l.get("liu_qin") == "妻财"]
+            for cy in cai_yaos:
+                cy_wx = cy.get("wuxing", "")
+                cy_is_dong = cy.get("is_dong", False)
+                cy_wang = ri_ws.get(cy_wx, "").startswith(("旺", "相")) if cy_wx and ri_ws else False
+                if cy_wang:
+                    wealth_trend.append("六爻妻财爻旺相，财运根基扎实，收入有保障")
+                    if wealth_luck != "凶":
+                        wealth_luck = "吉"
+                    break
+                elif cy_is_dong:
+                    wealth_trend.append("六爻妻财爻发动，财运有变动，进财或破财看变爻")
+                    break
 
         if chong and any("财" in str(c) or "子" in str(c) for c in chong):
             wealth_trend.append("有冲，财运波动大")
@@ -2799,6 +2843,22 @@ class CrossValidator:
                         love_luck = "吉"
                 if stars:
                     love_trend.append(f"夫妻宫主星{stars[0]}")
+
+        # 六爻看妻财爻（男命看妻）和官鬼爻（感情约束力）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            ly_lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+            qicai_yaos = [l for l in ly_lines if l.get("liu_qin") == "妻财"]
+            for qc in qicai_yaos:
+                qc_wx = qc.get("wuxing", "")
+                qc_wang = ri_ws.get(qc_wx, "").startswith(("旺", "相")) if qc_wx and ri_ws else False
+                if qc_wang:
+                    love_trend.append("六爻妻财爻旺相，感情伴侣缘分强，物质基础稳固")
+                    if love_luck != "凶":
+                        love_luck = "吉"
+                    break
 
         if not love_trend:
             love_trend.append("感情运势平稳")
@@ -2869,6 +2929,33 @@ class CrossValidator:
                                 gong_name = p.get("name", "")
                                 break
                         health_trend.append(f"死门落{gong_name or str(gong) + '宫'}，{body}有慢性隐患")
+
+        # 六爻：官鬼爻=病邪、子孙爻=医药
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            ly_lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+            _GG_ORGAN = {"木": "肝胆", "火": "心小肠", "土": "脾胃", "金": "肺大肠", "水": "肾膀胱"}
+            guangui_yaos = [l for l in ly_lines if l.get("liu_qin") == "官鬼"]
+            zisun_yaos = [l for l in ly_lines if l.get("liu_qin") == "子孙"]
+            for gg in guangui_yaos:
+                gg_wx = gg.get("wuxing", "")
+                gg_is_dong = gg.get("is_dong", False)
+                gg_wang = ri_ws.get(gg_wx, "").startswith(("旺", "相")) if gg_wx and ri_ws else False
+                if gg_wang and gg_is_dong:
+                    organs = _GG_ORGAN.get(gg_wx, "相关脏腑")
+                    health_trend.append(f"六爻官鬼爻旺动，{organs}方面需留意")
+                    health_luck = "凶"
+                    break
+            for zs in zisun_yaos:
+                zs_wx = zs.get("wuxing", "")
+                zs_wang = ri_ws.get(zs_wx, "").startswith(("旺", "相")) if zs_wx and ri_ws else False
+                if zs_wang:
+                    health_trend.append("六爻子孙爻旺相，医药爻得力，恢复力强")
+                    if health_luck == "凶":
+                        health_luck = "中"  # 子孙旺可缓解官鬼之凶
+                    break
 
         judgment["健康"]["趋势"] = "；".join(health_trend)
         judgment["健康"]["建议"] = "；".join(health_suggest) if health_suggest else "规律作息，适度运动"
