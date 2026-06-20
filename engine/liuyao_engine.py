@@ -616,6 +616,52 @@ class LiuYaoEngine(DivinationEngine):
             'ri_yue_jian': self._calc_ri_yue_jian(day_gan, day_zhi, lunar.getMonthZhi() if lunar else '子', gua_gong_wuxing),
         }
 
+        # 流年太岁分析（与najia路径一致）
+        try:
+            from lunar_python import Solar as _Solar
+            now = datetime.now()
+            _solar = _Solar.fromYmdHms(now.year, now.month, now.day, now.hour, now.minute, 0)
+            _lunar = _solar.getLunar()
+            _year_zhi = _lunar.getYearZhi()
+            _year_gan = _lunar.getYearGan()
+            _tai_sui_wx = self.ZHI_WUXING.get(_year_zhi, '')
+
+            _shi_yao = next((l for l in lines if l.get('is_shi')), {})
+            _shi_dizhi = _shi_yao.get('dizhi', '')
+            _tai_sui_vs_shi = ''
+            if _shi_dizhi and _year_zhi:
+                if _shi_dizhi == _year_zhi:
+                    _tai_sui_vs_shi = '太岁临世爻，年运有靠'
+                elif self.ZHI_HE.get(_shi_dizhi) == _year_zhi:
+                    _tai_sui_vs_shi = '世爻与太岁六合，年运顺遂'
+                elif self.ZHI_CHONG.get(_shi_dizhi) == _year_zhi:
+                    _tai_sui_vs_shi = '世爻与太岁六冲，年运多变'
+                else:
+                    _tai_sui_vs_shi = f'太岁{_year_zhi}({_tai_sui_wx})与世爻{_shi_dizhi}无特殊关系'
+
+            _tai_sui_yao_rel = []
+            for _line in lines:
+                _dz = _line.get('dizhi', '')
+                if _dz == _year_zhi:
+                    _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '太岁临爻'})
+                elif self.ZHI_HE.get(_dz) == _year_zhi:
+                    _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六合太岁'})
+                elif self.ZHI_CHONG.get(_dz) == _year_zhi:
+                    _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六冲太岁'})
+
+            result['liunian'] = {
+                'year': now.year,
+                'year_ganzhi': f'{_year_gan}{_year_zhi}',
+                'tai_sui_zhi': _year_zhi,
+                'tai_sui_wuxing': _tai_sui_wx,
+                'tai_sui_vs_shi': _tai_sui_vs_shi,
+                'tai_sui_yao_rel': _tai_sui_yao_rel,
+            }
+        except Exception as e:
+            logger.debug(f"流年分析失败: {e}")
+
+        return result
+
     # ─── 自包含工具方法 ──────────────────────────────────
 
     def _num_to_gua(self, num: int) -> str:
