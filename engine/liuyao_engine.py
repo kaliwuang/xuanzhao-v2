@@ -940,9 +940,9 @@ class LiuYaoEngine(DivinationEngine):
             if SHENG_REV.get(ref_wx) == wx:
                 return '休（生出）'
             if self.KE.get(ref_wx) == wx:
-                return '囚（克出）'
-            if KE_REV.get(ref_wx) == wx:
                 return '死（被克）'
+            if KE_REV.get(ref_wx) == wx:
+                return '囚（克出）'
             return '无'
 
         # 为每个五行计算日建/月建旺衰
