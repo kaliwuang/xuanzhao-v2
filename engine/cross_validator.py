@@ -2211,7 +2211,8 @@ class CrossValidator:
             ji_men = [k for k, v in men.items() if v in ("开门", "生门", "休门")]
             if ji_men:
                 qimen_career_good = True
-                qimen_career_good_reason = f"奇门吉门（{'、'.join(ji_men)}）得位，当下时运不错"
+                ji_men_names = [self.QIMEN_GONG_NAMES.get(k, k) for k in ji_men]
+                qimen_career_good_reason = f"奇门吉门（{'、'.join(ji_men_names)}）得位，当下时运不错"
 
         bazi_career_weak = not bazi_career_good and any("身弱" in f for f in features)
         if bazi_career_weak and qimen_career_good:
