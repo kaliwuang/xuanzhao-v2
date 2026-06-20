@@ -22,8 +22,9 @@ def _load_dotenv():
                     value = value.strip().strip('"').strip("'")
                     if key and key not in os.environ:  # 环境变量优先
                         os.environ[key] = value
-    except Exception:
-        pass
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).debug(f".env 加载异常（忽略）: {e}")
 
 _load_dotenv()
 
