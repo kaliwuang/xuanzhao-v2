@@ -375,7 +375,10 @@ class BaziEngine(DivinationEngine):
             trad = TRADITIONAL_HIDE_GAN.get(zhi)
             if trad and len(trad) > 1:
                 return list(trad)
-            return list(raw)
+            # 单藏干地支(子/卯/酉)：优先用lunar_python返回值，为空时回退到传统表
+            if raw:
+                return list(raw)
+            return list(trad) if trad else []
 
         # 藏干（已修正顺序）
         raw_hidden = {
