@@ -466,7 +466,7 @@ def get_chart(
                     'ji_shen': ji_shen,
                 }
             
-            xm_result = _xingming_engine.analyze(surname, given_name, "男" if gender in ("男", "male", "m") else "女", bazi_info)
+            xm_result = _xingming_engine.analyze_name(surname, given_name, "男" if gender in ("男", "male", "m") else "女", bazi_info)
             result["xingming"] = xm_result
             result["methods"].append("姓名学")
 
@@ -967,7 +967,7 @@ def get_xingming(
                 logger.warning(f"八字信息提取失败: {e}")
 
         gender_str = "男" if gender in ("男", "male", "m") else "女"
-        result = _xingming_engine.analyze(surname, given_name, gender_str, bazi_info)
+        result = _xingming_engine.analyze_name(surname, given_name, gender_str, bazi_info)
         return result
 
     except Exception as e:
