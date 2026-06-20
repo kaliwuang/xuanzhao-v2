@@ -2929,8 +2929,9 @@ class CrossValidator:
                     _ss_wx = ""
                     if _day_wx:
                         _bei_ke = {v: k for k, v in _KE.items()}
+                        _bei_sheng = {v: k for k, v in _SHENG.items()}
                         _ss_wx_map = {
-                            "正印": _bei_ke.get(_day_wx, ""), "偏印": _bei_ke.get(_day_wx, ""),
+                            "正印": _bei_sheng.get(_day_wx, ""), "偏印": _bei_sheng.get(_day_wx, ""),
                             "比肩": _day_wx, "劫财": _day_wx,
                             "食神": _SHENG.get(_day_wx, ""), "伤官": _SHENG.get(_day_wx, ""),
                             "正财": _KE.get(_day_wx, ""), "偏财": _KE.get(_day_wx, ""),
