@@ -180,11 +180,12 @@ class CrossValidator:
                     ))
         
         # 检查当前大运用神一致性
-        bazi_xiyong = (self.udm.xi_yong or {}).get("xi", "") if self.udm.xi_yong else ""
+        bazi_xiyong_raw = (self.udm.xi_yong or {}).get("xi", "") if self.udm.xi_yong else ""
+        bazi_xiyong_str = "+".join(bazi_xiyong_raw) if isinstance(bazi_xiyong_raw, list) else str(bazi_xiyong_raw)
         
         # 检查紫微当前大限
         try:
-            if bazi_xiyong and ziwei_dayun:
+            if bazi_xiyong_raw and ziwei_dayun:
                 current_year = datetime.now().year
                 birth_year = self._get_birth_year()
                 age = current_year - birth_year + 1  # 虚岁
@@ -194,7 +195,7 @@ class CrossValidator:
                     if start <= age <= end:
                         results.append(ConsensusItem(
                             aspect="当前大运",
-                            finding=f"紫微大限在{dy.get('palace_name', '某宫')}宫，八字喜{bazi_xiyong}",
+                            finding=f"紫微大限在{dy.get('palace_name', '某宫')}宫，八字喜{bazi_xiyong_str}",
                             supporting_methods=["八字", "紫微斗数"],
                             confidence=ConfidenceLevel.MEDIUM
                         ))
@@ -222,7 +223,7 @@ class CrossValidator:
                 liunian = dy.get("liunian", [])
 
                 # 大运十神与喜用关系
-                if shishen and bazi_xiyong:
+                if shishen and bazi_xiyong_raw:
                     # 使用日主天干五行（非纳音五行）推导十神对应五行
                     _day_wx = self.udm.day_master_wuxing or ''
                     _SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
@@ -245,7 +246,7 @@ class CrossValidator:
                             '杀': _bei_ke.get(_day_wx, ''),
                         }
                     _ss_wx = _ss_wx_map.get(shishen, '')
-                    xi_list = bazi_xiyong if isinstance(bazi_xiyong, list) else [bazi_xiyong]
+                    xi_list = bazi_xiyong_raw if isinstance(bazi_xiyong_raw, list) else [bazi_xiyong_raw]
                     is_favorable = _ss_wx in xi_list if _ss_wx else False
                     results.append(ConsensusItem(
                         aspect="当前大运十神",
