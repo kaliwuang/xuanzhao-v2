@@ -467,7 +467,7 @@ class BaziEngine(DivinationEngine):
                         start_age = int(d.getStartAge())
                         end_age = int(d.getEndAge())
                     except Exception:
-                        start_age = abs_start - birth_year
+                        start_age = abs_start - birth_year + 1  # 虚岁
                         end_age = start_age + 9
 
                     # 大运天干十神
