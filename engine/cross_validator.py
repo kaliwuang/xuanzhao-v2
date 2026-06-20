@@ -2535,7 +2535,8 @@ class CrossValidator:
                     ziwei_wealth_good_reason = f"财帛宫有{'、'.join(good_wealth)}，后天财运格局高"
 
         bazi_wealth_weak = not bazi_wealth_good
-        if any("比劫" in f for f in features):
+        # 比劫存在但无财星时才算财运弱；有财星+比劫已在上方设为比劫夺财
+        if not bazi_wealth_good and any("比劫" in f for f in features):
             bazi_wealth_weak = True
 
         if bazi_wealth_weak and ziwei_wealth_good:
