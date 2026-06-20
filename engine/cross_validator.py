@@ -1321,7 +1321,7 @@ class CrossValidator:
         return items
 
     def _validate_academic(self) -> List[ConsensusItem]:
-        """学业交叉验证——八字印星、紫微父母宫/官禄宫、占星水星、奇门天辅景门、六爻父母爻"""
+        """学业交叉验证——八字印星/文昌贵人、紫微父母宫/官禄宫、占星水星、奇门天辅景门、六爻父母爻"""
         items = []
 
         # 八字：看印星（正印/偏印代表学习能力）
@@ -1350,6 +1350,18 @@ class CrossValidator:
                     finding="食伤透干，聪明有创意，表达力强",
                     supporting_methods=["八字"],
                     confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+        # 八字：看文昌贵人（神煞中最直接的学业吉星）
+        # 文昌贵人以日干查地支，主聪明好学、考试运佳、逢考必过
+        if self.udm.shensha:
+            wenchang_entries = [s for s in self.udm.shensha if "文昌" in s]
+            if wenchang_entries:
+                items.append(ConsensusItem(
+                    aspect="学业",
+                    finding=f"八字带{'、'.join(wenchang_entries)}，天生聪颖好学，考试运佳",
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.HIGH,
                 ))
 
         # 紫微：看官禄宫（学业方向）
@@ -3218,6 +3230,13 @@ class CrossValidator:
         if any("食伤" in f for f in bazi_features):
             academic_trend.append("食伤透干，聪明有创意，表达力强")
             if academic_luck == "中":
+                academic_luck = "吉"
+
+        # 八字：看文昌贵人（神煞中最直接的学业吉星）
+        if self.udm.shensha:
+            wenchang_entries = [s for s in self.udm.shensha if "文昌" in s]
+            if wenchang_entries:
+                academic_trend.append(f"八字带{'、'.join(wenchang_entries)}，天生聪颖好学，考试运佳")
                 academic_luck = "吉"
 
         # 紫微：看官禄宫
