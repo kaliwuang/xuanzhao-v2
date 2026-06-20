@@ -21,13 +21,23 @@ class ContentChecker:
         "首先", "其次", "最后", "综上所述", "值得注意的是",
         "因此", "从而", "由此可见", "本质上",
         "总的来说", "换言之", "与此同时", "毋庸置疑", "显而易见",
-        "不言而喻",
+        "不言而喻", "总而言之", "可以说", "毫无疑问",
+        "众所周知", "事实上", "简而言之",
+    ]
+
+    # AI 列举式结构模式（检测"第一…第二…第三…"或"一方面…另一方面"等模板化列举）
+    LIST_LIKE_PATTERNS = [
+        r"第[一二三四五六七八九十]+[，,]",
+        r"一方面.{0,20}另一方面",
+        r"[①②③④⑤⑥⑦⑧⑨⑩]",
     ]
 
     # 比喻关键词（避免把"是"当比喻，排除日常用法）
     METAPHOR_PATTERNS = [
         "像", "如同", "犹如", "仿佛", "好比",
-        "恰似", "宛如", "好似",
+        "恰似", "宛如", "好似", "仿若", "恍如",
+        "好像", "宛若", "恰如", "犹似", "有如",
+        "宛然", "恍若",
     ]
 
     def __init__(self):
@@ -91,6 +101,16 @@ class ContentChecker:
             })
             results["score"] -= (7 - structure) * 3
 
+        # 6. AI列举式结构检查（模板化的"第一/第二/第三"或"一方面/另一方面"等）
+        list_count = self._check_list_like_structures(text)
+        if list_count >= 3:
+            results["issues"].append({
+                "type": "列举式模板",
+                "severity": "中",
+                "details": f"检测到 {list_count} 处模板化列举结构",
+            })
+            results["score"] -= min(list_count * 2, 10)
+
         results["score"] = max(0, results["score"])
         results["passed"] = results["score"] >= 80 and not any(
             i["severity"] == "高" for i in results["issues"]
@@ -121,11 +141,18 @@ class ContentChecker:
         return long_sentences
 
     def _check_metaphors(self, text: str) -> int:
-        """检查比喻数量"""
-        count = 0
+        """检查比喻数量（去重：同一比喻词只计一次）"""
+        found = set()
         for pattern in self.METAPHOR_PATTERNS:
             if pattern in text:
-                count += 1
+                found.add(pattern)
+        return len(found)
+
+    def _check_list_like_structures(self, text: str) -> int:
+        """检查AI列举式结构出现次数（模板化的"第一/第二/第三"或"一方面/另一方面"等）"""
+        count = 0
+        for pat in self.LIST_LIKE_PATTERNS:
+            count += len(re.findall(pat, text))
         return count
 
     def _check_paragraph_length(self, text: str, max_sentences: int = 3) -> List[str]:
