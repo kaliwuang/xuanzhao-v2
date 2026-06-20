@@ -1293,16 +1293,14 @@ class BaziEngine(DivinationEngine):
                 shensha.append(f'寡宿（{pos}支{z}）')
 
         # 32. 天罗地网（以年支或日支查）
-        # 天罗：年支或日支为戌或亥，且另一支也出现在四柱中
-        # 地网：年支或日支为辰或巳，且另一支也出现在四柱中
-        tianluo_pairs = {'戌', '亥'}
-        diwang_pairs = {'辰', '巳'}
+        # 天罗：年支或日支为戌或亥
+        # 地网：年支或日支为辰或巳
+        tianluo_set = {'戌', '亥'}
+        diwang_set = {'辰', '巳'}
         ref_zhis = {year_zhi, day_zhi}
-        has_tianluo = bool(ref_zhis & tianluo_pairs) and bool(tianluo_pairs <= set(all_zhis))
-        if has_tianluo:
+        if ref_zhis & tianluo_set:
             shensha.append('天罗')
-        has_diwang = bool(ref_zhis & diwang_pairs) and bool(diwang_pairs <= set(all_zhis))
-        if has_diwang:
+        if ref_zhis & diwang_set:
             shensha.append('地网')
 
         # 33. 十恶大败（以日柱查）
