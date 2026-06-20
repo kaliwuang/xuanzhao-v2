@@ -808,20 +808,20 @@ class LiuYaoEngine(DivinationEngine):
                 ben_yinyang.append((ben_wx, ben_zhi))
                 bian_yinyang.append((bian_wx, bian_zhi))
 
-            # 伏吟：所有爻的地支五行相同
+            # 伏吟：所有爻的地支五行相同（需6爻均有有效数据）
             all_same = all(
-                ben_yinyang[i] == bian_yinyang[i]
+                ben_yinyang[i] == bian_yinyang[i] and ben_yinyang[i] != ('', '')
                 for i in range(6)
             )
             if all_same:
                 ge_ju.append('伏吟')
 
-            # 反吟：所有爻的地支五行都相冲（至少需有1对有效地支才判定）
+            # 反吟：所有爻的地支五行都相冲（需全部6爻都有有效地支）
             chong_pairs = [
                 i for i in range(6)
                 if ben_yinyang[i][1] and bian_yinyang[i][1]
             ]
-            all_chong = bool(chong_pairs) and all(
+            all_chong = len(chong_pairs) == 6 and all(
                 self.ZHI_CHONG.get(ben_yinyang[i][1]) == bian_yinyang[i][1]
                 for i in chong_pairs
             )
