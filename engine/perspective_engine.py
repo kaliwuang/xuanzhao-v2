@@ -628,6 +628,16 @@ class PerspectiveEngine:
             data["taiyi"] = {
                 "taiyi_gong": udm.taiyi_chart.get("taiyi_gong", ""),
                 "ji_nian": udm.taiyi_chart.get("ji_nian", 0),
+                "ju_name": udm.taiyi_chart.get("ju_name", ""),
+                "yin_yang": udm.taiyi_chart.get("yin_yang", ""),
+                "san_ji": udm.taiyi_chart.get("san_ji", {}),
+                "wu_fu": udm.taiyi_chart.get("wu_fu", ""),
+                "zhu_suan": udm.taiyi_chart.get("zhu_suan", []),
+                "ke_suan": udm.taiyi_chart.get("ke_suan", []),
+                "ding_suan": udm.taiyi_chart.get("ding_suan", []),
+                "suan_analysis": udm.taiyi_chart.get("suan_analysis", {}),
+                "ba_men": udm.taiyi_chart.get("ba_men", ""),
+                "year_ganzhi": udm.taiyi_chart.get("year_ganzhi", ""),
             } if udm.taiyi_chart else {}
 
         return data
