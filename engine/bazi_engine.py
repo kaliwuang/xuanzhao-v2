@@ -655,7 +655,7 @@ class BaziEngine(DivinationEngine):
             if cycle.issubset(zhi_set):
                 cycle_name = "无恩之刑" if cycle == frozenset({'寅', '巳', '申'}) else "恃势之刑"
                 cycle_str = "".join(sorted(cycle, key=lambda z: '子丑寅卯辰巳午未申酉戌亥'.index(z)))
-                positions = [pos_names[zhis.index(z)] for z in cycle if z in zhis]
+                positions = [pos_names[i] for i, z in enumerate(zhis) if z in cycle]
                 features.append(f"{cycle_str}{cycle_name} — {'、'.join(positions)}支三刑齐全，人生多历练")
 
         # 2.6 天干合
