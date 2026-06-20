@@ -990,7 +990,7 @@ class BaziEngine(DivinationEngine):
                             break
 
         # 17. 月德合（以月支查天干，月德的六合）
-        yuede = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
+        # yuede 已在第12步（月德贵人）赋值，此处复用
         yuede_he = GAN_LIUHE.get(yuede, '')
         if yuede_he:
             for g_pos_idx, g in enumerate(all_gans):
