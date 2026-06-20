@@ -968,8 +968,9 @@ class LiuYaoEngine(DivinationEngine):
         """安全版日建月建计算：lunar对象可能不完整"""
         try:
             month_zhi = lunar.getMonthZhi() if lunar else '子'
-        except Exception:
-            month_zhi = '子'
+        except Exception as e:
+            logger.debug(f"六爻月支获取异常，回退子: {e}")
+            month_zhi = "子"
         return self._calc_ri_yue_jian(day_gan, day_zhi, month_zhi, gua_gong_wuxing)
 
     def _calc_ri_yue_jian(self, day_gan: str, day_zhi: str, month_zhi: str, gua_gong_wuxing: str = '') -> dict:
