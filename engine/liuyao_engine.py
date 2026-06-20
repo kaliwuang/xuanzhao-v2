@@ -584,7 +584,7 @@ class LiuYaoEngine(DivinationEngine):
                 'yinyang': yao.get('yinyang', ''),
             })
 
-        return {
+        result = {
             'engine': self.name,
             'engine_en': self.name_en,
             'ben_gua': {
@@ -617,6 +617,7 @@ class LiuYaoEngine(DivinationEngine):
         }
 
         # 流年太岁分析（与najia路径一致）
+        # NOTE: 此块必须在 return result 之前，否则成为死代码
         try:
             from lunar_python import Solar as _Solar
             now = datetime.now()
