@@ -2604,7 +2604,7 @@ class CrossValidator:
                 ))
 
             # 冲突2：八字比劫夺财 vs 六爻妻财旺相
-            bazi_wealth_loss = any("比劫" in f and "财" in f for f in features)
+            bazi_wealth_loss = any("比劫" in f for f in features) and any("财" in f for f in features)
             if bazi_wealth_loss and liuyao_wealth_good:
                 conflicts.append(ConflictItem(
                     aspect="财运",
