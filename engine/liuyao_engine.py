@@ -326,8 +326,12 @@ class LiuYaoEngine(DivinationEngine):
                     })
 
         # 6. 卦宫五行
-        gong_idx = GUAS.index(gong_name) if gong_name in GUAS else 0
-        gua_gong_wuxing = XING5[GUA5[gong_idx]]
+        if gong_name and gong_name in GUAS:
+            gong_idx = GUAS.index(gong_name)
+            gua_gong_wuxing = XING5[GUA5[gong_idx]]
+        else:
+            # 卦宫名不在GUAS中时，用上下卦的五行来推断（非硬编码回退到乾金）
+            gua_gong_wuxing = self.GUA_WUXING.get(shang_gua, '金')
 
         # 7. 本卦信息
         # ⚠️ 位序修正：mark 从初爻到上爻存储（bit0=初爻），需反转位序再查GUAS
