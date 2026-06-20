@@ -2722,7 +2722,7 @@ class CrossValidator:
 
             # 冲突2：八字比劫夺财 vs 六爻妻财旺相
             # 排除"食伤生财""财官双美"等正面组合（与_validate_wealth一致）
-            bazi_wealth_loss = any("比劫" in f for f in features) and any("财" in f and "生" not in f and "美" not in f for f in features)
+            bazi_wealth_loss = any("比劫" in f for f in features) and any("财" in f and "生" not in f and "美" not in f and "不显" not in f for f in features)
             if bazi_wealth_loss and liuyao_wealth_good:
                 conflicts.append(ConflictItem(
                     aspect="财运",
