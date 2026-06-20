@@ -3454,7 +3454,7 @@ class CrossValidator:
         if any("食伤" in f for f in bazi_features):
             strengths.append("表达力强，有创意")
             weaknesses.append("容易急躁，话多")
-        if any("财" in f for f in bazi_features):
+        if any("财" in f and "不显" not in f for f in bazi_features):
             strengths.append("务实，重视效率")
 
         if self.udm.astro_chart:
