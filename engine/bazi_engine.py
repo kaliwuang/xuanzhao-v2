@@ -696,10 +696,14 @@ class BaziEngine(DivinationEngine):
 
         # 1. 天乙贵人（以日干查四支）
         tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
+        tianyi_count = 0
         for pos_idx, z in enumerate(all_zhis):
             if z in tianyi_zhis:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天乙贵人（{pos}支{z}）')
+                tianyi_count += 1
+        if tianyi_count >= 2:
+            shensha.append('双天乙贵人')
 
         # 2. 华盖（以年支查四支）
         huagai_zhi = SHENSHA_HUAGAI_MAP.get(year_zhi, '')
@@ -1092,15 +1096,6 @@ class BaziEngine(DivinationEngine):
                 if z in xunkong:
                     pos = ['年','月','日','时'][pos_idx]
                     shensha.append(f'空亡（{pos}支{z}）')
-
-        # 36. 天乙贵人（完整版，多个位置都算）
-        tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
-        tianyi_count = 0
-        for pos_idx, z in enumerate(all_zhis):
-            if z in tianyi_zhis:
-                tianyi_count += 1
-        if tianyi_count >= 2:
-            shensha.append(f'双天乙贵人')
 
         # 37. 双华盖
         huagai_zhi = SHENSHA_HUAGAI_MAP.get(year_zhi, '')
