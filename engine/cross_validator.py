@@ -2467,6 +2467,72 @@ class CrossValidator:
                 suggestion="八字看先天财运根基，奇门看当下求财时势。有财根但时运不济，宜等待时机，不宜冲动投资或大额支出。"
             ))
 
+        # === 7b. 财运冲突：八字财星 vs 六爻妻财爻 ===
+        # 六爻妻财爻代表当前财运状态。若八字有财但六爻妻财衰弱，
+        # 或八字比劫夺财但六爻妻财旺相，则产生财运维度冲突。
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            ly_lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            ly_cai_yaos = [l for l in ly_lines if l.get("liu_qin") == "妻财"]
+
+            # 六爻妻财爻衰弱信号
+            liuyao_wealth_weak = False
+            liuyao_wealth_weak_reason = ""
+            for cy in ly_cai_yaos:
+                cy_wx = cy.get("wuxing", "")
+                cy_dizhi = cy.get("dizhi", "")
+                cy_shuai = ri_ws.get(cy_wx, "").startswith(("衰", "死", "绝", "墓")) if cy_wx and ri_ws else False
+                if cy_shuai:
+                    liuyao_wealth_weak = True
+                    liuyao_wealth_weak_reason = f"六爻妻财爻{cy_dizhi}（{cy_wx}）衰弱，当下财运根基不强"
+                    break
+
+            # 六爻妻财爻旺相信号
+            liuyao_wealth_good = False
+            liuyao_wealth_good_reason = ""
+            for cy in ly_cai_yaos:
+                cy_wx = cy.get("wuxing", "")
+                cy_dizhi = cy.get("dizhi", "")
+                cy_wang = ri_ws.get(cy_wx, "").startswith(("旺", "相")) if cy_wx and ri_ws else False
+                cy_is_shi = cy.get("is_shi", False)
+                if cy_wang:
+                    liuyao_wealth_good = True
+                    label = "持世" if cy_is_shi else "旺相"
+                    liuyao_wealth_good_reason = f"六爻妻财爻{cy_dizhi}（{cy_wx}）{label}，当下财运根基扎实"
+                    break
+                elif cy_is_shi:
+                    liuyao_wealth_good = True
+                    liuyao_wealth_good_reason = f"六爻妻财爻{cy_dizhi}持世，重视理财，当下以财富积累为重心"
+                    break
+
+            # 冲突1：八字有财星 vs 六爻妻财衰弱
+            if bazi_wealth_good and liuyao_wealth_weak:
+                conflicts.append(ConflictItem(
+                    aspect="财运",
+                    method_a="八字",
+                    finding_a=bazi_wealth_reason,
+                    method_b="六爻",
+                    finding_b=liuyao_wealth_weak_reason,
+                    suggestion="八字看先天财运根基，六爻看当下财运状态。有财根但当下财运偏弱，"
+                               "说明赚钱能力在但时机未到，宜蓄势待发，不宜激进投资。"
+                ))
+
+            # 冲突2：八字比劫夺财 vs 六爻妻财旺相
+            bazi_wealth_loss = any("比劫" in f and "财" in f for f in features)
+            if bazi_wealth_loss and liuyao_wealth_good:
+                conflicts.append(ConflictItem(
+                    aspect="财运",
+                    method_a="八字",
+                    finding_a="比劫夺财，先天有破财或合伙纠纷风险",
+                    method_b="六爻",
+                    finding_b=liuyao_wealth_good_reason,
+                    suggestion="八字比劫夺财代表先天有竞争损耗，但六爻妻财旺相说明当下财运不错。"
+                               "短期财运有支撑，但需防范比劫暗示的合伙纠纷和冲动消费，守住才是真赚。"
+                ))
+
         # === 8. 学业冲突：八字印星 vs 占星水星 ===
         bazi_academic_good = False
         bazi_academic_reason = ""
