@@ -903,6 +903,8 @@ class PerspectiveEngine:
                 "感情": f"感情需顺其自然，{name}认为缘分不可强求",
                 "财运": f"财路在于积累，{name}主张稳健理财",
                 "健康": f"养生重在平衡，{name}提醒注意身心调和",
+                "学业": f"学业贵在持恒，{name}主张厚积薄发",
+                "人际": f"人际以诚为本，{name}提醒择善而交",
             }
             stance = stance_map.get(question_type, f"顺势而为，{name}曰「{catchphrase[:15]}」")
 
