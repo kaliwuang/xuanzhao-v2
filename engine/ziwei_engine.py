@@ -203,14 +203,6 @@ class ZiWeiEngine(DivinationEngine):
         # 四柱
         ganzhi = r.chinese_date.split()  # "乙酉 壬午 甲子 庚午"
 
-        # 构建星曜→宫位映射（用于自化计算）
-        star_in_palace = {}  # {星名中文: 宫位index}
-        for p in r.palaces:
-            for s in p.major_stars:
-                star_in_palace[_cn_star(s.name, 'major')] = p.index
-            for s in p.minor_stars:
-                star_in_palace[_cn_star(s.name, 'minor')] = p.index
-
         # 排十二宫
         palaces = []
         star_placements = {}
