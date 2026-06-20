@@ -353,7 +353,7 @@ class QiMenEngine(DivinationEngine):
                 for i, palace in enumerate(luo8):
                     src_idx = (i - offset) % n
                     new_jiu_xing[palace] = jiu_xing[luo8[src_idx]]
-                new_jiu_xing[5] = jiu_xing.get(5, '天禽')
+                new_jiu_xing[5] = '天禽'  # 中宫天禽不参与旋转，始终居中
                 jiu_xing = new_jiu_xing
 
                 # 八门也按同样偏移旋转
