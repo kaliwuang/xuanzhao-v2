@@ -708,31 +708,31 @@ class BaziEngine(DivinationEngine):
         if tianyi_count >= 2:
             shensha.append('双天乙贵人')
 
-        # 2. 华盖（以年支查四支）
-        huagai_zhi = SHENSHA_HUAGAI_MAP.get(year_zhi, '')
+        # 2. 华盖（以年支和日支查四支，与大运一致）
+        huagai_targets = set(filter(None, [SHENSHA_HUAGAI_MAP.get(year_zhi, ''), SHENSHA_HUAGAI_MAP.get(day_zhi, '')]))
         for pos_idx, z in enumerate(all_zhis):
-            if z == huagai_zhi:
+            if z in huagai_targets:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'华盖（{pos}支{z}）')
 
-        # 3. 驿马（以年支查三合局冲位）
-        yima_zhi = SHENSHA_YIMA_MAP.get(year_zhi, '')
+        # 3. 驿马（以年支和日支查三合局冲位，与大运一致）
+        yima_targets = set(filter(None, [SHENSHA_YIMA_MAP.get(year_zhi, ''), SHENSHA_YIMA_MAP.get(day_zhi, '')]))
         for pos_idx, z in enumerate(all_zhis):
-            if z == yima_zhi:
+            if z in yima_targets:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'驿马（{pos}支{z}）')
 
-        # 4. 桃花（以年支查）
-        taohua_zhi = SHENSHA_TAOHUA_MAP.get(year_zhi, '')
+        # 4. 桃花（以年支和日支查，与大运一致）
+        taohua_targets = set(filter(None, [SHENSHA_TAOHUA_MAP.get(year_zhi, ''), SHENSHA_TAOHUA_MAP.get(day_zhi, '')]))
         for pos_idx, z in enumerate(all_zhis):
-            if z == taohua_zhi:
+            if z in taohua_targets:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'桃花（{pos}支{z}）')
 
-        # 5. 将星（以年支查）
-        jiangxing_zhi = SHENSHA_JIANGXING_MAP.get(year_zhi, '')
+        # 5. 将星（以年支和日支查，与大运一致）
+        jiangxing_targets = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_zhi, ''), SHENSHA_JIANGXING_MAP.get(day_zhi, '')]))
         for pos_idx, z in enumerate(all_zhis):
-            if z == jiangxing_zhi:
+            if z in jiangxing_targets:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'将星（{pos}支{z}）')
 
