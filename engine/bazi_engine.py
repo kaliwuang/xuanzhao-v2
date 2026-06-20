@@ -663,6 +663,22 @@ class BaziEngine(DivinationEngine):
                 if GAN_HE.get(g1) == g2:
                     features.append(f"{g1}{g2}合 — {pos_names[i]}干与{pos_names[j]}干相合")
 
+        # 2.7 天干冲（甲庚/乙辛/丙壬/丁癸，阳克阳、阴克阴为偏冲）
+        for i, g1 in enumerate(all_gans):
+            for j, g2 in enumerate(all_gans[i+1:], i+1):
+                if GAN_CHONG.get(g1) == g2:
+                    features.append(f"{g1}{g2}冲 — {pos_names[i]}干与{pos_names[j]}干相冲，气场对立")
+
+        # 2.8 地支害（六害：子未/丑午/寅巳/卯辰/申亥/酉戌）
+        hai_found = set()
+        for i, z1 in enumerate(zhis):
+            for j, z2 in enumerate(zhis[i+1:], i+1):
+                if ZHI_HAI_MOD.get(z1) == z2:
+                    pair_key = frozenset({pos_names[i], pos_names[j]})
+                    if pair_key not in hai_found:
+                        hai_found.add(pair_key)
+                        features.append(f"{z1}{z2}害 — {pos_names[i]}支与{pos_names[j]}支相害，暗中损耗")
+
         # 3. 七杀透干
         ss = shishen_gan
         if ss.get("time") == "七杀":
