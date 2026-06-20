@@ -182,7 +182,7 @@ def _error_response(e: Exception):
 
 def _get_figure_ids(figures: Optional[str]) -> list:
     """解析人物ID参数"""
-    return figures.split(",") if figures else _default_figure_ids
+    return [f.strip() for f in figures.split(",") if f.strip()] if figures and figures.strip() else _default_figure_ids
 
 
 @router.get("/api/engines")
