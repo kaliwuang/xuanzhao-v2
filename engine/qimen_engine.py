@@ -502,7 +502,8 @@ class QiMenEngine(DivinationEngine):
             tp = p.get('tian_pan', '')
             if tp in GAN_XING and GAN_XING[tp] == g:
                 branch_name = GAN_XING_BRANCH.get(tp, XING_MAP.get(g, '中'))
-                xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{branch_name}宫，刑伤之象'})
+                gong_name = self.PALACE_NAMES.get(g, f'{branch_name}宫')
+                xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{gong_name}，刑伤之象'})
 
         # 6. 入墓：天干落墓宫（排除三奇乙丙丁，由下方三奇入墓专项检测）
         # 天干入墓表（五行墓库法）：乙木→未(坤二=2)，丙丁火→戌(乾六=6)，庚辛金→丑(艮八=8)，戊己壬癸→辰(巽四=4)
