@@ -98,6 +98,186 @@ SHENSHA_JIANGXING_MAP = {
     '午':'午','未':'卯','申':'子','酉':'酉','戌':'午','亥':'卯',
 }
 
+# ─── 天德贵人（以月支查，值为天干或地支）─────────────────
+SHENSHA_TIANYI_GUIREN_MAP = {
+    '子':'巳','丑':'庚','寅':'丁','卯':'申',
+    '辰':'壬','巳':'辛','午':'甲','未':'癸',
+    '申':'丙','酉':'乙','戌':'丙','亥':'乙',
+}
+
+# ─── 红艳煞（以日干查）──────────────────────────────
+SHENSHA_HONGYAN_MAP = {
+    '甲':'午','乙':'申','丙':'寅','丁':'未',
+    '戊':'辰','己':'辰','庚':'戌','辛':'酉',
+    '壬':'子','癸':'申',
+}
+
+# ─── 福星贵人（以日干查）──────────────────────────────
+SHENSHA_FUXING_MAP = {
+    '甲': ['寅'], '乙': ['丑','亥'], '丙': ['子','戌'],
+    '丁': ['酉'], '戊': ['申'], '己': ['未'],
+    '庚': ['午'], '辛': ['巳'], '壬': ['辰'], '癸': ['卯'],
+}
+
+# ─── 金舆（以日干查）────────────────────────────────
+SHENSHA_JINYU_MAP = {
+    '甲': ['辰'], '乙': ['巳'], '丙': ['未'], '丁': ['申'],
+    '戊': ['未'], '己': ['申'], '庚': ['戌'], '辛': ['亥'],
+    '壬': ['丑'], '癸': ['寅'],
+}
+
+# ─── 天赦（以月支所在季节查日柱）────────────────────
+SHENSHA_TIANSHE_MAP = {
+    '寅':'戊寅','卯':'戊寅','辰':'戊寅',
+    '巳':'甲午','午':'甲午','未':'甲午',
+    '申':'戊申','酉':'戊申','戌':'戊申',
+    '亥':'甲子','子':'甲子','丑':'甲子',
+}
+
+# ─── 天医（以月支查）────────────────────────────────
+SHENSHA_TIANYI_MEDICAL_MAP = {
+    '子':'丑','丑':'寅','寅':'卯','卯':'辰',
+    '辰':'巳','巳':'午','午':'未','未':'申',
+    '申':'酉','酉':'戌','戌':'亥','亥':'子',
+}
+
+# ─── 天厨（以日干查）────────────────────────────────
+SHENSHA_TIANCHU_MAP = {
+    '甲':'巳','乙':'午','丙':'巳','丁':'午',
+    '戊':'申','己':'酉','庚':'亥','辛':'子',
+    '壬':'寅','癸':'卯',
+}
+
+# ─── 学堂（以日干查长生位）────────────────────────
+SHENSHA_XUETANG_MAP = {
+    '甲':'亥','乙':'午','丙':'寅','丁':'酉',
+    '戊':'寅','己':'酉','庚':'巳','辛':'子',
+    '壬':'申','癸':'卯',
+}
+
+# ─── 词馆（以日干查临官位）────────────────────────
+SHENSHA_CIGUAN_MAP = {
+    '甲':'寅','乙':'卯','丙':'巳','丁':'午',
+    '戊':'巳','己':'午','庚':'申','辛':'酉',
+    '壬':'亥','癸':'子',
+}
+
+# ─── 羊刃（以日干查，阳干帝旺位）──────────────────
+SHENSHA_YANGREN_MAP = {
+    '甲':'卯','丙':'午','戊':'午','庚':'酉','壬':'子',
+}
+
+# ─── 飞刃（以日干查，羊刃对冲）────────────────────
+SHENSHA_FEIREN_MAP = {
+    '甲':'酉','丙':'子','戊':'子','庚':'卯','壬':'午',
+}
+
+# ─── 流霞（以日干查）────────────────────────────────
+SHENSHA_LIUXIA_MAP = {
+    '甲':'酉','乙':'戌','丙':'未','丁':'申',
+    '戊':'巳','己':'午','庚':'辰','辛':'卯',
+    '壬':'亥','癸':'寅',
+}
+
+# ─── 亡神（以年支查三合局绝位）────────────────────
+SHENSHA_WANGSHEN_MAP = {
+    '子':'巳','丑':'寅','寅':'亥','卯':'申',
+    '辰':'巳','巳':'寅','午':'亥','未':'申',
+    '申':'巳','酉':'寅','戌':'亥','亥':'申',
+}
+
+# ─── 劫煞（以年支查三合局死位）────────────────────
+SHENSHA_JIESHA_MAP = {
+    '子':'卯','丑':'子','寅':'酉','卯':'午',
+    '辰':'卯','巳':'子','午':'酉','未':'午',
+    '申':'卯','酉':'子','戌':'酉','亥':'午',
+}
+
+# ─── 灾煞（以年支查将星对冲位）────────────────────
+SHENSHA_ZAISHA_MAP = {
+    '子':'午','丑':'卯','寅':'子','卯':'酉',
+    '辰':'午','巳':'卯','午':'子','未':'酉',
+    '申':'午','酉':'卯','戌':'子','亥':'酉',
+}
+
+# ─── 勾煞（以年支查）────────────────────────────────
+SHENSHA_GOUSHA_MAP = {
+    '子':'卯','丑':'辰','寅':'巳','卯':'午',
+    '辰':'未','巳':'申','午':'酉','未':'戌',
+    '申':'亥','酉':'子','戌':'丑','亥':'寅',
+}
+
+# ─── 绞煞（以年支查，勾煞对冲）────────────────────
+SHENSHA_JIAOSHA_MAP = {
+    '子':'酉','丑':'戌','寅':'亥','卯':'子',
+    '辰':'丑','巳':'寅','午':'卯','未':'辰',
+    '申':'巳','酉':'午','戌':'未','亥':'申',
+}
+
+# ─── 孤辰寡宿（以年支查）────────────────────────
+SHENSHA_GUICHEN_MAP = {
+    '子':'寅','丑':'寅','寅':'巳','卯':'巳',
+    '辰':'巳','巳':'申','午':'申','未':'申',
+    '申':'亥','酉':'亥','戌':'亥','亥':'寅',
+}
+SHENSHA_GUASU_MAP = {
+    '子':'戌','丑':'戌','寅':'丑','卯':'丑',
+    '辰':'丑','巳':'辰','午':'辰','未':'辰',
+    '申':'未','酉':'未','戌':'未','亥':'戌',
+}
+
+# ─── 天官贵人（以日干查四支）────────────────────
+SHENSHA_TIANGUAN_MAP = {
+    '甲':'未','乙':'辰','丙':'巳','丁':'午',
+    '戊':'戌','己':'酉','庚':'丑','辛':'寅',
+    '壬':'卯','癸':'子',
+}
+
+# ─── 天福贵人（以日干查四支）────────────────────
+SHENSHA_TIANFU_MAP = {
+    '甲':'酉','乙':'申','丙':'子','丁':'亥',
+    '戊':'卯','己':'寅','庚':'午','辛':'巳',
+    '壬':'未','癸':'辰',
+}
+
+# ─── 德秀贵人（以月支查天干组合）────────────────
+SHENSHA_DEXIU_MAP = {
+    '子': {'德':'壬', '秀':'丙辛'},
+    '丑': {'德':'壬', '秀':'丙辛'},
+    '寅': {'德':'丙', '秀':'甲乙'},
+    '卯': {'德':'丙', '秀':'甲乙'},
+    '辰': {'德':'丙', '秀':'甲乙'},
+    '巳': {'德':'庚', '秀':'丙丁戊'},
+    '午': {'德':'庚', '秀':'丙丁戊'},
+    '未': {'德':'庚', '秀':'丙丁戊'},
+    '申': {'德':'甲', '秀':'庚辛壬'},
+    '酉': {'德':'甲', '秀':'庚辛壬'},
+    '戌': {'德':'甲', '秀':'庚辛壬'},
+    '亥': {'德':'戊', '秀':'甲乙'},
+}
+
+# ─── 十恶大败（以日柱查）────────────────────────
+SHIBA_EBA = ['甲辰','乙巳','丙申','丁亥','戊戌','己丑','庚辰','辛巳','壬申','癸亥']
+
+# ─── 四废（以月支所在季节查日柱）────────────────
+SHENSHA_SIFEI_MAP = {
+    '寅':['庚申','辛酉'],'卯':['庚申','辛酉'],'辰':['庚申','辛酉'],
+    '巳':['壬子','癸亥'],'午':['壬子','癸亥'],'未':['壬子','癸亥'],
+    '申':['甲寅','乙卯'],'酉':['甲寅','乙卯'],'戌':['甲寅','乙卯'],
+    '亥':['丙午','丁未'],'子':['丙午','丁未'],'丑':['丙午','丁未'],
+}
+
+# ─── 阴阳差错（以日柱查）────────────────────────
+YINYANG_CHACUO = [
+    '丙子','丁丑','戊寅','辛卯','壬辰','癸巳',
+    '丙午','丁未','戊申','辛酉','壬戌','癸亥'
+]
+
+# ─── 天转煞（以日柱纳音五行查）────────────────
+SHENSHA_TIANZHUAN_MAP = {
+    '金': '辛卯', '木': '癸巳', '水': '丁未', '火': '丙戌', '土': '己丑'
+}
+
 # ─── 天干关系表（模块级常量）──────────────────────────
 GAN_CHONG = {'甲':'庚','庚':'甲','乙':'辛','辛':'乙','丙':'壬','壬':'丙','丁':'癸','癸':'丁'}
 GAN_HE = {'甲':'己','己':'甲','乙':'庚','庚':'乙','丙':'辛','辛':'丙','丁':'壬','壬':'丁','戊':'癸','癸':'戊'}
@@ -319,13 +499,8 @@ class BaziEngine(DivinationEngine):
                     dy_yuede_gan = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
                     if dy_gan == dy_yuede_gan:
                         dy_shensha.append('月德')
-                    # 天德贵人（以月支查，大运地支或天干匹配则入）
-                    dy_tiande_map = {
-                        '子':'巳','丑':'庚','寅':'丁','卯':'申',
-                        '辰':'壬','巳':'辛','午':'甲','未':'癸',
-                        '申':'丙','酉':'乙','戌':'丙','亥':'乙',
-                    }
-                    dy_tiande = dy_tiande_map.get(month_pillar.zhi, '')
+                    # 天德贵人（以月支查，大运地支或天干匹配则入）— 使用模块级 SHENSHA_TIANYI_GUIREN_MAP
+                    dy_tiande = SHENSHA_TIANYI_GUIREN_MAP.get(month_pillar.zhi, '')
                     if dy_tiande:
                         if dy_tiande in TIANGAN_SET and dy_gan == dy_tiande:
                             dy_shensha.append('天德贵人')
@@ -975,14 +1150,8 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'将星（{pos}支{z}）')
 
-        # 6. 天德贵人（以月支查天干或地支）
-        # 注意：天德值可能是天干也可能是地支（如子月→巳、卯月→申）
-        tiande_map = {
-            '子':'巳','丑':'庚','寅':'丁','卯':'申',
-            '辰':'壬','巳':'辛','午':'甲','未':'癸',
-            '申':'丙','酉':'乙','戌':'丙','亥':'乙',
-        }
-        tiande = tiande_map.get(month_pillar.zhi, '')
+        # 6. 天德贵人（以月支查天干或地支）— 使用模块级 SHENSHA_TIANYI_GUIREN_MAP
+        tiande = SHENSHA_TIANYI_GUIREN_MAP.get(month_pillar.zhi, '')
         if tiande:
             if tiande in TIANGAN_SET:
                 # 天德为天干，查四柱天干
@@ -1006,13 +1175,8 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'文昌贵人（{pos}支{z}）')
 
-        # 8. 红艳煞（以日干查）
-        hongyan_map = {
-            '甲':'午','乙':'申','丙':'寅','丁':'未',
-            '戊':'辰','己':'辰','庚':'戌','辛':'酉',
-            '壬':'子','癸':'申',
-        }
-        hongyan_zhi = hongyan_map.get(day_gan, '')
+        # 8. 红艳煞（以日干查）— 使用模块级 SHENSHA_HONGYAN_MAP
+        hongyan_zhi = SHENSHA_HONGYAN_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == hongyan_zhi:
                 pos = ['年','月','日','时'][pos_idx]
@@ -1057,25 +1221,15 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'太极贵人（{pos}支{z}）')
 
-        # 14. 福星贵人（以日干查）
-        fuxing_map = {
-            '甲': ['寅'], '乙': ['丑','亥'], '丙': ['子','戌'],
-            '丁': ['酉'], '戊': ['申'], '己': ['未'],
-            '庚': ['午'], '辛': ['巳'], '壬': ['辰'], '癸': ['卯'],
-        }
-        fuxing_zhis = fuxing_map.get(day_gan, [])
+        # 14. 福星贵人（以日干查）— 使用模块级 SHENSHA_FUXING_MAP
+        fuxing_zhis = SHENSHA_FUXING_MAP.get(day_gan, [])
         for pos_idx, z in enumerate(all_zhis):
             if z in fuxing_zhis:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'福星贵人（{pos}支{z}）')
 
-        # 15. 金舆（以日干查）
-        jinyu_map = {
-            '甲': ['辰'], '乙': ['巳'], '丙': ['未'], '丁': ['申'],
-            '戊': ['未'], '己': ['申'], '庚': ['戌'], '辛': ['亥'],
-            '壬': ['丑'], '癸': ['寅'],
-        }
-        jinyu_zhi = jinyu_map.get(day_gan, [])
+        # 15. 金舆（以日干查）— 使用模块级 SHENSHA_JINYU_MAP
+        jinyu_zhi = SHENSHA_JINYU_MAP.get(day_gan, [])
         for pos_idx, z in enumerate(all_zhis):
             if z in jinyu_zhi:
                 pos = ['年','月','日','时'][pos_idx]
@@ -1114,174 +1268,99 @@ class BaziEngine(DivinationEngine):
                     shensha.append(f'月德合（{pos}干{g}）')
                     break
 
-        # 18. 天赦（以月支查日柱：春→戊寅，夏→甲午，秋→戊申，冬→甲子）
-        tianshe_map = {
-            '寅':'戊寅','卯':'戊寅','辰':'戊寅',
-            '巳':'甲午','午':'甲午','未':'甲午',
-            '申':'戊申','酉':'戊申','戌':'戊申',
-            '亥':'甲子','子':'甲子','丑':'甲子',
-        }
-        tianshe = tianshe_map.get(month_pillar.zhi, '')
+        # 18. 天赦（以月支查日柱）— 使用模块级 SHENSHA_TIANSHE_MAP
+        tianshe = SHENSHA_TIANSHE_MAP.get(month_pillar.zhi, '')
         if tianshe:
             if day_gz == tianshe:
                 shensha.append('天赦')
 
-        # 19. 天医（以月支查）
-        tianyi_medical_map = {
-            '子':'丑','丑':'寅','寅':'卯','卯':'辰',
-            '辰':'巳','巳':'午','午':'未','未':'申',
-            '申':'酉','酉':'戌','戌':'亥','亥':'子',
-        }
-        tianyi_medical_zhi = tianyi_medical_map.get(month_pillar.zhi, '')
+        # 19. 天医（以月支查）— 使用模块级 SHENSHA_TIANYI_MEDICAL_MAP
+        tianyi_medical_zhi = SHENSHA_TIANYI_MEDICAL_MAP.get(month_pillar.zhi, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == tianyi_medical_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天医（{pos}支{z}）')
 
-        # 20. 天厨（以日干查）
-        tianchu_map = {
-            '甲':'巳','乙':'午','丙':'巳','丁':'午',
-            '戊':'申','己':'酉','庚':'亥','辛':'子',
-            '壬':'寅','癸':'卯',
-        }
-        tianchu_zhi = tianchu_map.get(day_gan, '')
+        # 20. 天厨（以日干查）— 使用模块级 SHENSHA_TIANCHU_MAP
+        tianchu_zhi = SHENSHA_TIANCHU_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == tianchu_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天厨（{pos}支{z}）')
 
-        # 21. 学堂（以日干查长生位）
-        xuetang_map = {
-            '甲':'亥','乙':'午','丙':'寅','丁':'酉',
-            '戊':'寅','己':'酉','庚':'巳','辛':'子',
-            '壬':'申','癸':'卯',
-        }
-        xuetang_zhi = xuetang_map.get(day_gan, '')
+        # 21. 学堂（以日干查长生位）— 使用模块级 SHENSHA_XUETANG_MAP
+        xuetang_zhi = SHENSHA_XUETANG_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == xuetang_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'学堂（{pos}支{z}）')
 
-        # 22. 词馆（以日干查临官位）
-        ciguan_map = {
-            '甲':'寅','乙':'卯','丙':'巳','丁':'午',
-            '戊':'巳','己':'午','庚':'申','辛':'酉',
-            '壬':'亥','癸':'子',
-        }
-        ciguan_zhi = ciguan_map.get(day_gan, '')
+        # 22. 词馆（以日干查临官位）— 使用模块级 SHENSHA_CIGUAN_MAP
+        ciguan_zhi = SHENSHA_CIGUAN_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == ciguan_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'词馆（{pos}支{z}）')
 
-        # 23. 羊刃（以日干查，阳干帝旺位）
-        yangren_map = {
-            '甲':'卯','丙':'午','戊':'午','庚':'酉','壬':'子',
-        }
-        yangren_zhi = yangren_map.get(day_gan, '')
+        # 23. 羊刃（以日干查，阳干帝旺位）— 使用模块级 SHENSHA_YANGREN_MAP
+        yangren_zhi = SHENSHA_YANGREN_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == yangren_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'羊刃（{pos}支{z}）')
 
-        # 24. 飞刃（以日干查，羊刃对冲）
-        feiren_map = {
-            '甲':'酉','丙':'子','戊':'子','庚':'卯','壬':'午',
-        }
-        feiren_zhi = feiren_map.get(day_gan, '')
+        # 24. 飞刃（以日干查，羊刃对冲）— 使用模块级 SHENSHA_FEIREN_MAP
+        feiren_zhi = SHENSHA_FEIREN_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == feiren_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'飞刃（{pos}支{z}）')
 
-        # 25. 流霞（以日干查）
-        liuxia_map = {
-            '甲':'酉','乙':'戌','丙':'未','丁':'申',
-            '戊':'巳','己':'午','庚':'辰','辛':'卯',
-            '壬':'亥','癸':'寅',
-        }
-        liuxia_zhi = liuxia_map.get(day_gan, '')
+        # 25. 流霞（以日干查）— 使用模块级 SHENSHA_LIUXIA_MAP
+        liuxia_zhi = SHENSHA_LIUXIA_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == liuxia_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'流霞（{pos}支{z}）')
 
-        # 26. 亡神（以年支查三合局绝位）
-        wangshen_map = {
-            '子':'巳','丑':'寅','寅':'亥','卯':'申',
-            '辰':'巳','巳':'寅','午':'亥','未':'申',
-            '申':'巳','酉':'寅','戌':'亥','亥':'申',
-        }
-        wangshen_zhi = wangshen_map.get(year_zhi, '')
+        # 26. 亡神（以年支查三合局绝位）— 使用模块级 SHENSHA_WANGSHEN_MAP
+        wangshen_zhi = SHENSHA_WANGSHEN_MAP.get(year_zhi, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == wangshen_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'亡神（{pos}支{z}）')
 
-        # 27. 劫煞（以年支查三合局死位）
-        # 三合局死位：申子辰(水)→卯, 巳酉丑(金)→子, 寅午戌(火)→酉, 亥卯未(木)→午
-        jiesha_map = {
-            '子':'卯','丑':'子','寅':'酉','卯':'午',
-            '辰':'卯','巳':'子','午':'酉','未':'午',
-            '申':'卯','酉':'子','戌':'酉','亥':'午',
-        }
-        jiesha_zhi = jiesha_map.get(year_zhi, '')
+        # 27. 劫煞（以年支查三合局死位）— 使用模块级 SHENSHA_JIESHA_MAP
+        jiesha_zhi = SHENSHA_JIESHA_MAP.get(year_zhi, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == jiesha_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'劫煞（{pos}支{z}）')
 
-        # 28. 灾煞（以年支查将星对冲位）
-        # 将星=三合中位：申子辰→子、巳酉丑→酉、寅午戌→午、亥卯未→卯
-        # 灾煞=冲将星：冲子=午、冲酉=卯、冲午=子、冲卯=酉
-        zaisha_map = {
-            '子':'午','丑':'卯','寅':'子','卯':'酉',
-            '辰':'午','巳':'卯','午':'子','未':'酉',
-            '申':'午','酉':'卯','戌':'子','亥':'酉',
-        }
-        zaisha_zhi = zaisha_map.get(year_zhi, '')
+        # 28. 灾煞（以年支查将星对冲位）— 使用模块级 SHENSHA_ZAISHA_MAP
+        zaisha_zhi = SHENSHA_ZAISHA_MAP.get(year_zhi, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == zaisha_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'灾煞（{pos}支{z}）')
 
-        # 29. 勾煞（以年支查）
-        gousha_map = {
-            '子':'卯','丑':'辰','寅':'巳','卯':'午',
-            '辰':'未','巳':'申','午':'酉','未':'戌',
-            '申':'亥','酉':'子','戌':'丑','亥':'寅',
-        }
-        gousha_zhi = gousha_map.get(year_zhi, '')
+        # 29. 勾煞（以年支查）— 使用模块级 SHENSHA_GOUSHA_MAP
+        gousha_zhi = SHENSHA_GOUSHA_MAP.get(year_zhi, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == gousha_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'勾煞（{pos}支{z}）')
 
-        # 30. 绞煞（以年支查，勾煞对冲）
-        jiaosha_map = {
-            '子':'酉','丑':'戌','寅':'亥','卯':'子',
-            '辰':'丑','巳':'寅','午':'卯','未':'辰',
-            '申':'巳','酉':'午','戌':'未','亥':'申',
-        }
-        jiaosha_zhi = jiaosha_map.get(year_zhi, '')
+        # 30. 绞煞（以年支查，勾煞对冲）— 使用模块级 SHENSHA_JIAOSHA_MAP
+        jiaosha_zhi = SHENSHA_JIAOSHA_MAP.get(year_zhi, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == jiaosha_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'绞煞（{pos}支{z}）')
 
-        # 31. 孤辰寡宿（以年支查）
-        guchen_map = {
-            '子':'寅','丑':'寅','寅':'巳','卯':'巳',
-            '辰':'巳','巳':'申','午':'申','未':'申',
-            '申':'亥','酉':'亥','戌':'亥','亥':'寅',
-        }
-        guasu_map = {
-            '子':'戌','丑':'戌','寅':'丑','卯':'丑',
-            '辰':'丑','巳':'辰','午':'辰','未':'辰',
-            '申':'未','酉':'未','戌':'未','亥':'戌',
-        }
-        guchen_zhi = guchen_map.get(year_zhi, '')
-        guasu_zhi = guasu_map.get(year_zhi, '')
+        # 31. 孤辰寡宿（以年支查）— 使用模块级 SHENSHA_GUICHEN_MAP / SHENSHA_GUASU_MAP
+        guchen_zhi = SHENSHA_GUICHEN_MAP.get(year_zhi, '')
+        guasu_zhi = SHENSHA_GUASU_MAP.get(year_zhi, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == guchen_zhi:
                 pos = ['年','月','日','时'][pos_idx]
@@ -1302,21 +1381,12 @@ class BaziEngine(DivinationEngine):
         if ref_zhis & diwang_set:
             shensha.append('地网')
 
-        # 33. 十恶大败（以日柱查）
-        eba_map = ['甲辰','乙巳','丙申','丁亥','戊戌','己丑','庚辰','辛巳','壬申','癸亥']
-        if day_gz in eba_map:
+        # 33. 十恶大败（以日柱查）— 使用模块级 SHIBA_EBA
+        if day_gz in SHIBA_EBA:
             shensha.append('十恶大败')
 
-        # 34. 四废（以月支所在季节查日柱）
-        # 春(寅卯辰)：金死绝→庚申辛酉；夏(巳午未)：水死绝→壬子癸亥
-        # 秋(申酉戌)：木死绝→甲寅乙卯；冬(亥子丑)：火死绝→丙午丁未
-        sifei_map = {
-            '寅':['庚申','辛酉'],'卯':['庚申','辛酉'],'辰':['庚申','辛酉'],
-            '巳':['壬子','癸亥'],'午':['壬子','癸亥'],'未':['壬子','癸亥'],
-            '申':['甲寅','乙卯'],'酉':['甲寅','乙卯'],'戌':['甲寅','乙卯'],
-            '亥':['丙午','丁未'],'子':['丙午','丁未'],'丑':['丙午','丁未'],
-        }
-        sifei_list = sifei_map.get(month_pillar.zhi, [])
+        # 34. 四废（以月支所在季节查日柱）— 使用模块级 SHENSHA_SIFEI_MAP
+        sifei_list = SHENSHA_SIFEI_MAP.get(month_pillar.zhi, [])
         if day_gz in sifei_list:
             shensha.append('四废')
 
@@ -1354,25 +1424,15 @@ class BaziEngine(DivinationEngine):
                 shensha.append('双桃花')
                 break
 
-        # 38. 天官贵人（以日干查四支）
-        tianguan_map = {
-            '甲':'未','乙':'辰','丙':'巳','丁':'午',
-            '戊':'戌','己':'酉','庚':'丑','辛':'寅',
-            '壬':'卯','癸':'子',
-        }
-        tianguan_zhi = tianguan_map.get(day_gan, '')
+        # 38. 天官贵人（以日干查四支）— 使用模块级 SHENSHA_TIANGUAN_MAP
+        tianguan_zhi = SHENSHA_TIANGUAN_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == tianguan_zhi:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天官贵人（{pos}支{z}）')
 
-        # 39. 天福贵人（以日干查四支）
-        tianfu_map = {
-            '甲':'酉','乙':'申','丙':'子','丁':'亥',
-            '戊':'卯','己':'寅','庚':'午','辛':'巳',
-            '壬':'未','癸':'辰',
-        }
-        tianfu_zhi = tianfu_map.get(day_gan, '')
+        # 39. 天福贵人（以日干查四支）— 使用模块级 SHENSHA_TIANFU_MAP
+        tianfu_zhi = SHENSHA_TIANFU_MAP.get(day_gan, '')
         for pos_idx, z in enumerate(all_zhis):
             if z == tianfu_zhi:
                 pos = ['年','月','日','时'][pos_idx]
@@ -1387,22 +1447,8 @@ class BaziEngine(DivinationEngine):
         if '辛' in all_gan_str and '壬' in all_gan_str and '癸' in all_gan_str:
             shensha.append('人中三奇（辛壬癸）')
 
-        # 41. 德秀贵人（以月支查天干组合）
-        dexiu_map = {
-            '子': {'德':'壬', '秀':'丙辛'},
-            '丑': {'德':'壬', '秀':'丙辛'},
-            '寅': {'德':'丙', '秀':'甲乙'},
-            '卯': {'德':'丙', '秀':'甲乙'},
-            '辰': {'德':'丙', '秀':'甲乙'},
-            '巳': {'德':'庚', '秀':'丙丁戊'},
-            '午': {'德':'庚', '秀':'丙丁戊'},
-            '未': {'德':'庚', '秀':'丙丁戊'},
-            '申': {'德':'甲', '秀':'庚辛壬'},
-            '酉': {'德':'甲', '秀':'庚辛壬'},
-            '戌': {'德':'甲', '秀':'庚辛壬'},
-            '亥': {'德':'戊', '秀':'甲乙'},
-        }
-        dexiu = dexiu_map.get(month_pillar.zhi, {})
+        # 41. 德秀贵人（以月支查天干组合）— 使用模块级 SHENSHA_DEXIU_MAP
+        dexiu = SHENSHA_DEXIU_MAP.get(month_pillar.zhi, {})
         dexiu_de = dexiu.get('德', '')
         dexiu_xiu = dexiu.get('秀', '')
         if dexiu_de and dexiu_de in all_gans:
@@ -1411,27 +1457,20 @@ class BaziEngine(DivinationEngine):
             matching = [g for g in all_gans if g in dexiu_xiu]
             shensha.append(f'秀气（{",".join(matching)}）')
 
-        # 42. 阴阳差错（以日柱查）
-        yinyang_chacuo = [
-            '丙子','丁丑','戊寅','辛卯','壬辰','癸巳',
-            '丙午','丁未','戊申','辛酉','壬戌','癸亥'
-        ]
-        if day_gz in yinyang_chacuo:
+        # 42. 阴阳差错（以日柱查）— 使用模块级 YINYANG_CHACUO
+        if day_gz in YINYANG_CHACUO:
             shensha.append('阴阳差错')
 
         # NOTE: 天赦日检测已在上方第18条天赦中统一处理（两者判定条件完全一致：春戊寅/夏甲午/秋戊申/冬甲子）
 
-        # 44. 天转煞（以日柱纳音五行查）
-        tianzhuan_map = {
-            '金': '辛卯', '木': '癸巳', '水': '丁未', '火': '丙戌', '土': '己丑'
-        }
+        # 44. 天转煞（以日柱纳音五行查）— 使用模块级 SHENSHA_TIANZHUAN_MAP
         nayin_wx = ''
         nayin_str = day_pillar.nayin or ''
         for wx in ['金','木','水','火','土']:
             if wx in nayin_str:
                 nayin_wx = wx
                 break
-        tianzhuan_ri = tianzhuan_map.get(nayin_wx, '')
+        tianzhuan_ri = SHENSHA_TIANZHUAN_MAP.get(nayin_wx, '')
         if day_gz == tianzhuan_ri:
             shensha.append('天转煞')
 
