@@ -476,7 +476,7 @@ class XingMingEngine:
         """
         # Check special radicals first
         if char in SPECIAL_RADICALS:
-            return SPECIAL_RADICALS[char][0]  # Use simplified count
+            return SPECIAL_RADICALS[char][1]  # Use 康熙字典笔画（姓名学标准）
 
         # Check common strokes table
         if char in COMMON_STROKES:
