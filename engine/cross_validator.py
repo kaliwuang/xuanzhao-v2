@@ -2986,8 +2986,8 @@ class CrossValidator:
         love_suggest = []
         love_luck = "中"
 
-        if chong and any(("午" in str(c) and "子" in str(c)) or ("子" in str(c) and "午" in str(c)) for c in chong):
-            love_trend.append("子午冲，感情多波折")
+        if chong:
+            love_trend.append(f"八字有冲（{'、'.join(chong[:3])}），感情有变动和波折")
             love_luck = "凶"
             love_suggest.append("感情需耐心经营，避免急躁")
 
