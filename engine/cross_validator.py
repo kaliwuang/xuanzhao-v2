@@ -41,6 +41,12 @@ class CrossValidator:
 
     ASPECTS = ["性格", "事业", "财运", "感情", "健康", "学业", "人际关系"]
 
+    # 奇门九宫号→宫名映射（与 qimen_engine.PALACE_NAMES 一致）
+    QIMEN_GONG_NAMES = {
+        '1': '坎一宫', '2': '坤二宫', '3': '震三宫', '4': '巽四宫',
+        '5': '中五宫', '6': '乾六宫', '7': '兑七宫', '8': '艮八宫', '9': '离九宫',
+    }
+
     # 五行→脏腑对应表（中医传统理论）
     WUXING_ORGAN = {
         "木": "肝、胆",
@@ -427,16 +433,18 @@ class CrossValidator:
             kai = [k for k, v in men.items() if v == "开门"]
             sheng = [k for k, v in men.items() if v == "生门"]
             if kai:
+                kai_name = self.QIMEN_GONG_NAMES.get(kai[0], kai[0])
                 items.append(ConsensusItem(
                     aspect="事业方向",
-                    finding=f"开门在{kai[0]}，事业有发展空间",
+                    finding=f"开门在{kai_name}，事业有发展空间",
                     supporting_methods=["奇门"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
             if sheng:
+                sheng_name = self.QIMEN_GONG_NAMES.get(sheng[0], sheng[0])
                 items.append(ConsensusItem(
                     aspect="事业方向",
-                    finding=f"生门在{sheng[0]}，创业求新有增长潜力",
+                    finding=f"生门在{sheng_name}，创业求新有增长潜力",
                     supporting_methods=["奇门"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
@@ -2628,11 +2636,13 @@ class CrossValidator:
             men = self.udm.qimen_chart.get("ba_men", {})
             kai = [k for k, v in men.items() if v == "开门"]
             if kai:
-                career_trend.append(f"奇门开门在{kai[0]}，事业有发展空间")
+                kai_name = self.QIMEN_GONG_NAMES.get(kai[0], kai[0])
+                career_trend.append(f"奇门开门在{kai_name}，事业有发展空间")
                 career_luck = "吉"
             sheng = [k for k, v in men.items() if v == "生门"]
             if sheng:
-                career_suggest.append(f"生门在{sheng[0]}，求财宜往此方向")
+                sheng_name = self.QIMEN_GONG_NAMES.get(sheng[0], sheng[0])
+                career_suggest.append(f"生门在{sheng_name}，求财宜往此方向")
 
         # 紫微看事业宫
         if self.udm.ziwei_chart:
