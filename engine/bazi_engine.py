@@ -1586,17 +1586,23 @@ class BaziEngine(DivinationEngine):
         # 复用模块级常量 GAN_WUXING_STR（避免每次调用重复构建字典）
         gan_wuxing_map = GAN_WUXING_STR
 
+        # 藏干得分权重（本气、中气、余气）
+        BEN_QI_WEIGHT = 1.0        # 天干/地支本气基础分
+        YUE_LING_BEN_QI = 1.5      # 月令本气加权（月令为命局提纲）
+        ZHONG_QI_WEIGHT = 0.5      # 地支中气
+        YU_QI_WEIGHT = 0.3         # 地支余气
+
         for idx, pillar in enumerate(pillars):
             if not pillar:
                 continue
 
-            # 月令加权：月柱(索引1)本气得分×1.5，体现"月令为命局提纲"
+            # 月令加权：月柱(索引1)本气得分体现"月令为命局提纲"
             is_month = (idx == 1)
 
-            # 天干本气: 1分
+            # 天干本气
             gan_wx = gan_wuxing_map.get(pillar.gan)
             if gan_wx:
-                score[gan_wx] += 1.0
+                score[gan_wx] += BEN_QI_WEIGHT
 
             # 地支藏干
             canggan_list = ZHI_CANGGAN.get(pillar.zhi, [])
@@ -1605,14 +1611,11 @@ class BaziEngine(DivinationEngine):
                 if not canggan_wx:
                     continue
                 if cidx == 0:
-                    # 本气: 1分（月令1.5分）
-                    score[canggan_wx] += 1.5 if is_month else 1.0
+                    score[canggan_wx] += YUE_LING_BEN_QI if is_month else BEN_QI_WEIGHT
                 elif cidx == 1:
-                    # 中气: 0.5分
-                    score[canggan_wx] += 0.5
+                    score[canggan_wx] += ZHONG_QI_WEIGHT
                 elif cidx == 2:
-                    # 余气: 0.3分
-                    score[canggan_wx] += 0.3
+                    score[canggan_wx] += YU_QI_WEIGHT
 
         # 保留一位小数
         for k in score:
