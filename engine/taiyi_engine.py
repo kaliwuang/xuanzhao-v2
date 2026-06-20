@@ -210,14 +210,18 @@ class TaiYiEngine(DivinationEngine):
         """主客算解读分析 - 将主算、客算、定算数值解读为人类可读的判断"""
         analysis = {}
 
+        # 太乙主客算强弱阈值（算数通常1-15范围）
+        SUAN_STRONG = 7   # ≥7为强
+        SUAN_MEDIUM = 4   # 4-6为中，<4为弱
+
         # 主算解读
         if zhu_suan:
             zhu_val = zhu_suan[0] if isinstance(zhu_suan, list) and zhu_suan else zhu_suan
             try:
                 zhu_num = int(zhu_val) if not isinstance(zhu_val, int) else zhu_val
-                if zhu_num >= 7:
+                if zhu_num >= SUAN_STRONG:
                     analysis['zhu_ji'] = '主算强盛（{}），自身实力雄厚'.format(zhu_num)
-                elif zhu_num >= 4:
+                elif zhu_num >= SUAN_MEDIUM:
                     analysis['zhu_ji'] = '主算中平（{}），守中有进'.format(zhu_num)
                 else:
                     analysis['zhu_ji'] = '主算较弱（{}），宜守不宜攻'.format(zhu_num)
@@ -229,9 +233,9 @@ class TaiYiEngine(DivinationEngine):
             ke_val = ke_suan[0] if isinstance(ke_suan, list) and ke_suan else ke_suan
             try:
                 ke_num = int(ke_val) if not isinstance(ke_val, int) else ke_val
-                if ke_num >= 7:
+                if ke_num >= SUAN_STRONG:
                     analysis['ke_ji'] = '客算强盛（{}），外部压力大'.format(ke_num)
-                elif ke_num >= 4:
+                elif ke_num >= SUAN_MEDIUM:
                     analysis['ke_ji'] = '客算中平（{}），外力平和'.format(ke_num)
                 else:
                     analysis['ke_ji'] = '客算较弱（{}），外部阻力小'.format(ke_num)
@@ -252,7 +256,8 @@ class TaiYiEngine(DivinationEngine):
             ke_num_safe = int(ke_suan[0]) if ke_suan and isinstance(ke_suan, list) else 0
         except (ValueError, TypeError, IndexError):
             ke_num_safe = 0
-        if zhu_num_safe and ke_num_safe:
+        # 两个算数都有效时才对比（0表示数据缺失，不参与对比）
+        if zhu_num_safe > 0 and ke_num_safe > 0:
             if zhu_num_safe > ke_num_safe:
                 analysis['pan_duan'] = f'主强客弱（{zhu_num_safe}>{ke_num_safe}），宜主动出击'
             elif ke_num_safe > zhu_num_safe:
@@ -269,7 +274,7 @@ class TaiYiEngine(DivinationEngine):
     @staticmethod
     def _safe_convert_ba_men_dist(ba_men_dist) -> dict:
         """安全转换八门分布，处理非数字key和numpy类型"""
-        if not ba_men_dist:
+        if not ba_men_dist or not isinstance(ba_men_dist, dict):
             return {}
         result = {}
         for k, v in ba_men_dist.items():
