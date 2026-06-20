@@ -563,7 +563,10 @@ class BaziEngine(DivinationEngine):
                     zhi_relations.append(f'{z1}{z2}合')
                 # 子卯刑 + 自刑（辰辰午午酉酉亥亥）通过ZHI_XING_MOD查表
                 if ZHI_XING_MOD.get(z1) == z2 or ZHI_XING_MOD.get(z2) == z1:
-                    zhi_relations.append(f'{z1}{z2}刑')
+                    if z1 == z2:
+                        zhi_relations.append(f'{z1}自刑')
+                    else:
+                        zhi_relations.append(f'{z1}{z2}刑')
                 if ZHI_HAI_MOD.get(z1) == z2:
                     zhi_relations.append(f'{z1}{z2}害')
                 if ZHI_PO_MOD.get(z1) == z2:
