@@ -341,8 +341,8 @@ class ZiWeiEngine(DivinationEngine):
                 try:
                     h = r.horoscope(_safe_date_str(test_year, birth_dt.month, birth_dt.day), time_index)
                     dx = h.decadal
-                    stem_en = dx.heavenly_stem.replace('Heavenly', '')
-                    branch_en = dx.earthly_branch.replace('Earthly', '')
+                    stem_en = (dx.heavenly_stem or '').replace('Heavenly', '')
+                    branch_en = (dx.earthly_branch or '').replace('Earthly', '')
                     s = PINYIN_STEM_MAP.get(stem_en, stem_en)
                     b = PINYIN_BRANCH_MAP.get(branch_en, branch_en)
                     gz = f'{s}{b}'
