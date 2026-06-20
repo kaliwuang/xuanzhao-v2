@@ -388,6 +388,7 @@ class BaziEngine(DivinationEngine):
                                         "hidden_gans": ln_hidden,
                                         "nayin": NAYIN_TABLE.get(ln_gz, ''),
                                         "changsheng": _calc_changsheng(day_master, ln_zhi),
+                                        "shensha": ln_shensha,
                                     }
                     except Exception:
                         pass
