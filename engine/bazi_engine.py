@@ -44,6 +44,7 @@ TRADITIONAL_HIDE_GAN = {
 CHANGSHENG_ORDER = ['长生','沐浴','冠带','临官','帝旺','衰','病','死','墓','绝','胎','养']
 CHANGSHENG_START = {'甲':'亥','丙':'寅','戊':'寅','庚':'巳','壬':'申','乙':'午','丁':'酉','己':'酉','辛':'子','癸':'卯'}
 DI_ZHI = '子丑寅卯辰巳午未申酉戌亥'
+TIANGAN_CYCLE = '甲乙丙丁戊己庚辛壬癸'
 
 # 天干五行（字符串形式，从udm.GAN_WUXING派生）
 GAN_WUXING_STR = {k: v[0].value for k, v in GAN_WUXING.items()}
@@ -1072,9 +1073,7 @@ class BaziEngine(DivinationEngine):
             features.append("日坐禄地 — 自身根基扎实")
 
         # 11. 天干连珠（四天干占连续四位置，如甲乙丙丁/丙丁戊己等，极罕见）
-        TIANGAN_CYCLE = '甲乙丙丁戊己庚辛壬癸'
         gan_indices = sorted(TIANGAN_CYCLE.index(g) for g in all_gans)
-        DIZHI_CYCLE = '子丑寅卯辰巳午未申酉戌亥'
 
         def _is_consecutive_4(indices, cycle_len):
             """检查4个索引是否在环形排列中连续"""
@@ -1092,7 +1091,7 @@ class BaziEngine(DivinationEngine):
             features.append("天干连珠 — 四天干连续排列，五行流转顺畅")
 
         # 12. 地支连珠（四地支占连续四位置，如子丑寅卯/寅卯辰巳等）
-        zhi_indices = [DIZHI_CYCLE.index(z) for z in zhis]
+        zhi_indices = [DI_ZHI.index(z) for z in zhis]
         if _is_consecutive_4(zhi_indices, 12):
             features.append("地支连珠 — 四地支连续排列，气势连贯，格局特殊")
 
