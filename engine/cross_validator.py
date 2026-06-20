@@ -399,11 +399,8 @@ class CrossValidator:
 
     def _validate_career(self) -> List[ConsensusItem]:
         items = []
-        methods = []
-
         # 八字：看官杀和食伤
         if self.udm.shishen_gan:
-            methods.append("八字")
             ss = self.udm.shishen_gan
             has_guan = any("官" in v for v in ss.values())
             has_sha = any("杀" in v for v in ss.values())
@@ -451,7 +448,6 @@ class CrossValidator:
             if p:
                 stars = self._get_palace_stars(p)
                 if stars:
-                    methods.append("紫微")
                     auspicious = [s for s in stars if s in ("紫微", "天府", "太阳", "天梁", "天相", "武曲")]
                     if auspicious:
                         items.append(ConsensusItem(
@@ -470,7 +466,6 @@ class CrossValidator:
 
         # 占星：看中天（MC）星座和太阳星座
         if self.udm.astro_chart:
-            methods.append("占星")
             sun_sign = self.udm.astro_chart.get("sun_sign", "")
             mc = self.udm.astro_chart.get("mc", 0)
             career_signs = {
@@ -512,7 +507,6 @@ class CrossValidator:
                 gg_wang = ri_ws.get(gg_wx, "").startswith(("旺", "相")) if gg_wx and ri_ws else False
 
                 if gg_wang:
-                    methods.append("六爻")
                     items.append(ConsensusItem(
                         aspect="事业方向",
                         finding=f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺相，事业有权威，有晋升或领导机会",
@@ -525,7 +519,6 @@ class CrossValidator:
             if not guangui_handled:
                 for gg in guangui_yaos:
                     if gg.get("is_shi", False):
-                        methods.append("六爻")
                         items.append(ConsensusItem(
                             aspect="事业方向",
                             finding=f"六爻官鬼爻{gg.get('dizhi', '')}持世，事业自主性强，适合独立决策",
