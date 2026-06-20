@@ -668,6 +668,7 @@ class QiMenEngine(DivinationEngine):
                 'tai_sui_xing': tai_sui_palace.get('xing', '') if tai_sui_palace else '',
                 'tai_sui_shen': tai_sui_palace.get('shen', '') if tai_sui_palace else '',
             }
-        except Exception:
+        except Exception as e:
+            logger.debug(f"流年太岁分析异常: {e}")
             return {}
 
