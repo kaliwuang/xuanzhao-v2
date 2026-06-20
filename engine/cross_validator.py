@@ -1177,6 +1177,100 @@ class CrossValidator:
                     ))
                     break
 
+        # 大六壬：初传天将健康信号（白虎=病伤、螣蛇=虚惊、玄武=暗病）
+        # 以及初传地支五行与日干的生克关系（克我=受制→健康受压）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            if yong_shen:
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                jiang_jx = yong_shen.get("jiang_ji_xiong", "")
+                ri_relation = yong_shen.get("ri_gan_relation", "")
+                chu_zhi = yong_shen.get("chu_chuan_zhi", "")
+
+                # 天将→健康含义映射（六壬传统健康解读）
+                _HEALTH_JIANG = {
+                    "白虎": ("白虎主病伤血光，初传见白虎暗示当下有明确健康隐患，需防意外伤害或急性病症", ConfidenceLevel.HIGH),
+                    "虎": ("白虎主病伤血光，初传见白虎暗示当下有明确健康隐患，需防意外伤害或急性病症", ConfidenceLevel.HIGH),
+                    "螣蛇": ("螣蛇主虚惊怪异，初传见螣蛇暗示神经或心理层面有压力，易焦虑失眠", ConfidenceLevel.MEDIUM),
+                    "蛇": ("螣蛇主虚惊怪异，初传见螣蛇暗示神经或心理层面有压力，易焦虑失眠", ConfidenceLevel.MEDIUM),
+                    "玄武": ("玄武主暗昧隐疾，初传见玄武暗示有不易察觉的暗病，宜定期体检排查", ConfidenceLevel.MEDIUM),
+                    "武": ("玄武主暗昧隐疾，初传见玄武暗示有不易察觉的暗病，宜定期体检排查", ConfidenceLevel.MEDIUM),
+                    "勾陳": ("勾陳主阻滞缠绵，初传见勾陳暗示慢性病或病程迁延难愈", ConfidenceLevel.LOW),
+                    "勾": ("勾陳主阻滞缠绵，初传见勾陳暗示慢性病或病程迁延难愈", ConfidenceLevel.LOW),
+                }
+
+                # 初传地支→脏腑映射
+                _ZHI_ORGAN = {
+                    "子": "肾、膀胱", "丑": "脾胃", "寅": "肝胆", "卯": "肝胆",
+                    "辰": "脾胃", "巳": "心、小肠", "午": "心、小肠", "未": "脾胃",
+                    "申": "肺、大肠", "酉": "肺、大肠", "戌": "脾胃", "亥": "肾、膀胱",
+                }
+                # 初传地支五行映射
+                _ZHI_WX = {
+                    "子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火",
+                    "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水",
+                }
+
+                # 天将健康信号
+                if chu_jiang in _HEALTH_JIANG:
+                    desc, conf = _HEALTH_JIANG[chu_jiang]
+                    # 初传地支五行→脏腑补充
+                    organ_hint = _ZHI_ORGAN.get(chu_zhi, "")
+                    chu_wx = _ZHI_WX.get(chu_zhi, "")
+                    finding = desc
+                    if organ_hint and chu_wx:
+                        finding += f"（初传{chu_zhi}属{chu_wx}，{organ_hint}方向需留意）"
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=finding,
+                        supporting_methods=["大六壬"],
+                        confidence=conf,
+                    ))
+
+                # 日干受克信号（克我=身体受压制，健康基础受影响）
+                if "克我" in ri_relation:
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"六壬初传克日干（{ri_relation}），当下体质偏弱，易受外邪侵袭，需注意增强免疫力",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
+        # 太乙：天目/地目健康信号（太乙三基与九宫身体对应）
+        if self.udm.taiyi_chart:
+            ty = self.udm.taiyi_chart
+            taiyi_gong = ty.get("taiyi_gong", "")
+            if taiyi_gong:
+                # 太乙落宫→身体部位映射（按九宫对应）
+                _TY_GONG_BODY = {
+                    1: ("坎一宫", "肾、膀胱、泌尿生殖"),
+                    2: ("坤二宫", "脾胃、腹部"),
+                    3: ("震三宫", "肝胆、足部"),
+                    4: ("巽四宫", "肝胆、神经"),
+                    5: ("中五宫", "脾胃（中宫寄坤）"),
+                    6: ("乾六宫", "肺、大肠、骨骼"),
+                    7: ("兑七宫", "肺、呼吸系统"),
+                    8: ("艮八宫", "关节、脊椎"),
+                    9: ("离九宫", "心脏、血液循环"),
+                }
+                # 太乙落宫可能是数字或宫名字符串
+                gong_num = taiyi_gong if isinstance(taiyi_gong, int) else 0
+                gong_info = _TY_GONG_BODY.get(gong_num, ("", ""))
+                if not gong_info[1]:
+                    # 尝试从宫名中提取
+                    for gn, info in _TY_GONG_BODY.items():
+                        if info[0] in str(taiyi_gong):
+                            gong_info = info
+                            break
+                if gong_info[1]:
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"太乙落{gong_info[0]}，{gong_info[1]}方向需关注，可与八字五行偏颇交叉印证",
+                        supporting_methods=["太乙"],
+                        confidence=ConfidenceLevel.LOW,
+                    ))
+
         return items
 
     def _validate_wealth(self) -> List[ConsensusItem]:
