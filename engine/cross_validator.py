@@ -365,7 +365,7 @@ class CrossValidator:
                 elif "印" in f and "不显" not in f and "善于学习" not in matched_traits:
                     traits.append("善于学习，有涵养")
                     matched_traits.add("善于学习")
-                elif "财" in f and "务实" not in matched_traits:
+                elif "财" in f and "不显" not in f and "务实" not in matched_traits:
                     traits.append("务实，重视物质生活")
                     matched_traits.add("务实")
                 elif "食伤" in f and "表达力" not in matched_traits:
