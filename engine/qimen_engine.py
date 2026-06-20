@@ -649,8 +649,8 @@ class QiMenEngine(DivinationEngine):
             year_zhi = lunar.getYearZhi()
             year_ganzhi = f'{year_gan}{year_zhi}'
 
-            # 太岁地支→宫位
-            tai_sui_gong = self.ZHI_TO_GONG_NUM.get(year_zhi, 0)
+            # 太岁地支→宫位（默认坎一宫，确保gong始终为有效宫号1-9）
+            tai_sui_gong = self.ZHI_TO_GONG_NUM.get(year_zhi, 1)
 
             # 找到太岁宫的信息
             tai_sui_palace = None
