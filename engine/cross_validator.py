@@ -1207,7 +1207,7 @@ class CrossValidator:
         if self.udm.features:
             has_bijie_feat = any("比劫" in f for f in self.udm.features)
             # 只匹配"财星多现"等中性财特征，不匹配"食伤生财""财官双美"等正面组合
-            has_cai_feat = any("财星" in f and "生" not in f and "美" not in f for f in self.udm.features)
+            has_cai_feat = any("财星" in f and "生" not in f and "美" not in f and "不显" not in f for f in self.udm.features)
             if has_bijie_feat and has_cai_feat:
                 items.append(ConsensusItem(
                     aspect="财运",
