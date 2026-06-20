@@ -194,7 +194,15 @@ class Pillar:
     def wuxing(self) -> str:
         """柱的五行（以纳音为主，无纳音用干支五行）"""
         if self.nayin:
-            return self.nayin[-1]
+            # 纳音名称末字即五行（如"海中金"→"金"），用显式集合校验防止误取
+            _WUXING_CHARS = {'金', '木', '水', '火', '土'}
+            last_char = self.nayin[-1]
+            if last_char in _WUXING_CHARS:
+                return last_char
+            # 回退：遍历纳音字符串找五行
+            for ch in reversed(self.nayin):
+                if ch in _WUXING_CHARS:
+                    return ch
         gz_wx = GAN_WUXING.get(self.gan, (None, None))[0]
         return gz_wx.value if gz_wx else ""
 
