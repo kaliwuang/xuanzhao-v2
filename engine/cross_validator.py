@@ -1859,17 +1859,44 @@ class CrossValidator:
                 confidence=ConfidenceLevel.MEDIUM
             ))
 
-        # 格局分析
+        # 格局分析——列出具体格局名称和描述（而非仅报数量）
         ge_ju = qm.get('ge_ju_analysis', {})
         ji_ge = ge_ju.get('ji_ge', [])
         xiong_ge = ge_ju.get('xiong_ge', [])
-        if ji_ge or xiong_ge:
-            ge_str = f"吉格{len(ji_ge)}个" if ji_ge else ""
-            if xiong_ge:
-                ge_str += f"，凶格{len(xiong_ge)}个" if ge_str else f"凶格{len(xiong_ge)}个"
+
+        if ji_ge:
+            ji_details = []
+            for ge in ji_ge:
+                gong = ge.get('gong', 0)
+                gong_name = self.QIMEN_GONG_NAMES.get(str(gong), str(gong))
+                ji_details.append(f"{ge['name']}（{gong_name}：{ge.get('desc', '')}）")
             items.append(ConsensusItem(
-                aspect="奇门格局",
-                finding=ge_str,
+                aspect="奇门吉格",
+                finding="；".join(ji_details),
+                supporting_methods=["奇门遁甲"],
+                confidence=ConfidenceLevel.HIGH if len(ji_ge) >= 2 else ConfidenceLevel.MEDIUM
+            ))
+
+        if xiong_ge:
+            xiong_details = []
+            for ge in xiong_ge:
+                gong = ge.get('gong', 0)
+                gong_name = self.QIMEN_GONG_NAMES.get(str(gong), str(gong))
+                xiong_details.append(f"{ge['name']}（{gong_name}：{ge.get('desc', '')}）")
+            items.append(ConsensusItem(
+                aspect="奇门凶格",
+                finding="；".join(xiong_details),
+                supporting_methods=["奇门遁甲"],
+                confidence=ConfidenceLevel.HIGH if len(xiong_ge) >= 2 else ConfidenceLevel.MEDIUM
+            ))
+
+        # 旬空宫（空亡之宫，行事需谨慎）
+        kong_wang_gongs = ge_ju.get('kong_wang_gongs', [])
+        if kong_wang_gongs:
+            kong_names = [self.QIMEN_GONG_NAMES.get(str(g), str(g)) for g in kong_wang_gongs]
+            items.append(ConsensusItem(
+                aspect="奇门旬空",
+                finding=f"旬空宫：{'、'.join(kong_names)}，落空之宫事多不实",
                 supporting_methods=["奇门遁甲"],
                 confidence=ConfidenceLevel.MEDIUM
             ))
