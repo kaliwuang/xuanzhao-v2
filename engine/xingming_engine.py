@@ -8,6 +8,9 @@ Includes 三才五行配置 analysis and optional 八字喜用神 matching.
 
 import unicodedata
 from typing import Optional, Dict, List, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ─── 复姓表 (Compound Surnames) ───────────────────────────────────────────
 COMPOUND_SURNAMES = [
@@ -498,7 +501,8 @@ class XingMingEngine:
                 # For production, use a real stroke dictionary
                 return self._estimate_strokes(char)
             return 8  # Default fallback
-        except Exception:
+        except Exception as e:
+            logger.debug(f"笔画查询异常，回退默认8画: {e}")
             return 8
 
     def _estimate_strokes(self, char: str) -> int:
@@ -515,8 +519,8 @@ class XingMingEngine:
             name = unihan.name(char, '')
             if not name or 'CJK' not in name:
                 return 8  # 非CJK字符默认8画
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Unihan 笔画查询异常: {e}")
 
         # 基于 CJK 字符笔画分布的统计估算
         # 高频字平均约 8-10 画，低频字偏多
