@@ -330,8 +330,9 @@ class BaziEngine(DivinationEngine):
                                     # 月德
                                     if ln_gan == SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''):
                                         ln_shensha.append('月德')
-                                    # 将星
-                                    if ln_zhi == SHENSHA_JIANGXING_MAP.get(year_pillar.zhi, ''):
+                                    # 将星（以年支和日支查，与原局一致）
+                                    jiangxing_targets_ln = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_pillar.zhi, ''), SHENSHA_JIANGXING_MAP.get(day_pillar.zhi, '')]))
+                                    if ln_zhi in jiangxing_targets_ln:
                                         ln_shensha.append('将星')
                                 except Exception:
                                     pass
