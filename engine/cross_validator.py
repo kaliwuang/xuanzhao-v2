@@ -508,7 +508,7 @@ class CrossValidator:
                 gg_wx = gg.get("wuxing", "")
                 gg_dizhi = gg.get("dizhi", "")
                 gg_is_shi = gg.get("is_shi", False)
-                gg_wang = ri_ws.get(gg_wx, "") in ("旺", "相") if gg_wx and ri_ws else False
+                gg_wang = ri_ws.get(gg_wx, "") .startswith(("旺", "相")) if gg_wx and ri_ws else False
 
                 if gg_wang:
                     methods.append("六爻")
@@ -537,7 +537,7 @@ class CrossValidator:
             for zs in zisun_yaos:
                 zs_wx = zs.get("wuxing", "")
                 zs_dizhi = zs.get("dizhi", "")
-                zs_wang = ri_ws.get(zs_wx, "") in ("旺", "相") if zs_wx and ri_ws else False
+                zs_wang = ri_ws.get(zs_wx, "") .startswith(("旺", "相")) if zs_wx and ri_ws else False
                 if zs_wang:
                     items.append(ConsensusItem(
                         aspect="事业方向",
@@ -552,7 +552,7 @@ class CrossValidator:
             for cy in cai_yaos:
                 cy_wx = cy.get("wuxing", "")
                 cy_dizhi = cy.get("dizhi", "")
-                cy_wang = ri_ws.get(cy_wx, "") in ("旺", "相") if cy_wx and ri_ws else False
+                cy_wang = ri_ws.get(cy_wx, "") .startswith(("旺", "相")) if cy_wx and ri_ws else False
                 cai_sheng_guangui = any(
                     _SHENG.get(cy_wx) == gg.get("wuxing", "") for gg in guangui_yaos
                 )
@@ -658,7 +658,7 @@ class CrossValidator:
                 qc_dizhi = qc.get("dizhi", "")
                 qc_is_shi = qc.get("is_shi", False)
                 qc_is_dong = qc.get("is_dong", False)
-                qc_wang = ri_ws.get(qc_wx, "") in ("旺", "相") if qc_wx and ri_ws else False
+                qc_wang = ri_ws.get(qc_wx, "") .startswith(("旺", "相")) if qc_wx and ri_ws else False
 
                 if qc_wang:
                     items.append(ConsensusItem(
@@ -683,7 +683,7 @@ class CrossValidator:
                 gg_wx = gg.get("wuxing", "")
                 gg_dizhi = gg.get("dizhi", "")
                 gg_is_shi = gg.get("is_shi", False)
-                gg_wang = ri_ws.get(gg_wx, "") in ("旺", "相") if gg_wx and ri_ws else False
+                gg_wang = ri_ws.get(gg_wx, "") .startswith(("旺", "相")) if gg_wx and ri_ws else False
 
                 if gg_wang and not any("妻财" in it.finding for it in items if "六爻" in it.supporting_methods):
                     items.append(ConsensusItem(
@@ -707,7 +707,7 @@ class CrossValidator:
             for xd in xiongdi_yaos:
                 xd_wx = xd.get("wuxing", "")
                 xd_dizhi = xd.get("dizhi", "")
-                xd_wang = ri_ws.get(xd_wx, "") in ("旺", "相") if xd_wx and ri_ws else False
+                xd_wang = ri_ws.get(xd_wx, "") .startswith(("旺", "相")) if xd_wx and ri_ws else False
                 xd_is_dong = xd.get("is_dong", False)
 
                 if xd_wang and xd_is_dong:
@@ -1177,7 +1177,7 @@ class CrossValidator:
                     is_shi = fy.get("is_shi", False)
 
                     # 父母爻是否旺相
-                    is_wang = ri_ws.get(fy_wx, "") in ("旺", "相") if fy_wx and ri_ws else False
+                    is_wang = ri_ws.get(fy_wx, "") .startswith(("旺", "相")) if fy_wx and ri_ws else False
 
                     if is_shi:
                         # 父母爻持世——重视学业，学习态度端正
