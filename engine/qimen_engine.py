@@ -366,8 +366,10 @@ class QiMenEngine(DivinationEngine):
                 new_ba_men[5] = ''
                 ba_men = new_ba_men
             else:
+                logger.warning(f"_build_tian_pan: 时干'{hour_gan}'所在宫位{gong_int}不在洛书飞宫序列中，天盘不做旋转")
                 tian_pan = dict(di_pan)
         else:
+            logger.warning(f"_build_tian_pan: 时干'{hour_gan}'(查找'{lookup_gan}')未在地盘中找到对应宫位，天盘=地盘")
             tian_pan = dict(di_pan)
 
         return tian_pan, ba_men, jiu_xing
