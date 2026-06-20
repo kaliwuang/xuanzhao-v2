@@ -1133,7 +1133,7 @@ class CrossValidator:
             if sheng:
                 items.append(ConsensusItem(
                     aspect="财运",
-                    finding=f"生门在{sheng[0]}，求财有门路",
+                    finding=f"生门在{self.QIMEN_GONG_NAMES.get(sheng[0], sheng[0])}，求财有门路",
                     supporting_methods=["奇门"],
                     confidence=ConfidenceLevel.MEDIUM,
                 ))
