@@ -1218,17 +1218,17 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'禄神（{pos}支{z}）')
 
-        # 10. 红鸾（以年支查）
-        hongluan_zhi = SHENSHA_HONGLUAN_MAP.get(year_zhi, '')
+        # 10. 红鸾（以年支和日支查，与华盖/驿马/桃花/将星一致）
+        hongluan_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(year_zhi, ''), SHENSHA_HONGLUAN_MAP.get(day_zhi, '')]))
         for pos_idx, z in enumerate(all_zhis):
-            if z == hongluan_zhi:
+            if z in hongluan_targets:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'红鸾（{pos}支{z}）')
 
-        # 11. 天喜（以年支查，红鸾对冲）
-        tianxi_zhi = SHENSHA_TIANXI_MAP.get(year_zhi, '')
+        # 11. 天喜（以年支和日支查，红鸾对冲）
+        tianxi_targets = set(filter(None, [SHENSHA_TIANXI_MAP.get(year_zhi, ''), SHENSHA_TIANXI_MAP.get(day_zhi, '')]))
         for pos_idx, z in enumerate(all_zhis):
-            if z == tianxi_zhi:
+            if z in tianxi_targets:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天喜（{pos}支{z}）')
 
