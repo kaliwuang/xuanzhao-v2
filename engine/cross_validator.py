@@ -1179,8 +1179,13 @@ class CrossValidator:
                 ))
 
         # 八字：看财星是否被克（比劫夺财）
+        # 注意：特征字符串中"比劫"和"财"不会出现在同一句中，
+        # 需要跨特征检测：同时存在比劫特征和财星特征才算比劫夺财
         if self.udm.features:
-            if any("比劫" in f and "财" in f for f in self.udm.features):
+            has_bijie_feat = any("比劫" in f for f in self.udm.features)
+            # 只匹配"财星多现"等中性财特征，不匹配"食伤生财""财官双美"等正面组合
+            has_cai_feat = any("财星" in f and "生" not in f and "美" not in f for f in self.udm.features)
+            if has_bijie_feat and has_cai_feat:
                 items.append(ConsensusItem(
                     aspect="财运",
                     finding="比劫夺财，需防破财或合伙纠纷",
