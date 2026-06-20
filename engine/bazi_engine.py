@@ -679,6 +679,57 @@ class BaziEngine(DivinationEngine):
                         hai_found.add(pair_key)
                         features.append(f"{z1}{z2}害 — {pos_names[i]}支与{pos_names[j]}支相害，暗中损耗")
 
+        # 2.9 地支三合局（三支齐全时强力聚合，两支半合也有引力）
+        # 申子辰→水局，寅午戌→火局，巳酉丑→金局，亥卯未→木局
+        SAN_HE_GROUPS = [
+            (frozenset({'申', '子', '辰'}), '水', '申子辰'),
+            (frozenset({'寅', '午', '戌'}), '火', '寅午戌'),
+            (frozenset({'巳', '酉', '丑'}), '金', '巳酉丑'),
+            (frozenset({'亥', '卯', '未'}), '木', '亥卯未'),
+        ]
+        # 半合对（每组中两两组合，取靠近的两个）
+        BAN_HE_PAIRS = {
+            frozenset({'申', '子'}): ('水', '子'), frozenset({'子', '辰'}): ('水', '子'),
+            frozenset({'申', '辰'}): ('水', '辰'),  # 子水缺位，水库半合
+            frozenset({'寅', '午'}): ('火', '午'), frozenset({'午', '戌'}): ('火', '午'),
+            frozenset({'寅', '戌'}): ('火', '戌'),
+            frozenset({'巳', '酉'}): ('金', '酉'), frozenset({'酉', '丑'}): ('金', '酉'),
+            frozenset({'巳', '丑'}): ('金', '丑'),
+            frozenset({'亥', '卯'}): ('木', '卯'), frozenset({'卯', '未'}): ('木', '卯'),
+            frozenset({'亥', '未'}): ('木', '未'),
+        }
+        zhi_set_for_he = set(zhis)
+        for group, wx, name in SAN_HE_GROUPS:
+            if group <= zhi_set_for_he:
+                # 按年月日时顺序列出位置
+                positions = [pos_names[zhis.index(z)] for z in zhis if z in group]
+                features.append(f"{name}三合{wx}局 — {'、'.join(positions)}支三合齐全，{wx}气汇聚，能量强大")
+            else:
+                # 检查半合（两支）
+                matched_pairs = []
+                for pair, (p_wx, _) in BAN_HE_PAIRS.items():
+                    if pair <= zhi_set_for_he and pair <= group:
+                        z_sorted = sorted(pair, key=lambda z: '子丑寅卯辰巳午未申酉戌亥'.index(z))
+                        # 按年月日时顺序列出位置
+                        positions = [pos_names[zhis.index(z)] for z in zhis if z in pair]
+                        matched_pairs.append((z_sorted, positions, p_wx))
+                for z_sorted, positions, p_wx in matched_pairs:
+                    features.append(f"{''.join(z_sorted)}半合{p_wx}局 — {'、'.join(positions)}支有{p_wx}气聚合之势")
+
+        # 2.10 地支三会局（同一方位三支齐全，力量极强于三合）
+        # 寅卯辰→东方木，巳午未→南方火，申酉戌→西方金，亥子丑→北方水
+        SAN_HUI_GROUPS = [
+            (frozenset({'寅', '卯', '辰'}), '木', '东方'),
+            (frozenset({'巳', '午', '未'}), '火', '南方'),
+            (frozenset({'申', '酉', '戌'}), '金', '西方'),
+            (frozenset({'亥', '子', '丑'}), '水', '北方'),
+        ]
+        for group, wx, direction in SAN_HUI_GROUPS:
+            if group <= zhi_set_for_he:
+                # 按年月日时顺序列出位置
+                positions = [pos_names[zhis.index(z)] for z in zhis if z in group]
+                features.append(f"{direction}三会{wx}局 — {'、'.join(positions)}支方位齐聚，{wx}势磅礴，力量极强")
+
         # 3. 七杀透干
         ss = shishen_gan
         if ss.get("time") == "七杀":
