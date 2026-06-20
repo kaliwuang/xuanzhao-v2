@@ -2263,6 +2263,68 @@ class CrossValidator:
                     suggestion="八字五行平衡代表先天体质底子好，但紫微疾厄宫有凶星暗示特定健康风险。先天底子好不代表可以忽视，需定期体检防范凶星暗示的健康隐患。"
                 ))
 
+        # === 4b. 健康冲突：八字五行 vs 六爻官鬼/子孙 ===
+        # 六爻中官鬼爻=病邪，子孙爻=医药。若八字有健康隐患但六爻子孙旺，
+        # 或八字平衡但六爻官鬼旺动，则产生健康维度冲突。
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            ly_lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            ly_guanyui = [l for l in ly_lines if l.get("liu_qin") == "官鬼"]
+            ly_zisun = [l for l in ly_lines if l.get("liu_qin") == "子孙"]
+
+            # 八字有健康隐患 vs 六爻子孙旺（有治疗康复能力）
+            if wuxing_count:
+                bazi_health_issue = wuxing_count.get(max_wx, 0) >= 4
+                if bazi_health_issue:
+                    # 检查六爻子孙爻是否旺相
+                    liuyao_recovery = False
+                    liuyao_recovery_reason = ""
+                    for zs in ly_zisun:
+                        zs_wx = zs.get("wuxing", "")
+                        zs_dizhi = zs.get("dizhi", "")
+                        zs_wang = ri_ws.get(zs_wx, "").startswith(("旺", "相")) if zs_wx and ri_ws else False
+                        if zs_wang:
+                            liuyao_recovery = True
+                            liuyao_recovery_reason = f"六爻子孙爻{zs_dizhi}（{zs_wx}）旺相，医药爻得力，有治疗康复之机"
+                            break
+                    if liuyao_recovery:
+                        conflicts.append(ConflictItem(
+                            aspect="健康体质",
+                            method_a="八字",
+                            finding_a=bazi_health_reason,
+                            method_b="六爻",
+                            finding_b=liuyao_recovery_reason,
+                            suggestion="八字五行偏颇暗示先天体质有薄弱环节，但六爻子孙旺相说明后天恢复力强，有治病良机。体质虽有隐患但不必过度担忧，关键在于及时调理。"
+                        ))
+
+                # 八字五行平衡 vs 六爻官鬼旺动（病邪有力）
+                bazi_health_balanced = not bazi_health_issue
+                if bazi_health_balanced:
+                    liuyao_disease = False
+                    liuyao_disease_reason = ""
+                    for gg in ly_guanyui:
+                        gg_wx = gg.get("wuxing", "")
+                        gg_dizhi = gg.get("dizhi", "")
+                        gg_is_dong = gg.get("is_dong", False)
+                        gg_wang = ri_ws.get(gg_wx, "").startswith(("旺", "相")) if gg_wx and ri_ws else False
+                        if gg_wang and gg_is_dong:
+                            organs = self.WUXING_ORGAN.get(gg_wx, "相关脏腑")
+                            liuyao_disease = True
+                            liuyao_disease_reason = f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺动，病邪有力且发动，{organs}需留意"
+                            break
+                    if liuyao_disease:
+                        conflicts.append(ConflictItem(
+                            aspect="健康体质",
+                            method_a="八字",
+                            finding_a="八字五行基本平衡，先天体质尚可",
+                            method_b="六爻",
+                            finding_b=liuyao_disease_reason,
+                            suggestion="八字五行平衡代表先天体质底子好，但六爻官鬼旺动暗示当下有健康隐患在酝酿。先天底子好不代表可以忽视，需关注六爻提示的具体脏腑方向。"
+                        ))
+
         # === 5. 性格冲突：八字 vs 占星 ===
         bazi_bold = any("七杀" in f or "伤官" in f for f in features)
         bazi_bold_reason = "七杀/伤官透干，性格刚强冲动" if bazi_bold else ""
