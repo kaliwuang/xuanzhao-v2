@@ -1055,6 +1055,79 @@ class CrossValidator:
                         confidence=ConfidenceLevel.MEDIUM,
                     ))
 
+            # 占星：看木星落座（木星=扩张、幸运、丰盛，占星中最核心的财运吉星）
+            jupiter = planets.get("木星", {})
+            if jupiter.get("sign"):
+                jupiter_styles = {
+                    "金牛": "木星金牛，财运稳健，善用资源积累财富",
+                    "巨蟹": "木星入旺，家庭财运佳，不动产运强",
+                    "射手": "木星入庙，运气好，贵人多，远方求财有利",
+                    "双鱼": "木星入庙，直觉型理财，偏财运佳，灵感带来财富",
+                    "狮子": "木星狮子，大格局理财，适合投资和创业",
+                    "天蝎": "木星天蝎，善用杠杆和深层资源，投资眼光独到",
+                    "摩羯": "木星落陷，财运需靠踏实努力，大器晚成型",
+                    "双子": "木星落陷，财路分散，需聚焦核心方向",
+                }
+                jupiter_sign = jupiter["sign"]
+                if jupiter_sign in jupiter_styles:
+                    items.append(ConsensusItem(
+                        aspect="财运",
+                        finding=f"木星{jupiter_sign}：{jupiter_styles[jupiter_sign]}",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
+        # 六爻：看妻财爻（六爻中代表钱财、资产、收入的核心爻位）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            cai_yaos = [l for l in lines if l.get("liu_qin") == "妻财"]
+            if cai_yaos:
+                for cy in cai_yaos:
+                    cy_wx = cy.get("wuxing", "")
+                    cy_dizhi = cy.get("dizhi", "")
+                    cy_is_shi = cy.get("is_shi", False)
+                    cy_is_dong = cy.get("is_dong", False)
+                    cy_wang = ri_ws.get(cy_wx, "").startswith(("旺", "相")) if cy_wx and ri_ws else False
+
+                    if cy_wang:
+                        items.append(ConsensusItem(
+                            aspect="财运",
+                            finding=f"六爻妻财爻{cy_dizhi}（{cy_wx}）旺相，财运根基扎实，收入有保障",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.HIGH,
+                        ))
+                        break
+                    elif cy_is_shi:
+                        items.append(ConsensusItem(
+                            aspect="财运",
+                            finding=f"六爻妻财爻{cy_dizhi}持世，重视理财，以财富积累为重心",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.MEDIUM,
+                        ))
+                        break
+                    elif cy_is_dong:
+                        items.append(ConsensusItem(
+                            aspect="财运",
+                            finding=f"六爻妻财爻{cy_dizhi}（{cy_wx}）发动，财运有变动，进财或破财看变爻",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.MEDIUM,
+                        ))
+                        break
+                    else:
+                        cy_shuai = ri_ws.get(cy_wx, "").startswith(("衰", "死", "绝", "墓")) if cy_wx and ri_ws else False
+                        if cy_shuai:
+                            items.append(ConsensusItem(
+                                aspect="财运",
+                                finding=f"六爻妻财爻{cy_dizhi}（{cy_wx}）衰弱，财运根基不强，需努力开拓财源",
+                                supporting_methods=["六爻"],
+                                confidence=ConfidenceLevel.MEDIUM,
+                            ))
+                            break
+
         return items
 
     def _validate_academic(self) -> List[ConsensusItem]:
