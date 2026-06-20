@@ -297,6 +297,31 @@ class BaziEngine(DivinationEngine):
                         dy_shensha.append('驿马')
                     if dy_zhi == SHENSHA_TAOHUA_MAP.get(year_pillar.zhi, '') or dy_zhi == SHENSHA_TAOHUA_MAP.get(day_pillar.zhi, ''):
                         dy_shensha.append('桃花')
+                    # 文昌（以日干查）
+                    if dy_zhi == SHENSHA_WENCHANG_MAP.get(day_master, ''):
+                        dy_shensha.append('文昌')
+                    # 禄神（以日干查）
+                    if dy_zhi == SHENSHA_LU_MAP.get(day_master, ''):
+                        dy_shensha.append('禄神')
+                    # 红鸾（以年支查）
+                    if dy_zhi == SHENSHA_HONGLUAN_MAP.get(year_pillar.zhi, ''):
+                        dy_shensha.append('红鸾')
+                    # 天喜（以年支查）
+                    if dy_zhi == SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''):
+                        dy_shensha.append('天喜')
+                    # 太极贵人（以日干和年干查）
+                    dy_taiji = set(SHENSHA_TAIJI_MAP.get(day_master, []))
+                    dy_taiji.update(SHENSHA_TAIJI_MAP.get(year_pillar.gan, []))
+                    if dy_zhi in dy_taiji:
+                        dy_shensha.append('太极贵人')
+                    # 月德（以月支查天干，大运天干匹配则入）
+                    dy_yuede_gan = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
+                    if dy_gan == dy_yuede_gan:
+                        dy_shensha.append('月德')
+                    # 将星（以年支和日支查）
+                    dy_jiangxing = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_pillar.zhi, ''), SHENSHA_JIANGXING_MAP.get(day_pillar.zhi, '')]))
+                    if dy_zhi in dy_jiangxing:
+                        dy_shensha.append('将星')
 
                     # 流年（该大运期间每年）
                     liunian_list = []
