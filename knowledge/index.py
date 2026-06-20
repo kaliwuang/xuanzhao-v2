@@ -2,7 +2,7 @@
 """
 玄照 v2.0 - 知识库索引引擎
 
-扫描玄学泰斗知识库，按命盘特征建立倒排索引。
+扫描本地知识库，按命盘特征建立倒排索引。
 支持关键词：日主、五行、十神、格局、冲合、宫位、术法等。
 """
 import os
@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple, Optional
 from collections import defaultdict
 
-# 知识库根目录
-KNOWLEDGE_BASE = Path("C:/Users/W/.qclaw/workspace-agent-9332ca33/玄学泰斗")
+# 知识库根目录（本地）
+KNOWLEDGE_BASE = Path(__file__).parent / "data"
 INDEX_FILE = Path(__file__).parent / "knowledge_index.json"
 
 # 索引关键词词典
@@ -40,6 +40,20 @@ KEYWORDS = {
     "method": ["八字", "紫微", "占星", "六爻", "奇门", "大六壬", "太乙", "风水", "面相", "手相", "塔罗"],
     # 人生主题
     "theme": ["事业", "感情", "婚姻", "财运", "健康", "学业", "人际", "子女", "父母", "贵人"],
+    # 八门（奇门）
+    "gate": ["开门", "休门", "生门", "伤门", "杜门", "景门", "死门", "惊门"],
+    # 九星（奇门）
+    "star9": ["天蓬", "天芮", "天冲", "天辅", "天禽", "天心", "天柱", "天任", "天英"],
+    # 六神（六爻）
+    "god6": ["青龙", "朱雀", "勾陈", "螣蛇", "白虎", "玄武"],
+    # 十二天将（六壬）
+    "general12": ["贵人", "螣蛇", "朱雀", "六合", "勾陈", "青龙", "天空", "白虎", "太常", "玄武", "太阴", "天后"],
+    # 四化（紫微）
+    "hua": ["化禄", "化权", "化科", "化忌"],
+    # 面相部位
+    "face": ["额头", "眉毛", "眼睛", "鼻子", "嘴巴", "耳朵", "印堂", "山根"],
+    # 姓名学
+    "name": ["天格", "人格", "地格", "外格", "总格", "三才", "五格"],
 }
 
 
@@ -56,22 +70,22 @@ def _extract_keywords(text: str) -> Dict[str, Set[str]]:
 
 
 def _scan_knowledge_base() -> List[Dict]:
-    """扫描知识库目录，返回所有文档信息"""
+    """扫描本地知识库目录，返回所有文档信息"""
     docs = []
 
     if not KNOWLEDGE_BASE.exists():
         return docs
 
     for root, dirs, files in os.walk(KNOWLEDGE_BASE):
-        # 跳过备份和日志目录
-        dirs[:] = [d for d in dirs if d not in ("backup_before_fix_20260429", "backup_final_fix", "backup_prefixed_files", "logs")]
+        # 跳过隐藏目录
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
 
         rel_root = Path(root).relative_to(KNOWLEDGE_BASE)
-        category = str(rel_root).split("/")[0] if rel_root != Path(".") else "其他"
-        subcategory = str(rel_root).split("/")[1] if len(str(rel_root).split("/")) > 1 else ""
+        category = str(rel_root).replace("\\", "/").split("/")[0] if rel_root != Path(".") else "其他"
+        subcategory = str(rel_root).replace("\\", "/").split("/")[1] if len(str(rel_root).replace("\\", "/").split("/")) > 1 else ""
 
         for filename in files:
-            if not filename.endswith(".txt"):
+            if not filename.endswith((".md", ".txt")):
                 continue
 
             filepath = Path(root) / filename
@@ -91,7 +105,7 @@ def _scan_knowledge_base() -> List[Dict]:
                 "category": category,
                 "subcategory": subcategory,
                 "filename": filename,
-                "title": filename.replace(".txt", ""),
+                "title": filename.replace(".md", "").replace(".txt", ""),
                 "size": len(text),
                 "keywords": {k: list(v) for k, v in keywords.items()},
             }
@@ -129,7 +143,7 @@ def build_index(force: bool = False) -> Dict:
     }
 
     index = {
-        "version": "1.0",
+        "version": "2.0",
         "stats": stats,
         "docs": docs,
         "inverted_index": {k: dict(v) for k, v in inverted_index.items()},

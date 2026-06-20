@@ -69,10 +69,38 @@ class KnowledgeSearch:
         elif "奇门" in figure_name or figure_name in ("诸葛亮", "姜子牙", "孙子"):
             # 奇门视角
             features["method"] = ["奇门"]
+            if hasattr(udm, 'qimen_chart') and udm.qimen_chart:
+                if udm.qimen_chart.get("gate"):
+                    features["gate"] = [udm.qimen_chart["gate"]]
+                if udm.qimen_chart.get("star9"):
+                    features["star9"] = [udm.qimen_chart["star9"]]
 
         elif "六爻" in figure_name or figure_name == "鬼谷子":
             # 六爻视角
             features["method"] = ["六爻"]
+            if hasattr(udm, 'liuyao_chart') and udm.liuyao_chart:
+                if udm.liuyao_chart.get("god6"):
+                    features["god6"] = [udm.liuyao_chart["god6"]]
+
+        elif "六壬" in figure_name or figure_name in ("管辂", "东方朔"):
+            # 六壬视角
+            features["method"] = ["大六壬"]
+            if hasattr(udm, 'liuren_chart') and udm.liuren_chart:
+                if udm.liuren_chart.get("general12"):
+                    features["general12"] = [udm.liuren_chart["general12"]]
+
+        elif "太乙" in figure_name:
+            # 太乙视角
+            features["method"] = ["太乙"]
+
+        elif "面相" in figure_name or figure_name in ("曾国藩", "冰鉴"):
+            # 面相视角
+            features["method"] = ["面相"]
+
+        elif "姓名" in figure_name:
+            # 姓名学视角
+            features["method"] = ["姓名"]
+            features["name"] = ["天格", "人格", "地格"]
 
         # 问题主题
         theme_keywords = {
@@ -139,3 +167,11 @@ class KnowledgeSearch:
             parts.append(s.get("snippet", "")[:200])
             parts.append("")
         return "\n".join(parts)
+
+    def search_by_method(self, method: str, top_n: int = 5) -> List[Dict]:
+        """按术法搜索知识"""
+        return search_by_features({"method": [method]}, top_n)
+
+    def search_by_theme(self, theme: str, top_n: int = 5) -> List[Dict]:
+        """按主题搜索知识"""
+        return search_by_features({"theme": [theme]}, top_n)
