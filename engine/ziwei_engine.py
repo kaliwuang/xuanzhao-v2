@@ -11,6 +11,7 @@ from .base import DivinationEngine
 from .time_engine import CorrectedTime
 from typing import Optional, Dict
 from datetime import datetime
+import calendar
 import logging
 
 logger = logging.getLogger(__name__)
@@ -332,7 +333,6 @@ class ZiWeiEngine(DivinationEngine):
         # 大限完整序列（保留原有逻辑用于dai_xian顶层字段）
         dai_xian = []
 
-        import calendar
         def _safe_date_str(year: int, month: int, day: int) -> str:
             """安全构造日期字符串，2月29日在非闰年自动回退到28日"""
             _, last_day = calendar.monthrange(year, month)
