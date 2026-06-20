@@ -210,6 +210,67 @@ class TestPerspectiveEngine:
         assert data["day_master_wuxing"] == "火"
         assert "pillars" in data
 
+    def test_extract_liuyao_data_enriched(self):
+        """六爻数据提取应包含世应、六神、日月建等新增字段"""
+        from engine.perspective_engine import PerspectiveEngine
+        from unittest.mock import MagicMock
+
+        pe = PerspectiveEngine()
+        udm = MagicMock()
+        udm.liuyao_chart = {
+            "ben_gua": {"name": "乾为天"},
+            "bian_gua": {"name": "天风姤"},
+            "dong_yao": [1],
+            "shi": 1,
+            "ying": 4,
+            "gua_gong_wuxing": "金",
+            "liu_shen": ["青龙", "朱雀", "勾陈", "螣蛇", "白虎", "玄武"],
+            "ri_yue_jian": {"ri_jian": "子", "ri_wangshuai": {"金": "旺", "木": "死"}},
+            "lines": [{"position": 1, "liu_qin": "父母", "dizhi": "子", "wuxing": "水", "is_dong": True}],
+            "wuxing_analysis": {"yong_shen": "父母爻"},
+        }
+
+        data = pe._extract_method_data(udm, "六爻")
+        assert data["shi"] == 1
+        assert data["ying"] == 4
+        assert len(data["liu_shen"]) == 6
+        assert data["ri_yue_jian"]["ri_jian"] == "子"
+        assert len(data["lines"]) == 1
+        assert data["lines"][0]["liu_qin"] == "父母"
+        assert data["wuxing_analysis"]["yong_shen"] == "父母爻"
+
+    def test_extract_qimen_data_enriched(self):
+        """奇门数据提取应包含旬空、流年、三盘摘要等新增字段"""
+        from engine.perspective_engine import PerspectiveEngine
+        from unittest.mock import MagicMock
+
+        pe = PerspectiveEngine()
+        udm = MagicMock()
+        udm.qimen_chart = {
+            "ju_name": "阳遁3局",
+            "yin_yang": "阳遁",
+            "jieqi": "春分",
+            "di_pan": {"1": "戊"},
+            "tian_pan": {"1": "戊"},
+            "ba_men": {"1": "休门"},
+            "jiu_xing": {"1": "天蓬"},
+            "ba_shen": {"1": "值符"},
+            "zhi_fu": {"star": "天蓬", "gong": 1},
+            "zhi_shi": {"door": "休门", "gong": 1},
+            "palaces": [],
+            "ge_ju_analysis": {"ji_ge": [], "xiong_ge": []},
+            "xun_kong": {"xun_shou": "甲子", "kong_wang": ["戌", "亥"]},
+            "liunian": {"year_ganzhi": "乙巳", "tai_sui_gong": 9, "tai_sui_palace_name": "离九宫"},
+            "san_pan_summary": {"1": {"name": "坎一宫"}},
+        }
+
+        data = pe._extract_method_data(udm, "奇门")
+        assert data["yin_yang"] == "阳遁"
+        assert data["jieqi"] == "春分"
+        assert data["xun_kong"]["kong_wang"] == ["戌", "亥"]
+        assert data["liunian"]["year_ganzhi"] == "乙巳"
+        assert "1" in data["san_pan_summary"]
+
 
 # ============================================================
 # LLM 客户端测试（实际调用 API）

@@ -497,10 +497,16 @@ class PerspectiveEngine:
                 data["shi"] = udm.liuyao_chart.get("shi", 0)
                 data["ying"] = udm.liuyao_chart.get("ying", 0)
                 data["gua_gong_wuxing"] = udm.liuyao_chart.get("gua_gong_wuxing", "")
+                data["liu_shen"] = udm.liuyao_chart.get("liu_shen", [])
+                data["ri_yue_jian"] = udm.liuyao_chart.get("ri_yue_jian", {})
+                data["lines"] = udm.liuyao_chart.get("lines", [])
+                data["wuxing_analysis"] = udm.liuyao_chart.get("wuxing_analysis", {})
 
         elif method == "奇门":
             if udm.qimen_chart:
                 data["ju_name"] = udm.qimen_chart.get("ju_name", "")
+                data["yin_yang"] = udm.qimen_chart.get("yin_yang", "")
+                data["jieqi"] = udm.qimen_chart.get("jieqi", "")
                 data["di_pan"] = udm.qimen_chart.get("di_pan", {})
                 data["tian_pan"] = udm.qimen_chart.get("tian_pan", {})
                 data["ba_men"] = udm.qimen_chart.get("ba_men", {})
@@ -510,6 +516,9 @@ class PerspectiveEngine:
                 data["zhi_shi"] = udm.qimen_chart.get("zhi_shi", {})
                 data["palaces"] = udm.qimen_chart.get("palaces", [])
                 data["ge_ju_analysis"] = udm.qimen_chart.get("ge_ju_analysis", {})
+                data["xun_kong"] = udm.qimen_chart.get("xun_kong", {})
+                data["liunian"] = udm.qimen_chart.get("liunian", {})
+                data["san_pan_summary"] = udm.qimen_chart.get("san_pan_summary", {})
 
         elif method == "大六壬":
             if udm.liuren_chart:
@@ -577,13 +586,24 @@ class PerspectiveEngine:
             } if udm.astro_chart else {}
             data["qimen"] = {
                 "ju_name": udm.qimen_chart.get("ju_name", ""),
+                "yin_yang": udm.qimen_chart.get("yin_yang", ""),
+                "jieqi": udm.qimen_chart.get("jieqi", ""),
                 "ba_men": udm.qimen_chart.get("ba_men", {}),
                 "jiu_xing": udm.qimen_chart.get("jiu_xing", {}),
+                "zhi_fu": udm.qimen_chart.get("zhi_fu", {}),
+                "zhi_shi": udm.qimen_chart.get("zhi_shi", {}),
+                "ge_ju_analysis": udm.qimen_chart.get("ge_ju_analysis", {}),
+                "xun_kong": udm.qimen_chart.get("xun_kong", {}),
+                "liunian": udm.qimen_chart.get("liunian", {}),
             } if udm.qimen_chart else {}
             data["liuyao"] = {
                 "ben_gua": udm.liuyao_chart.get("ben_gua", {}),
                 "bian_gua": udm.liuyao_chart.get("bian_gua", {}),
                 "dong_yao": udm.liuyao_chart.get("dong_yao", []),
+                "shi": udm.liuyao_chart.get("shi", 0),
+                "ying": udm.liuyao_chart.get("ying", 0),
+                "liu_shen": udm.liuyao_chart.get("liu_shen", []),
+                "ri_yue_jian": udm.liuyao_chart.get("ri_yue_jian", {}),
             } if udm.liuyao_chart else {}
             data["liuren"] = {
                 "yue_jiang": udm.liuren_chart.get("yue_jiang", ""),
@@ -773,6 +793,11 @@ class PerspectiveEngine:
         elif method == "六爻":
             ben = method_data.get("ben_gua", {})
             dong = method_data.get("dong_yao", [])
+            shi = method_data.get("shi", 0)
+            ying = method_data.get("ying", 0)
+            liu_shen = method_data.get("liu_shen", [])
+            ri_yue = method_data.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {}) if ri_yue else {}
             if ben:
                 gua_name = ben.get("name", "")
                 if gua_name:
@@ -782,12 +807,36 @@ class PerspectiveEngine:
                 dong_str = ','.join(str(d) for d in dong) if isinstance(dong, list) else str(dong)
                 reasoning_parts.append(f"动爻第{dong_str}爻")
                 key_points.append(f"动爻第{dong_str}爻")
+            if shi and ying:
+                reasoning_parts.append(f"世爻第{shi}爻，应爻第{ying}爻")
+            if liu_shen:
+                shen_str = '、'.join(liu_shen[:6])
+                reasoning_parts.append(f"六神：{shen_str}")
+            if ri_ws:
+                wang_xiang = [wx for wx, status in ri_ws.items() if '旺' in status or '相' in status]
+                if wang_xiang:
+                    key_points.append(f"日建旺{','.join(wang_xiang[:2])}")
+            # 看动爻中的六亲关系（新增：从lines数据中提取核心信息）
+            lines = method_data.get("lines", [])
+            if lines:
+                dong_lines = [l for l in lines if l.get("is_dong")]
+                for dl in dong_lines[:2]:
+                    liuqin = dl.get("liu_qin", "")
+                    dizhi = dl.get("dizhi", "")
+                    wuxing = dl.get("wuxing", "")
+                    if liuqin and dizhi:
+                        reasoning_parts.append(f"动爻{liuqin}{dizhi}（{wuxing}）")
+                        key_points.append(f"{liuqin}{dizhi}")
 
         elif method == "奇门":
             ju = method_data.get("ju_name", "")
+            jieqi = method_data.get("jieqi", "")
+            yin_yang = method_data.get("yin_yang", "")
             if ju:
                 reasoning_parts.append(f"格局：{ju}")
                 key_points.append(ju)
+            if jieqi:
+                reasoning_parts.append(f"节气：{jieqi}")
             # 值符值使——奇门核心信息
             zhi_fu = method_data.get("zhi_fu", {})
             zhi_shi = method_data.get("zhi_shi", {})
@@ -824,6 +873,20 @@ class PerspectiveEngine:
                     ge_names = "、".join(g.get("name", "") for g in xiong_ge[:3])
                     reasoning_parts.append(f"凶格：{ge_names}")
                     key_points.append(f"凶格{ge_names}")
+            # 旬空宫（空亡之宫，行事需谨慎）
+            xun_kong = method_data.get("xun_kong", {})
+            if xun_kong:
+                kong_wang = xun_kong.get("kong_wang", [])
+                if kong_wang:
+                    reasoning_parts.append(f"旬空：{'、'.join(kong_wang)}")
+            # 流年太岁
+            liunian = method_data.get("liunian", {})
+            if liunian:
+                year_gz = liunian.get("year_ganzhi", "")
+                tai_palace = liunian.get("tai_sui_palace_name", "")
+                if year_gz and tai_palace:
+                    reasoning_parts.append(f"{year_gz}太岁落{tai_palace}")
+                    key_points.append(f"太岁{tai_palace}")
 
         elif method == "大六壬":
             yj = method_data.get("yue_jiang", "")
