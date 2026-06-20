@@ -3171,8 +3171,10 @@ class CrossValidator:
                     wealth_trend.append("六爻妻财爻发动，财运有变动，进财或破财看变爻")
                     break
 
-        if chong and any("财" in str(c) for c in chong):
-            wealth_trend.append("有冲，财运波动大")
+        # 日支冲影响财运（日支为夫妻宫，也关联财位）
+        day_zhi = self.udm.bazi_day.zhi if self.udm.bazi_day else ''
+        if chong and day_zhi and any(day_zhi in c for c in chong):
+            wealth_trend.append("日支逢冲，财运波动大")
             wealth_luck = "中"
             wealth_suggest.append("理财需谨慎，避免冲动投资")
 
