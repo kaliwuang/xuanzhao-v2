@@ -559,7 +559,7 @@ class BaziEngine(DivinationEngine):
                                     if ln_gan == SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''):
                                         ln_shensha.append('月德')
                                     # 天德贵人（以月支查，流年干支匹配则入）
-                                    ln_tiande = dy_tiande_map.get(month_pillar.zhi, '')
+                                    ln_tiande = SHENSHA_TIANYI_GUIREN_MAP.get(month_pillar.zhi, '')
                                     if ln_tiande:
                                         if ln_tiande in TIANGAN_SET and ln_gan == ln_tiande:
                                             ln_shensha.append('天德贵人')
