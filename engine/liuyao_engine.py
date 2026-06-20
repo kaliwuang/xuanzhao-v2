@@ -417,8 +417,8 @@ class LiuYaoEngine(DivinationEngine):
             day_z = ec.getDayZhi()
             month_z = ec.getMonthZhi()
             result['ri_yue_jian'] = self._calc_ri_yue_jian(day_g, day_z, month_z, gua_gong_wuxing)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"六爻日月建计算异常: {e}")
 
         # 流年太岁分析
         try:
