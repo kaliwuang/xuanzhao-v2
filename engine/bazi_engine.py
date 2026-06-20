@@ -1067,7 +1067,7 @@ class BaziEngine(DivinationEngine):
 
         # 10. 日主坐禄
         day_gan = day.gan
-        lu_map = {"甲":"寅","乙":"卯","丙":"巳","丁":"午","戊":"巳","己":"午","庚":"申","辛":"酉","壬":"亥","癸":"子"}
+        lu_map = SHENSHA_LU_MAP
         if lu_map.get(day_gan) == day_zhi:
             features.append("日坐禄地 — 自身根基扎实")
 
