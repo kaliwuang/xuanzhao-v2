@@ -11,6 +11,9 @@ from .base import DivinationEngine
 from .time_engine import CorrectedTime
 from typing import Optional, Dict
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # 地支英文→中文映射
@@ -371,9 +374,10 @@ class ZiWeiEngine(DivinationEngine):
                             'palace_index': dx.index,
                             'sihua': dx_sihua,
                         })
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"大限{test_age}岁计算异常: {e}")
         except Exception as e:
+            logger.warning(f"大限序列计算异常: {e}")
             dai_xian = []
 
         # 子斗（斗君）计算
@@ -410,8 +414,8 @@ class ZiWeiEngine(DivinationEngine):
                     'palace_names': liunian_palace_names,
                     'sihua': liunian_stars,
                 }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"流年分析异常: {e}")
 
         return {
             'engine': self.name,
