@@ -313,6 +313,8 @@ class LiuRenEngine(DivinationEngine):
 
     def _analyze_si_ke(self, si_ke_raw: dict, day_gan: str, tian_jiang: dict) -> dict:
         """四课详细解读"""
+        if not si_ke_raw or not isinstance(si_ke_raw, dict):
+            return {}
         analysis = {}
 
         KE_NAMES = {'一課': '干上神（日上）', '二課': '干阳神', '三課': '支上神（辰上）', '四課': '支阳神'}
@@ -356,6 +358,8 @@ class LiuRenEngine(DivinationEngine):
     def _analyze_yong_shen(self, san_chuan_raw: dict, si_ke_raw: dict,
                            day_gan: str, day_zhi: str, tian_jiang: dict) -> dict:
         """分析用神：基于三传初传的天将和六亲关系"""
+        if not san_chuan_raw or not isinstance(san_chuan_raw, dict):
+            return {}
         # 十二天将含义（含kinliuren缩写映射）
         JIANG_YI = {
             "貴人": {"吉凶": "大吉", "含义": "贵人相助、提携"},
