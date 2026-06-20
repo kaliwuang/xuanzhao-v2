@@ -114,16 +114,25 @@ def _validate_birth(birth: str):
     patterns = [
         r'^\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$',
         r'^\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}$',
+        r'^\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}$',
         r'^\d{4}/\d{1,2}/\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$',
         r'^\d{4}/\d{1,2}/\d{1,2}\s+\d{1,2}:\d{2}$',
+        r'^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}:\d{2}$',
+        r'^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}$',
+        r'^\d{4}\d{2}\d{2}\s+\d{4,6}$',
     ]
     if not any(re.match(p, birth.strip()) for p in patterns):
         raise ValueError(f"时间格式错误: {birth}，应为 YYYY-MM-DD HH:MM")
-    # 检查范围
-    parts = re.split(r'[-/ ]+', birth.strip())
+    # 检查范围（统一用正则提取年月日时分，兼容ISO格式T分隔符和仅小时格式）
+    clean = re.sub(r'T', ' ', birth.strip())
+    parts = re.split(r'[-/ ]+', clean)
     year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
-    hour_min = parts[3].split(':')
-    hour = int(hour_min[0])
+    if len(parts) >= 4:
+        hour_min = parts[3].split(':')
+        hour = int(hour_min[0])
+    else:
+        hour_min = []
+        hour = 0
     if not (1900 <= year <= 2100):
         raise ValueError(f"年份超出范围: {year}")
     if not (1 <= month <= 12):
@@ -135,7 +144,7 @@ def _validate_birth(birth: str):
         raise ValueError(f"日期错误: {year}年{month}月只有{max_day}天，输入{day}天")
     if not (0 <= hour <= 23):
         raise ValueError(f"小时错误: {hour}")
-    minute = int(hour_min[1])
+    minute = int(hour_min[1]) if len(hour_min) > 1 else 0
     if not (0 <= minute <= 59):
         raise ValueError(f"分钟错误: {minute}")
     if len(hour_min) > 2:
