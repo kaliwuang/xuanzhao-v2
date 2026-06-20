@@ -1174,7 +1174,7 @@ class BaziEngine(DivinationEngine):
                     pos = ['年','月','日','时'][pos_idx]
                     shensha.append(f'空亡（{pos}支{z}）')
 
-        # 37. 双华盖（以年支和日支查，与华盖检测一致）
+        # 36. 双华盖（以年支和日支查，与华盖检测一致）
         huagai_targets = set(filter(None, [SHENSHA_HUAGAI_MAP.get(year_zhi, ''), SHENSHA_HUAGAI_MAP.get(day_zhi, '')]))
         for huagai_zhi in huagai_targets:
             huagai_count = sum(1 for z in all_zhis if z == huagai_zhi)
@@ -1182,7 +1182,7 @@ class BaziEngine(DivinationEngine):
                 shensha.append('双华盖')
                 break
 
-        # 38. 双桃花（以年支和日支查，与桃花检测一致）
+        # 37. 双桃花（以年支和日支查，与桃花检测一致）
         taohua_targets = set(filter(None, [SHENSHA_TAOHUA_MAP.get(year_zhi, ''), SHENSHA_TAOHUA_MAP.get(day_zhi, '')]))
         for taohua_zhi in taohua_targets:
             taohua_count = sum(1 for z in all_zhis if z == taohua_zhi)
@@ -1190,7 +1190,7 @@ class BaziEngine(DivinationEngine):
                 shensha.append('双桃花')
                 break
 
-        # 39. 天官贵人（以日干查四支）
+        # 38. 天官贵人（以日干查四支）
         tianguan_map = {
             '甲':'未','乙':'辰','丙':'巳','丁':'午',
             '戊':'戌','己':'酉','庚':'丑','辛':'寅',
@@ -1202,7 +1202,7 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天官贵人（{pos}支{z}）')
 
-        # 40. 天福贵人（以日干查四支）
+        # 39. 天福贵人（以日干查四支）
         tianfu_map = {
             '甲':'酉','乙':'申','丙':'子','丁':'亥',
             '戊':'卯','己':'寅','庚':'午','辛':'巳',
@@ -1214,7 +1214,7 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天福贵人（{pos}支{z}）')
 
-        # 41. 三奇贵人（天干组合：乙丙丁=天上三奇，甲戊庚=地上三奇，辛壬癸=人中三奇）
+        # 40. 三奇贵人（天干组合：乙丙丁=天上三奇，甲戊庚=地上三奇，辛壬癸=人中三奇）
         all_gan_str = ''.join(all_gans)
         if '乙' in all_gan_str and '丙' in all_gan_str and '丁' in all_gan_str:
             shensha.append('天上三奇（乙丙丁）')
@@ -1223,7 +1223,7 @@ class BaziEngine(DivinationEngine):
         if '辛' in all_gan_str and '壬' in all_gan_str and '癸' in all_gan_str:
             shensha.append('人中三奇（辛壬癸）')
 
-        # 42. 德秀贵人（以月支查天干组合）
+        # 41. 德秀贵人（以月支查天干组合）
         dexiu_map = {
             '子': {'德':'壬', '秀':'丙辛'},
             '丑': {'德':'壬', '秀':'丙辛'},
@@ -1247,7 +1247,7 @@ class BaziEngine(DivinationEngine):
             matching = [g for g in all_gans if g in dexiu_xiu]
             shensha.append(f'秀气（{",".join(matching)}）')
 
-        # 43. 阴阳差错（以日柱查）
+        # 42. 阴阳差错（以日柱查）
         yinyang_chacuo = [
             '丙子','丁丑','戊寅','辛卯','壬辰','癸巳',
             '丙午','丁未','戊申','辛酉','壬戌','癸亥'
@@ -1255,7 +1255,7 @@ class BaziEngine(DivinationEngine):
         if day_gz in yinyang_chacuo:
             shensha.append('阴阳差错')
 
-        # 44. 天赦日（以季节查日柱，比天赦更精确的版本）
+        # 43. 天赦日（以季节查日柱，比天赦更精确的版本）
         tianshe_ri_map = {
             '春': '戊寅', '夏': '甲午', '秋': '戊申', '冬': '甲子'
         }
@@ -1270,7 +1270,7 @@ class BaziEngine(DivinationEngine):
         if day_gz == tianshe_ri:
             shensha.append('天赦日')
 
-        # 45. 天转煞（以日柱纳音五行查）
+        # 44. 天转煞（以日柱纳音五行查）
         tianzhuan_map = {
             '金': '辛卯', '木': '癸巳', '水': '丁未', '火': '丙戌', '土': '己丑'
         }
