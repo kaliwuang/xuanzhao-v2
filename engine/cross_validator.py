@@ -305,6 +305,13 @@ class CrossValidator:
             if ziwei_pos:
                 methods.append("紫微")
                 findings.append(f"紫微在{ziwei_pos}")
+            # 五行局五行（命盘核心五行属性）
+            wuxing_ju = self.udm.ziwei_chart.get("wuxing_ju", {})
+            ju_wuxing = wuxing_ju.get("wuxing", "")
+            if ju_wuxing and "紫微五行局" not in "".join(findings):
+                if "紫微" not in methods:
+                    methods.append("紫微")
+                findings.append(f"五行局属{ju_wuxing}（{ju_wuxing}{wuxing_ju.get('ju_shu', '')}局）")
 
         # 占星太阳星座元素
         if self.udm.astro_chart:
