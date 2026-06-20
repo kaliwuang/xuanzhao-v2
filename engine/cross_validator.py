@@ -2474,7 +2474,7 @@ class CrossValidator:
         # === 6. 财运冲突：八字财星 vs 紫微财帛宫 ===
         bazi_wealth_good = False
         bazi_wealth_reason = ""
-        if any("财" in v for v in shishen.values()):
+        if any(v in ("正财", "偏财") for v in shishen.values()):
             bazi_wealth_good = True
             bazi_wealth_reason = "财星透干，有赚钱能力和财运基础"
         if any("比劫" in f and "财" in f for f in features):
