@@ -523,11 +523,18 @@ class PerspectiveEngine:
         elif method == "大六壬":
             if udm.liuren_chart:
                 data["yue_jiang"] = udm.liuren_chart.get("yue_jiang", "")
+                data["yue_jiang_zhi"] = udm.liuren_chart.get("yue_jiang_zhi", "")
+                data["jieqi"] = udm.liuren_chart.get("jieqi", "")
                 data["si_ke"] = udm.liuren_chart.get("si_ke", [])
                 data["san_chuan"] = udm.liuren_chart.get("san_chuan", [])
                 data["tian_jiang"] = udm.liuren_chart.get("tian_jiang", {})
+                data["tian_pan"] = udm.liuren_chart.get("tian_pan", {})
+                data["positions"] = udm.liuren_chart.get("positions", {})
+                data["gan_ji"] = udm.liuren_chart.get("gan_ji", "")
                 data["ge_ju"] = udm.liuren_chart.get("ge_ju", "")
+                data["day_ma"] = udm.liuren_chart.get("day_ma", "")
                 data["yong_shen"] = udm.liuren_chart.get("yong_shen", {})
+                data["si_ke_analysis"] = udm.liuren_chart.get("si_ke_analysis", {})
 
         elif method == "太乙":
             if udm.taiyi_chart:
@@ -607,8 +614,16 @@ class PerspectiveEngine:
             } if udm.liuyao_chart else {}
             data["liuren"] = {
                 "yue_jiang": udm.liuren_chart.get("yue_jiang", ""),
+                "yue_jiang_zhi": udm.liuren_chart.get("yue_jiang_zhi", ""),
+                "jieqi": udm.liuren_chart.get("jieqi", ""),
                 "si_ke": udm.liuren_chart.get("si_ke", []),
                 "san_chuan": udm.liuren_chart.get("san_chuan", []),
+                "tian_jiang": udm.liuren_chart.get("tian_jiang", {}),
+                "ge_ju": udm.liuren_chart.get("ge_ju", ""),
+                "day_ma": udm.liuren_chart.get("day_ma", ""),
+                "gan_ji": udm.liuren_chart.get("gan_ji", ""),
+                "yong_shen": udm.liuren_chart.get("yong_shen", {}),
+                "si_ke_analysis": udm.liuren_chart.get("si_ke_analysis", {}),
             } if udm.liuren_chart else {}
             data["taiyi"] = {
                 "taiyi_gong": udm.taiyi_chart.get("taiyi_gong", ""),
