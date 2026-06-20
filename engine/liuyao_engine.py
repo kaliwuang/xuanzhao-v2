@@ -341,7 +341,7 @@ class LiuYaoEngine(DivinationEngine):
             gua_gong_wuxing = XING5[GUA5[gong_idx]]
         else:
             # 卦宫名不在GUAS中时，用上下卦的五行来推断（非硬编码回退到乾金）
-            gua_gong_wuxing = self.GUA_WUXING.get(shang_gua, '金')
+            gua_gong_wuxing = self.GUA_WUXING.get(shang_gua) or self.GUA_WUXING.get(xia_gua, '金')
         ben_gua = {
             'name': ben_gua_name,
             'mark': mark,
