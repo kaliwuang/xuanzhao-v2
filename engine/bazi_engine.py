@@ -866,7 +866,7 @@ class BaziEngine(DivinationEngine):
         tiande_map = {
             '子':'巳','丑':'庚','寅':'丁','卯':'申',
             '辰':'壬','巳':'辛','午':'甲','未':'癸',
-            '申':'丙','酉':'乙','戌':'巳','亥':'庚',
+            '申':'丙','酉':'乙','戌':'丙','亥':'乙',
         }
         tiande = tiande_map.get(month_pillar.zhi, '')
         if tiande:
