@@ -453,7 +453,8 @@ class LiuRenEngine(DivinationEngine):
 
         # 最终回退：按农历月份估算中气（用于月将判定）
         # 农历月份与中气对应：正月→雨水, 二月→春分, ..., 十一月→冬至, 十二月→大寒
-        month = lunar.getMonth()
+        # lunar_python 闰月返回负数（如闰四月=-4），取绝对值映射到同月节气
+        month = abs(lunar.getMonth())
         approx = {
             1: "雨水", 2: "春分", 3: "谷雨", 4: "小满",
             5: "夏至", 6: "大暑", 7: "处暑", 8: "秋分",
