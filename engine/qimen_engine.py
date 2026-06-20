@@ -203,8 +203,8 @@ class QiMenEngine(DivinationEngine):
                     return jq_name, self.YIN_JU[jq_name], '阴遁'
                 else:
                     logger.warning(f"lunar_python返回的节气'{jq_name}'不在阴阳遁局数表中，回退到近似计算")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"lunar_python精确节气查询异常，回退到近似计算: {e}")
 
         # 回退：按月日近似节气分界
         m, d = solar_dt.month, solar_dt.day
