@@ -713,6 +713,33 @@ class BaziEngine(DivinationEngine):
         if lu_map.get(day_gan) == day_zhi:
             features.append("日坐禄地 — 自身根基扎实")
 
+        # 11. 天干连珠（四天干占连续四位置，如甲乙丙丁/丙丁戊己等，极罕见）
+        TIANGAN_CYCLE = '甲乙丙丁戊己庚辛壬癸'
+        gan_indices = sorted(TIANGAN_CYCLE.index(g) for g in all_gans)
+        DIZHI_CYCLE = '子丑寅卯辰巳午未申酉戌亥'
+
+        def _is_consecutive_4(indices, cycle_len):
+            """检查4个索引是否在环形排列中连续"""
+            s = sorted(set(indices))
+            if len(s) < 4:
+                return False
+            # 普通连续：0,1,2,3
+            if s[3] - s[0] == 3 and all(s[i+1] - s[i] == 1 for i in range(3)):
+                return True
+            # 环形连续：如 辛壬癸甲=7,8,9,0 → max=9, min=0 → cycle_len-9+0+1=2 ≠ 4
+            # 但 子丑寅卯=0,1,2,3 → sorted差=3 → 直接命中上面
+            # 戌亥子丑=10,11,0,1 → sorted=[0,1,10,11] → 12-11+0+1=2 ≠ 4
+            # 正确写法：环形跨度 = cycle_len - (s[-1] - s[0])，应为1
+            return (cycle_len - (s[3] - s[0])) == 1
+
+        if _is_consecutive_4(gan_indices, 10):
+            features.append("天干连珠 — 四天干连续排列，五行流转顺畅")
+
+        # 12. 地支连珠（四地支占连续四位置，如子丑寅卯/寅卯辰巳等）
+        zhi_indices = [DIZHI_CYCLE.index(z) for z in zhis]
+        if _is_consecutive_4(zhi_indices, 12):
+            features.append("地支连珠 — 四地支连续排列，气势连贯，格局特殊")
+
         return features[:11]  # 最多11条（留1个位置给身强/身弱特征）
 
     def _calc_shensha(self, day_master: str, day_pillar, year_pillar, month_pillar, time_pillar) -> list:
