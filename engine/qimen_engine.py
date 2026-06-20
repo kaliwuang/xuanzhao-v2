@@ -2,7 +2,7 @@
 Qi Men Dun Jia (奇门遁甲) Engine for XuanZhao v2.0
 """
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -252,7 +252,6 @@ class QiMenEngine(DivinationEngine):
             hour = solar_dt.hour
             zhi_idx = ((hour + 1) % 24) // 2
             # 晚子时(23:xx)日柱用次日，但时支仍为子时
-            from datetime import timedelta
             calc_dt = solar_dt + timedelta(days=1) if hour == 23 else solar_dt
             day_gan_idx = (calc_dt.toordinal() + 9) % 10
             gan_idx = (day_gan_idx * 2 + zhi_idx) % 10
@@ -269,7 +268,6 @@ class QiMenEngine(DivinationEngine):
             return lunar.getDayInGanZhi()
         except Exception:
             # 晚子时(23:xx)日柱用次日
-            from datetime import timedelta
             calc_dt = solar_dt + timedelta(days=1) if solar_dt.hour == 23 else solar_dt
             ga = (calc_dt.toordinal() + 9) % 10
             zi = (calc_dt.toordinal() + 1) % 12
