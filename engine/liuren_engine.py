@@ -130,8 +130,9 @@ class LiuRenEngine(DivinationEngine):
         yue_jiang_zhi = self.JIEQI_TO_YUEJIANG.get(jieqi_name, "丑")
         yue_jiang_name = self.YUE_JIANG_NAMES.get(yue_jiang_zhi, "大吉")
 
-        # ── 3. 占时（时支） ──
-        hour_zhi_idx = (orig.hour + 1) // 2 % 12
+        # ── 3. 占时（时支，使用 bazi_hour 保持与日柱时柱一致的晚子时处理） ──
+        bazi_h = time.bazi_hour
+        hour_zhi_idx = (bazi_h + 1) // 2 % 12
         zhan_shi = self.ZHI_ORDER[hour_zhi_idx]
 
         # ── 4. 日干寄宫 ──
