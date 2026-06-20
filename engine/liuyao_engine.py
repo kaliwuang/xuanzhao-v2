@@ -231,7 +231,7 @@ class LiuYaoEngine(DivinationEngine):
 
     def _analyze_najia(self, time: CorrectedTime, gender: int) -> dict:
         """使用 najia 库进行纳甲六爻排盘"""
-        from najia.utils import get_najia, set_shi_yao, palace, get_qin6, GZ5X
+        from najia.utils import get_najia
         from najia.const import (
             ZHI5, ZHIS, XING5, GUA5, GUAS, GUA64, GANS
         )
