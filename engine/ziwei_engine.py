@@ -196,8 +196,15 @@ class ZiWeiEngine(DivinationEngine):
         # 五行局
         wuxing_ju_str = r.five_elements_class  # 如 "木三局"
         CN_DIGITS = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9}
+        # 五行→局数标准映射（水二局、木三局、金四局、土五局、火六局）
+        WUXING_TO_JU = {'水':2, '木':3, '金':4, '土':5, '火':6}
         wuxing = wuxing_ju_str[0] if wuxing_ju_str else "木"
-        ju_shu = CN_DIGITS.get(wuxing_ju_str[1], 6) if len(wuxing_ju_str) > 1 else 6
+        if wuxing_ju_str and len(wuxing_ju_str) > 1:
+            ju_shu = CN_DIGITS.get(wuxing_ju_str[1], WUXING_TO_JU.get(wuxing, 3))
+        else:
+            # 解析失败时用五行→局数映射保证一致性，回退到木三局
+            ju_shu = WUXING_TO_JU.get(wuxing, 3)
+            wuxing = wuxing if wuxing in WUXING_TO_JU else "木"
 
         # 起运年龄（五行局→起运虚岁）
         JU_START_AGE = {2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
