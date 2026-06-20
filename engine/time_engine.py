@@ -206,11 +206,16 @@ class TimeEngine:
         loc = loc.strip()
         if loc in self._cities:
             return self._cities[loc]
-        # 尝试去掉"市"后缀
-        if loc.endswith("市") and loc[:-1] in self._cities:
-            return self._cities[loc[:-1]]
-        if loc.endswith("省") and loc[:-1] in self._cities:
-            return self._cities[loc[:-1]]
+        # 尝试去掉行政区划后缀
+        for suffix in ["市", "省", "县", "区", "盟", "州", "地区"]:
+            if loc.endswith(suffix) and loc[:-len(suffix)] in self._cities:
+                return self._cities[loc[:-len(suffix)]]
+        # 尝试取第一个词（如"北京市朝阳区"→"北京"）
+        if len(loc) > 2:
+            for end in range(2, min(5, len(loc))):
+                prefix = loc[:end]
+                if prefix in self._cities:
+                    return self._cities[prefix]
         # 默认北京
         logger.warning(f"城市 '{loc}' 未找到，回退到北京坐标")
         return (39.9042, 116.4074)
