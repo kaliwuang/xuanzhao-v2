@@ -128,8 +128,11 @@ def _validate_birth(birth: str):
         raise ValueError(f"年份超出范围: {year}")
     if not (1 <= month <= 12):
         raise ValueError(f"月份错误: {month}")
-    if not (1 <= day <= 31):
-        raise ValueError(f"日期错误: {day}")
+    # 月份天数校验（考虑闰年）
+    import calendar
+    max_day = calendar.monthrange(year, month)[1]
+    if not (1 <= day <= max_day):
+        raise ValueError(f"日期错误: {year}年{month}月只有{max_day}天，输入{day}天")
     if not (0 <= hour <= 23):
         raise ValueError(f"小时错误: {hour}")
     minute = int(hour_min[1])
