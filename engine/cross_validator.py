@@ -2623,6 +2623,70 @@ class CrossValidator:
                                    "需警惕此时的判断可能偏离最佳选择，宜多参考他人意见或等待更好的时机。"
                     ))
 
+        # === 12. 大六壬-八字喜用神冲突：初传天将吉凶 vs 命局喜忌 ===
+        # 六壬初传代表事件的核心走向，天将吉凶反映运势好坏。
+        # 若天将吉但初传五行属八字忌神，说明六壬看好但命局不配合；
+        # 若天将凶但初传五行属八字喜用，说明六壬看衰但命局有根基。
+        if self.udm.liuren_chart and self.udm.xi_yong:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            xi_val = self.udm.xi_yong.get("xi", "") if isinstance(self.udm.xi_yong, dict) else ""
+            ji_val = self.udm.xi_yong.get("ji", "") if isinstance(self.udm.xi_yong, dict) else ""
+            strength = self.udm.xi_yong.get("strength", "") if isinstance(self.udm.xi_yong, dict) else ""
+            xi_list = xi_val if isinstance(xi_val, list) else [xi_val] if xi_val else []
+            ji_list = ji_val if isinstance(ji_val, list) else [ji_val] if ji_val else []
+
+            if yong_shen and xi_list:
+                chu_zhi = yong_shen.get("chu_chuan_zhi", "")
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                jiang_jx = yong_shen.get("jiang_ji_xiong", "")
+                ri_relation = yong_shen.get("ri_gan_relation", "")
+
+                # 初传地支五行
+                _ZHI_WX = {
+                    "子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火",
+                    "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水",
+                }
+                chu_wx = _ZHI_WX.get(chu_zhi, "")
+
+                # 冲突1：天将吉但初传五行属忌神
+                if jiang_jx in ("大吉", "吉") and chu_wx and chu_wx in ji_list:
+                    conflicts.append(ConflictItem(
+                        aspect="运势",
+                        method_a="八字",
+                        finding_a=f"{strength}，忌{'+'.join(ji_list)}",
+                        method_b="大六壬",
+                        finding_b=f"初传天将{chu_jiang}（{jiang_jx}），但初传地支{chu_zhi}（{chu_wx}）属八字忌神",
+                        suggestion=f"六壬天将{chu_jiang}虽为{jiang_jx}之将，但初传五行属忌神{chu_wx}。"
+                                   f"吉将受忌神拖累，运势有表面利好但根基不稳之象。"
+                                   f"宜借喜用五行（{'、'.join(xi_list)}）之力化解。"
+                    ))
+
+                # 冲突2：天将凶但初传五行属喜用
+                elif jiang_jx == "凶" and chu_wx and chu_wx in xi_list:
+                    conflicts.append(ConflictItem(
+                        aspect="运势",
+                        method_a="八字",
+                        finding_a=f"{strength}，喜{'+'.join(xi_list)}",
+                        method_b="大六壬",
+                        finding_b=f"初传天将{chu_jiang}（凶），但初传地支{chu_zhi}（{chu_wx}）属八字喜用",
+                        suggestion=f"六壬天将{chu_jiang}虽为凶将，但初传五行属喜用{chu_wx}。"
+                                   f"凶将得喜用化解，虽有波折但终能转危为安。"
+                                   f"命局根基可抵御一时之凶。"
+                    ))
+
+                # 冲突3：初传克日干（受制）且八字身弱
+                if "克我" in ri_relation and any("身弱" in f for f in features):
+                    conflicts.append(ConflictItem(
+                        aspect="运势",
+                        method_a="八字",
+                        finding_a="八字身弱，需印比扶助",
+                        method_b="大六壬",
+                        finding_b=f"初传{chu_zhi}克日干（{ri_relation}），天将{chu_jiang}（{jiang_jx}）",
+                        suggestion="八字身弱与六壬初传克我相互印证，两术共识指向受制状态。"
+                                   "此时宜借助贵人、长辈之力（印星方向），避免独自承担过重压力。"
+                    ))
+
         return conflicts
 
     def _calc_overall_confidence(self, results: dict) -> ConfidenceLevel:
