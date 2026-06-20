@@ -738,6 +738,82 @@ class CrossValidator:
                     ))
                     break
 
+        # 奇门遁甲：乙奇（女方）、庚（男方）、六合（合和神）、太阴（暗中情缘）
+        if self.udm.qimen_chart:
+            qm = self.udm.qimen_chart
+            di_pan = qm.get("di_pan", {})
+            tian_pan = qm.get("tian_pan", {})
+            ba_shen = qm.get("ba_shen", {})
+
+            # 乙奇→女方，庚→男方：定位它们在地盘和天盘的位置
+            yi_gong_di = next((int(g) for g, v in di_pan.items() if v == "乙"), None)
+            geng_gong_di = next((int(g) for g, v in di_pan.items() if v == "庚"), None)
+            yi_gong_tian = next((int(g) for g, v in tian_pan.items() if v == "乙"), None)
+            geng_gong_tian = next((int(g) for g, v in tian_pan.items() if v == "庚"), None)
+
+            # 乙庚同宫或天盘乙庚相合→感情和谐
+            if yi_gong_tian and geng_gong_di and yi_gong_tian == geng_gong_di:
+                gong_name = ""
+                for p in qm.get("palaces", []):
+                    if p.get("gong") == yi_gong_tian:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="感情婚姻",
+                    finding=f"奇门天盘乙奇与地盘庚同落{gong_name}（乙庚合），感情有合和之象",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.HIGH,
+                ))
+            elif geng_gong_tian and yi_gong_di and geng_gong_tian == yi_gong_di:
+                gong_name = ""
+                for p in qm.get("palaces", []):
+                    if p.get("gong") == geng_gong_tian:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="感情婚姻",
+                    finding=f"奇门天盘庚与地盘乙奇同落{gong_name}（乙庚合），感情有合和之象",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.HIGH,
+                ))
+
+            # 六合神落宫→合和、缘分、匹配
+            liuhe_gong = next((int(g) for g, v in ba_shen.items() if v == "六合"), None)
+            if liuhe_gong:
+                gong_name = ""
+                men_name = ""
+                for p in qm.get("palaces", []):
+                    if p.get("gong") == liuhe_gong:
+                        gong_name = p.get("name", "")
+                        break
+                ba_men = qm.get("ba_men", {})
+                men_name = ba_men.get(str(liuhe_gong), "")
+                finding = f"六合神落{gong_name}"
+                if men_name:
+                    finding += f"（{men_name}）"
+                finding += "，有合和缘分，利于婚恋匹配"
+                items.append(ConsensusItem(
+                    aspect="感情婚姻",
+                    finding=finding,
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 太阴神落宫→暗中情缘、私密关系、桃花暗动
+            taiyin_gong = next((int(g) for g, v in ba_shen.items() if v == "太阴"), None)
+            if taiyin_gong:
+                gong_name = ""
+                for p in qm.get("palaces", []):
+                    if p.get("gong") == taiyin_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="感情婚姻",
+                    finding=f"太阴神落{gong_name}，有暗中情缘或私密桃花之象",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.LOW,
+                ))
+
         return items
 
     def _validate_health(self) -> List[ConsensusItem]:
