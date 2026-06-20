@@ -120,8 +120,8 @@ class AstroEngine(DivinationEngine):
                 'sign_index': sign_idx,
                 'degree': round(degree, 2),
                 'house': house,
-                'speed': round(result[0][3] if isinstance(result[0], (list, tuple)) else result[3], 4) if len(result[0]) > 3 else 0,
-                'retrograde': (result[0][3] < 0) if isinstance(result[0], (list, tuple)) and len(result[0]) > 3 else False,
+                'speed': round(result[0][3], 4) if isinstance(result[0], (list, tuple)) and len(result[0]) > 3 else 0,
+                'retrograde': (isinstance(result[0], (list, tuple)) and len(result[0]) > 3 and result[0][3] < 0),
             }
 
         # Sun/Moon signs and elements
