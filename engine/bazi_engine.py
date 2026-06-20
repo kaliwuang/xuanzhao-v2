@@ -681,7 +681,7 @@ class BaziEngine(DivinationEngine):
         if lu_map.get(day_gan) == day_zhi:
             features.append("日坐禄地 — 自身根基扎实")
 
-        return features[:12]  # 最多12条
+        return features[:11]  # 最多11条（留1个位置给身强/身弱特征）
 
     def _calc_shensha(self, day_master: str, day_pillar, year_pillar, month_pillar, time_pillar) -> list:
         """计算神煞（以日干和年支为主）"""
