@@ -249,7 +249,6 @@ class LiuYaoEngine(DivinationEngine):
         dong = data['dong']          # 动爻列表（0-indexed）
         shi_ying = data['shiy']      # (世爻, 应爻, 宫位) 世应1-indexed
         qin6 = data['qin6']          # 六亲 list[6]
-        qinx = data['qinx']          # 干支五行 list[6] e.g. "甲子水"
         god6 = data['god6']          # 六神 list[6]
         gong_name = data['gong']     # 卦宫名 e.g. "乾"
 
