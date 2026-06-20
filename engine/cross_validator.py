@@ -2494,7 +2494,7 @@ class CrossValidator:
         if any(v in ("正财", "偏财") for v in shishen.values()):
             bazi_wealth_good = True
             bazi_wealth_reason = "财星透干，有赚钱能力和财运基础"
-        if any("比劫" in f for f in features) and any("财" in f for f in features):
+        if any("比劫" in f for f in features) and any("财星" in f and "生" not in f and "美" not in f for f in features):
             bazi_wealth_good = False
             bazi_wealth_reason = "比劫夺财，财运有损耗风险"
 
