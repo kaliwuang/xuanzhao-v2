@@ -331,10 +331,11 @@ class ZiWeiEngine(DivinationEngine):
             _, last_day = calendar.monthrange(year, month)
             return f'{year}-{month:02d}-{min(day, last_day):02d}'
 
-        try:
-            current_year = datetime.now().year
-            birth_year = birth_dt.year if birth_dt else datetime.now().year
+        # 计算当前年份（供大限和流年共用，避免重复调用 datetime.now()）
+        current_year = datetime.now().year
+        birth_year = birth_dt.year if birth_dt else current_year
 
+        try:
             seen_palaces = set()
             for test_age in range(start_age, 100, 10):
                 test_year = birth_year + test_age - 1  # 虚岁
@@ -397,7 +398,6 @@ class ZiWeiEngine(DivinationEngine):
         liunian_info = {}
         if birth_dt:
             try:
-                current_year = datetime.now().year
                 h = r.horoscope(_safe_date_str(current_year, birth_dt.month, birth_dt.day), time_index)
                 liunian_palace_names = []
                 if hasattr(h, 'palace_names') and h.palace_names:
