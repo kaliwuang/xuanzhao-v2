@@ -182,8 +182,11 @@ class TestPerspectiveEngine:
         assert pe._classify_question("感情运势") == "感情"
         assert pe._classify_question("财运怎样") == "财运"
         assert pe._classify_question("身体健康") == "健康"
-        # 注意：包含子串匹配，"人生意义"含"生意"会匹配到事业
         assert pe._classify_question("命运走向") == "综合"
+        # 长词优先匹配：避免子串误命中
+        assert pe._classify_question("找工作难不难") == "事业"
+        assert pe._classify_question("人际关系怎么样") == "人际"
+        assert pe._classify_question("考研考公哪个好") == "学业"
 
     def test_extract_bazi_data(self):
         """八字数据提取应包含日主和五行"""
