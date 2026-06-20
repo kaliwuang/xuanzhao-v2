@@ -1052,6 +1052,14 @@ class BaziEngine(DivinationEngine):
         # 枭神夺食：偏印与食神同透——才艺受阻
         if has_pianyin and has_shishen:
             features.append("枭神夺食 — 才艺易受干扰，思路易被打断")
+        # 官杀混杂：正官与七杀同透天干——压力来源复杂，既有制度约束又有竞争压力
+        # 八字中最重要的格局信号之一，需要合杀留官或合官留杀方能化解
+        if has_zhenguan and has_qisha:
+            features.append("官杀混杂 — 压力来源复杂，事业需防多头管理，宜化繁为简")
+        # 官印相生：正官与印星同透——体制内发展的经典格局
+        # 区别于杀印相生（七杀+印），官印相生偏正统路径
+        if has_zhenguan and has_yin:
+            features.append("官印相生 — 体制内发展有利，稳中有升，有贵人提携")
 
         # 5. 印星
         yin_count = sum(1 for v in ss.values() if "印" in v)

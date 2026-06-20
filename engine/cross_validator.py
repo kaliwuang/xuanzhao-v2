@@ -335,22 +335,45 @@ class CrossValidator:
         methods = []
         traits = []
 
-        # 八字特征
+        # 八字特征——扫描全部特征，匹配重要十神组合和格局信号
         if self.udm.features:
             methods.append("八字")
-            for f in self.udm.features[:3]:
-                if "七杀" in f:
+            # 优先匹配十神组合（更精准的性格信号）
+            shishen_patterns = [
+                ("官杀混杂", "压力来源复杂，内心矛盾，需在规则与竞争间找平衡"),
+                ("官印相生", "善于在体制内发展，稳重有涵养，有贵人提携"),
+                ("杀印相生", "有权威根基，能化压力为动力"),
+                ("伤官见官", "才华与规矩冲突，适合以技立身"),
+                ("食神制杀", "化压力为动力，逆境中见能力"),
+                ("食伤生财", "创意生财，以技谋利"),
+                ("枭神夺食", "才艺易受干扰，需防思路被打断"),
+            ]
+            matched_traits = set()
+            for f in self.udm.features:
+                for pattern, trait in shishen_patterns:
+                    if pattern in f and trait not in matched_traits:
+                        traits.append(trait)
+                        matched_traits.add(trait)
+            # 再补充基础十神信号（避免重复）
+            for f in self.udm.features:
+                if "七杀" in f and "性格刚强" not in matched_traits:
                     traits.append("性格刚强，有领导力")
-                elif "正官" in f:
+                    matched_traits.add("性格刚强")
+                elif "正官" in f and "守规矩" not in matched_traits:
                     traits.append("守规矩，责任心强")
-                elif "印" in f:
+                    matched_traits.add("守规矩")
+                elif "印" in f and "善于学习" not in matched_traits:
                     traits.append("善于学习，有涵养")
-                elif "财" in f:
+                    matched_traits.add("善于学习")
+                elif "财" in f and "务实" not in matched_traits:
                     traits.append("务实，重视物质生活")
-                elif "食伤" in f:
+                    matched_traits.add("务实")
+                elif "食伤" in f and "表达力" not in matched_traits:
                     traits.append("表达力强，有创意")
-                elif "比劫" in f:
+                    matched_traits.add("表达力")
+                elif "比劫" in f and "重情义" not in matched_traits:
                     traits.append("重情义，竞争意识强")
+                    matched_traits.add("重情义")
 
         # 紫微命宫主星（紫微斗数最核心的性格指标）
         if self.udm.ziwei_chart:
@@ -3052,6 +3075,12 @@ class CrossValidator:
             if any("七杀" in f for f in bazi_features):
                 career_trend.append("七杀透干，事业心强，敢闯敢拼")
                 career_luck = "吉"
+            if any("官杀混杂" in f for f in bazi_features):
+                career_trend.append("官杀混杂，事业压力来源多，需防多头管理")
+                career_suggest.append("宜化繁为简，选定一个方向深耕，避免同时应付多个压力源")
+            if any("官印相生" in f for f in bazi_features):
+                career_trend.append("官印相生，体制内发展有利，有贵人提携")
+                career_luck = "吉"
 
         # 奇门看开门
         if self.udm.qimen_chart:
@@ -3410,8 +3439,13 @@ class CrossValidator:
         if any("七杀" in f for f in bazi_features):
             strengths.append("魄力足，敢担当")
             weaknesses.append("压力大，易焦虑")
+        if any("官杀混杂" in f for f in bazi_features):
+            strengths.append("适应力强，能在多种压力下生存")
+            weaknesses.append("方向感易模糊，需防精力分散")
         if any("正官" in f for f in bazi_features):
             strengths.append("守规矩，责任心强")
+        if any("官印相生" in f for f in bazi_features):
+            strengths.append("善于借势，有贵人缘")
         if any("印" in f for f in bazi_features):
             strengths.append("善于学习，有涵养")
         if any("食伤" in f for f in bazi_features):
