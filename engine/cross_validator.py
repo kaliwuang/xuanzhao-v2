@@ -415,9 +415,9 @@ class CrossValidator:
         # 八字：看官杀和食伤
         if self.udm.shishen_gan:
             ss = self.udm.shishen_gan
-            has_guan = any("官" in v for v in ss.values())
-            has_sha = any("杀" in v for v in ss.values())
-            has_shi = any("食" in v or "伤" in v for v in ss.values())
+            has_guan = any(v == "正官" for v in ss.values())
+            has_sha = any(v == "七杀" for v in ss.values())
+            has_shi = any(v in ("食神", "伤官") for v in ss.values())
 
             if has_guan or has_sha:
                 items.append(ConsensusItem(
@@ -2871,9 +2871,9 @@ class CrossValidator:
         # 八字看官杀
         if self.udm.shishen_gan:
             ss = self.udm.shishen_gan
-            has_guan = any("官" in v for v in ss.values())
-            has_sha = any("杀" in v for v in ss.values())
-            has_shi = any("食" in v or "伤" in v for v in ss.values())
+            has_guan = any(v == "正官" for v in ss.values())
+            has_sha = any(v == "七杀" for v in ss.values())
+            has_shi = any(v in ("食神", "伤官") for v in ss.values())
             if has_guan or has_sha:
                 career_trend.append("有管理才能，适合带领团队")
                 career_luck = "吉"
