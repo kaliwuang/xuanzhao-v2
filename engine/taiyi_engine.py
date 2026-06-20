@@ -114,7 +114,9 @@ class TaiYiEngine(DivinationEngine):
         xiao_you = r.get('小游', 0)
 
         # 局式
-        ju_shi = r.get('局式', {})
+        ju_shi = r.get('局式', {}) or {}
+        if not isinstance(ju_shi, dict):
+            ju_shi = {}
         ju_name = ju_shi.get('文', '')
         ju_num = ju_shi.get('數', 0)
         ji_nian = ju_shi.get('積年數', 0)
