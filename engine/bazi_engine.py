@@ -100,7 +100,7 @@ SHENSHA_JIANGXING_MAP = {
 }
 
 # ─── 天德贵人（以月支查，值为天干或地支）─────────────────
-SHENSHA_TIANYI_GUIREN_MAP = {
+SHENSHA_TIANDEREN_MAP = {
     '子':'巳','丑':'庚','寅':'丁','卯':'申',
     '辰':'壬','巳':'辛','午':'甲','未':'癸',
     '申':'丙','酉':'乙','戌':'丙','亥':'乙',
@@ -516,8 +516,8 @@ class BaziEngine(DivinationEngine):
                     dy_yuede_gan = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
                     if dy_gan == dy_yuede_gan:
                         dy_shensha.append('月德')
-                    # 天德贵人（以月支查，大运地支或天干匹配则入）— 使用模块级 SHENSHA_TIANYI_GUIREN_MAP
-                    dy_tiande = SHENSHA_TIANYI_GUIREN_MAP.get(month_pillar.zhi, '')
+                    # 天德贵人（以月支查，大运地支或天干匹配则入）— 使用模块级 SHENSHA_TIANDEREN_MAP
+                    dy_tiande = SHENSHA_TIANDEREN_MAP.get(month_pillar.zhi, '')
                     if dy_tiande:
                         if dy_tiande in TIANGAN_SET and dy_gan == dy_tiande:
                             dy_shensha.append('天德贵人')
@@ -576,7 +576,7 @@ class BaziEngine(DivinationEngine):
                                     if ln_gan == SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''):
                                         ln_shensha.append('月德')
                                     # 天德贵人（以月支查，流年干支匹配则入）
-                                    ln_tiande = SHENSHA_TIANYI_GUIREN_MAP.get(month_pillar.zhi, '')
+                                    ln_tiande = SHENSHA_TIANDEREN_MAP.get(month_pillar.zhi, '')
                                     if ln_tiande:
                                         if ln_tiande in TIANGAN_SET and ln_gan == ln_tiande:
                                             ln_shensha.append('天德贵人')
@@ -1166,8 +1166,8 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'将星（{pos}支{z}）')
 
-        # 6. 天德贵人（以月支查天干或地支）— 使用模块级 SHENSHA_TIANYI_GUIREN_MAP
-        tiande = SHENSHA_TIANYI_GUIREN_MAP.get(month_pillar.zhi, '')
+        # 6. 天德贵人（以月支查天干或地支）— 使用模块级 SHENSHA_TIANDEREN_MAP
+        tiande = SHENSHA_TIANDEREN_MAP.get(month_pillar.zhi, '')
         if tiande:
             if tiande in TIANGAN_SET:
                 # 天德为天干，查四柱天干
