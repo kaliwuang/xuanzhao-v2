@@ -1409,7 +1409,7 @@ class CrossValidator:
                         break
                 items.append(ConsensusItem(
                     aspect="学业",
-                    finding=f"天辅文昌星与景门同落{gong_name}宫，学业考试大吉之象",
+                    finding=f"天辅文昌星与景门同落{gong_name}，学业考试大吉之象",
                     supporting_methods=["奇门"],
                     confidence=ConfidenceLevel.HIGH,
                 ))
@@ -1850,9 +1850,11 @@ class CrossValidator:
         zhi_fu = qm.get('zhi_fu', {})
         zhi_shi = qm.get('zhi_shi', {})
         if zhi_fu:
+            zf_gong = str(zhi_fu.get('gong', ''))
+            zf_gong_name = self.QIMEN_GONG_NAMES.get(zf_gong, zf_gong)
             items.append(ConsensusItem(
                 aspect="奇门值符值使",
-                finding=f"值符：{zhi_fu.get('star','')}落{zhi_fu.get('gong','')}宫，值使：{zhi_shi.get('door','')}",
+                finding=f"值符：{zhi_fu.get('star','')}落{zf_gong_name}，值使：{zhi_shi.get('door','')}",
                 supporting_methods=["奇门遁甲"],
                 confidence=ConfidenceLevel.MEDIUM
             ))
@@ -2759,7 +2761,12 @@ class CrossValidator:
                     gong = int(g) if str(g).isdigit() else 0
                     body = GONG_BODY.get(gong, "")
                     if body:
-                        health_trend.append(f"奇门天芮病星落{gong}宫，{body}偏弱")
+                        gong_name = ""
+                        for p in palaces:
+                            if p.get("gong") == gong:
+                                gong_name = p.get("name", "")
+                                break
+                        health_trend.append(f"奇门天芮病星落{gong_name or str(gong) + '宫'}，{body}偏弱")
                         health_suggest.append(f"注意{body}保养")
                         health_luck = "凶"
             for g, men in ba_men.items():
@@ -2767,7 +2774,12 @@ class CrossValidator:
                     gong = int(g) if str(g).isdigit() else 0
                     body = GONG_BODY.get(gong, "")
                     if body:
-                        health_trend.append(f"死门落{gong}宫，{body}有慢性隐患")
+                        gong_name = ""
+                        for p in palaces:
+                            if p.get("gong") == gong:
+                                gong_name = p.get("name", "")
+                                break
+                        health_trend.append(f"死门落{gong_name or str(gong) + '宫'}，{body}有慢性隐患")
 
         judgment["健康"]["趋势"] = "；".join(health_trend)
         judgment["健康"]["建议"] = "；".join(health_suggest) if health_suggest else "规律作息，适度运动"
