@@ -2675,7 +2675,7 @@ class CrossValidator:
             men = self.udm.qimen_chart.get("ba_men", {})
             sheng = [k for k, v in men.items() if v == "生门"]
             if sheng:
-                wealth_trend.append(f"生门在{sheng[0]}，财运有门路")
+                wealth_trend.append(f"生门在{self.QIMEN_GONG_NAMES.get(sheng[0], sheng[0])}，财运有门路")
                 wealth_luck = "吉"
 
         if chong and any("财" in str(c) or "子" in str(c) for c in chong):
