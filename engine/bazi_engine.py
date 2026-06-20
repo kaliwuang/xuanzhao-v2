@@ -1290,12 +1290,15 @@ class BaziEngine(DivinationEngine):
                 shensha.append(f'寡宿（{pos}支{z}）')
 
         # 32. 天罗地网（以年支或日支查）
-        tianluo_map = {'戌':'亥','亥':'戌'}
-        diwang_map = {'辰':'巳','巳':'辰'}
-        has_tianluo = any(z in tianluo_map and tianluo_map[z] in all_zhis for z in all_zhis)
+        # 天罗：年支或日支为戌或亥，且另一支也出现在四柱中
+        # 地网：年支或日支为辰或巳，且另一支也出现在四柱中
+        tianluo_pairs = {'戌', '亥'}
+        diwang_pairs = {'辰', '巳'}
+        ref_zhis = {year_zhi, day_zhi}
+        has_tianluo = bool(ref_zhis & tianluo_pairs) and bool(tianluo_pairs <= set(all_zhis))
         if has_tianluo:
             shensha.append('天罗')
-        has_diwang = any(z in diwang_map and diwang_map[z] in all_zhis for z in all_zhis)
+        has_diwang = bool(ref_zhis & diwang_pairs) and bool(diwang_pairs <= set(all_zhis))
         if has_diwang:
             shensha.append('地网')
 
