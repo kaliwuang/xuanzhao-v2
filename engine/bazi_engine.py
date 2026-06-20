@@ -746,6 +746,41 @@ class BaziEngine(DivinationEngine):
         if ss.get("month") == "正官":
             features.append("正官当令 — 正统、规矩")
 
+        # 4.5 十神组合（天干层面的经典格局信号，八字论命的核心维度之一）
+        ss_vals_non_day = [v for k, v in ss.items() if k != "day"]
+        has_shangguan = "伤官" in ss_vals_non_day
+        has_zhenguan = "正官" in ss_vals_non_day
+        has_qisha = "七杀" in ss_vals_non_day
+        has_shishen = "食神" in ss_vals_non_day
+        has_zhengyin = "正印" in ss_vals_non_day
+        has_pianyin = "偏印" in ss_vals_non_day
+        has_yin = has_zhengyin or has_pianyin
+        has_zhengcai = "正财" in ss_vals_non_day
+        has_piancai = "偏财" in ss_vals_non_day
+        has_cai = has_zhengcai or has_piancai
+
+        # 伤官见官：伤官与正官同透天干——叛逆与规则的冲突
+        if has_shangguan and has_zhenguan:
+            features.append("伤官见官 — 才华与规矩冲突，宜以技立身而非从政")
+        # 食神制杀：食神与七杀同透——化压力为动力的天赋
+        if has_shishen and has_qisha:
+            features.append("食神制杀 — 化压力为动力，逆境中见能力")
+        # 杀印相生：七杀与印星同透——权威有根基，有贵人扶
+        if has_qisha and has_yin:
+            features.append("杀印相生 — 权威有根基，贵人扶上位")
+        # 财官双美：财星与正官同透——名利兼收的信号
+        if has_cai and has_zhenguan:
+            features.append("财官双美 — 名利兼收，务实进取")
+        # 伤官生财：伤官与财星同透——创意生财
+        if has_shangguan and has_cai:
+            features.append("伤官生财 — 才华转化为财富，以技谋利")
+        # 食神生财：食神与财星同透——稳健生财
+        if has_shishen and has_cai:
+            features.append("食神生财 — 稳健求财，生活品质佳")
+        # 枭神夺食：偏印与食神同透——才艺受阻
+        if has_pianyin and has_shishen:
+            features.append("枭神夺食 — 才艺易受干扰，思路易被打断")
+
         # 5. 印星
         yin_count = sum(1 for v in ss.values() if "印" in v)
         if yin_count >= 2:
