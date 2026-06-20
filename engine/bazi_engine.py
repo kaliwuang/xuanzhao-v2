@@ -564,7 +564,10 @@ class BaziEngine(DivinationEngine):
                 BaziEngine._tiaohou_cache = {}
         
         if BaziEngine._tiaohou_cache:
-            return BaziEngine._tiaohou_cache.get(day_gan, {}).get(month_zhi, "")
+            cached = BaziEngine._tiaohou_cache.get(day_gan, {}).get(month_zhi, "")
+            if cached:
+                return cached
+            # 缓存中无此组合，继续回退到硬编码表
 
         # 回退：硬编码
         table = {
