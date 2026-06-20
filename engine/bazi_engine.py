@@ -1401,15 +1401,22 @@ class BaziEngine(DivinationEngine):
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'寡宿（{pos}支{z}）')
 
-        # 32. 天罗地网（以年支或日支查）
-        # 天罗：年支或日支为戌或亥
-        # 地网：年支或日支为辰或巳
+        # 32. 天罗地网（以纳音五行+年支/日支查）
+        # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
+        # 注：部分现代派系简化为所有命格均查，此处按传统纳音五行判定
+        _TL_WUXING_CHARS = {'金', '木', '水', '火', '土'}
+        _tl_nayin_str = day_pillar.nayin or ''
+        _tl_nayin_wx = ''
+        for _wx in _TL_WUXING_CHARS:
+            if _wx in _tl_nayin_str:
+                _tl_nayin_wx = _wx
+                break
         tianluo_set = {'戌', '亥'}
         diwang_set = {'辰', '巳'}
         ref_zhis = {year_zhi, day_zhi}
-        if ref_zhis & tianluo_set:
+        if _tl_nayin_wx == '火' and ref_zhis & tianluo_set:
             shensha.append('天罗')
-        if ref_zhis & diwang_set:
+        if _tl_nayin_wx in ('水', '土') and ref_zhis & diwang_set:
             shensha.append('地网')
 
         # 33. 十恶大败（以日柱查）— 使用模块级 SHIBA_EBA
