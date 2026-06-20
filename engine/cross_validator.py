@@ -2757,29 +2757,51 @@ class CrossValidator:
 
         return conflicts
 
+    # 共识置信度权重：HIGH共识权重3，MEDIUM权重2，LOW权重1
+    _CONFIDENCE_WEIGHT = {
+        ConfidenceLevel.HIGH: 3,
+        ConfidenceLevel.MEDIUM: 2,
+        ConfidenceLevel.LOW: 1,
+        ConfidenceLevel.CONTRADICTORY: 0,
+    }
+
     def _calc_overall_confidence(self, results: dict) -> ConfidenceLevel:
-        consensus = len(results["consensus"])
-        conflicts = len(results["conflicts"])
-        methods = results["method_count"]
+        """综合置信度计算——加权共识评分法
 
-        # 七术系统中，少量冲突是正常的（不同术法维度不同），
-        # 关键看共识与冲突的比例，而非有无冲突。
-        # 共识远多于冲突 → 整体可信；冲突反超共识 → 矛盾；其余 → 中/低。
+        不再简单计数共识条目，而是按置信度等级和支撑术法数加权：
+        - HIGH共识权重3，MEDIUM权重2，LOW权重1
+        - 多术法共同支撑的共识额外加分（每多一种+1权重）
+        - 冲突按条目数计（冲突本身已是需要关注的信号）
+        """
+        consensus_items = results.get("consensus", [])
+        conflicts = len(results.get("conflicts", []))
+        methods = results.get("method_count", 0)
 
-        # 冲突主导：冲突数 >= 共识数
-        if conflicts > 0 and conflicts >= consensus:
+        # 加权共识分：每条共识按其置信度等级赋权，多术法支撑额外加分
+        weighted_score = 0
+        for item in consensus_items:
+            base_w = self._CONFIDENCE_WEIGHT.get(item.confidence, 1)
+            method_bonus = max(0, len(item.supporting_methods) - 1)  # 多术法支撑加分
+            weighted_score += base_w + method_bonus
+
+        # 冲突权重：每条冲突扣2分（冲突是明确的分歧信号）
+        conflict_penalty = conflicts * 2
+        effective_score = weighted_score - conflict_penalty
+
+        # 冲突主导：有效分 <= 0 或冲突数 >= 加权共识分
+        if effective_score <= 0 or (conflicts > 0 and conflicts >= weighted_score):
             return ConfidenceLevel.CONTRADICTORY
 
-        # 高置信：多术法（>=4）+ 多共识（>=5）+ 冲突被共识压制
-        if methods >= 4 and consensus >= 5:
+        # 高置信：多术法（>=4）且有效分 >= 12（约等于4条HIGH共识或多条MEDIUM+HIGH组合）
+        if methods >= 4 and effective_score >= 12:
             return ConfidenceLevel.HIGH
 
-        # 中置信：一定数量的术法和共识
-        if methods >= 3 and consensus >= 3:
+        # 中置信：一定数量的术法且有效分 >= 6
+        if methods >= 3 and effective_score >= 6:
             return ConfidenceLevel.MEDIUM
 
-        # 有冲突但共识仍多于冲突
-        if conflicts > 0 and consensus > conflicts:
+        # 有冲突但有效分仍为正
+        if conflicts > 0 and effective_score > 0:
             return ConfidenceLevel.MEDIUM
 
         # 数据不足
