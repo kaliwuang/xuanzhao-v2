@@ -1643,10 +1643,10 @@ class CrossValidator:
         # === 1. 感情婚姻冲突：八字 vs 紫微 ===
         bazi_love_bad = False
         bazi_love_reason = ""
-        if any("子午" in c for c in chong):
+        if any(("子" in c and "午" in c) for c in chong):
             bazi_love_bad = True
             bazi_love_reason = "子午冲，感情多波折"
-        elif any("卯酉" in c for c in chong):
+        elif any(("卯" in c and "酉" in c) for c in chong):
             bazi_love_bad = True
             bazi_love_reason = "卯酉冲，感情易生变"
 
@@ -1667,7 +1667,7 @@ class CrossValidator:
         # 八字感情正面信号（有合）
         bazi_love_good = False
         bazi_love_good_reason = ""
-        if any("午未" in h or "寅亥" in h or "卯戌" in h for h in he):
+        if any(("午" in h and "未" in h) or ("寅" in h and "亥" in h) or ("卯" in h and "戌" in h) for h in he):
             bazi_love_good = True
             bazi_love_good_reason = f"八字有合（{'、'.join(he[:2])}），感情缘分佳"
 
