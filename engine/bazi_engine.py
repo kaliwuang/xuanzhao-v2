@@ -967,8 +967,7 @@ class BaziEngine(DivinationEngine):
                 shensha.append(f'金舆（{pos}支{z}）')
 
         # 16. 天德合（以月支查天干，天德的六合）
-        # tiande_map 已在第6步定义，此处复用
-        tiande = tiande_map.get(month_pillar.zhi, '')
+        # tiande 已在第6步（天德贵人）赋值，此处复用
         if tiande:
             tiande_he = ''
             if tiande in TIANGAN_SET:
