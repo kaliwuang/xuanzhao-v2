@@ -735,11 +735,26 @@ class CrossValidator:
     def _validate_health(self) -> List[ConsensusItem]:
         items = []
 
-        # 八字五行平衡
+        # 八字五行平衡（含藏干，更准确反映体内五行分布）
         counts = self.udm.get_wuxing_count()
         if counts:
+            # 补充藏干五行计数（藏干反映体内隐藏的五行能量）
+            GAN_WUXING_LOCAL = {
+                '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土',
+                '己':'土','庚':'金','辛':'金','壬':'水','癸':'水',
+            }
+            hidden_counts = dict(counts)  # 复制天干+本气计数
+            for pillar_key, gans_list in (self.udm.hidden_gans or {}).items():
+                for g in gans_list:
+                    wx = GAN_WUXING_LOCAL.get(g, '')
+                    if wx:
+                        hidden_counts[wx] = hidden_counts.get(wx, 0) + 1
+
             max_wx = max(counts, key=counts.get)
             min_wx = min(counts, key=counts.get)
+            # 用含藏干的数据判断缺失（更准确）
+            hidden_min_wx = min(hidden_counts, key=hidden_counts.get) if hidden_counts else min_wx
+
             if counts[max_wx] >= 4:
                 organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
                 items.append(ConsensusItem(
@@ -750,12 +765,21 @@ class CrossValidator:
                 ))
             if counts[min_wx] == 0:
                 organs = self.WUXING_ORGAN.get(min_wx, "相关脏腑")
-                items.append(ConsensusItem(
-                    aspect="健康体质",
-                    finding=f"{min_wx}缺失，注意{organs}功能偏弱",
-                    supporting_methods=["八字"],
-                    confidence=ConfidenceLevel.MEDIUM
-                ))
+                # 检查藏干中是否有补充（藏干有的五行不算完全缺失）
+                if hidden_counts.get(min_wx, 0) > 0:
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"{min_wx}在天干地支本气中缺失，但藏干中有{hidden_counts[min_wx]}个，属隐性偏弱",
+                        supporting_methods=["八字"],
+                        confidence=ConfidenceLevel.LOW
+                    ))
+                else:
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"{min_wx}缺失（天干、地支本气、藏干均无），注意{organs}功能偏弱",
+                        supporting_methods=["八字"],
+                        confidence=ConfidenceLevel.MEDIUM
+                    ))
 
         # 八字：日柱长生十二宫看先天元气
         # 日柱天干坐支的十二长生状态直接反映日主的先天体质根基
