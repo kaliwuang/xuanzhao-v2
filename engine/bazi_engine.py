@@ -495,7 +495,8 @@ class BaziEngine(DivinationEngine):
         zhi_set = set(all_zhis)
         for cycle in SAN_XING_CYCLES:
             if cycle <= zhi_set:
-                zhi_relations.append(f'{"·".join(cycle)}三刑')
+                cycle_sorted = sorted(cycle, key=lambda z: DI_ZHI.index(z))
+                zhi_relations.append(f'{"·".join(cycle_sorted)}三刑')
 
         return {
             "engine": self.name,
