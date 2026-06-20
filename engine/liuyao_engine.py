@@ -327,7 +327,6 @@ class LiuYaoEngine(DivinationEngine):
 
         # 7. 本卦信息（先算上下卦名，供卦宫五行回退使用）
         # ⚠️ 位序修正：mark 从初爻到上爻存储（bit0=初爻），需反转位序再查GUAS
-        ben_gua_name = data.get('name', GUA64.get(mark, ''))
         if len(mark) >= 6:
             xia_bits = mark[:3][::-1]  # 下卦3位反转
             shang_bits = mark[3:][::-1]  # 上卦3位反转
@@ -335,6 +334,8 @@ class LiuYaoEngine(DivinationEngine):
             xia_gua = GUAS[int(xia_bits, 2)]
         else:
             shang_gua = xia_gua = ''
+        # GUA64 以 (上卦, 下卦) 元组为键，不能用字符串 mark 查找
+        ben_gua_name = data.get('name', GUA64.get((shang_gua, xia_gua), ''))
 
         # 6. 卦宫五行（依赖shang_gua，故移到其后）
         if gong_name and gong_name in GUAS:
