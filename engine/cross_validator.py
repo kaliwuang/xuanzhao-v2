@@ -1864,6 +1864,69 @@ class CrossValidator:
                 suggestion="八字论身强身弱定先天禀赋，紫微论星曜格局看后天造化。格局高但身弱，需借力打力，贵人运重要。"
             ))
 
+        # === 3b. 事业冲突：八字 vs 六爻 ===
+        # 六爻官鬼爻代表权威/管理运，子孙爻克官鬼代表创业/自由职业倾向。
+        # 若八字指向管理路线而六爻子孙爻旺，或反之，则产生事业方向冲突。
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            ly_lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            guangui_yaos = [l for l in ly_lines if l.get("liu_qin") == "官鬼"]
+            zisun_yaos = [l for l in ly_lines if l.get("liu_qin") == "子孙"]
+
+            # 六爻子孙爻旺相 → 克官鬼，适合创业/自由职业/技术路线
+            liuyao_entrepreneur = False
+            liuyao_entrepreneur_reason = ""
+            for zs in zisun_yaos:
+                zs_wx = zs.get("wuxing", "")
+                zs_dizhi = zs.get("dizhi", "")
+                zs_wang = ri_ws.get(zs_wx, "").startswith(("旺", "相")) if zs_wx and ri_ws else False
+                if zs_wang:
+                    liuyao_entrepreneur = True
+                    liuyao_entrepreneur_reason = f"六爻子孙爻{zs_dizhi}（{zs_wx}）旺相克官，适合创业、自由职业或技术路线"
+                    break
+
+            # 六爻官鬼爻旺相 → 有权威/晋升机会
+            liuyao_authority = False
+            liuyao_authority_reason = ""
+            for gg in guangui_yaos:
+                gg_wx = gg.get("wuxing", "")
+                gg_dizhi = gg.get("dizhi", "")
+                gg_wang = ri_ws.get(gg_wx, "").startswith(("旺", "相")) if gg_wx and ri_ws else False
+                if gg_wang:
+                    liuyao_authority = True
+                    liuyao_authority_reason = f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺相，事业有权威，有晋升或领导机会"
+                    break
+
+            # 八字指向管理路线（官杀）vs 六爻子孙旺（创业）
+            if bazi_career_good and liuyao_entrepreneur:
+                conflicts.append(ConflictItem(
+                    aspect="事业",
+                    method_a="八字",
+                    finding_a=bazi_career_reason,
+                    method_b="六爻",
+                    finding_b=liuyao_entrepreneur_reason,
+                    suggestion="八字官杀透干适合管理路线，但六爻子孙旺克官暗示自由发展更有利。"
+                               "并非矛盾——管理岗位中可争取更多自主权，或在体制内开辟创新空间。"
+                               "也可在副业中尝试创业方向，两条腿走路。"
+                ))
+
+            # 八字指向创意/技术路线（食伤）vs 六爻官鬼旺（权威管理）
+            bazi_creative = any("食" in f or "伤" in f for f in features)
+            if bazi_creative and liuyao_authority:
+                conflicts.append(ConflictItem(
+                    aspect="事业",
+                    method_a="八字",
+                    finding_a="食伤透干，适合技术、创意、表达类工作",
+                    method_b="六爻",
+                    finding_b=liuyao_authority_reason,
+                    suggestion="八字食伤旺适合创意技术路线，但六爻官鬼旺暗示有管理晋升机会。"
+                               "两者可结合——以技术专长获得权威地位，走技术管理路线。"
+                               "不必二选一，专精技术后自然会被推上管理岗位。"
+                ))
+
         # === 4. 健康冲突：八字五行 vs 紫微疾厄宫 ===
         wuxing_count = self.udm.get_wuxing_count()
         if wuxing_count:
