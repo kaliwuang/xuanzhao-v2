@@ -373,7 +373,8 @@ class LiuYaoEngine(DivinationEngine):
                 yong_shen = '世爻与卦宫同五行，自身有力'
             else:
                 rel = self._calc_liuqin(gua_gong_wx, shi_wuxing)
-                yong_shen = f'世爻为{rel}，{shi_wuxing}生克卦宫{gua_gong_wx}'
+                relation_desc = self._get_wuxing_relation(shi_wuxing, gua_gong_wx)
+                yong_shen = f'世爻为{rel}，{relation_desc}'
 
         # 10. 详细用神分析
         yong_shen_detail = self._build_yong_shen_detail(
@@ -698,7 +699,8 @@ class LiuYaoEngine(DivinationEngine):
                 yong_shen = '世爻与卦宫同五行，自身有力'
             else:
                 rel = self._calc_liuqin(gua_gong_wx, shi_wuxing)
-                yong_shen = f'世爻为{rel}，{shi_wuxing}生克卦宫{gua_gong_wx}'
+                relation_desc = self._get_wuxing_relation(shi_wuxing, gua_gong_wx)
+                yong_shen = f'世爻为{rel}，{relation_desc}'
 
         # 详细用神分析
         yong_shen_detail = self._build_yong_shen_detail(
