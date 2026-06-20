@@ -1421,20 +1421,7 @@ class BaziEngine(DivinationEngine):
         if day_gz in yinyang_chacuo:
             shensha.append('阴阳差错')
 
-        # 43. 天赦日（以季节查日柱，比天赦更精确的版本）
-        tianshe_ri_map = {
-            '春': '戊寅', '夏': '甲午', '秋': '戊申', '冬': '甲子'
-        }
-        month_zhi_season = {
-            '寅':'春','卯':'春','辰':'春',
-            '巳':'夏','午':'夏','未':'夏',
-            '申':'秋','酉':'秋','戌':'秋',
-            '亥':'冬','子':'冬','丑':'冬',
-        }
-        season = month_zhi_season.get(month_pillar.zhi, '')
-        tianshe_ri = tianshe_ri_map.get(season, '')
-        if day_gz == tianshe_ri:
-            shensha.append('天赦日')
+        # NOTE: 天赦日检测已在上方第18条天赦中统一处理（两者判定条件完全一致：春戊寅/夏甲午/秋戊申/冬甲子）
 
         # 44. 天转煞（以日柱纳音五行查）
         tianzhuan_map = {
