@@ -1646,12 +1646,9 @@ class CrossValidator:
         # === 1. 感情婚姻冲突：八字 vs 紫微 ===
         bazi_love_bad = False
         bazi_love_reason = ""
-        if any(("子" in c and "午" in c) for c in chong):
+        if chong:
             bazi_love_bad = True
-            bazi_love_reason = "子午冲，感情多波折"
-        elif any(("卯" in c and "酉" in c) for c in chong):
-            bazi_love_bad = True
-            bazi_love_reason = "卯酉冲，感情易生变"
+            bazi_love_reason = f"八字有冲（{'、'.join(chong[:3])}），感情有变动和波折"
 
         ziwei_love_good = False
         ziwei_love_reason = ""
