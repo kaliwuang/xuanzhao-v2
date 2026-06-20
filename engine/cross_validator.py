@@ -187,7 +187,7 @@ class CrossValidator:
             if bazi_xiyong and ziwei_dayun:
                 current_year = datetime.now().year
                 birth_year = self._get_birth_year()
-                age = current_year - birth_year
+                age = current_year - birth_year + 1  # 虚岁
                 for dy in ziwei_dayun:
                     start = dy.get("start_age", 0)
                     end = dy.get("end_age", 0)
@@ -206,7 +206,7 @@ class CrossValidator:
         if bazi_dayun:
             current_year = datetime.now().year
             birth_year = self._get_birth_year()
-            age = current_year - birth_year
+            age = current_year - birth_year + 1  # 虚岁
 
             for dy in bazi_dayun:
                 start = dy.get("start_age", 0)
@@ -2612,7 +2612,7 @@ class CrossValidator:
         if bazi_dayun:
             current_year = datetime.now().year
             birth_year = self._get_birth_year()
-            age = current_year - birth_year
+            age = current_year - birth_year + 1  # 虚岁
 
             for dy in bazi_dayun:
                 start = dy.get("start_age", 0)
