@@ -2062,7 +2062,7 @@ class CrossValidator:
             xiong_men = [k for k, v in men.items() if v in ("死门", "惊门", "伤门")]
             if len(xiong_men) >= 3:
                 qimen_career_bad = True
-                qimen_career_reason = f"奇门凶门过多（{'、'.join(xiong_men)}），事业格局偏凶"
+                qimen_career_reason = f"奇门凶门过多（{'、'.join(self.QIMEN_GONG_NAMES.get(k, k) for k in xiong_men)}），事业格局偏凶"
 
         if bazi_career_good and qimen_career_bad:
             conflicts.append(ConflictItem(
@@ -2364,7 +2364,7 @@ class CrossValidator:
             xiong_for_wealth = [k for k, v in men.items() if v in ("死门", "惊门", "伤门")]
             if len(xiong_for_wealth) >= 2:
                 qimen_wealth_bad = True
-                qimen_wealth_reason = f"奇门凶门过多（{'、'.join(xiong_for_wealth)}），当下求财时运不佳"
+                qimen_wealth_reason = f"奇门凶门过多（{'、'.join(self.QIMEN_GONG_NAMES.get(k, k) for k in xiong_for_wealth)}），当下求财时运不佳"
 
         if bazi_wealth_good and qimen_wealth_bad:
             conflicts.append(ConflictItem(
