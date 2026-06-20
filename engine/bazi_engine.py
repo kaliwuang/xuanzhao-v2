@@ -703,7 +703,7 @@ class BaziEngine(DivinationEngine):
         for group, wx, name in SAN_HE_GROUPS:
             if group <= zhi_set_for_he:
                 # 按年月日时顺序列出位置
-                positions = [pos_names[zhis.index(z)] for z in zhis if z in group]
+                positions = [pos_names[i] for i, z in enumerate(zhis) if z in group]
                 features.append(f"{name}三合{wx}局 — {'、'.join(positions)}支三合齐全，{wx}气汇聚，能量强大")
             else:
                 # 检查半合（两支）
@@ -712,7 +712,7 @@ class BaziEngine(DivinationEngine):
                     if pair <= zhi_set_for_he and pair <= group:
                         z_sorted = sorted(pair, key=lambda z: '子丑寅卯辰巳午未申酉戌亥'.index(z))
                         # 按年月日时顺序列出位置
-                        positions = [pos_names[zhis.index(z)] for z in zhis if z in pair]
+                        positions = [pos_names[i] for i, z in enumerate(zhis) if z in pair]
                         matched_pairs.append((z_sorted, positions, p_wx))
                 for z_sorted, positions, p_wx in matched_pairs:
                     features.append(f"{''.join(z_sorted)}半合{p_wx}局 — {'、'.join(positions)}支有{p_wx}气聚合之势")
@@ -728,7 +728,7 @@ class BaziEngine(DivinationEngine):
         for group, wx, direction in SAN_HUI_GROUPS:
             if group <= zhi_set_for_he:
                 # 按年月日时顺序列出位置
-                positions = [pos_names[zhis.index(z)] for z in zhis if z in group]
+                positions = [pos_names[i] for i, z in enumerate(zhis) if z in group]
                 features.append(f"{direction}三会{wx}局 — {'、'.join(positions)}支方位齐聚，{wx}势磅礴，力量极强")
 
         # 3. 七杀透干
