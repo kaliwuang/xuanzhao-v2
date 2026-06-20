@@ -2159,7 +2159,7 @@ class CrossValidator:
         if any("七杀" in f for f in features):
             bazi_career_good = True
             bazi_career_reason = "七杀透干，事业驱动力强"
-        if any("官" in v for v in shishen.values()):
+        if any(v == "正官" for v in shishen.values()):
             bazi_career_good = True
             if bazi_career_reason:
                 bazi_career_reason += "；正官有力，有管理运"
