@@ -1190,14 +1190,12 @@ class BaziEngine(DivinationEngine):
                     if g == tiande:
                         pos = ['年','月','日','时'][g_pos_idx]
                         shensha.append(f'天德贵人（{pos}干{g}）')
-                        break
             else:
                 # 天德为地支（如巳、申），查四柱地支
                 for pos_idx, z in enumerate(all_zhis):
                     if z == tiande:
                         pos = ['年','月','日','时'][pos_idx]
                         shensha.append(f'天德贵人（{pos}支{z}）')
-                        break
 
         # 7. 文昌贵人（以日干查）
         wenchang_zhi = SHENSHA_WENCHANG_MAP.get(day_gan, '')
@@ -1241,7 +1239,6 @@ class BaziEngine(DivinationEngine):
                 if g == yuede:
                     pos = ['年','月','日','时'][g_pos_idx]
                     shensha.append(f'月德（{pos}干{g}）')
-                    break
 
         # 13. 太极贵人（以日干和年干查四支，复用模块级 SHENSHA_TAIJI_MAP）
         taiji_targets = set()
@@ -1281,13 +1278,11 @@ class BaziEngine(DivinationEngine):
                         if g == tiande_he:
                             pos = ['年','月','日','时'][g_pos_idx]
                             shensha.append(f'天德合（{pos}干{g}）')
-                            break
                 else:
                     for pos_idx, z in enumerate(all_zhis):
                         if z == tiande_he:
                             pos = ['年','月','日','时'][pos_idx]
                             shensha.append(f'天德合（{pos}支{z}）')
-                            break
 
         # 17. 月德合（以月支查天干，月德的六合）
         # yuede 已在第12步（月德贵人）赋值，此处复用
@@ -1297,7 +1292,6 @@ class BaziEngine(DivinationEngine):
                 if g == yuede_he:
                     pos = ['年','月','日','时'][g_pos_idx]
                     shensha.append(f'月德合（{pos}干{g}）')
-                    break
 
         # 18. 天赦（以月支查日柱）— 使用模块级 SHENSHA_TIANSHE_MAP
         tianshe = SHENSHA_TIANSHE_MAP.get(month_pillar.zhi, '')
