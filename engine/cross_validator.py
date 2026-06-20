@@ -575,17 +575,19 @@ class CrossValidator:
         if self.udm.bazi_day and self.udm.bazi_time:
             chong = self.udm.get_chong()
             he = self.udm.get_he()
-            if any("午" in c and "子" in c for c in chong):
+            # 所有冲对感情都有影响（不限子午冲）
+            if chong:
                 items.append(ConsensusItem(
                     aspect="感情婚姻",
-                    finding="子午冲，感情多波折",
+                    finding=f"八字有冲（{'、'.join(chong[:3])}），感情有变动和波折",
                     supporting_methods=["八字"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
-            if any("午" in h and "未" in h for h in he):
+            # 所有合对感情都有正面影响（不限午未合）
+            if he:
                 items.append(ConsensusItem(
                     aspect="感情婚姻",
-                    finding="午未合，感情有缘分",
+                    finding=f"八字有合（{'、'.join(he[:3])}），感情有缘分和吸引力",
                     supporting_methods=["八字"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
