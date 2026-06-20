@@ -325,15 +325,7 @@ class LiuYaoEngine(DivinationEngine):
                         'position': i + 1,
                     })
 
-        # 6. 卦宫五行
-        if gong_name and gong_name in GUAS:
-            gong_idx = GUAS.index(gong_name)
-            gua_gong_wuxing = XING5[GUA5[gong_idx]]
-        else:
-            # 卦宫名不在GUAS中时，用上下卦的五行来推断（非硬编码回退到乾金）
-            gua_gong_wuxing = self.GUA_WUXING.get(shang_gua, '金')
-
-        # 7. 本卦信息
+        # 7. 本卦信息（先算上下卦名，供卦宫五行回退使用）
         # ⚠️ 位序修正：mark 从初爻到上爻存储（bit0=初爻），需反转位序再查GUAS
         ben_gua_name = data.get('name', GUA64.get(mark, ''))
         if len(mark) >= 6:
@@ -343,6 +335,14 @@ class LiuYaoEngine(DivinationEngine):
             xia_gua = GUAS[int(xia_bits, 2)]
         else:
             shang_gua = xia_gua = ''
+
+        # 6. 卦宫五行（依赖shang_gua，故移到其后）
+        if gong_name and gong_name in GUAS:
+            gong_idx = GUAS.index(gong_name)
+            gua_gong_wuxing = XING5[GUA5[gong_idx]]
+        else:
+            # 卦宫名不在GUAS中时，用上下卦的五行来推断（非硬编码回退到乾金）
+            gua_gong_wuxing = self.GUA_WUXING.get(shang_gua, '金')
         ben_gua = {
             'name': ben_gua_name,
             'mark': mark,
