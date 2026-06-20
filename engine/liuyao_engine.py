@@ -380,7 +380,6 @@ class LiuYaoEngine(DivinationEngine):
         )
 
         # 11. 格局识别
-        ben_gua_name = ben_gua.get('name', '')
         bian_gua_name = bian_gua.get('name', '')
         ge_ju = self._identify_ge_ju(
             ben_gua_name, bian_gua_name, lines, bian_lines, shi_ying[0], shi_ying[1]
