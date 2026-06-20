@@ -270,7 +270,7 @@ class QiMenEngine(DivinationEngine):
             # 晚子时(23:xx)日柱用次日
             calc_dt = solar_dt + timedelta(days=1) if solar_dt.hour == 23 else solar_dt
             ga = (calc_dt.toordinal() + 4) % 10
-            zi = (calc_dt.toordinal() + 1) % 12
+            zi = (calc_dt.toordinal() + 2) % 12
             return f'{self.TIAN_GAN[ga]}{self.DI_ZHI[zi]}'
 
     def _build_di_pan(self, ju: int, yin_yang: str) -> dict:
