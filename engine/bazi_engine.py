@@ -621,6 +621,7 @@ class BaziEngine(DivinationEngine):
 
         # 1. 冲
         zhis = [p.zhi for p in [year, month, day, time]]
+        all_gans = [p.gan for p in [year, month, day, time]]
         pos_names = ["年","月","日","时"]
         for i, z1 in enumerate(zhis):
             for j, z2 in enumerate(zhis[i+1:], i+1):
@@ -633,6 +634,34 @@ class BaziEngine(DivinationEngine):
                 # 六合（复用模块级 ZHI_HE_MOD 常量）
                 if ZHI_HE_MOD.get(z1) == z2:
                     features.append(f"{z1}{z2}合 — {pos_names[i]}支与{pos_names[j]}支相合")
+
+        # 2.5 刑（地支三刑：子卯刑/自刑 + 寅巳申/丑戌未三刑）
+        # 子卯刑 & 自刑（通过 ZHI_XING_MOD 两两检测）
+        xing_found = set()
+        for i, z1 in enumerate(zhis):
+            for j, z2 in enumerate(zhis[i+1:], i+1):
+                if ZHI_XING_MOD.get(z1) == z2:
+                    pair_key = frozenset({pos_names[i], pos_names[j]})
+                    if pair_key not in xing_found:
+                        xing_found.add(pair_key)
+                        if z1 == z2:
+                            features.append(f"{z1}自刑 — {pos_names[i]}支与{pos_names[j]}支同支自刑，性格自我矛盾")
+                        else:
+                            features.append(f"{z1}{z2}刑 — {pos_names[i]}支与{pos_names[j]}支相刑，人际或健康有隐患")
+        # 三刑循环（寅巳申=无恩之刑，丑戌未=恃势之刑）
+        zhi_set = set(zhis)
+        for cycle in SAN_XING_CYCLES:
+            if cycle.issubset(zhi_set):
+                cycle_name = "无恩之刑" if cycle == frozenset({'寅', '巳', '申'}) else "恃势之刑"
+                cycle_str = "".join(sorted(cycle, key=lambda z: '子丑寅卯辰巳午未申酉戌亥'.index(z)))
+                positions = [pos_names[zhis.index(z)] for z in cycle if z in zhis]
+                features.append(f"{cycle_str}{cycle_name} — {'、'.join(positions)}支三刑齐全，人生多历练")
+
+        # 2.6 天干合
+        for i, g1 in enumerate(all_gans):
+            for j, g2 in enumerate(all_gans[i+1:], i+1):
+                if GAN_HE.get(g1) == g2:
+                    features.append(f"{g1}{g2}合 — {pos_names[i]}干与{pos_names[j]}干相合")
 
         # 3. 七杀透干
         ss = shishen_gan
