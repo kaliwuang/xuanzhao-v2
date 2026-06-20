@@ -746,7 +746,9 @@ class CrossValidator:
             }
             hidden_counts = dict(counts)  # 复制天干+本气计数
             for pillar_key, gans_list in (self.udm.hidden_gans or {}).items():
-                for g in gans_list:
+                for cidx, g in enumerate(gans_list):
+                    if cidx == 0:
+                        continue  # 本气已在get_wuxing_count()中计算过，跳过避免重复
                     wx = GAN_WUXING_LOCAL.get(g, '')
                     if wx:
                         hidden_counts[wx] = hidden_counts.get(wx, 0) + 1
