@@ -953,7 +953,7 @@ class LiuYaoEngine(DivinationEngine):
             'yue_jian': yue_jian,
             'yue_jian_wuxing': yue_wx,
             'day_gan': day_gan,
-            'day_shishen': self._calc_liuqin(gua_gong_wuxing, self.GAN_WUXING.get(day_gan, '')),
+            'day_liuqin': self._calc_liuqin(gua_gong_wuxing, self.GAN_WUXING.get(day_gan, '')),
             'ri_wangshuai': ri_wangshuai,
             'yue_wangshuai': yue_wangshuai,
         }
