@@ -964,6 +964,110 @@ class CrossValidator:
                     confidence=ConfidenceLevel.HIGH,
                 ))
 
+        # 六爻：健康分析——官鬼爻=病邪、子孙爻=医药、父母爻=劳累体虚
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            guangui_yaos = [l for l in lines if l.get("liu_qin") == "官鬼"]
+            zisun_yaos = [l for l in lines if l.get("liu_qin") == "子孙"]
+            fumu_yaos = [l for l in lines if l.get("liu_qin") == "父母"]
+            xiongdi_yaos = [l for l in lines if l.get("liu_qin") == "兄弟"]
+
+            # 官鬼爻旺动——病邪旺相且发动，有明确健康隐患
+            gg_health_handled = False
+            for gg in guangui_yaos:
+                gg_wx = gg.get("wuxing", "")
+                gg_dizhi = gg.get("dizhi", "")
+                gg_is_dong = gg.get("is_dong", False)
+                gg_wang = ri_ws.get(gg_wx, "").startswith(("旺", "相")) if gg_wx and ri_ws else False
+
+                if gg_wang and gg_is_dong:
+                    organs = self.WUXING_ORGAN.get(gg_wx, "相关脏腑")
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺动，病邪有力且发动，注意{organs}方面的健康隐患",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                    gg_health_handled = True
+                    break
+                elif gg_wang:
+                    organs = self.WUXING_ORGAN.get(gg_wx, "相关脏腑")
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺相，病邪有力，{organs}需留意",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    gg_health_handled = True
+                    break
+
+            # 子孙爻旺相——医药爻得力，有治疗康复能力
+            zs_health_handled = False
+            for zs in zisun_yaos:
+                zs_wx = zs.get("wuxing", "")
+                zs_dizhi = zs.get("dizhi", "")
+                zs_wang = ri_ws.get(zs_wx, "").startswith(("旺", "相")) if zs_wx and ri_ws else False
+
+                if zs_wang:
+                    # 子孙旺克官鬼——病能治好
+                    can_cure_gg = any(
+                        ri_ws.get(gg.get("wuxing", ""), "").startswith(("衰", "死", "绝", "墓"))
+                        if gg.get("wuxing") and ri_ws else False
+                        for gg in guangui_yaos
+                    )
+                    if guangui_yaos and can_cure_gg:
+                        items.append(ConsensusItem(
+                            aspect="健康体质",
+                            finding=f"六爻子孙爻{zs_dizhi}（{zs_wx}）旺相克制官鬼，有治疗康复之机，病可医",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.HIGH,
+                        ))
+                    else:
+                        items.append(ConsensusItem(
+                            aspect="健康体质",
+                            finding=f"六爻子孙爻{zs_dizhi}（{zs_wx}）旺相，福德护身，体质有韧性，恢复力强",
+                            supporting_methods=["六爻"],
+                            confidence=ConfidenceLevel.MEDIUM,
+                        ))
+                    zs_health_handled = True
+                    break
+
+            # 父母爻旺动——过劳伤身信号
+            for fm in fumu_yaos:
+                fm_wx = fm.get("wuxing", "")
+                fm_dizhi = fm.get("dizhi", "")
+                fm_is_dong = fm.get("is_dong", False)
+                fm_wang = ri_ws.get(fm_wx, "").startswith(("旺", "相")) if fm_wx and ri_ws else False
+
+                if fm_wang and fm_is_dong:
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"六爻父母爻{fm_dizhi}（{fm_wx}）旺动，过劳伤身信号，需注意休息和营养补充",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+
+            # 兄弟爻旺动——精力消耗大
+            for xd in xiongdi_yaos:
+                xd_wx = xd.get("wuxing", "")
+                xd_dizhi = xd.get("dizhi", "")
+                xd_is_dong = xd.get("is_dong", False)
+                xd_wang = ri_ws.get(xd_wx, "").startswith(("旺", "相")) if xd_wx and ri_ws else False
+
+                if xd_wang and xd_is_dong:
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"六爻兄弟爻{xd_dizhi}（{xd_wx}）旺动，精力消耗大，易感疲劳，需注意体力分配",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.LOW,
+                    ))
+                    break
+
         return items
 
     def _validate_wealth(self) -> List[ConsensusItem]:
