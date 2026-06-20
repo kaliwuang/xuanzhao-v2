@@ -810,10 +810,12 @@ class BaziEngine(DivinationEngine):
                     shensha.append(f'月德（{pos}干{g}）')
                     break
 
-        # 13. 太极贵人（以日干查四支，复用模块级 SHENSHA_TAIJI_MAP）
-        taiji_zhis = SHENSHA_TAIJI_MAP.get(day_gan, [])
+        # 13. 太极贵人（以日干和年干查四支，复用模块级 SHENSHA_TAIJI_MAP）
+        taiji_targets = set()
+        for gan in [day_gan, year_gan]:
+            taiji_targets.update(SHENSHA_TAIJI_MAP.get(gan, []))
         for pos_idx, z in enumerate(all_zhis):
-            if z in taiji_zhis:
+            if z in taiji_targets:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'太极贵人（{pos}支{z}）')
 
