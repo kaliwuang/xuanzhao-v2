@@ -70,6 +70,12 @@ class QiMenEngine(DivinationEngine):
     # 九宫→九星直接映射（标准洛书配九星：1蓬2芮3冲4辅5禽6心7柱8任9英）
     GONG_TO_STAR = {1: '天蓬', 2: '天芮', 3: '天冲', 4: '天辅', 5: '天禽', 6: '天心', 7: '天柱', 8: '天任', 9: '天英'}
 
+    # 天干五行映射（悖格判断用）
+    GAN_WUXING = {'甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
+                   '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水'}
+    # 五行相克（我克）
+    WUXING_KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
+
     # ---- abstract property implementations ----
 
     @property
@@ -560,9 +566,6 @@ class QiMenEngine(DivinationEngine):
 
         # 14. 悖格：天盘天干五行克制地盘天干五行（排除已检测的特殊格局）
         # 天克地为"悖"，行事多阻，进退维谷
-        WUXING = {'甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
-                   '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水'}
-        KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
         ALREADY_CHECKED = {('庚', '丙'), ('丙', '庚'), ('庚', '癸'), ('戊', '丙'),
                            ('丙', '戊'), ('辛', '乙'), ('丙', '辛'), ('乙', '庚'),
                            # 天干五合（合不为悖）：甲己、乙庚、丙辛、丁壬、戊癸
@@ -573,9 +576,9 @@ class QiMenEngine(DivinationEngine):
             tp = p.get('tian_pan', '')
             dp = p.get('di_pan', '')
             if tp and dp and (tp, dp) not in ALREADY_CHECKED:
-                tp_wx = WUXING.get(tp, '')
-                dp_wx = WUXING.get(dp, '')
-                if tp_wx and dp_wx and KE.get(tp_wx) == dp_wx:
+                tp_wx = self.GAN_WUXING.get(tp, '')
+                dp_wx = self.GAN_WUXING.get(dp, '')
+                if tp_wx and dp_wx and self.WUXING_KE.get(tp_wx) == dp_wx:
                     xiong_ge.append({'name': '悖格', 'gong': p['gong'],
                                      'desc': f'{tp}({tp_wx})克{dp}({dp_wx})，天克地，行事多阻'})
 
