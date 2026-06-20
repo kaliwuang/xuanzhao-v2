@@ -636,11 +636,11 @@ class BaziEngine(DivinationEngine):
                     features.append(f"{z1}{z2}合 — {pos_names[i]}支与{pos_names[j]}支相合")
 
         # 2.5 刑（地支三刑：子卯刑/自刑 + 寅巳申/丑戌未三刑）
-        # 子卯刑 & 自刑（通过 ZHI_XING_MOD 两两检测）
+        # 子卯刑 & 自刑（通过 ZHI_XING_MOD 两两检测，双向查表与zhi_relations保持一致）
         xing_found = set()
         for i, z1 in enumerate(zhis):
             for j, z2 in enumerate(zhis[i+1:], i+1):
-                if ZHI_XING_MOD.get(z1) == z2:
+                if ZHI_XING_MOD.get(z1) == z2 or ZHI_XING_MOD.get(z2) == z1:
                     pair_key = frozenset({pos_names[i], pos_names[j]})
                     if pair_key not in xing_found:
                         xing_found.add(pair_key)
