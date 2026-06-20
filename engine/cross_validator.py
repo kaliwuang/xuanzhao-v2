@@ -136,13 +136,13 @@ class CrossValidator:
         # 12. 六爻交叉验证（新增）
         results["consensus"].extend(self._validate_liuyao())
 
-        # 12.5 奇门交叉验证（新增）
+        # 13. 奇门交叉验证（新增）
         results["consensus"].extend(self._validate_qimen())
 
-        # 13. 冲突检测
+        # 14. 冲突检测
         results["conflicts"].extend(self._detect_conflicts())
 
-        # 14. 综合置信度
+        # 15. 综合置信度
         results["overall_confidence"] = self._calc_overall_confidence(results)
 
         return results
