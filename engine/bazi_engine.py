@@ -705,7 +705,7 @@ class BaziEngine(DivinationEngine):
             changsheng[pillar_name] = _calc_changsheng(day_master, pillar.zhi)
 
         # 每柱神煞（从shensha列表按关键词分组到对应柱）
-        shensha_per_pillar = {'year': [], 'month': [], 'day': [], 'time': []}
+        shensha_per_pillar = {'year': [], 'month': [], 'day': [], 'time': [], 'general': []}
         PILLAR_KEYWORDS = {
             'year': ['年支', '年柱', '年干'],
             'month': ['月支', '月柱', '月干'],
@@ -730,7 +730,12 @@ class BaziEngine(DivinationEngine):
                     if pillar.zhi in s:
                         clean = s.split('（')[0] if '（' in s else s
                         shensha_per_pillar[pillar_name].append(clean)
+                        matched = True
                         break
+            if not matched:
+                # 天罗/地网/十恶大败/阴阳差错/三奇/天转煞等无柱标注神煞归入general
+                clean = s.split('（')[0] if '（' in s else s
+                shensha_per_pillar['general'].append(clean)
 
         # 天干关系
         gan_relations = []
