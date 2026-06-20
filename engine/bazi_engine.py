@@ -383,6 +383,25 @@ class BaziEngine(DivinationEngine):
                                     # 月德
                                     if ln_gan == SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''):
                                         ln_shensha.append('月德')
+                                    # 天德贵人（以月支查，流年干支匹配则入）
+                                    ln_tiande = dy_tiande_map.get(month_pillar.zhi, '')
+                                    if ln_tiande:
+                                        if ln_tiande in TIANGAN_SET_DY and ln_gan == ln_tiande:
+                                            ln_shensha.append('天德贵人')
+                                        elif ln_tiande not in TIANGAN_SET_DY and ln_zhi == ln_tiande:
+                                            ln_shensha.append('天德贵人')
+                                    # 天德合（天德的六合，流年匹配则入）
+                                    if ln_tiande:
+                                        ln_tiande_he = GAN_LIUHE.get(ln_tiande, '') if ln_tiande in TIANGAN_SET_DY else ZHI_HE_MOD.get(ln_tiande, '')
+                                        if ln_tiande_he:
+                                            if ln_tiande_he in TIANGAN_SET_DY and ln_gan == ln_tiande_he:
+                                                ln_shensha.append('天德合')
+                                            elif ln_tiande_he not in TIANGAN_SET_DY and ln_zhi == ln_tiande_he:
+                                                ln_shensha.append('天德合')
+                                    # 月德合（月德的六合，流年天干匹配则入）
+                                    ln_yuede_he = GAN_LIUHE.get(SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''), '')
+                                    if ln_yuede_he and ln_gan == ln_yuede_he:
+                                        ln_shensha.append('月德合')
                                     # 将星（以年支和日支查，与原局一致）
                                     jiangxing_targets_ln = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_pillar.zhi, ''), SHENSHA_JIANGXING_MAP.get(day_pillar.zhi, '')]))
                                     if ln_zhi in jiangxing_targets_ln:
