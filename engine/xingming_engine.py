@@ -675,38 +675,48 @@ class XingMingEngine:
     def _evaluate_sancai_wuxing(self, tian: str, ren: str, di: str) -> Tuple[str, str]:
         """
         Evaluate 三才 configuration when not in the lookup table.
-        Uses wuxing 生克 relationships.
+        Uses wuxing 生克 relationships (双向检测：天→人、人→地、天→地 及其反向).
         """
-        # Check for mutual generation (相生)
         sheng_count = 0
         ke_count = 0
 
-        # 天格 -> 人格
-        if WUXING_SHENG.get(tian) == ren:
+        def _check_pair(a: str, b: str) -> str:
+            """检查a与b的五行关系，返回 'sheng'/'ke'/'same'/'none'"""
+            if a == b:
+                return 'same'
+            if WUXING_SHENG.get(a) == b:
+                return 'sheng'  # a生b
+            if WUXING_SHENG.get(b) == a:
+                return 'sheng'  # b生a（反向相生）
+            if WUXING_KE.get(a) == b:
+                return 'ke'     # a克b
+            if WUXING_KE.get(b) == a:
+                return 'ke'     # b克a（反向相克）
+            return 'none'
+
+        # 天格 ↔ 人格
+        rel_tr = _check_pair(tian, ren)
+        if rel_tr == 'sheng':
             sheng_count += 1
-        elif WUXING_KE.get(tian) == ren:
+        elif rel_tr == 'ke':
             ke_count += 1
 
-        # 人格 -> 地格
-        if WUXING_SHENG.get(ren) == di:
+        # 人格 ↔ 地格
+        rel_rd = _check_pair(ren, di)
+        if rel_rd == 'sheng':
             sheng_count += 1
-        elif WUXING_KE.get(ren) == di:
+        elif rel_rd == 'ke':
             ke_count += 1
 
-        # 天格 -> 地格
-        if WUXING_SHENG.get(tian) == di:
+        # 天格 ↔ 地格
+        rel_td = _check_pair(tian, di)
+        if rel_td == 'sheng':
             sheng_count += 1
-        elif WUXING_KE.get(tian) == di:
+        elif rel_td == 'ke':
             ke_count += 1
 
         # Same element count
-        same_count = 0
-        if tian == ren:
-            same_count += 1
-        if ren == di:
-            same_count += 1
-        if tian == di:
-            same_count += 1
+        same_count = sum(1 for r in [rel_tr, rel_rd, rel_td] if r == 'same')
 
         if ke_count >= 2:
             return ("凶", f"三才配置为{tian}{ren}{di}，克制较多，基础不稳，须注意化解。")
@@ -805,7 +815,7 @@ class XingMingEngine:
         score = 0
 
         # Grid scores
-        jixiong_scores = {"大吉": 100, "吉": 85, "半吉": 65, "平": 50, "半凶": 35, "凶": 15}
+        jixiong_scores = {"大吉": 100, "吉": 85, "半吉": 65, "平": 50, "半凶": 35, "凶": 15, "大凶": 5}
 
         # 人格 (30%)
         ren_jx = wuge["人格"].get("吉凶", "平")
