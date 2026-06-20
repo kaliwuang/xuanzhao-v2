@@ -1037,8 +1037,9 @@ class BaziEngine(DivinationEngine):
         # 食神制杀：食神与七杀同透——化压力为动力的天赋
         if has_shishen and has_qisha:
             features.append("食神制杀 — 化压力为动力，逆境中见能力")
-        # 杀印相生：七杀与印星同透——权威有根基，有贵人扶
-        if has_qisha and has_yin:
+        # 杀印相生：七杀与正印同透——权威有根基，有贵人扶
+        # 注：偏印+七杀为"枭神驾杀"，性质不同，不归入杀印相生
+        if has_qisha and has_zhengyin:
             features.append("杀印相生 — 权威有根基，贵人扶上位")
         # 财官双美：财星与正官同透——名利兼收的信号
         if has_cai and has_zhenguan:
