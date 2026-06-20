@@ -1302,7 +1302,7 @@ class BaziEngine(DivinationEngine):
         五行得分计算。
 
         天干本气: 1分
-        地支本气: 1分
+        地支本气: 1分（月令本气加权1.5倍，体现月令为命局提纲）
         地支中气: 0.5分
         地支余气: 0.3分
 
@@ -1313,9 +1313,12 @@ class BaziEngine(DivinationEngine):
         # 复用模块级常量 GAN_WUXING_STR（避免每次调用重复构建字典）
         gan_wuxing_map = GAN_WUXING_STR
 
-        for pillar in pillars:
+        for idx, pillar in enumerate(pillars):
             if not pillar:
                 continue
+
+            # 月令加权：月柱(索引1)本气得分×1.5，体现"月令为命局提纲"
+            is_month = (idx == 1)
 
             # 天干本气: 1分
             gan_wx = gan_wuxing_map.get(pillar.gan)
@@ -1324,17 +1327,17 @@ class BaziEngine(DivinationEngine):
 
             # 地支藏干
             canggan_list = ZHI_CANGGAN.get(pillar.zhi, [])
-            for idx, canggan in enumerate(canggan_list):
+            for cidx, canggan in enumerate(canggan_list):
                 canggan_wx = gan_wuxing_map.get(canggan)
                 if not canggan_wx:
                     continue
-                if idx == 0:
-                    # 本气: 1分
-                    score[canggan_wx] += 1.0
-                elif idx == 1:
+                if cidx == 0:
+                    # 本气: 1分（月令1.5分）
+                    score[canggan_wx] += 1.5 if is_month else 1.0
+                elif cidx == 1:
                     # 中气: 0.5分
                     score[canggan_wx] += 0.5
-                elif idx == 2:
+                elif cidx == 2:
                     # 余气: 0.3分
                     score[canggan_wx] += 0.3
 
