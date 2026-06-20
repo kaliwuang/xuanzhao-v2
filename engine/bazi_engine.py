@@ -1057,9 +1057,10 @@ class BaziEngine(DivinationEngine):
         # 八字中最重要的格局信号之一，需要合杀留官或合官留杀方能化解
         if has_zhenguan and has_qisha:
             features.append("官杀混杂 — 压力来源复杂，事业需防多头管理，宜化繁为简")
-        # 官印相生：正官与印星同透——体制内发展的经典格局
-        # 区别于杀印相生（七杀+印），官印相生偏正统路径
-        if has_zhenguan and has_yin:
+        # 官印相生：正官与正印同透——体制内发展的经典格局
+        # 区别于杀印相生（七杀+正印），官印相生偏正统路径
+        # 注：正官+偏印不构成官印相生，偏印为枭神，性质不同
+        if has_zhenguan and has_zhengyin:
             features.append("官印相生 — 体制内发展有利，稳中有升，有贵人提携")
 
         # 5. 印星
