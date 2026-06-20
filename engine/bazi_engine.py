@@ -723,14 +723,12 @@ class BaziEngine(DivinationEngine):
             s = sorted(set(indices))
             if len(s) < 4:
                 return False
-            # 普通连续：0,1,2,3
-            if s[3] - s[0] == 3 and all(s[i+1] - s[i] == 1 for i in range(3)):
-                return True
-            # 环形连续：如 辛壬癸甲=7,8,9,0 → max=9, min=0 → cycle_len-9+0+1=2 ≠ 4
-            # 但 子丑寅卯=0,1,2,3 → sorted差=3 → 直接命中上面
-            # 戌亥子丑=10,11,0,1 → sorted=[0,1,10,11] → 12-11+0+1=2 ≠ 4
-            # 正确写法：环形跨度 = cycle_len - (s[-1] - s[0])，应为1
-            return (cycle_len - (s[3] - s[0])) == 1
+            # 计算4个环形间距（含绕回间距）
+            gaps = [s[i+1] - s[i] for i in range(3)]
+            gaps.append(cycle_len - s[3] + s[0])  # 绕回间距
+            gaps_sorted = sorted(gaps)
+            # 4个连续元素在环形中：3个间距为1，1个间距为cycle_len-3
+            return gaps_sorted == [1, 1, 1, cycle_len - 3]
 
         if _is_consecutive_4(gan_indices, 10):
             features.append("天干连珠 — 四天干连续排列，五行流转顺畅")
