@@ -644,6 +644,89 @@ class CrossValidator:
                         confidence=ConfidenceLevel.LOW
                     ))
 
+        # 六爻：看妻财爻（男命看妻）、官鬼爻（女命看夫）、兄弟爻（感情竞争）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            # 妻财爻——男命看妻/女友，也反映感情中的物质基础
+            qicai_yaos = [l for l in lines if l.get("liu_qin") == "妻财"]
+            for qc in qicai_yaos:
+                qc_wx = qc.get("wuxing", "")
+                qc_dizhi = qc.get("dizhi", "")
+                qc_is_shi = qc.get("is_shi", False)
+                qc_is_dong = qc.get("is_dong", False)
+                qc_wang = ri_ws.get(qc_wx, "") in ("旺", "相") if qc_wx and ri_ws else False
+
+                if qc_wang:
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"六爻妻财爻{qc_dizhi}（{qc_wx}）旺相，感情伴侣缘分强，感情中物质基础稳固",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                    break
+                elif qc_is_shi:
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"六爻妻财爻{qc_dizhi}持世，重视感情，以伴侣为重心",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+
+            # 官鬼爻——女命看夫/男友，也反映感情中的约束和责任
+            guangui_yaos = [l for l in lines if l.get("liu_qin") == "官鬼"]
+            for gg in guangui_yaos:
+                gg_wx = gg.get("wuxing", "")
+                gg_dizhi = gg.get("dizhi", "")
+                gg_is_shi = gg.get("is_shi", False)
+                gg_wang = ri_ws.get(gg_wx, "") in ("旺", "相") if gg_wx and ri_ws else False
+
+                if gg_wang and not any("妻财" in it.finding for it in items if "六爻" in it.supporting_methods):
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺相，感情中有权威感，伴侣关系有约束力",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+                elif gg_is_shi and not any("妻财" in it.finding for it in items if "六爻" in it.supporting_methods):
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"六爻官鬼爻{gg_dizhi}持世，感情中主导性强，重视关系中的责任",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+
+            # 兄弟爻旺相——感情中有竞争或第三者风险
+            xiongdi_yaos = [l for l in lines if l.get("liu_qin") == "兄弟"]
+            for xd in xiongdi_yaos:
+                xd_wx = xd.get("wuxing", "")
+                xd_dizhi = xd.get("dizhi", "")
+                xd_wang = ri_ws.get(xd_wx, "") in ("旺", "相") if xd_wx and ri_ws else False
+                xd_is_dong = xd.get("is_dong", False)
+
+                if xd_wang and xd_is_dong:
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"六爻兄弟爻{xd_dizhi}（{xd_wx}）旺动，感情中需防第三者介入或竞争",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+                elif xd_wang:
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"六爻兄弟爻{xd_dizhi}（{xd_wx}）旺相，感情中可能有竞争或破耗",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.LOW,
+                    ))
+                    break
+
         return items
 
     def _validate_health(self) -> List[ConsensusItem]:
