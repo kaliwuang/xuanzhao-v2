@@ -525,7 +525,7 @@ class XingMingEngine:
         if 0x4E00 <= code <= 0x9FFF:
             # 基本区字符：使用分布表估算（基于 GB2312 统计）
             # 按Unicode区块的笔画中位数估算
-            block_idx = (code - 0x4E00) // 256  # 0-319
+            block_idx = (code - 0x4E00) // 256  # 0-82
             # 各区块笔画中位数经验值（从简到繁）
             block_medians = [5, 6, 7, 7, 8, 8, 9, 9, 9, 10,
                             10, 10, 11, 11, 11, 11, 12, 12, 12, 13,
@@ -863,7 +863,15 @@ class XingMingEngine:
         lines.append("━━━ 五格剖象 ━━━")
         for name in ["天格", "人格", "地格", "外格", "总格"]:
             g = wuge[name]
-            emoji = "✅" if g.get("吉凶") in ("吉", "大吉") else ("⚠️" if "半" in g.get("吉凶", "") else "❌")
+            jx = g.get("吉凶", "平")
+            if jx in ("吉", "大吉"):
+                emoji = "✅"
+            elif jx == "平":
+                emoji = "➖"
+            elif "半" in jx:
+                emoji = "⚠️"
+            else:
+                emoji = "❌"
             lines.append(f"  {name}：{g['画数']}画（{g['数理']}数·{g.get('数理名', '')}）{emoji} {g.get('吉凶', '')}")
             if g.get("数理含义"):
                 lines.append(f"         {g['数理含义'][:60]}")
