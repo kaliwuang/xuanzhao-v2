@@ -2312,6 +2312,81 @@ class CrossValidator:
                                "不必二选一，专精技术后自然会被推上管理岗位。"
                 ))
 
+        # === 3c. 事业冲突：奇门 vs 紫微（时势 vs 先天格局）===
+        # 奇门看当下时运，紫微看先天格局。若两者事业指向不一致，
+        # 说明先天格局高但时运不佳，或反之——提供更细致的事业策略建议。
+        if self.udm.qimen_chart and self.udm.ziwei_chart:
+            # 奇门事业信号
+            qm = self.udm.qimen_chart
+            qm_men = qm.get("ba_men", {})
+            qm_ji_men = [k for k, v in qm_men.items() if v in ("开门", "生门", "休门")]
+            qm_xiong_men = [k for k, v in qm_men.items() if v in ("死门", "惊门", "伤门")]
+
+            # 奇门值符落宫——核心事业力量
+            qm_zhi_fu = qm.get("zhi_fu", {})
+            qm_zf_star = qm_zhi_fu.get("star", "")
+            qm_zf_gong = qm_zhi_fu.get("gong", "")
+
+            # 奇门格局吉凶
+            qm_ge_ju = qm.get("ge_ju_analysis", {})
+            qm_ji_ge = qm_ge_ju.get("ji_ge", [])
+            qm_xiong_ge = qm_ge_ju.get("xiong_ge", [])
+
+            # 判断奇门事业好坏
+            qm_career_good = len(qm_ji_men) >= 2 or len(qm_ji_ge) >= 2
+            qm_career_bad = len(qm_xiong_men) >= 3 or len(qm_xiong_ge) >= 2
+            qm_career_good_reason = ""
+            qm_career_bad_reason = ""
+
+            if qm_ji_men:
+                qm_career_good_reason = f"奇门吉门（{'、'.join(self.QIMEN_GONG_NAMES.get(k, k) for k in qm_ji_men)}）得位，当下时运有利"
+            if qm_xiong_men:
+                qm_career_bad_reason = f"奇门凶门（{'、'.join(self.QIMEN_GONG_NAMES.get(k, k) for k in qm_xiong_men)}）过多，当下时运受阻"
+
+            # 紫微事业信号
+            zw_palaces = self.udm.ziwei_chart.get("palaces", [])
+            zw_career_p = self._find_palace(zw_palaces, "官禄")
+            zw_career_good = False
+            zw_career_good_reason = ""
+            zw_career_bad = False
+            zw_career_bad_reason = ""
+            if zw_career_p:
+                zw_stars = self._get_palace_stars(zw_career_p)
+                auspicious = [s for s in zw_stars if s in ("紫微", "天府", "太阳", "天梁", "天相", "武曲")]
+                inauspicious = [s for s in zw_stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
+                if auspicious:
+                    zw_career_good = True
+                    zw_career_good_reason = f"紫微官禄宫有{'、'.join(auspicious)}，先天事业格局高"
+                if inauspicious:
+                    zw_career_bad = True
+                    zw_career_bad_reason = f"紫微官禄宫有{'、'.join(inauspicious)}，先天事业格局有挑战"
+
+            # 冲突1：紫微格局高但奇门时运差
+            if zw_career_good and qm_career_bad:
+                conflicts.append(ConflictItem(
+                    aspect="事业",
+                    method_a="紫微",
+                    finding_a=zw_career_good_reason,
+                    method_b="奇门",
+                    finding_b=qm_career_bad_reason,
+                    suggestion="紫微看先天格局，奇门看当下时运。先天格局高但时运受阻，"
+                               "说明能力在但时机未到，宜韬光养晦、积蓄实力，等待时运转好后一飞冲天。"
+                               "切忌逆势硬拼，消耗先天格局优势。"
+                ))
+
+            # 冲突2：紫微格局有挑战但奇门时运好
+            if zw_career_bad and qm_career_good:
+                conflicts.append(ConflictItem(
+                    aspect="事业",
+                    method_a="紫微",
+                    finding_a=zw_career_bad_reason,
+                    method_b="奇门",
+                    finding_b=qm_career_good_reason,
+                    suggestion="紫微官禄宫有凶星暗示先天事业格局有挑战，但奇门显示当下时运不错。"
+                               "先天根基虽不完美，但时运给力，宜借势而为、把握当下有利窗口期快速推进。"
+                               "时运好时不纠结先天不足，先上车再补票。"
+                ))
+
         # === 4. 健康冲突：八字五行 vs 紫微疾厄宫 ===
         wuxing_count = self.udm.get_wuxing_count()
         if wuxing_count:
