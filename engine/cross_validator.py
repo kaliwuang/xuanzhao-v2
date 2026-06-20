@@ -9,6 +9,9 @@ from typing import List, Dict
 from enum import Enum
 from .udm import DestinyModel
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ConfidenceLevel(Enum):
@@ -157,7 +160,8 @@ class CrossValidator:
         # 检查紫微大运数据（增加异常处理，防止数据不完整时报错）
         try:
             ziwei_dayun = self.udm.ziwei_chart.get("dai_xian", []) if self.udm.ziwei_chart else []
-        except Exception:
+        except Exception as e:
+            logger.debug(f"紫微大运数据读取异常: {e}")
             ziwei_dayun = []
         
         if bazi_dayun and ziwei_dayun:
@@ -206,8 +210,8 @@ class CrossValidator:
                             confidence=ConfidenceLevel.MEDIUM
                         ))
                         break
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"紫微大限与八字喜用对比异常: {e}")
 
         # ── 新增：利用八字详细大运数据做深层互证 ──
         if bazi_dayun:
