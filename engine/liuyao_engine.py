@@ -971,10 +971,6 @@ class LiuYaoEngine(DivinationEngine):
         ri_wx = self.ZHI_WUXING.get(ri_jian, '')
         yue_wx = self.ZHI_WUXING.get(yue_jian, '')
         
-        # 旺衰关系分析
-        SHENG_REV = self.SHENG_REV
-        KE_REV = self.KE_REV
-
         def _wx_relation(wx: str, ref_wx: str) -> str:
             if not wx or not ref_wx:
                 return '无'
@@ -982,11 +978,11 @@ class LiuYaoEngine(DivinationEngine):
                 return '旺（比和）'
             if self.SHENG.get(ref_wx) == wx:
                 return '相（生我）'
-            if SHENG_REV.get(ref_wx) == wx:
+            if self.SHENG_REV.get(ref_wx) == wx:
                 return '休（我生）'
             if self.KE.get(ref_wx) == wx:
                 return '囚（克我）'
-            if KE_REV.get(ref_wx) == wx:
+            if self.KE_REV.get(ref_wx) == wx:
                 return '死（我克）'
             return '无'
 
