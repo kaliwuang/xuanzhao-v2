@@ -501,11 +501,13 @@ class BaziEngine(DivinationEngine):
                     # 禄神（以日干查）
                     if dy_zhi == SHENSHA_LU_MAP.get(day_master, ''):
                         dy_shensha.append('禄神')
-                    # 红鸾（以年支查）
-                    if dy_zhi == SHENSHA_HONGLUAN_MAP.get(year_pillar.zhi, ''):
+                    # 红鸾（以年支和日支查，与原局一致）
+                    hongluan_dy_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(year_pillar.zhi, ''), SHENSHA_HONGLUAN_MAP.get(day_pillar.zhi, '')]))
+                    if dy_zhi in hongluan_dy_targets:
                         dy_shensha.append('红鸾')
-                    # 天喜（以年支查）
-                    if dy_zhi == SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''):
+                    # 天喜（以年支和日支查，与原局一致）
+                    tianxi_dy_targets = set(filter(None, [SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''), SHENSHA_TIANXI_MAP.get(day_pillar.zhi, '')]))
+                    if dy_zhi in tianxi_dy_targets:
                         dy_shensha.append('天喜')
                     # 太极贵人（以日干和年干查）
                     dy_taiji = set(SHENSHA_TAIJI_MAP.get(day_master, []))
@@ -563,9 +565,13 @@ class BaziEngine(DivinationEngine):
                                         ln_shensha.append('文昌')
                                     if ln_zhi == SHENSHA_LU_MAP.get(day_master, ''):
                                         ln_shensha.append('禄神')
-                                    if ln_zhi == SHENSHA_HONGLUAN_MAP.get(year_pillar.zhi, ''):
+                                    # 红鸾（以年支和日支查，与原局一致）
+                                    hongluan_ln_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(year_pillar.zhi, ''), SHENSHA_HONGLUAN_MAP.get(day_pillar.zhi, '')]))
+                                    if ln_zhi in hongluan_ln_targets:
                                         ln_shensha.append('红鸾')
-                                    if ln_zhi == SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''):
+                                    # 天喜（以年支和日支查，与原局一致）
+                                    tianxi_ln_targets = set(filter(None, [SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''), SHENSHA_TIANXI_MAP.get(day_pillar.zhi, '')]))
+                                    if ln_zhi in tianxi_ln_targets:
                                         ln_shensha.append('天喜')
                                     # 太极贵人（以日干和年干查，与原局一致）
                                     taiji_targets_ln = set(SHENSHA_TAIJI_MAP.get(day_master, []))
