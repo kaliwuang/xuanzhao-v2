@@ -102,6 +102,7 @@ SHENSHA_JIANGXING_MAP = {
 GAN_CHONG = {'甲':'庚','庚':'甲','乙':'辛','辛':'乙','丙':'壬','壬':'丙','丁':'癸','癸':'丁'}
 GAN_HE = {'甲':'己','己':'甲','乙':'庚','庚':'乙','丙':'辛','辛':'丙','丁':'壬','壬':'丁','戊':'癸','癸':'戊'}
 GAN_LIUHE = GAN_HE  # 天干六合（天德合、月德合复用此常量）
+TIANGAN_SET = set('甲乙丙丁戊己庚辛壬癸')  # 天干集合（天德、天德合判断用）
 
 # ─── 地支关系表（模块级常量）──────────────────────────
 # ZHI_CHONG_MOD 和 ZHI_HE_MOD 已从 udm 导入（见上方 import）
@@ -325,19 +326,18 @@ class BaziEngine(DivinationEngine):
                         '申':'丙','酉':'乙','戌':'丙','亥':'乙',
                     }
                     dy_tiande = dy_tiande_map.get(month_pillar.zhi, '')
-                    TIANGAN_SET_DY = set('甲乙丙丁戊己庚辛壬癸')
                     if dy_tiande:
-                        if dy_tiande in TIANGAN_SET_DY and dy_gan == dy_tiande:
+                        if dy_tiande in TIANGAN_SET and dy_gan == dy_tiande:
                             dy_shensha.append('天德贵人')
-                        elif dy_tiande not in TIANGAN_SET_DY and dy_zhi == dy_tiande:
+                        elif dy_tiande not in TIANGAN_SET and dy_zhi == dy_tiande:
                             dy_shensha.append('天德贵人')
                     # 天德合（天德的六合，大运匹配则入）
                     if dy_tiande:
-                        dy_tiande_he = GAN_LIUHE.get(dy_tiande, '') if dy_tiande in TIANGAN_SET_DY else ZHI_HE_MOD.get(dy_tiande, '')
+                        dy_tiande_he = GAN_LIUHE.get(dy_tiande, '') if dy_tiande in TIANGAN_SET else ZHI_HE_MOD.get(dy_tiande, '')
                         if dy_tiande_he:
-                            if dy_tiande_he in TIANGAN_SET_DY and dy_gan == dy_tiande_he:
+                            if dy_tiande_he in TIANGAN_SET and dy_gan == dy_tiande_he:
                                 dy_shensha.append('天德合')
-                            elif dy_tiande_he not in TIANGAN_SET_DY and dy_zhi == dy_tiande_he:
+                            elif dy_tiande_he not in TIANGAN_SET and dy_zhi == dy_tiande_he:
                                 dy_shensha.append('天德合')
                     # 月德合（月德的六合，大运天干匹配则入）
                     dy_yuede_he = GAN_LIUHE.get(dy_yuede_gan, '')
@@ -386,17 +386,17 @@ class BaziEngine(DivinationEngine):
                                     # 天德贵人（以月支查，流年干支匹配则入）
                                     ln_tiande = dy_tiande_map.get(month_pillar.zhi, '')
                                     if ln_tiande:
-                                        if ln_tiande in TIANGAN_SET_DY and ln_gan == ln_tiande:
+                                        if ln_tiande in TIANGAN_SET and ln_gan == ln_tiande:
                                             ln_shensha.append('天德贵人')
-                                        elif ln_tiande not in TIANGAN_SET_DY and ln_zhi == ln_tiande:
+                                        elif ln_tiande not in TIANGAN_SET and ln_zhi == ln_tiande:
                                             ln_shensha.append('天德贵人')
                                     # 天德合（天德的六合，流年匹配则入）
                                     if ln_tiande:
-                                        ln_tiande_he = GAN_LIUHE.get(ln_tiande, '') if ln_tiande in TIANGAN_SET_DY else ZHI_HE_MOD.get(ln_tiande, '')
+                                        ln_tiande_he = GAN_LIUHE.get(ln_tiande, '') if ln_tiande in TIANGAN_SET else ZHI_HE_MOD.get(ln_tiande, '')
                                         if ln_tiande_he:
-                                            if ln_tiande_he in TIANGAN_SET_DY and ln_gan == ln_tiande_he:
+                                            if ln_tiande_he in TIANGAN_SET and ln_gan == ln_tiande_he:
                                                 ln_shensha.append('天德合')
-                                            elif ln_tiande_he not in TIANGAN_SET_DY and ln_zhi == ln_tiande_he:
+                                            elif ln_tiande_he not in TIANGAN_SET and ln_zhi == ln_tiande_he:
                                                 ln_shensha.append('天德合')
                                     # 月德合（月德的六合，流年天干匹配则入）
                                     ln_yuede_he = GAN_LIUHE.get(SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''), '')
@@ -977,7 +977,6 @@ class BaziEngine(DivinationEngine):
 
         # 6. 天德贵人（以月支查天干或地支）
         # 注意：天德值可能是天干也可能是地支（如子月→巳、卯月→申）
-        TIANGAN_SET = set('甲乙丙丁戊己庚辛壬癸')
         tiande_map = {
             '子':'巳','丑':'庚','寅':'丁','卯':'申',
             '辰':'壬','巳':'辛','午':'甲','未':'癸',
