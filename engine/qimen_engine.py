@@ -382,6 +382,7 @@ class QiMenEngine(DivinationEngine):
                 # 阴遁：八神逆排（值符起始反向旋转）
                 god_idx = (start - i) % len(gods)
             ba_shen[palace] = gods[god_idx]
+        ba_shen[5] = ''  # 中宫5不排八神，显式设置空值确保key一致
         return ba_shen
 
     def _find_gong_for_gan(self, di_pan: dict, gan_zhi: str) -> int:
