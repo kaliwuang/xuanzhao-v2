@@ -598,8 +598,8 @@ class BaziEngine(DivinationEngine):
                                     jiangxing_targets_ln = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_pillar.zhi, ''), SHENSHA_JIANGXING_MAP.get(day_pillar.zhi, '')]))
                                     if ln_zhi in jiangxing_targets_ln:
                                         ln_shensha.append('将星')
-                                except Exception:
-                                    pass
+                                except Exception as _ln_ss_err:
+                                    logger.debug(f"流年神煞计算异常: {_ln_ss_err}")
                                 ln_info = {
                                     "year": ln.getYear(),
                                     "age": ln.getAge(),
@@ -626,8 +626,8 @@ class BaziEngine(DivinationEngine):
                                         "changsheng": _calc_changsheng(day_master, ln_zhi),
                                         "shensha": ln_shensha,
                                     }
-                    except Exception:
-                        pass
+                    except Exception as _ln_err:
+                        logger.debug(f"大运流年处理异常: {_ln_err}")
 
                     dayun_list.append({
                         "start_age": start_age,
