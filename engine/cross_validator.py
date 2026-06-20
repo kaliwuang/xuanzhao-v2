@@ -2558,7 +2558,7 @@ class CrossValidator:
         # 反向：八字稳重但占星冲动
         bazi_cautious = False
         bazi_cautious_reason = ""
-        if not bazi_bold and any("正官" in f or "印" in f for f in features):
+        if not bazi_bold and any("正官" in f or ("印" in f and "不显" not in f) for f in features):
             bazi_cautious = True
             bazi_cautious_reason = "正官/印星透干，性格偏稳重内敛"
 
@@ -2721,7 +2721,8 @@ class CrossValidator:
                 ))
 
             # 冲突2：八字比劫夺财 vs 六爻妻财旺相
-            bazi_wealth_loss = any("比劫" in f for f in features) and any("财" in f for f in features)
+            # 排除"食伤生财""财官双美"等正面组合（与_validate_wealth一致）
+            bazi_wealth_loss = any("比劫" in f for f in features) and any("财" in f and "生" not in f and "美" not in f for f in features)
             if bazi_wealth_loss and liuyao_wealth_good:
                 conflicts.append(ConflictItem(
                     aspect="财运",
