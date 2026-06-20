@@ -325,7 +325,10 @@ class BaziEngine(DivinationEngine):
                                         ln_shensha.append('红鸾')
                                     if ln_zhi == SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''):
                                         ln_shensha.append('天喜')
-                                    if ln_zhi in SHENSHA_TAIJI_MAP.get(day_master, []):
+                                    # 太极贵人（以日干和年干查，与原局一致）
+                                    taiji_targets_ln = set(SHENSHA_TAIJI_MAP.get(day_master, []))
+                                    taiji_targets_ln.update(SHENSHA_TAIJI_MAP.get(year_pillar.gan, []))
+                                    if ln_zhi in taiji_targets_ln:
                                         ln_shensha.append('太极贵人')
                                     # 月德
                                     if ln_gan == SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''):
