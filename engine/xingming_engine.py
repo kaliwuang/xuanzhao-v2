@@ -733,8 +733,16 @@ class XingMingEngine:
                 - 'ji_shen' or 'unfavorable': 忌神 list
         """
         # Extract bazi information
+        # 兼容多种key格式：优先xi_shen/favorable，回退到xi_yong.xi（八字引擎输出格式）
         xi_shen = bazi_info.get("xi_shen") or bazi_info.get("favorable") or []
         ji_shen = bazi_info.get("ji_shen") or bazi_info.get("unfavorable") or []
+        # 八字引擎输出格式：xi_yong = {'xi': [...], 'ji': [...]}
+        if not xi_shen:
+            xi_yong = bazi_info.get("xi_yong") or {}
+            if isinstance(xi_yong, dict):
+                xi_shen = xi_yong.get("xi", [])
+                if not ji_shen:
+                    ji_shen = xi_yong.get("ji", [])
         ri_zhu = bazi_info.get("ri_zhu") or bazi_info.get("day_master") or ""
 
         if isinstance(xi_shen, str):
