@@ -1457,13 +1457,16 @@ class BaziEngine(DivinationEngine):
         ratio = day_score / total if total > 0 else 0
         
         # 普通旺衰判断（使用模块级五行生克常量）
-        if ratio >= 0.40:
+        # 阈值：身强≥40%，中和25%-40%，身弱<25%
+        STRONG_THRESHOLD = 0.40
+        BALANCED_THRESHOLD = 0.25
+        if ratio >= STRONG_THRESHOLD:
             strength = '身强'
             # 喜：克我(官杀) + 我克(财) + 我生(食伤泄)
             base_xi = [WUXING_BEI_KE[day_wx], WUXING_KE[day_wx], WUXING_SHENG[day_wx]]
             # 忌：生我(印) + 同我(比劫)
             base_ji = [day_wx, WUXING_BEI_SHENG[day_wx]]  # 同我 + 生我
-        elif ratio >= 0.25:
+        elif ratio >= BALANCED_THRESHOLD:
             strength = '中和'
             base_xi = []
             base_ji = []
