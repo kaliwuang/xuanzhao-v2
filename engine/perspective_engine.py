@@ -939,13 +939,12 @@ class PerspectiveEngine:
             if any(w in question for w in words):
                 return qtype
 
-        # 回退：单字匹配（仅在精确匹配未命中时）
+        # 回退：双字短语匹配（仅在精确匹配未命中时，单字易误命中）
         fallback = {
-            "事业": ["业"],
-            "感情": ["情", "爱"],
-            "财运": ["财", "钱", "富"],
-            "健康": ["病", "医"],
-            "学业": ["考", "学"],
+            "感情": ["情人", "爱情", "情缘"],
+            "财运": ["发财", "富人", "钱财"],
+            "健康": ["病痛", "医嘱"],
+            "学业": ["考试", "学习"],
         }
         for qtype, chars in fallback.items():
             if any(c in question for c in chars):
