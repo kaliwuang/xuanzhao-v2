@@ -1129,13 +1129,13 @@ class BaziEngine(DivinationEngine):
 
         # 1. 天乙贵人（以日干查四支）
         tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
-        tianyi_count = 0
+        tianyi_found = set()
         for pos_idx, z in enumerate(all_zhis):
             if z in tianyi_zhis:
                 pos = ['年','月','日','时'][pos_idx]
                 shensha.append(f'天乙贵人（{pos}支{z}）')
-                tianyi_count += 1
-        if tianyi_count >= 2:
+                tianyi_found.add(z)
+        if len(tianyi_found) >= 2:
             shensha.append('双天乙贵人')
 
         # 2. 华盖（以年支和日支查四支，与大运一致）
