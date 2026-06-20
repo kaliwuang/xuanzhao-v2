@@ -3448,7 +3448,7 @@ class CrossValidator:
             strengths.append("守规矩，责任心强")
         if any("官印相生" in f for f in bazi_features):
             strengths.append("善于借势，有贵人缘")
-        if any("印" in f for f in bazi_features):
+        if any("印" in f and "不显" not in f for f in bazi_features):
             strengths.append("善于学习，有涵养")
         if any("食伤" in f for f in bazi_features):
             strengths.append("表达力强，有创意")
