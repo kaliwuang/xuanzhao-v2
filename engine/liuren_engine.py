@@ -19,6 +19,8 @@ class LiuRenEngine(DivinationEngine):
     """大六壬引擎（kinliuren 库驱动）"""
 
     # 地支五行映射
+    ZHI_ORDER = list("子丑寅卯辰巳午未申酉戌亥")
+
     ZHI_WUXING = {
         "子": "水", "丑": "土", "寅": "木", "卯": "木",
         "辰": "土", "巳": "火", "午": "火", "未": "土",
@@ -130,8 +132,7 @@ class LiuRenEngine(DivinationEngine):
 
         # ── 3. 占时（时支） ──
         hour_zhi_idx = (orig.hour + 1) // 2 % 12
-        zhi_list = list("子丑寅卯辰巳午未申酉戌亥")
-        zhan_shi = zhi_list[hour_zhi_idx]
+        zhan_shi = self.ZHI_ORDER[hour_zhi_idx]
 
         # ── 4. 日干寄宫 ──
         shigangjigong = dict(
@@ -182,13 +183,13 @@ class LiuRenEngine(DivinationEngine):
 
             # 提取天地盘
             tian_pan_raw = lr_result.get("天地盤", {})
-            di_pan_list = tian_pan_raw.get("地盤", list("子丑寅卯辰巳午未申酉戌亥"))
-            tian_pan_list = tian_pan_raw.get("天盤", list("子丑寅卯辰巳午未申酉戌亥"))
+            di_pan_list = tian_pan_raw.get("地盤", self.ZHI_ORDER)
+            tian_pan_list = tian_pan_raw.get("天盤", self.ZHI_ORDER)
             tian_jiang_list = tian_pan_raw.get("天將", [""] * 12)
 
             # 天盘：地支→天盘地支
             tian_pan = {}
-            for i, zhi in enumerate(list("子丑寅卯辰巳午未申酉戌亥")):
+            for i, zhi in enumerate(self.ZHI_ORDER):
                 if i < len(tian_pan_list):
                     tian_pan[zhi] = tian_pan_list[i]
                 else:
@@ -196,7 +197,7 @@ class LiuRenEngine(DivinationEngine):
 
             # 天将：地支→天将
             tian_jiang = {}
-            di_zhi_order = list("子丑寅卯辰巳午未申酉戌亥")
+            di_zhi_order = self.ZHI_ORDER
             for i, zhi in enumerate(di_zhi_order):
                 if i < len(tian_jiang_list):
                     tian_jiang[zhi] = tian_jiang_list[i]
@@ -227,8 +228,8 @@ class LiuRenEngine(DivinationEngine):
             logger.warning(f"kinliuren排盘失败，使用最小可用结构: {e}")
             si_ke = ([], [], [], [])
             san_chuan = ([], [], [])
-            tian_pan = {zhi: zhi for zhi in list("子丑寅卯辰巳午未申酉戌亥")}
-            tian_jiang = {zhi: "" for zhi in list("子丑寅卯辰巳午未申酉戌亥")}
+            tian_pan = {zhi: zhi for zhi in self.ZHI_ORDER}
+            tian_jiang = {zhi: "" for zhi in self.ZHI_ORDER}
             di_to_tian = tian_pan.copy()
             di_to_jiang = tian_jiang.copy()
             ge_ju_name = ""
@@ -238,7 +239,7 @@ class LiuRenEngine(DivinationEngine):
 
         # ── 6. 合并十二宫信息（便于前端渲染） ──
         positions = {}
-        for zhi in list("子丑寅卯辰巳午未申酉戌亥"):
+        for zhi in self.ZHI_ORDER:
             positions[zhi] = {
                 "zhi": zhi,
                 "wuxing": self.ZHI_WUXING.get(zhi, ""),
