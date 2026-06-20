@@ -87,8 +87,10 @@ class TaiYiEngine(DivinationEngine):
 
         return self._convert_result(result, year)
 
-    def _convert_result(self, r: dict, year: int) -> dict:
+    def _convert_result(self, r, year: int) -> dict:
         """将kintaiyi结果转换为玄照API格式"""
+        if not r or not isinstance(r, dict):
+            return {"error": "kintaiyi返回数据格式异常（非字典类型）"}
 
         # 太乙落宫
         try:
