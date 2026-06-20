@@ -1347,7 +1347,7 @@ class BaziEngine(DivinationEngine):
         
         # 计算日主得分占比
         total = sum(wuxing_score.values()) if wuxing_score else 1
-        day_score = wuxing_score.get(day_wx, 0)
+        day_score = wuxing_score.get(day_wx, 0) if wuxing_score else 0
         ratio = day_score / total if total > 0 else 0
         
         # 普通旺衰判断（使用模块级五行生克常量）
