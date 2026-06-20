@@ -1274,6 +1274,58 @@ class CrossValidator:
                         confidence=ConfidenceLevel.HIGH if len(study_stars) >= 2 else ConfidenceLevel.MEDIUM,
                     ))
 
+            # 紫微：看生年四化——化科是学业最直接指标
+            # 化科主考试运、名声、学术成就、贵人提携
+            sihua = self.udm.ziwei_chart.get("sihua", {})
+            ke_star = sihua.get("科", "")
+            if ke_star:
+                # 定位化科星所在的宫位
+                star_placements = self.udm.ziwei_chart.get("star_placements", {})
+                ke_palace = star_placements.get(ke_star, "")
+
+                # 化科落在学业关键宫位的解读
+                ACADEMIC_PALACES = {"命宫", "官禄", "父母", "福德"}
+                if ke_palace in ACADEMIC_PALACES:
+                    palace_desc = {
+                        "命宫": "命宫带化科，一生有贵人相助学业，逢考易得佳绩",
+                        "官禄": "官禄宫带化科，学业考试运极佳，功名顺遂",
+                        "父母": "父母宫带化科，得长辈师长提携学业，读书有贵人",
+                        "福德": "福德宫带化科，精神世界丰富，适合学术研究和精神层面的学问",
+                    }
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding=f"{ke_star}化科在{ke_palace}，{palace_desc.get(ke_palace, '学业有贵人助力')}",
+                        supporting_methods=["紫微"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                elif ke_palace:
+                    # 化科在其他宫位，也有正面影响但不直接关乎学业
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding=f"{ke_star}化科在{ke_palace}，有科名之象，利于考试名声",
+                        supporting_methods=["紫微"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
+            # 紫微：看化忌所在宫位对学业的负面影响
+            ji_star = sihua.get("忌", "")
+            if ji_star:
+                ji_placements = self.udm.ziwei_chart.get("star_placements", {})
+                ji_palace = ji_placements.get(ji_star, "")
+                NEGATIVE_ACADEMIC_PALACES = {"官禄", "父母", "命宫"}
+                if ji_palace in NEGATIVE_ACADEMIC_PALACES:
+                    ji_desc = {
+                        "官禄": "官禄宫化忌，学业易有波折反复，考试运需注意",
+                        "父母": "父母宫化忌，与师长关系易有摩擦，读书过程多波折",
+                        "命宫": "命宫化忌，自身学业压力大，需付出更多努力",
+                    }
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding=f"{ji_star}化忌在{ji_palace}，{ji_desc.get(ji_palace, '学业有阻力')}",
+                        supporting_methods=["紫微"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
         # 占星：看水星（思维和学习能力）
         if self.udm.astro_chart:
             planets = self.udm.astro_chart.get("planets", {})
