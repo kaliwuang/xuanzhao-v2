@@ -1131,17 +1131,21 @@ class BaziEngine(DivinationEngine):
                     pos = ['年','月','日','时'][pos_idx]
                     shensha.append(f'空亡（{pos}支{z}）')
 
-        # 37. 双华盖
-        huagai_zhi = SHENSHA_HUAGAI_MAP.get(year_zhi, '')
-        huagai_count = sum(1 for z in all_zhis if z == huagai_zhi)
-        if huagai_count >= 2:
-            shensha.append('双华盖')
+        # 37. 双华盖（以年支和日支查，与华盖检测一致）
+        huagai_targets = set(filter(None, [SHENSHA_HUAGAI_MAP.get(year_zhi, ''), SHENSHA_HUAGAI_MAP.get(day_zhi, '')]))
+        for huagai_zhi in huagai_targets:
+            huagai_count = sum(1 for z in all_zhis if z == huagai_zhi)
+            if huagai_count >= 2:
+                shensha.append('双华盖')
+                break
 
-        # 38. 双桃花
-        taohua_zhi = SHENSHA_TAOHUA_MAP.get(year_zhi, '')
-        taohua_count = sum(1 for z in all_zhis if z == taohua_zhi)
-        if taohua_count >= 2:
-            shensha.append('双桃花')
+        # 38. 双桃花（以年支和日支查，与桃花检测一致）
+        taohua_targets = set(filter(None, [SHENSHA_TAOHUA_MAP.get(year_zhi, ''), SHENSHA_TAOHUA_MAP.get(day_zhi, '')]))
+        for taohua_zhi in taohua_targets:
+            taohua_count = sum(1 for z in all_zhis if z == taohua_zhi)
+            if taohua_count >= 2:
+                shensha.append('双桃花')
+                break
 
         # 39. 天官贵人（以日干查四支）
         tianguan_map = {
