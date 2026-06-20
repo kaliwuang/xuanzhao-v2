@@ -2052,7 +2052,7 @@ class CrossValidator:
         # 八字感情正面信号（有合）
         bazi_love_good = False
         bazi_love_good_reason = ""
-        if any(("午" in h and "未" in h) or ("寅" in h and "亥" in h) or ("卯" in h and "戌" in h) for h in he):
+        if any(("子" in h and "丑" in h) or ("寅" in h and "亥" in h) or ("卯" in h and "戌" in h) or ("辰" in h and "酉" in h) or ("巳" in h and "申" in h) or ("午" in h and "未" in h) for h in he):
             bazi_love_good = True
             bazi_love_good_reason = f"八字有合（{'、'.join(he[:2])}），感情缘分佳"
 
