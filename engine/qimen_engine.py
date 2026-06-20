@@ -306,6 +306,7 @@ class QiMenEngine(DivinationEngine):
         ba_men = {}
         for i, palace in enumerate(luo8):
             ba_men[palace] = doors[i]
+        ba_men[5] = ''  # 中宫5不排门，显式设置空值确保key存在
 
         # 天盘旋转：找到时干在地盘中的宫位
         # 甲不直接出现在地盘（三奇六仪），需查找其隐遁的六仪
