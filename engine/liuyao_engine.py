@@ -332,7 +332,8 @@ class LiuYaoEngine(DivinationEngine):
         else:
             shang_gua = xia_gua = ''
         # GUA64 以 (上卦, 下卦) 元组为键，不能用字符串 mark 查找
-        ben_gua_name = data.get('name', GUA64.get((shang_gua, xia_gua), ''))
+        # 使用 or 而非 get default，确保 data['name'] 为空字符串时也触发 fallback
+        ben_gua_name = data.get('name') or GUA64.get((shang_gua, xia_gua), '')
 
         # 6. 卦宫五行（依赖shang_gua，故移到其后）
         if gong_name and gong_name in GUAS:
