@@ -453,6 +453,67 @@ class BaziEngine(DivinationEngine):
             offset = (zhi_idx - start_idx) % 12 if is_yang else (start_idx - zhi_idx) % 12
             return CHANGSHENG_ORDER[offset]
 
+        # ─── 大运/流年神煞辅助函数 ─────────────────────────
+        # 给定一个地支(zhi)和天干(gan)，返回匹配的神煞名称列表
+        # 复用于大运和流年，消除 ~60 行重复代码
+        _year_zhi = year_pillar.zhi
+        _day_zhi = day_pillar.zhi
+        _month_zhi = month_pillar.zhi
+        _year_gan = year_pillar.gan
+        _yuede_gan = SHENSHA_YUEDE_MAP.get(_month_zhi, '')
+        _tiande_val = SHENSHA_TIANDEREN_MAP.get(_month_zhi, '')
+        _tiande_he = ''
+        if _tiande_val:
+            _tiande_he = GAN_LIUHE.get(_tiande_val, '') if _tiande_val in TIANGAN_SET else ZHI_HE_MOD.get(_tiande_val, '')
+        _yuede_he = GAN_LIUHE.get(_yuede_gan, '')
+        _huagai_targets = set(filter(None, [SHENSHA_HUAGAI_MAP.get(_year_zhi, ''), SHENSHA_HUAGAI_MAP.get(_day_zhi, '')]))
+        _yima_targets = set(filter(None, [SHENSHA_YIMA_MAP.get(_year_zhi, ''), SHENSHA_YIMA_MAP.get(_day_zhi, '')]))
+        _taohua_targets = set(filter(None, [SHENSHA_TAOHUA_MAP.get(_year_zhi, ''), SHENSHA_TAOHUA_MAP.get(_day_zhi, '')]))
+        _hongluan_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(_year_zhi, ''), SHENSHA_HONGLUAN_MAP.get(_day_zhi, '')]))
+        _tianxi_targets = set(filter(None, [SHENSHA_TIANXI_MAP.get(_year_zhi, ''), SHENSHA_TIANXI_MAP.get(_day_zhi, '')]))
+        _taiji_targets = set(SHENSHA_TAIJI_MAP.get(day_master, []))
+        _taiji_targets.update(SHENSHA_TAIJI_MAP.get(_year_gan, []))
+        _jiangxing_targets = set(filter(None, [SHENSHA_JIANGXING_MAP.get(_year_zhi, ''), SHENSHA_JIANGXING_MAP.get(_day_zhi, '')]))
+
+        def _check_yl_shensha(zhi: str, gan: str) -> list:
+            """检查一个流年/大运干支对应的神煞列表"""
+            result = []
+            if zhi in SHENSHA_TIANYI_MAP.get(day_master, []):
+                result.append('天乙贵人')
+            if zhi in _huagai_targets:
+                result.append('华盖')
+            if zhi in _yima_targets:
+                result.append('驿马')
+            if zhi in _taohua_targets:
+                result.append('桃花')
+            if zhi == SHENSHA_WENCHANG_MAP.get(day_master, ''):
+                result.append('文昌')
+            if zhi == SHENSHA_LU_MAP.get(day_master, ''):
+                result.append('禄神')
+            if zhi in _hongluan_targets:
+                result.append('红鸾')
+            if zhi in _tianxi_targets:
+                result.append('天喜')
+            if zhi in _taiji_targets:
+                result.append('太极贵人')
+            if gan == _yuede_gan:
+                result.append('月德')
+            if _tiande_val:
+                if _tiande_val in TIANGAN_SET and gan == _tiande_val:
+                    result.append('天德贵人')
+                elif _tiande_val not in TIANGAN_SET and zhi == _tiande_val:
+                    result.append('天德贵人')
+            if _tiande_he:
+                if _tiande_he in TIANGAN_SET and gan == _tiande_he:
+                    result.append('天德合')
+                elif _tiande_he not in TIANGAN_SET and zhi == _tiande_he:
+                    result.append('天德合')
+            if _yuede_he and gan == _yuede_he:
+                result.append('月德合')
+            if zhi in _jiangxing_targets:
+                result.append('将星')
+            return result
+
         # 大运（增强版：含十神、藏干、纳音、长生、神煞、流年）
         # NOTE: lunar_python's getStartYear() returns ABSOLUTE year, not age.
         # e.g., getStartYear() might return 2015, not 10.
@@ -495,61 +556,8 @@ class BaziEngine(DivinationEngine):
                     dy_changsheng = _calc_changsheng(day_master, dy_zhi)
 
                     # 大运带来的神煞（大运地支对照原局四柱）
-                    dy_shensha = []
-                    if dy_zhi in SHENSHA_TIANYI_MAP.get(day_master, []):
-                        dy_shensha.append('天乙贵人')
-                    if dy_zhi == SHENSHA_HUAGAI_MAP.get(year_pillar.zhi, '') or dy_zhi == SHENSHA_HUAGAI_MAP.get(day_pillar.zhi, ''):
-                        dy_shensha.append('华盖')
-                    if dy_zhi == SHENSHA_YIMA_MAP.get(year_pillar.zhi, '') or dy_zhi == SHENSHA_YIMA_MAP.get(day_pillar.zhi, ''):
-                        dy_shensha.append('驿马')
-                    if dy_zhi == SHENSHA_TAOHUA_MAP.get(year_pillar.zhi, '') or dy_zhi == SHENSHA_TAOHUA_MAP.get(day_pillar.zhi, ''):
-                        dy_shensha.append('桃花')
-                    # 文昌（以日干查）
-                    if dy_zhi == SHENSHA_WENCHANG_MAP.get(day_master, ''):
-                        dy_shensha.append('文昌')
-                    # 禄神（以日干查）
-                    if dy_zhi == SHENSHA_LU_MAP.get(day_master, ''):
-                        dy_shensha.append('禄神')
-                    # 红鸾（以年支和日支查，与原局一致）
-                    hongluan_dy_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(year_pillar.zhi, ''), SHENSHA_HONGLUAN_MAP.get(day_pillar.zhi, '')]))
-                    if dy_zhi in hongluan_dy_targets:
-                        dy_shensha.append('红鸾')
-                    # 天喜（以年支和日支查，与原局一致）
-                    tianxi_dy_targets = set(filter(None, [SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''), SHENSHA_TIANXI_MAP.get(day_pillar.zhi, '')]))
-                    if dy_zhi in tianxi_dy_targets:
-                        dy_shensha.append('天喜')
-                    # 太极贵人（以日干和年干查）
-                    dy_taiji = set(SHENSHA_TAIJI_MAP.get(day_master, []))
-                    dy_taiji.update(SHENSHA_TAIJI_MAP.get(year_pillar.gan, []))
-                    if dy_zhi in dy_taiji:
-                        dy_shensha.append('太极贵人')
-                    # 月德（以月支查天干，大运天干匹配则入）
-                    dy_yuede_gan = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
-                    if dy_gan == dy_yuede_gan:
-                        dy_shensha.append('月德')
-                    # 天德贵人（以月支查，大运地支或天干匹配则入）— 使用模块级 SHENSHA_TIANDEREN_MAP
-                    dy_tiande = SHENSHA_TIANDEREN_MAP.get(month_pillar.zhi, '')
-                    if dy_tiande:
-                        if dy_tiande in TIANGAN_SET and dy_gan == dy_tiande:
-                            dy_shensha.append('天德贵人')
-                        elif dy_tiande not in TIANGAN_SET and dy_zhi == dy_tiande:
-                            dy_shensha.append('天德贵人')
-                    # 天德合（天德的六合，大运匹配则入）
-                    if dy_tiande:
-                        dy_tiande_he = GAN_LIUHE.get(dy_tiande, '') if dy_tiande in TIANGAN_SET else ZHI_HE_MOD.get(dy_tiande, '')
-                        if dy_tiande_he:
-                            if dy_tiande_he in TIANGAN_SET and dy_gan == dy_tiande_he:
-                                dy_shensha.append('天德合')
-                            elif dy_tiande_he not in TIANGAN_SET and dy_zhi == dy_tiande_he:
-                                dy_shensha.append('天德合')
-                    # 月德合（月德的六合，大运天干匹配则入）
-                    dy_yuede_he = GAN_LIUHE.get(dy_yuede_gan, '')
-                    if dy_yuede_he and dy_gan == dy_yuede_he:
-                        dy_shensha.append('月德合')
-                    # 将星（以年支和日支查）
-                    dy_jiangxing = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_pillar.zhi, ''), SHENSHA_JIANGXING_MAP.get(day_pillar.zhi, '')]))
-                    if dy_zhi in dy_jiangxing:
-                        dy_shensha.append('将星')
+                    # 使用 _check_yl_shensha 统一计算大运/流年神煞
+                    dy_shensha = _check_yl_shensha(dy_zhi, dy_gan)
 
                     # 流年（该大运期间每年）
                     liunian_list = []
@@ -559,62 +567,8 @@ class BaziEngine(DivinationEngine):
                             if ln_gz and len(ln_gz) >= 2:
                                 ln_gan = ln_gz[0]
                                 ln_zhi = ln_gz[1]
-                                # 流年神煞
-                                ln_shensha = []
-                                try:
-                                    if ln_zhi in SHENSHA_TIANYI_MAP.get(day_master, []):
-                                        ln_shensha.append('天乙贵人')
-                                    if ln_zhi == SHENSHA_HUAGAI_MAP.get(year_pillar.zhi, '') or ln_zhi == SHENSHA_HUAGAI_MAP.get(day_pillar.zhi, ''):
-                                        ln_shensha.append('华盖')
-                                    if ln_zhi == SHENSHA_YIMA_MAP.get(year_pillar.zhi, '') or ln_zhi == SHENSHA_YIMA_MAP.get(day_pillar.zhi, ''):
-                                        ln_shensha.append('驿马')
-                                    if ln_zhi == SHENSHA_TAOHUA_MAP.get(year_pillar.zhi, '') or ln_zhi == SHENSHA_TAOHUA_MAP.get(day_pillar.zhi, ''):
-                                        ln_shensha.append('桃花')
-                                    if ln_zhi == SHENSHA_WENCHANG_MAP.get(day_master, ''):
-                                        ln_shensha.append('文昌')
-                                    if ln_zhi == SHENSHA_LU_MAP.get(day_master, ''):
-                                        ln_shensha.append('禄神')
-                                    # 红鸾（以年支和日支查，与原局一致）
-                                    hongluan_ln_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(year_pillar.zhi, ''), SHENSHA_HONGLUAN_MAP.get(day_pillar.zhi, '')]))
-                                    if ln_zhi in hongluan_ln_targets:
-                                        ln_shensha.append('红鸾')
-                                    # 天喜（以年支和日支查，与原局一致）
-                                    tianxi_ln_targets = set(filter(None, [SHENSHA_TIANXI_MAP.get(year_pillar.zhi, ''), SHENSHA_TIANXI_MAP.get(day_pillar.zhi, '')]))
-                                    if ln_zhi in tianxi_ln_targets:
-                                        ln_shensha.append('天喜')
-                                    # 太极贵人（以日干和年干查，与原局一致）
-                                    taiji_targets_ln = set(SHENSHA_TAIJI_MAP.get(day_master, []))
-                                    taiji_targets_ln.update(SHENSHA_TAIJI_MAP.get(year_pillar.gan, []))
-                                    if ln_zhi in taiji_targets_ln:
-                                        ln_shensha.append('太极贵人')
-                                    # 月德
-                                    if ln_gan == SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''):
-                                        ln_shensha.append('月德')
-                                    # 天德贵人（以月支查，流年干支匹配则入）
-                                    ln_tiande = SHENSHA_TIANDEREN_MAP.get(month_pillar.zhi, '')
-                                    if ln_tiande:
-                                        if ln_tiande in TIANGAN_SET and ln_gan == ln_tiande:
-                                            ln_shensha.append('天德贵人')
-                                        elif ln_tiande not in TIANGAN_SET and ln_zhi == ln_tiande:
-                                            ln_shensha.append('天德贵人')
-                                    # 天德合（天德的六合，流年匹配则入）
-                                    if ln_tiande:
-                                        ln_tiande_he = GAN_LIUHE.get(ln_tiande, '') if ln_tiande in TIANGAN_SET else ZHI_HE_MOD.get(ln_tiande, '')
-                                        if ln_tiande_he:
-                                            if ln_tiande_he in TIANGAN_SET and ln_gan == ln_tiande_he:
-                                                ln_shensha.append('天德合')
-                                            elif ln_tiande_he not in TIANGAN_SET and ln_zhi == ln_tiande_he:
-                                                ln_shensha.append('天德合')
-                                    # 月德合（月德的六合，流年天干匹配则入）
-                                    ln_yuede_he = GAN_LIUHE.get(SHENSHA_YUEDE_MAP.get(month_pillar.zhi, ''), '')
-                                    if ln_yuede_he and ln_gan == ln_yuede_he:
-                                        ln_shensha.append('月德合')
-                                    # 将星（以年支和日支查，与原局一致）
-                                    jiangxing_targets_ln = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_pillar.zhi, ''), SHENSHA_JIANGXING_MAP.get(day_pillar.zhi, '')]))
-                                    if ln_zhi in jiangxing_targets_ln:
-                                        ln_shensha.append('将星')
-                                except Exception as _ln_ss_err:
-                                    logger.debug(f"流年神煞计算异常: {_ln_ss_err}")
+                                # 流年神煞（复用 _check_yl_shensha）
+                                ln_shensha = _check_yl_shensha(ln_zhi, ln_gan)
                                 ln_info = {
                                     "year": ln.getYear(),
                                     "age": ln.getAge(),
@@ -1152,9 +1106,18 @@ class BaziEngine(DivinationEngine):
         day_zhi = day_pillar.zhi
         year_zhi = year_pillar.zhi
         year_gan = year_pillar.gan
+        POS_NAMES = ['年', '月', '日', '时']
         all_zhis = [year_pillar.zhi, month_pillar.zhi, day_pillar.zhi, time_pillar.zhi]
         all_gans = [year_pillar.gan, month_pillar.gan, day_pillar.gan, time_pillar.gan]
         day_gz = day_pillar.gan + day_pillar.zhi  # 日柱干支（复用，消除重复计算）
+
+        # 辅助函数：扫描四柱地支，target_zhi 命中则追加 shensha 条目
+        def _scan_zhi(name: str, target_zhi: str):
+            if not target_zhi:
+                return
+            for pos_idx, z in enumerate(all_zhis):
+                if z == target_zhi:
+                    shensha.append(f'{name}（{POS_NAMES[pos_idx]}支{z}）')
 
         # 1. 天乙贵人（以日干查四支）
         tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
@@ -1211,26 +1174,10 @@ class BaziEngine(DivinationEngine):
                         pos = ['年','月','日','时'][pos_idx]
                         shensha.append(f'天德贵人（{pos}支{z}）')
 
-        # 7. 文昌贵人（以日干查）
-        wenchang_zhi = SHENSHA_WENCHANG_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == wenchang_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'文昌贵人（{pos}支{z}）')
-
-        # 8. 红艳煞（以日干查）— 使用模块级 SHENSHA_HONGYAN_MAP
-        hongyan_zhi = SHENSHA_HONGYAN_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == hongyan_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'红艳煞（{pos}支{z}）')
-
-        # 9. 禄神（以日干查）
-        lu_zhi = SHENSHA_LU_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == lu_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'禄神（{pos}支{z}）')
+        # 7~9. 文昌/红艳/禄神（以日干查地支，统一用 _scan_zhi 扫描四柱）
+        _scan_zhi('文昌贵人', SHENSHA_WENCHANG_MAP.get(day_gan, ''))
+        _scan_zhi('红艳煞', SHENSHA_HONGYAN_MAP.get(day_gan, ''))
+        _scan_zhi('禄神', SHENSHA_LU_MAP.get(day_gan, ''))
 
         # 10. 红鸾（以年支和日支查，与华盖/驿马/桃花/将星一致）
         hongluan_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(year_zhi, ''), SHENSHA_HONGLUAN_MAP.get(day_zhi, '')]))
@@ -1313,101 +1260,22 @@ class BaziEngine(DivinationEngine):
             if day_gz == tianshe:
                 shensha.append('天赦')
 
-        # 19. 天医（以月支查）— 使用模块级 SHENSHA_TIANYI_MEDICAL_MAP
-        tianyi_medical_zhi = SHENSHA_TIANYI_MEDICAL_MAP.get(month_pillar.zhi, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == tianyi_medical_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'天医（{pos}支{z}）')
-
-        # 20. 天厨（以日干查）— 使用模块级 SHENSHA_TIANCHU_MAP
-        tianchu_zhi = SHENSHA_TIANCHU_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == tianchu_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'天厨（{pos}支{z}）')
-
-        # 21. 学堂（以日干查长生位）— 使用模块级 SHENSHA_XUETANG_MAP
-        xuetang_zhi = SHENSHA_XUETANG_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == xuetang_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'学堂（{pos}支{z}）')
-
-        # 22. 词馆（以日干查临官位）— 使用模块级 SHENSHA_CIGUAN_MAP
-        ciguan_zhi = SHENSHA_CIGUAN_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == ciguan_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'词馆（{pos}支{z}）')
-
-        # 23. 羊刃（以日干查，阳干帝旺位）— 使用模块级 SHENSHA_YANGREN_MAP
-        yangren_zhi = SHENSHA_YANGREN_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == yangren_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'羊刃（{pos}支{z}）')
-
-        # 24. 飞刃（以日干查，羊刃对冲）— 使用模块级 SHENSHA_FEIREN_MAP
-        feiren_zhi = SHENSHA_FEIREN_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == feiren_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'飞刃（{pos}支{z}）')
-
-        # 25. 流霞（以日干查）— 使用模块级 SHENSHA_LIUXIA_MAP
-        liuxia_zhi = SHENSHA_LIUXIA_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == liuxia_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'流霞（{pos}支{z}）')
-
-        # 26. 亡神（以年支查三合局绝位）— 使用模块级 SHENSHA_WANGSHEN_MAP
-        wangshen_zhi = SHENSHA_WANGSHEN_MAP.get(year_zhi, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == wangshen_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'亡神（{pos}支{z}）')
-
-        # 27. 劫煞（以年支查三合局死位）— 使用模块级 SHENSHA_JIESHA_MAP
-        jiesha_zhi = SHENSHA_JIESHA_MAP.get(year_zhi, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == jiesha_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'劫煞（{pos}支{z}）')
-
-        # 28. 灾煞（以年支查将星对冲位）— 使用模块级 SHENSHA_ZAISHA_MAP
-        zaisha_zhi = SHENSHA_ZAISHA_MAP.get(year_zhi, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == zaisha_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'灾煞（{pos}支{z}）')
-
-        # 29. 勾煞（以年支查）— 使用模块级 SHENSHA_GOUSHA_MAP
-        gousha_zhi = SHENSHA_GOUSHA_MAP.get(year_zhi, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == gousha_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'勾煞（{pos}支{z}）')
-
-        # 30. 绞煞（以年支查，勾煞对冲）— 使用模块级 SHENSHA_JIAOSHA_MAP
-        jiaosha_zhi = SHENSHA_JIAOSHA_MAP.get(year_zhi, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == jiaosha_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'绞煞（{pos}支{z}）')
-
-        # 31. 孤辰寡宿（以年支查）— 使用模块级 SHENSHA_GUICHEN_MAP / SHENSHA_GUASU_MAP
-        guchen_zhi = SHENSHA_GUICHEN_MAP.get(year_zhi, '')
-        guasu_zhi = SHENSHA_GUASU_MAP.get(year_zhi, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == guchen_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'孤辰（{pos}支{z}）')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == guasu_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'寡宿（{pos}支{z}）')
+        # 19~31. 以日干/年支查地支的神煞（统一用 _scan_zhi 消除重复代码）
+        _scan_zhi('天医', SHENSHA_TIANYI_MEDICAL_MAP.get(month_pillar.zhi, ''))
+        _scan_zhi('天厨', SHENSHA_TIANCHU_MAP.get(day_gan, ''))
+        _scan_zhi('学堂', SHENSHA_XUETANG_MAP.get(day_gan, ''))
+        _scan_zhi('词馆', SHENSHA_CIGUAN_MAP.get(day_gan, ''))
+        _scan_zhi('羊刃', SHENSHA_YANGREN_MAP.get(day_gan, ''))
+        _scan_zhi('飞刃', SHENSHA_FEIREN_MAP.get(day_gan, ''))
+        _scan_zhi('流霞', SHENSHA_LIUXIA_MAP.get(day_gan, ''))
+        _scan_zhi('亡神', SHENSHA_WANGSHEN_MAP.get(year_zhi, ''))
+        _scan_zhi('劫煞', SHENSHA_JIESHA_MAP.get(year_zhi, ''))
+        _scan_zhi('灾煞', SHENSHA_ZAISHA_MAP.get(year_zhi, ''))
+        _scan_zhi('勾煞', SHENSHA_GOUSHA_MAP.get(year_zhi, ''))
+        _scan_zhi('绞煞', SHENSHA_JIAOSHA_MAP.get(year_zhi, ''))
+        # 孤辰寡宿（以年支查，分别查两支）
+        _scan_zhi('孤辰', SHENSHA_GUICHEN_MAP.get(year_zhi, ''))
+        _scan_zhi('寡宿', SHENSHA_GUASU_MAP.get(year_zhi, ''))
 
         # 32. 天罗地网（以纳音五行+年支/日支查）
         # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
@@ -1459,19 +1327,9 @@ class BaziEngine(DivinationEngine):
                 shensha.append('双桃花')
                 break
 
-        # 38. 天官贵人（以日干查四支）— 使用模块级 SHENSHA_TIANGUAN_MAP
-        tianguan_zhi = SHENSHA_TIANGUAN_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == tianguan_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'天官贵人（{pos}支{z}）')
-
-        # 39. 天福贵人（以日干查四支）— 使用模块级 SHENSHA_TIANFU_MAP
-        tianfu_zhi = SHENSHA_TIANFU_MAP.get(day_gan, '')
-        for pos_idx, z in enumerate(all_zhis):
-            if z == tianfu_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'天福贵人（{pos}支{z}）')
+        # 38~39. 天官贵人/天福贵人（以日干查四支）
+        _scan_zhi('天官贵人', SHENSHA_TIANGUAN_MAP.get(day_gan, ''))
+        _scan_zhi('天福贵人', SHENSHA_TIANFU_MAP.get(day_gan, ''))
 
         # 40. 三奇贵人（天干组合：乙丙丁=天上三奇，甲戊庚=地上三奇，辛壬癸=人中三奇）
         all_gan_str = ''.join(all_gans)
