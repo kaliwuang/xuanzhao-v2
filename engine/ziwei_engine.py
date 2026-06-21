@@ -117,6 +117,15 @@ PINYIN_BRANCH_MAP = {
     'shen': '申', 'you': '酉', 'xu': '戌', 'hai': '亥',
 }
 
+# 中文数字→阿拉伯数字映射（五行局解析用，模块级常量）
+CN_DIGITS = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9}
+
+# 五行→局数标准映射（水二局、木三局、金四局、土五局、火六局）
+WUXING_TO_JU = {'水':2, '木':3, '金':4, '土':5, '火':6}
+
+# 五行局→起运虚岁（简化映射，实际起运年龄由iztro精确计算）
+JU_START_AGE = {2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
+
 
 def _cn_branch(en: str) -> str:
     """英文地支→中文"""
@@ -196,9 +205,8 @@ class ZiWeiEngine(DivinationEngine):
 
         # 五行局
         wuxing_ju_str = r.five_elements_class  # 如 "木三局"
-        CN_DIGITS = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9}
         # 五行→局数标准映射（水二局、木三局、金四局、土五局、火六局）
-        WUXING_TO_JU = {'水':2, '木':3, '金':4, '土':5, '火':6}
+        # NOTE: CN_DIGITS, WUXING_TO_JU, JU_START_AGE 已提升为模块级常量
         wuxing = wuxing_ju_str[0] if wuxing_ju_str else "木"
         if wuxing_ju_str and len(wuxing_ju_str) > 1:
             ju_shu = CN_DIGITS.get(wuxing_ju_str[1], WUXING_TO_JU.get(wuxing, 3))
@@ -208,7 +216,6 @@ class ZiWeiEngine(DivinationEngine):
             wuxing = wuxing if wuxing in WUXING_TO_JU else "木"
 
         # 起运年龄（五行局→起运虚岁）
-        JU_START_AGE = {2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
         start_age = JU_START_AGE.get(ju_shu, 6)
 
         # 四柱
