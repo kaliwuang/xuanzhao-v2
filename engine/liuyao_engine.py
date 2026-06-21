@@ -193,7 +193,8 @@ class LiuYaoEngine(DivinationEngine):
 
         至少包含一个动爻以确保有变卦。
         """
-        seed = f"{dt.year}{dt.month:02d}{dt.day:02d}{dt.hour:02d}{dt.minute:02d}{dt.second:02d}"
+        # 使用时间戳（秒级精度）作为种子，确保同分钟内不同调用产生相同卦象（六爻传统）
+        seed = f"{dt.year}{dt.month:02d}{dt.day:02d}{dt.hour:02d}{dt.minute:02d}"
         h = int(hashlib.sha256(seed.encode()).hexdigest(), 16)
 
         params = []
