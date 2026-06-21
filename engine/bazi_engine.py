@@ -350,6 +350,10 @@ class BaziEngine(DivinationEngine):
 
     MAX_BASE_FEATURES = 25  # 基础特征条数上限
 
+    # 身强/身弱判定阈值（日主五行得分占比）
+    STRONG_THRESHOLD = 0.40   # >=40% 为身强
+    BALANCED_THRESHOLD = 0.25 # 25%-40% 为中和, <25% 为身弱
+
     @property
     def name(self) -> str:
         return "八字"
@@ -1372,15 +1376,14 @@ class BaziEngine(DivinationEngine):
         
         # 普通旺衰判断（使用模块级五行生克常量）
         # 阈值：身强≥40%，中和25%-40%，身弱<25%
-        STRONG_THRESHOLD = 0.40
-        BALANCED_THRESHOLD = 0.25
-        if ratio >= STRONG_THRESHOLD:
+        # (使用类级 STRONG_THRESHOLD / BALANCED_THRESHOLD)
+        if ratio >= self.STRONG_THRESHOLD:
             strength = '身强'
             # 喜：克我(官杀) + 我克(财) + 我生(食伤泄)
             base_xi = [WUXING_BEI_KE[day_wx], WUXING_KE[day_wx], WUXING_SHENG[day_wx]]
             # 忌：生我(印) + 同我(比劫)
             base_ji = [day_wx, WUXING_BEI_SHENG[day_wx]]  # 同我 + 生我
-        elif ratio >= BALANCED_THRESHOLD:
+        elif ratio >= self.BALANCED_THRESHOLD:
             strength = '中和'
             base_xi = []
             base_ji = []
