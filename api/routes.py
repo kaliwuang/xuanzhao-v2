@@ -1053,17 +1053,14 @@ def get_hehun(
         # 日支关系（婚姻宫）
         rizhi_relation = ""
         rizhi_score = 50
-        ZHI_LIUHE = {"子": "丑", "丑": "子", "寅": "亥", "亥": "寅", "卯": "戌", "戌": "卯",
-                     "辰": "酉", "酉": "辰", "巳": "申", "申": "巳", "午": "未", "未": "午"}
-        ZHI_LIUCHONG = {"子": "午", "午": "子", "丑": "未", "未": "丑", "寅": "申", "申": "寅",
-                        "卯": "酉", "酉": "卯", "辰": "戌", "戌": "辰", "巳": "亥", "亥": "巳"}
+        from engine.udm import ZHI_LIUHE as _UDM_ZHI_LIUHE, ZHI_CHONG as _UDM_ZHI_CHONG
         zhi1 = bazi1.get("day", "")[1:2] if len(bazi1.get("day", "")) > 1 else ""
         zhi2 = bazi2.get("day", "")[1:2] if len(bazi2.get("day", "")) > 1 else ""
         if zhi1 and zhi2:
-            if ZHI_LIUHE.get(zhi1) == zhi2:
+            if _UDM_ZHI_LIUHE.get(zhi1) == zhi2:
                 rizhi_relation = f"{zhi1}{zhi2}六合（暗合吸引）"
                 rizhi_score = 90
-            elif ZHI_LIUCHONG.get(zhi1) == zhi2:
+            elif _UDM_ZHI_CHONG.get(zhi1) == zhi2:
                 rizhi_relation = f"{zhi1}{zhi2}六冲（核心矛盾）"
                 rizhi_score = 20
             elif zhi1 == zhi2:
