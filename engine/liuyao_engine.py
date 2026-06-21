@@ -710,6 +710,14 @@ class LiuYaoEngine(DivinationEngine):
         "巳": "申", "申": "巳", "午": "未", "未": "午",
     }
 
+    # 三合局：地支→(局名, 五行)  申子辰合水、寅午戌合火、巳酉丑合金、亥卯未合木
+    ZHI_SAN_HE = {
+        "子": ("水局", "水"), "申": ("水局", "水"), "辰": ("水局", "水"),
+        "午": ("火局", "火"), "寅": ("火局", "火"), "戌": ("火局", "火"),
+        "酉": ("金局", "金"), "巳": ("金局", "金"), "丑": ("金局", "金"),
+        "卯": ("木局", "木"), "亥": ("木局", "木"), "未": ("木局", "木"),
+    }
+
     SHENG = {'木': '火', '火': '土', '土': '金', '金': '水', '水': '木'}
     KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
     SHENG_REV = {v: k for k, v in SHENG.items()}
@@ -776,6 +784,8 @@ class LiuYaoEngine(DivinationEngine):
         - 六合：上卦与下卦地支形成六合关系
         - 世应冲：世爻与应爻地支相冲
         - 世应合：世爻与应爻地支相合
+        - 三合X局：六爻地支中三支组成三合局（水/火/金/木）
+        - 半合X局：六爻地支中有两支属于同一三合局（半合）
         """
         ge_ju = []
 
@@ -823,6 +833,27 @@ class LiuYaoEngine(DivinationEngine):
                     ge_ju.append('世应冲')
                 elif self.ZHI_HE.get(shi_zhi) == ying_zhi:
                     ge_ju.append('世应合')
+
+        # 4. 三合局（检查六爻中是否有三支组成三合局）
+        #    传统六爻重要格局：申子辰合水、寅午戌合火、巳酉丑合金、亥卯未合木
+        if lines and len(lines) == 6:
+            zhis = [l.get('dizhi', '') for l in lines]
+            # 统计各三合局出现的爻位
+            _san_he_groups = {}
+            for i, z in enumerate(zhis):
+                if not z or z not in self.ZHI_SAN_HE:
+                    continue
+                ju_name, ju_wx = self.ZHI_SAN_HE[z]
+                if ju_name not in _san_he_groups:
+                    _san_he_groups[ju_name] = {'wx': ju_wx, 'positions': []}
+                _san_he_groups[ju_name]['positions'].append(i + 1)
+
+            for ju_name, info in _san_he_groups.items():
+                pos_list = info['positions']
+                if len(pos_list) == 3:
+                    ge_ju.append(f'三合{ju_name}')
+                elif len(pos_list) == 2:
+                    ge_ju.append(f'半合{ju_name}')
 
         return ge_ju if ge_ju else ['普通']
 
