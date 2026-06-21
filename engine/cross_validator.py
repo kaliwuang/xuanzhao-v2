@@ -84,6 +84,8 @@ class CrossValidator:
     def __init__(self, udm: DestinyModel):
         self.udm = udm
 
+    _cached_current_year = None
+
     def _get_birth_year(self) -> int:
         """从UDM获取出生公历年份，优先用birth_year字段，回退到corrected_time"""
         by = getattr(self.udm, 'birth_year', 0)
@@ -92,7 +94,13 @@ class CrossValidator:
         ct = getattr(self.udm, 'corrected_time', None)
         if ct and hasattr(ct, 'original'):
             return ct.original.year
-        return datetime.now().year  # 最终回退：用当前年份（影响最小）
+        return self._get_current_year()  # 最终回退：用当前年份（影响最小）
+
+    def _get_current_year(self) -> int:
+        """缓存当前年份，避免多次datetime.now()调用"""
+        if CrossValidator._cached_current_year is None:
+            CrossValidator._cached_current_year = datetime.now().year
+        return CrossValidator._cached_current_year
 
     def validate(self) -> dict:
         results = {
@@ -153,7 +161,7 @@ class CrossValidator:
     def _validate_dayun(self) -> List[ConsensusItem]:
         """大运流年交叉验证 — 利用八字详细大运数据（十神/藏干/纳音/长生/神煞/流年）"""
         results = []
-        current_year = datetime.now().year  # 缓存当前年份，避免重复调用
+        current_year = self._get_current_year()  # 缓存当前年份，避免重复调用
         
         # 检查八字大运数据
         bazi_dayun = self.udm.dayun if self.udm.dayun else []
@@ -3643,7 +3651,7 @@ class CrossValidator:
         bazi_dayun = self.udm.dayun or []
 
         if bazi_dayun:
-            current_year = datetime.now().year
+            current_year = self._get_current_year()
             birth_year = self._get_birth_year()
             age = current_year - birth_year + 1  # 虚岁
 
