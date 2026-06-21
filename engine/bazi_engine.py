@@ -1150,7 +1150,7 @@ class BaziEngine(DivinationEngine):
         tianyi_found = set()
         for pos_idx, z in enumerate(all_zhis):
             if z in tianyi_zhis:
-                pos = ['年','月','日','时'][pos_idx]
+                pos = POS_NAMES[pos_idx]
                 shensha.append(f'天乙贵人（{pos}支{z}）')
                 tianyi_found.add(z)
         if len(tianyi_found) >= 2:
@@ -1179,13 +1179,13 @@ class BaziEngine(DivinationEngine):
                 # 天德为天干，查四柱天干
                 for g_pos_idx, g in enumerate(all_gans):
                     if g == tiande:
-                        pos = ['年','月','日','时'][g_pos_idx]
+                        pos = POS_NAMES[g_pos_idx]
                         shensha.append(f'天德贵人（{pos}干{g}）')
             else:
                 # 天德为地支（如巳、申），查四柱地支
                 for pos_idx, z in enumerate(all_zhis):
                     if z == tiande:
-                        pos = ['年','月','日','时'][pos_idx]
+                        pos = POS_NAMES[pos_idx]
                         shensha.append(f'天德贵人（{pos}支{z}）')
 
         # 7~9. 文昌/红艳/禄神（以日干查地支，统一用 _scan_zhi 扫描四柱）
@@ -1206,7 +1206,7 @@ class BaziEngine(DivinationEngine):
         if yuede:
             for g_pos_idx, g in enumerate(all_gans):
                 if g == yuede:
-                    pos = ['年','月','日','时'][g_pos_idx]
+                    pos = POS_NAMES[g_pos_idx]
                     shensha.append(f'月德（{pos}干{g}）')
 
         # 13. 太极贵人（以日干和年干查四支，复用模块级 SHENSHA_TAIJI_MAP）
@@ -1236,12 +1236,12 @@ class BaziEngine(DivinationEngine):
                 if tiande_he in TIANGAN_SET:
                     for g_pos_idx, g in enumerate(all_gans):
                         if g == tiande_he:
-                            pos = ['年','月','日','时'][g_pos_idx]
+                            pos = POS_NAMES[g_pos_idx]
                             shensha.append(f'天德合（{pos}干{g}）')
                 else:
                     for pos_idx, z in enumerate(all_zhis):
                         if z == tiande_he:
-                            pos = ['年','月','日','时'][pos_idx]
+                            pos = POS_NAMES[pos_idx]
                             shensha.append(f'天德合（{pos}支{z}）')
 
         # 17. 月德合（以月支查天干，月德的六合）
@@ -1250,7 +1250,7 @@ class BaziEngine(DivinationEngine):
         if yuede_he:
             for g_pos_idx, g in enumerate(all_gans):
                 if g == yuede_he:
-                    pos = ['年','月','日','时'][g_pos_idx]
+                    pos = POS_NAMES[g_pos_idx]
                     shensha.append(f'月德合（{pos}干{g}）')
 
         # 18. 天赦（以月支查日柱）— 使用模块级 SHENSHA_TIANSHE_MAP
@@ -1313,7 +1313,7 @@ class BaziEngine(DivinationEngine):
         if xunkong:
             for pos_idx, z in enumerate(all_zhis):
                 if z in xunkong:
-                    pos = ['年','月','日','时'][pos_idx]
+                    pos = POS_NAMES[pos_idx]
                     shensha.append(f'空亡（{pos}支{z}）')
 
         # 36. 双华盖（以年支和日支查，复用上方第2步的华盖目标地支）
