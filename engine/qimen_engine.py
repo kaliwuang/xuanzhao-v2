@@ -531,10 +531,10 @@ class QiMenEngine(DivinationEngine):
                     xiong_ge.append({'name': '悖格', 'gong': g,
                                      'desc': f'{tp}({tp_wx})克{dp}({dp_wx})，天克地，行事多阻'})
 
-            # 玉女守门
-            if tp == '丁' and men and men != '':
+            # 玉女守门：丁奇加值使门所在宫位（传统规则：丁奇落在值使门宫位）
+            if zhi_shi_door and men == zhi_shi_door and tp == '丁':
                 ji_ge.append({'name': '玉女守门', 'gong': g,
-                              'desc': f'丁奇守{men}，百事皆宜，利于文书'})
+                              'desc': f'丁奇守值使{men}，百事皆宜，利于文书'})
 
             # 三奇得使：天盘乙/丙丁落在值使门所在宫位，为奇门大吉之格
             # 规则：天盘为三奇（乙丙丁）之一 + 该宫八门恰好是值使门
