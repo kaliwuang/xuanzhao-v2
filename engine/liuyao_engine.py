@@ -574,20 +574,28 @@ class LiuYaoEngine(DivinationEngine):
                 'is_ying': yao.get('is_ying', False),
             })
 
+        # 构造卦码字符串（与najia路径格式一致：从初爻到上爻的0/1序列）
+        mark_str = ''.join(str(b) for b in ben_lines)
+        bian_mark_str = ''.join(str(b) for b in bian_lines_raw)
+
         result = {
             'engine': self.name,
             'engine_en': self.name_en,
             'ben_gua': {
                 'name': ben_name,
+                'mark': mark_str,
                 'shang': shang_gua,
                 'xia': xia_gua,
+                'gong': shang_gua,  # 卦宫名（与najia路径一致，京房八宫以上卦为宫）
                 'shang_wuxing': self.GUA_WUXING.get(shang_gua, ''),
                 'xia_wuxing': self.GUA_WUXING.get(xia_gua, ''),
             },
             'bian_gua': {
                 'name': bian_name,
+                'mark': bian_mark_str,
                 'shang': bian_shang,
                 'xia': bian_xia,
+                'gong': bian_shang,
             },
             'dong_yao': [dong_yao_pos],
             'shi': shi_pos,
