@@ -3,8 +3,11 @@
 import swisseph as swe
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import logging
 
 from .base import DivinationEngine, CorrectedTime
+
+logger = logging.getLogger(__name__)
 
 
 SIGN_NAMES = ['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼']
@@ -120,21 +123,29 @@ class AstroEngine(DivinationEngine):
         # Calculate planet positions (UTC-based)
         planets = {}
         for pname, pid in PLANETS.items():
-            # calc_ut returns (longitude, latitude, distance, speed_lon, ...)
-            result = swe.calc_ut(jd_utc, pid)
-            plon = result[0][0] if isinstance(result[0], (list, tuple)) else result[0]
-            plon = plon % 360.0
-            sign, degree, sign_idx = _sign_degree(plon)
-            house = _find_house(plon, list(cusps))
-            planets[pname] = {
-                'longitude': round(plon, 4),
-                'sign': sign,
-                'sign_index': sign_idx,
-                'degree': round(degree, 2),
-                'house': house,
-                'speed': round(result[0][3], 4) if isinstance(result[0], (list, tuple)) and len(result[0]) > 3 else 0,
-                'retrograde': (isinstance(result[0], (list, tuple)) and len(result[0]) > 3 and result[0][3] < 0),
-            }
+            try:
+                # calc_ut returns (longitude, latitude, distance, speed_lon, ...)
+                result = swe.calc_ut(jd_utc, pid)
+                plon = result[0][0] if isinstance(result[0], (list, tuple)) else result[0]
+                plon = plon % 360.0
+                sign, degree, sign_idx = _sign_degree(plon)
+                house = _find_house(plon, list(cusps))
+                planets[pname] = {
+                    'longitude': round(plon, 4),
+                    'sign': sign,
+                    'sign_index': sign_idx,
+                    'degree': round(degree, 2),
+                    'house': house,
+                    'speed': round(result[0][3], 4) if isinstance(result[0], (list, tuple)) and len(result[0]) > 3 else 0,
+                    'retrograde': (isinstance(result[0], (list, tuple)) and len(result[0]) > 3 and result[0][3] < 0),
+                }
+            except Exception as e:
+                logger.warning(f"占星：{pname}位置计算异常，跳过: {e}")
+                planets[pname] = {
+                    'longitude': 0, 'sign': '', 'sign_index': 0,
+                    'degree': 0, 'house': 0, 'speed': 0, 'retrograde': False,
+                    'error': str(e),
+                }
 
         # Sun/Moon signs and elements
         sun_sign = planets['太阳']['sign']
