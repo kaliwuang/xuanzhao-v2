@@ -831,8 +831,9 @@ class LiuYaoEngine(DivinationEngine):
         # 1. 伏吟/反吟（基于完整六爻地支对比——传统定义）
         if lines and bian_lines and len(lines) == 6 and len(bian_lines) == 6:
             # 伏吟：变卦与本卦所有爻地支完全相同（卦象不变）
+            # 防御空地支：所有爻都必须有有效地支才算伏吟
             all_same = all(
-                l.get('dizhi') == bl.get('dizhi')
+                l.get('dizhi') and l.get('dizhi') == bl.get('dizhi')
                 for l, bl in zip(lines, bian_lines)
             )
             if all_same:
