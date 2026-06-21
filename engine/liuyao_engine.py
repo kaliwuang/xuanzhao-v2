@@ -980,10 +980,8 @@ class LiuYaoEngine(DivinationEngine):
         year_offset = now.year - 1984  # 1984=甲子年
         gan_idx = year_offset % 10
         zhi_idx = year_offset % 12
-        TIANGAN = '甲乙丙丁戊己庚辛壬癸'
-        DIZHI = '子丑寅卯辰巳午未申酉戌亥'
-        _year_gan = TIANGAN[gan_idx]
-        _year_zhi = DIZHI[zhi_idx]
+        _year_gan = '甲乙丙丁戊己庚辛壬癸'[gan_idx]
+        _year_zhi = '子丑寅卯辰巳午未申酉戌亥'[zhi_idx]
         return self._analyze_tai_sui_lines(lines, now.year, _year_gan, _year_zhi)
 
     def _analyze_tai_sui_lines(self, lines: list, year: int, year_gan: str, year_zhi: str) -> dict:
