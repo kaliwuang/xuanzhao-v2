@@ -784,6 +784,30 @@ class LiuYaoEngine(DivinationEngine):
         """解释动爻数量的含义"""
         return self.DONG_YAO_MEANINGS.get(count, '动爻异常')
 
+    # 京房八宫游魂卦（各宫第7卦）——世在四爻，主游移不定
+    YOU_HUN_GUAS = frozenset({
+        "火地晋",     # 乾宫
+        "水天需",     # 坤宫
+        "泽风大过",   # 震宫
+        "山雷颐",     # 巽宫
+        "地火明夷",   # 坎宫
+        "天水讼",     # 离宫
+        "风泽中孚",   # 艮宫
+        "雷山小过",   # 兑宫
+    })
+
+    # 京房八宫归魂卦（各宫第8卦）——世在三爻，主回归落实
+    GUI_HUN_GUAS = frozenset({
+        "火天大有",   # 乾宫
+        "水地比",     # 坤宫
+        "泽雷随",     # 震宫
+        "山风蛊",     # 巽宫
+        "地水师",     # 坎宫
+        "天火同人",   # 离宫
+        "风山渐",     # 艮宫
+        "雷泽归妹",   # 兑宫
+    })
+
     def _identify_ge_ju(self, ben_name: str, bian_name: str,
                         lines: list, bian_lines: list,
                         shi_pos: int, ying_pos: int) -> list:
@@ -799,6 +823,8 @@ class LiuYaoEngine(DivinationEngine):
         - 世应合：世爻与应爻地支相合
         - 三合X局：六爻地支中三支组成三合局（水/火/金/木）
         - 半合X局：六爻地支中有两支属于同一三合局（半合）
+        - 游魂卦：京房八宫第7卦，事有游移反复
+        - 归魂卦：京房八宫第8卦，事归定局
         """
         ge_ju = []
 
@@ -869,6 +895,12 @@ class LiuYaoEngine(DivinationEngine):
                     ge_ju.append(f'三合{ju_name}')
                 elif distinct_count == 2:
                     ge_ju.append(f'半合{ju_name}')
+
+        # 5. 游魂卦/归魂卦（京房八宫核心格局——反映事物发展周期的阶段）
+        if ben_name in self.YOU_HUN_GUAS:
+            ge_ju.append('游魂卦')
+        elif ben_name in self.GUI_HUN_GUAS:
+            ge_ju.append('归魂卦')
 
         return ge_ju if ge_ju else ['普通']
 
