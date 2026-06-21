@@ -1507,6 +1507,64 @@ class CrossValidator:
                             ))
                             break
 
+        # 大六壬：看初传天将和用神六亲（财运信号）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            if yong_shen:
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                chu_liuqin = yong_shen.get("chu_chuan_liuqin", "")
+                ji_xiong = yong_shen.get("jiang_ji_xiong", "")
+
+                # 天将→财运含义映射（六壬传统财运解读）
+                _WEALTH_JIANG = {
+                    "青龍": ("初传见青龙，财喜临门，求财有贵人助力，正偏财运俱佳", ConfidenceLevel.HIGH),
+                    "龍": ("初传见青龙，财喜临门，求财有贵人助力，正偏财运俱佳", ConfidenceLevel.HIGH),
+                    "龙": ("初传见青龙，财喜临门，求财有贵人助力，正偏财运俱佳", ConfidenceLevel.HIGH),
+                    "六合": ("初传见六合，利于合作求财，合伙经营或资源共享有收益", ConfidenceLevel.MEDIUM),
+                    "合": ("初传见六合，利于合作求财，合伙经营或资源共享有收益", ConfidenceLevel.MEDIUM),
+                    "貴人": ("初传见贵人，求财有贵人提携，人脉带来财富机会", ConfidenceLevel.MEDIUM),
+                    "貴": ("初传见贵人，求财有贵人提携，人脉带来财富机会", ConfidenceLevel.MEDIUM),
+                    "太常": ("初传见太常，衣食丰足，稳定型收入有保障", ConfidenceLevel.MEDIUM),
+                    "常": ("初传见太常，衣食丰足，稳定型收入有保障", ConfidenceLevel.MEDIUM),
+                    "白虎": ("初传见白虎，求财有波折和风险，需防意外破财或投资损失", ConfidenceLevel.MEDIUM),
+                    "虎": ("初传见白虎，求财有波折和风险，需防意外破财或投资损失", ConfidenceLevel.MEDIUM),
+                    "玄武": ("初传见玄武，需防暗中损耗或钱财纠纷，投资需谨慎甄别", ConfidenceLevel.LOW),
+                    "武": ("初传见玄武，需防暗中损耗或钱财纠纷，投资需谨慎甄别", ConfidenceLevel.LOW),
+                }
+
+                if chu_jiang in _WEALTH_JIANG:
+                    desc, conf = _WEALTH_JIANG[chu_jiang]
+                    items.append(ConsensusItem(
+                        aspect="财运",
+                        finding=desc,
+                        supporting_methods=["大六壬"],
+                        confidence=conf,
+                    ))
+
+                # 用神六亲→财运方向
+                if chu_liuqin in ("妻财", "财"):
+                    items.append(ConsensusItem(
+                        aspect="财运",
+                        finding="六壬初传见财爻，当前财运信号明确，利于经营和投资类决策",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                elif chu_liuqin == "子孙":
+                    items.append(ConsensusItem(
+                        aspect="财运",
+                        finding="六壬初传子孙爻，生财有源，创意和技术带来收入，偏财运佳",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                elif chu_liuqin == "兄弟":
+                    items.append(ConsensusItem(
+                        aspect="财运",
+                        finding="六壬初传兄弟爻，求财有竞争，需防合伙纠纷或同行挤压利润",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
         return items
 
     def _validate_academic(self) -> List[ConsensusItem]:
