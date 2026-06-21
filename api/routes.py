@@ -207,7 +207,7 @@ def get_engines_status():
                 "name": eng.name,
                 "name_en": eng.name_en,
                 "priority": eng.priority,
-                "available": getattr(eng, '_available', True),
+                "available": getattr(eng, '_available', getattr(eng, '_najia_available', True)),
             })
         return {"engines": engines, "count": len(engines)}
     except Exception as e:
