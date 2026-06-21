@@ -317,6 +317,8 @@ class ZiWeiEngine(DivinationEngine):
             })
 
         # 年干四化（生年四化）
+        # 注意：四化不仅限于主星——丙年文昌化科、戊年右弼化科、己年文曲化忌、
+        # 辛年文曲化科/文昌化忌、壬年左辅化科 均为辅星（minor_stars）四化
         sihua = {}
         soul_star = _cn_star(r.soul, 'major') if r.soul else ''
         body_star = _cn_star(r.body, 'major') if r.body else ''
@@ -327,6 +329,11 @@ class ZiWeiEngine(DivinationEngine):
                     mutagen_map = {'禄': '禄', '权': '权', '科': '科', '忌': '忌'}
                     if s.mutagen in mutagen_map:
                         sihua[mutagen_map[s.mutagen]] = _cn_star(s.name, 'major')
+            for s in p.minor_stars:
+                if s.mutagen:
+                    mutagen_map = {'禄': '禄', '权': '权', '科': '科', '忌': '忌'}
+                    if s.mutagen in mutagen_map:
+                        sihua[mutagen_map[s.mutagen]] = _cn_star(s.name, 'minor')
 
         # 自化汇总（哪些宫位有自化禄/权/科/忌）
         self_hua_map = {'禄': [], '权': [], '科': [], '忌': []}
