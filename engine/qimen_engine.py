@@ -140,7 +140,7 @@ class QiMenEngine(DivinationEngine):
         pillar_date = time.bazi_day_pillar_date
         bazi_hour = time.bazi_hour
         solar_dt = datetime(pillar_date.year, pillar_date.month, pillar_date.day,
-                            bazi_hour, time.original.minute, 0)
+                            bazi_hour, time.true_solar.minute, 0)
 
         # 1. 节气 & 局数
         jieqi, ju, yin_yang = self._get_jieqi_info(solar_dt)
