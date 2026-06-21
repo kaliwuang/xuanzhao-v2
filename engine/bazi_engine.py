@@ -1394,7 +1394,7 @@ class BaziEngine(DivinationEngine):
             strength = '身强'
             # 喜：克我(官杀) + 我克(财) + 我生(食伤泄)
             base_xi = [WUXING_BEI_KE[day_wx], WUXING_KE[day_wx], WUXING_SHENG[day_wx]]
-            # 忌：生我(印) + 同我(比劫)
+            # 忌：同我(比劫) + 生我(印)
             base_ji = [day_wx, WUXING_BEI_SHENG[day_wx]]  # 同我 + 生我
         elif ratio >= self.BALANCED_THRESHOLD:
             strength = '中和'
