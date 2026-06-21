@@ -895,7 +895,6 @@ class BaziEngine(DivinationEngine):
     def _extract_features(self, year, month, day, time, shishen_gan, hidden_gans) -> list:
         """提取命盘核心特征"""
         features = []
-        ba = {"year": year, "month": month, "day": day, "time": time}
 
         # 1. 冲
         zhis = [p.zhi for p in [year, month, day, time]]
