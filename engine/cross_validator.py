@@ -921,8 +921,6 @@ class CrossValidator:
 
             max_wx = max(counts, key=counts.get)
             min_wx = min(counts, key=counts.get)
-            # 用含藏干的数据判断缺失（更准确）
-            hidden_min_wx = min(hidden_counts, key=hidden_counts.get) if hidden_counts else min_wx
 
             if counts[max_wx] >= 4:
                 organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
