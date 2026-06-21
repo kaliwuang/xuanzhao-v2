@@ -539,7 +539,8 @@ class QiMenEngine(DivinationEngine):
             # 三奇得使：天盘乙/丙丁落在值使门所在宫位，为奇门大吉之格
             # 规则：天盘为三奇（乙丙丁）之一 + 该宫八门恰好是值使门
             # 含义：三奇得使，天地人三才相合，主凡事有贵人暗助，谋事易成
-            if zhi_shi_door and men == zhi_shi_door and tp in ('乙', '丙', '丁'):
+            # 注意：丁奇+值使门已由上方"玉女守门"单独判断，此处排除避免重复
+            if zhi_shi_door and men == zhi_shi_door and tp in ('乙', '丙'):
                 ji_ge.append({'name': '三奇得使', 'gong': g,
                               'desc': f'{tp}奇得值使{men}，三才相合，贵人暗助，百事可为'})
 
