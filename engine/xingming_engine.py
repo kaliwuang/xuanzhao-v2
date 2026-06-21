@@ -365,6 +365,11 @@ class XingMingEngine:
         Returns:
             dict with keys: wuge, sancai, score, analysis, details
         """
+        # 输入校验
+        if not surname or not given_name:
+            return {"error": "姓名不能为空", "wuge": {}, "sancai": {}, "score": 0, "analysis": ""}
+        if not any('\u4e00' <= c <= '\u9fff' for c in surname + given_name):
+            return {"error": "姓名必须包含汉字", "wuge": {}, "sancai": {}, "score": 0, "analysis": ""}
         # Determine if compound surname
         is_compound = self._is_compound_surname(surname)
         surname_len = len(surname)
