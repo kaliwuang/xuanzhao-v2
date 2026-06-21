@@ -348,9 +348,13 @@ class ZiWeiEngine(DivinationEngine):
         dai_xian = []
 
         def _safe_date_str(year: int, month: int, day: int) -> str:
-            """安全构造日期字符串，2月29日在非闰年自动回退到28日"""
+            """安全构造日期字符串，自动回退到合法日期"""
+            # 月份防御
+            month = max(1, min(12, month))
             _, last_day = calendar.monthrange(year, month)
-            return f'{year}-{month:02d}-{min(day, last_day):02d}'
+            # 日期防御（clamp到1~月末）
+            day = max(1, min(day, last_day))
+            return f'{year}-{month:02d}-{day:02d}'
 
         # 计算当前年份（供大限和流年共用，避免重复调用 datetime.now()）
         current_year = datetime.now().year
