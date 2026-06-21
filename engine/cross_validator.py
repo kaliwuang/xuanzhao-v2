@@ -88,14 +88,14 @@ class CrossValidator:
     _cached_current_year_ts = 0  # 缓存时间戳，跨年时自动刷新
 
     def _get_birth_year(self) -> int:
-        """从UDM获取出生公历年份，优先用birth_year字段，回退到corrected_time"""
+        """从UDM获取出生公历年份，优先用birth_year字段，回退到corrected_time。返回0表示未知。"""
         by = getattr(self.udm, 'birth_year', 0)
         if by:
             return by
         ct = getattr(self.udm, 'corrected_time', None)
         if ct and hasattr(ct, 'original'):
             return ct.original.year
-        return self._get_current_year()  # 最终回退：用当前年份（影响最小）
+        return 0  # 未知出生年份，调用方应检查并跳过年龄相关计算
 
     def _get_current_year(self) -> int:
         """缓存当前年份，跨年时自动刷新（检查年份变化+24小时双条件）"""
@@ -213,6 +213,8 @@ class CrossValidator:
         try:
             if bazi_xiyong_raw and ziwei_dayun:
                 birth_year = self._get_birth_year()
+                if not birth_year:
+                    return items  # 出生年份未知，跳过大运年龄匹配
                 age = current_year - birth_year + 1  # 虚岁
                 for dy in ziwei_dayun:
                     start = dy.get("start_age", 0)
@@ -231,6 +233,8 @@ class CrossValidator:
         # ── 新增：利用八字详细大运数据做深层互证 ──
         if bazi_dayun:
             birth_year = self._get_birth_year()
+            if not birth_year:
+                return items  # 出生年份未知，跳过大运年龄匹配
             age = current_year - birth_year + 1  # 虚岁
 
             # 预计算十神→五行映射（仅依赖日主五行，循环外一次性构建）
