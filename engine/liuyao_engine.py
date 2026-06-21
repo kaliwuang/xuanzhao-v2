@@ -956,6 +956,10 @@ class LiuYaoEngine(DivinationEngine):
             _dz = _line.get('dizhi', '')
             if _dz == _year_zhi:
                 _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '太岁临爻'})
+            elif self.ZHI_HE.get(_dz) == _year_zhi:
+                _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六合太岁'})
+            elif self.ZHI_CHONG.get(_dz) == _year_zhi:
+                _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六冲太岁'})
 
         return {
             'year': now.year,
