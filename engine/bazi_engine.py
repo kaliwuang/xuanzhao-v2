@@ -1412,19 +1412,20 @@ class BaziEngine(DivinationEngine):
         # 32. 天罗地网（以纳音五行+年支/日支查）
         # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
         # 注：部分现代派系简化为所有命格均查，此处按传统纳音五行判定
-        _TL_WUXING_CHARS = {'金', '木', '水', '火', '土'}
-        _tl_nayin_str = day_pillar.nayin or ''
-        _tl_nayin_wx = ''
-        for _wx in _TL_WUXING_CHARS:
-            if _wx in _tl_nayin_str:
-                _tl_nayin_wx = _wx
+        # 提取纳音五行（复用于天罗地网和天转煞）
+        _NAYIN_WX_CHARS = {'金', '木', '水', '火', '土'}
+        _nayin_str = day_pillar.nayin or ''
+        _nayin_wx = ''
+        for _wx in _NAYIN_WX_CHARS:
+            if _wx in _nayin_str:
+                _nayin_wx = _wx
                 break
         tianluo_set = {'戌', '亥'}
         diwang_set = {'辰', '巳'}
         ref_zhis = {year_zhi, day_zhi}
-        if _tl_nayin_wx == '火' and ref_zhis & tianluo_set:
+        if _nayin_wx == '火' and ref_zhis & tianluo_set:
             shensha.append('天罗')
-        if _tl_nayin_wx in ('水', '土') and ref_zhis & diwang_set:
+        if _nayin_wx in ('水', '土') and ref_zhis & diwang_set:
             shensha.append('地网')
 
         # 33. 十恶大败（以日柱查）— 使用模块级 SHIBA_EBA
@@ -1497,14 +1498,8 @@ class BaziEngine(DivinationEngine):
 
         # NOTE: 天赦日检测已在上方第18条天赦中统一处理（两者判定条件完全一致：春戊寅/夏甲午/秋戊申/冬甲子）
 
-        # 44. 天转煞（以日柱纳音五行查）— 使用模块级 SHENSHA_TIANZHUAN_MAP
-        nayin_wx = ''
-        nayin_str = day_pillar.nayin or ''
-        for wx in ['金','木','水','火','土']:
-            if wx in nayin_str:
-                nayin_wx = wx
-                break
-        tianzhuan_ri = SHENSHA_TIANZHUAN_MAP.get(nayin_wx, '')
+        # 44. 天转煞（以日柱纳音五行查）— 使用模块级 SHENSHA_TIANZHUAN_MAP（复用上方_nayin_wx）
+        tianzhuan_ri = SHENSHA_TIANZHUAN_MAP.get(_nayin_wx, '')
         if day_gz == tianzhuan_ri:
             shensha.append('天转煞')
 
