@@ -153,12 +153,12 @@ class TaiYiEngine(DivinationEngine):
         ba_men = r.get('八門值事', '')
         ba_men_dist = r.get('八門分佈', {})
 
-        # 干支
-        ganzhi = r.get('干支', [])
-        year_gz = ganzhi[0] if len(ganzhi) > 0 else ''
-        month_gz = ganzhi[1] if len(ganzhi) > 1 else ''
-        day_gz = ganzhi[2] if len(ganzhi) > 2 else ''
-        hour_gz = ganzhi[3] if len(ganzhi) > 3 else ''
+        # 干支（安全处理None值）
+        ganzhi = r.get('干支') or []
+        year_gz = ganzhi[0] if isinstance(ganzhi, (list, tuple)) and len(ganzhi) > 0 else ''
+        month_gz = ganzhi[1] if isinstance(ganzhi, (list, tuple)) and len(ganzhi) > 1 else ''
+        day_gz = ganzhi[2] if isinstance(ganzhi, (list, tuple)) and len(ganzhi) > 2 else ''
+        hour_gz = ganzhi[3] if isinstance(ganzhi, (list, tuple)) and len(ganzhi) > 3 else ''
 
         # 纪元
         ji_yuan = r.get('紀元', '')
