@@ -1361,6 +1361,62 @@ class CrossValidator:
                         confidence=ConfidenceLevel.LOW,
                     ))
 
+        # ── 跨系统健康共识检测 ──
+        # 当多个系统指向同一身体区域时，信号互相印证，置信度大幅提升
+        # 1) 八字五行过旺/缺失 vs 奇门天芮病星落宫
+        if counts and self.udm.qimen_chart:
+            max_wx = max(counts, key=counts.get)
+            min_wx = min(counts, key=counts.get)
+            bazi_wx_issue = max_wx if counts[max_wx] >= 4 else (min_wx if counts[min_wx] == 0 else None)
+
+            if bazi_wx_issue:
+                bazi_organs = self.WUXING_ORGAN.get(bazi_wx_issue, "")
+                # 五行→奇门宫号映射（天芮落此宫暗示该五行方向有病灶）
+                WX_TO_GONG = {"水": 1, "土": 2, "木": 3, "火": 9, "金": 6}
+                expected_gong = WX_TO_GONG.get(bazi_wx_issue, 0)
+
+                qm = self.udm.qimen_chart
+                jiu_xing = qm.get("jiu_xing", {})
+                tianrui_gong = None
+                for g, star in jiu_xing.items():
+                    if star == "天芮":
+                        tianrui_gong = int(g) if str(g).isdigit() else 0
+                        break
+
+                if tianrui_gong and expected_gong and tianrui_gong == expected_gong:
+                    # 天芮病星恰好落在八字偏颇五行对应的宫位
+                    issue_desc = "过旺" if counts[bazi_wx_issue] >= 4 else "缺失"
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"八字{bazi_wx_issue}{issue_desc}（{counts[bazi_wx_issue]}个），奇门天芮病星同落{bazi_wx_issue}行对应宫位，{bazi_organs}健康风险高度一致，需重点关注",
+                        supporting_methods=["八字", "奇门"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+
+        # 2) 八字五行过旺 vs 六爻官鬼爻五行相同（病邪指向与先天偏颇一致）
+        if counts and self.udm.liuyao_chart:
+            max_wx = max(counts, key=counts.get)
+            if counts[max_wx] >= 4:
+                ly = self.udm.liuyao_chart
+                ly_lines = ly.get("lines", [])
+                ri_yue = ly.get("ri_yue_jian", {})
+                ri_ws = ri_yue.get("ri_wangshuai", {})
+                for gg in ly_lines:
+                    if gg.get("liu_qin") != "官鬼":
+                        continue
+                    gg_wx = gg.get("wuxing", "")
+                    gg_dizhi = gg.get("dizhi", "")
+                    gg_wang = ri_ws.get(gg_wx, "").startswith(("旺", "相")) if gg_wx and ri_ws else False
+                    if gg_wang and gg_wx == max_wx:
+                        organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
+                        items.append(ConsensusItem(
+                            aspect="健康体质",
+                            finding=f"八字{max_wx}过旺（{counts[max_wx]}个），六爻官鬼爻{gg_dizhi}（{gg_wx}）旺相同属{max_wx}，{organs}健康风险双重印证",
+                            supporting_methods=["八字", "六爻"],
+                            confidence=ConfidenceLevel.HIGH,
+                        ))
+                        break
+
         return items
 
     def _validate_wealth(self) -> List[ConsensusItem]:
