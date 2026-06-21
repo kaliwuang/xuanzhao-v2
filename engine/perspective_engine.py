@@ -917,6 +917,24 @@ class PerspectiveEngine:
             yj = method_data.get("yue_jiang", "")
             if yj:
                 key_points.append(f"月将{yj}")
+                reasoning_parts.append(f"月将：{yj}")
+            # 节气
+            jieqi = method_data.get("jieqi", "")
+            if jieqi:
+                reasoning_parts.append(f"节气：{jieqi}")
+            # 四课
+            si_ke = method_data.get("si_ke", [])
+            if si_ke:
+                sk_names = []
+                for sk in si_ke[:4]:
+                    if isinstance(sk, dict):
+                        sk_names.append(sk.get("name", sk.get("gan_zhi", str(sk))))
+                    else:
+                        sk_names.append(str(sk))
+                if sk_names:
+                    reasoning_parts.append(f"四课：{'、'.join(sk_names)}")
+                    key_points.append(f"四课{'、'.join(sk_names[:2])}")
+            # 三传（初传→中传→末传，大六壬核心信息）
             sc = method_data.get("san_chuan", [])
             if sc:
                 def _sc_name(s):
@@ -925,12 +943,103 @@ class PerspectiveEngine:
                     if isinstance(s, (list, tuple)) and s:
                         return str(s[0])
                     return str(s)
-                key_points.append(f"三传{'→'.join(_sc_name(s) for s in sc[:3])}")
+                sc_str = '→'.join(_sc_name(s) for s in sc[:3])
+                key_points.append(f"三传{sc_str}")
+                reasoning_parts.append(f"三传：{sc_str}")
+            # 天将（初传天将尤其重要）
+            tian_jiang = method_data.get("tian_jiang", {})
+            if tian_jiang:
+                first_jiang = ""
+                if isinstance(tian_jiang, dict):
+                    first_jiang = tian_jiang.get("1", tian_jiang.get("初传", ""))
+                    if not first_jiang and tian_jiang:
+                        first_jiang = next(iter(tian_jiang.values()), "")
+                if first_jiang:
+                    key_points.append(f"初传天将{first_jiang}")
+                    reasoning_parts.append(f"初传天将：{first_jiang}")
+            # 格局
+            ge_ju = method_data.get("ge_ju", "")
+            if ge_ju:
+                reasoning_parts.append(f"格局：{ge_ju}")
+                key_points.append(ge_ju)
+            # 驿马
+            day_ma = method_data.get("day_ma", "")
+            if day_ma:
+                reasoning_parts.append(f"驿马：{day_ma}")
+            # 用神（大六壬核心——决定分析重点）
+            yong_shen = method_data.get("yong_shen", {})
+            if yong_shen:
+                ys_name = yong_shen.get("yong_shen_name", yong_shen.get("name", ""))
+                if ys_name:
+                    reasoning_parts.append(f"用神：{ys_name}")
+                    key_points.append(f"用神{ys_name}")
+                chu_liuqin = yong_shen.get("chu_chuan_liuqin", "")
+                if chu_liuqin:
+                    liuqin_desc = {
+                        "官鬼": "用神为官鬼，主权威、压力、事业变动",
+                        "父母": "用神为父母，主文书、庇护、劳碌",
+                        "兄弟": "用神为兄弟，主竞争、合作、破耗",
+                        "子孙": "用神为子孙，主解忧、创新、克官",
+                        "妻财": "用神为妻财，主收益、感情、务实",
+                        "财": "用神为财，主收益、务实",
+                    }
+                    desc = liuqin_desc.get(chu_liuqin, f"用神六亲：{chu_liuqin}")
+                    reasoning_parts.append(desc)
+                jiang_jx = yong_shen.get("jiang_ji_xiong", "")
+                if jiang_jx:
+                    reasoning_parts.append(f"初传天将吉凶：{jiang_jx}")
+            # 四课分析
+            si_ke_analysis = method_data.get("si_ke_analysis", {})
+            if si_ke_analysis:
+                sk_summary = si_ke_analysis.get("summary", si_ke_analysis.get("finding", ""))
+                if sk_summary:
+                    reasoning_parts.append(f"四课分析：{sk_summary}")
 
         elif method == "太乙":
             tg = method_data.get("taiyi_gong", "")
             if tg:
                 key_points.append(f"太乙{tg}宫")
+                reasoning_parts.append(f"太乙落宫：{tg}")
+            # 局名
+            ju_name = method_data.get("ju_name", "")
+            if ju_name:
+                reasoning_parts.append(f"格局：{ju_name}")
+                key_points.append(ju_name)
+            # 阴阳遁
+            yin_yang = method_data.get("yin_yang", "")
+            if yin_yang:
+                reasoning_parts.append(f"遁法：{yin_yang}")
+            # 积年（太乙神数核心参数）
+            ji_nian = method_data.get("ji_nian", 0)
+            if ji_nian:
+                reasoning_parts.append(f"积年：{ji_nian}")
+            # 三基（天地人三基，太乙核心框架）
+            san_ji = method_data.get("san_ji", {})
+            if san_ji:
+                ji_parts = []
+                for key in ("天基", "地基", "人基"):
+                    val = san_ji.get(key, "")
+                    if val:
+                        ji_parts.append(f"{key}={val}")
+                if ji_parts:
+                    reasoning_parts.append(f"三基：{'，'.join(ji_parts)}")
+                    key_points.append(f"三基{'、'.join(ji_parts[:2])}")
+            # 主算与客算（太乙推算核心）
+            zhu_suan = method_data.get("zhu_suan", [])
+            ke_suan = method_data.get("ke_suan", [])
+            if zhu_suan:
+                zhu_str = ', '.join(str(s) for s in zhu_suan[:3])
+                reasoning_parts.append(f"主算：{zhu_str}")
+                key_points.append(f"主算{zhu_str}")
+            if ke_suan:
+                ke_str = ', '.join(str(s) for s in ke_suan[:3])
+                reasoning_parts.append(f"客算：{ke_str}")
+            # 算分析（吉凶判断）
+            suan_analysis = method_data.get("suan_analysis", {})
+            if suan_analysis:
+                suan_jx = suan_analysis.get("ji_xiong", suan_analysis.get("summary", ""))
+                if suan_jx:
+                    reasoning_parts.append(f"算分析：{suan_jx}")
 
         # 2. 根据人物阵营(faction)和名言生成差异化stance
         faction = figure.faction if hasattr(figure, 'faction') else "其他"
