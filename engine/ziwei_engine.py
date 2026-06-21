@@ -361,6 +361,8 @@ class ZiWeiEngine(DivinationEngine):
             for test_age in range(start_age, 100, 10):
                 test_year = birth_year + test_age - 1  # 虚岁
                 try:
+                    if not birth_dt:
+                        break
                     h = r.horoscope(_safe_date_str(test_year, birth_dt.month, birth_dt.day), time_index)
                     dx = h.decadal
                     stem_en = (dx.heavenly_stem or '').replace('Heavenly', '')
