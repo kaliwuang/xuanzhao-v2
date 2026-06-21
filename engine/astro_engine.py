@@ -223,7 +223,8 @@ class AstroEngine(DivinationEngine):
             ketu_sign, ketu_deg, _ = _sign_degree(ketu_lon)
             north_node = {'longitude': round(rahu_lon, 4), 'sign': rahu_sign, 'degree': round(rahu_deg, 2), 'house': _find_house(rahu_lon, list(cusps))}
             south_node = {'longitude': round(ketu_lon, 4), 'sign': ketu_sign, 'degree': round(ketu_deg, 2), 'house': _find_house(ketu_lon, list(cusps))}
-        except Exception:
+        except Exception as e:
+            logger.debug(f"月交点计算异常: {e}")
             north_node = {}
             south_node = {}
 

@@ -565,7 +565,8 @@ class BaziEngine(DivinationEngine):
                     try:
                         start_age = int(d.getStartAge())
                         end_age = int(d.getEndAge())
-                    except Exception:
+                    except Exception as _age_err:
+                        logger.debug(f"大运起止年龄获取异常，回退到年份差计算: {_age_err}")
                         start_age = abs_start - birth_year + 1  # 虚岁
                         end_age = start_age + 9
 
