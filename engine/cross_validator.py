@@ -470,6 +470,25 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
+        # 八字：特征组合→事业格局信号
+        if self.udm.features:
+            career_patterns = [
+                ("官印相生", "体制内发展有利，稳中有升，适合公务员或大企业", ConfidenceLevel.HIGH),
+                ("杀印相生", "权威有根基，适合管理层或高压岗位", ConfidenceLevel.HIGH),
+                ("财官双美", "名利兼收，务实进取，适合商业或金融", ConfidenceLevel.HIGH),
+                ("伤官生财", "才华转化为财富，适合创业或技术型商业", ConfidenceLevel.MEDIUM),
+                ("食神生财", "稳健求财，适合实业或服务业", ConfidenceLevel.MEDIUM),
+                ("伤官见官", "才华与规矩冲突，宜以技立身而非从政", ConfidenceLevel.MEDIUM),
+                ("官杀混杂", "事业需防多头管理，宜化繁为简", ConfidenceLevel.MEDIUM),
+                ("食神制杀", "化压力为动力，逆境中见能力，适合竞争性行业", ConfidenceLevel.MEDIUM),
+            ]
+            for pattern, desc, conf in career_patterns:
+                if any(pattern in f for f in self.udm.features):
+                    items.append(ConsensusItem(
+                        aspect="事业方向", finding=desc,
+                        supporting_methods=["八字"], confidence=conf
+                    ))
+
         # 奇门：看开门、生门
         if self.udm.qimen_chart:
             men = self.udm.qimen_chart.get("ba_men", {})
