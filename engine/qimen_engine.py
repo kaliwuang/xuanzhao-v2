@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .base import DivinationEngine
-from .time_engine import CorrectedTime
+from .time_engine import CorrectedTime, JIEQI_APPROX_TABLE
 
 
 class QiMenEngine(DivinationEngine):
@@ -211,24 +211,8 @@ class QiMenEngine(DivinationEngine):
         # 回退：按月日近似节气分界
         m, d = solar_dt.month, solar_dt.day
 
-        # 按月日近似节气分界
-        jieqi_table = [
-            (1, 6, '小寒'), (1, 20, '大寒'),
-            (2, 4, '立春'), (2, 19, '雨水'),
-            (3, 6, '惊蛰'), (3, 21, '春分'),
-            (4, 5, '清明'), (4, 20, '谷雨'),
-            (5, 6, '立夏'), (5, 21, '小满'),
-            (6, 6, '芒种'), (6, 21, '夏至'),
-            (7, 7, '小暑'), (7, 23, '大暑'),
-            (8, 7, '立秋'), (8, 23, '处暑'),
-            (9, 8, '白露'), (9, 23, '秋分'),
-            (10, 8, '寒露'), (10, 23, '霜降'),
-            (11, 7, '立冬'), (11, 22, '小雪'),
-            (12, 7, '大雪'), (12, 22, '冬至'),
-        ]
-
         current_jieqi = '冬至'
-        for jm, jd, name in jieqi_table:
+        for name, jm, jd in JIEQI_APPROX_TABLE:
             if (m > jm) or (m == jm and d >= jd):
                 current_jieqi = name
 

@@ -8,7 +8,7 @@
   3. 返回标准化的结构化数据供 UDM 使用
 """
 from .base import DivinationEngine
-from .time_engine import CorrectedTime
+from .time_engine import CorrectedTime, JIEQI_APPROX_TABLE
 from typing import Optional
 import logging
 
@@ -446,17 +446,8 @@ class LiuRenEngine(DivinationEngine):
             current_solar = lunar.getSolar()
             current_md = (current_solar.getMonth(), current_solar.getDay())
 
-            jieqi_dates = [
-                ("小寒", 1, 6), ("大寒", 1, 20), ("立春", 2, 4), ("雨水", 2, 19),
-                ("惊蛰", 3, 6), ("春分", 3, 21), ("清明", 4, 5), ("谷雨", 4, 20),
-                ("立夏", 5, 6), ("小满", 5, 21), ("芒种", 6, 6), ("夏至", 6, 21),
-                ("小暑", 7, 7), ("大暑", 7, 23), ("立秋", 8, 7), ("处暑", 8, 23),
-                ("白露", 9, 8), ("秋分", 9, 23), ("寒露", 10, 8), ("霜降", 10, 23),
-                ("立冬", 11, 7), ("小雪", 11, 22), ("大雪", 12, 7), ("冬至", 12, 22),
-            ]
-
             prev_name = "冬至"
-            for name, m, d in jieqi_dates:
+            for name, m, d in JIEQI_APPROX_TABLE:
                 if current_md < (m, d):
                     break
                 prev_name = name
