@@ -444,14 +444,6 @@ class LiuYaoEngine(DivinationEngine):
 
         return result
 
-    def _zhi_liuhe(self, zhi: str) -> str:
-        """地支六合"""
-        return self.ZHI_HE.get(zhi, '')
-
-    def _zhi_liuchong(self, zhi: str) -> str:
-        """地支六冲"""
-        return self.ZHI_CHONG.get(zhi, '')
-
     # ─── 自包含引擎（回退）──────────────────────────────
 
     def _analyze_builtin(self, time: CorrectedTime, gender: int) -> dict:

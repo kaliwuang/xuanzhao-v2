@@ -160,7 +160,7 @@ class QiMenEngine(DivinationEngine):
             'zhi_fu_gong': zhi_fu_gong,
             'zhi_shi': {'door': zhi_shi_door, 'gong': zhi_fu_gong},
             'solar_time': solar_dt.isoformat(),
-            'gender': gender,
+            'gender': '男' if gender == 1 else '女',
             'xun_kong': xun_kong,
             # 天地人三盘摘要（便于前端快速展示）
             'san_pan_summary': self._build_san_pan_summary(palaces),

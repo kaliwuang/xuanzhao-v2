@@ -227,7 +227,7 @@ class AstroEngine(DivinationEngine):
             'aspects_summary': self._build_aspects_summary(aspects),
             'house_rulers': house_rulers,
             'house_system': 'Placidus',
-            'gender': gender,
+            'gender': '男' if gender == 1 else '女',
             'birth_time': str(time.original),
             'location': time.location_name,
             'north_node': north_node,
