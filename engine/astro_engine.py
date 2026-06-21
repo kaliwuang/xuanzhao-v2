@@ -32,11 +32,19 @@ ASPECT_DEFS = [
 
 
 def _jd(dt: datetime) -> float:
-    """Convert a naive or aware datetime to Julian Day (UT)."""
-    if dt.tzinfo is None:
-        utc_dt = dt
-    else:
+    """Convert a datetime to Julian Day (UT).
+
+    Args:
+        dt: datetime object. Aware datetimes are auto-converted to UTC.
+            Naive datetimes are ASSUMED to already be in UTC.
+
+    Returns:
+        Julian Day number in UT.
+    """
+    if dt.tzinfo is not None:
         utc_dt = dt.astimezone(timezone.utc)
+    else:
+        utc_dt = dt
     return swe.julday(utc_dt.year, utc_dt.month, utc_dt.day,
                       utc_dt.hour + utc_dt.minute / 60.0 + utc_dt.second / 3600.0)
 
