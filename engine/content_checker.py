@@ -133,7 +133,7 @@ class ContentChecker:
         """检查超长句"""
         long_sentences = []
         # 按标点分句
-        sentences = re.split(r'[。！？；\.\!\?\;]', text)
+        sentences = re.split(r'[。！？；.!?;]', text)
         for s in sentences:
             s = s.strip()
             if len(s) > max_len:
