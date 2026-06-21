@@ -373,6 +373,7 @@ class LiuYaoEngine(DivinationEngine):
             'mark': mark,
             'shang': shang_gua,
             'xia': xia_gua,
+            'gong': gong_name,
         }
 
         # 8. 伏神（隐藏信息）
