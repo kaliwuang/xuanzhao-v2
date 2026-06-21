@@ -541,46 +541,108 @@ class DebateEngine:
 
         return {k: v for k, v in clusters.items() if v}
 
+    # ─── 共识提取关键词表（模块级常量，避免每次调用重建）──────────────
+    # 多字符术法关键词（优先匹配，避免被单字符截断）
+    _CONSENSUS_MULTI_KEYWORDS = [
+        "身强", "身弱", "用神", "日主", "大运", "流年", "格局", "调候",
+        "命宫", "主星", "四化", "三方四正", "化忌", "化禄", "化权", "化科",
+        "值符", "值使", "生门", "开门", "八门", "九星", "六神",
+        "三传", "四课", "天将", "月将", "神煞", "太乙", "主算", "客算",
+        "顺势", "贵人", "谋略", "策略", "借势", "守正", "无为", "自然",
+        "桃花", "文昌", "禄位", "财帛", "官禄", "驿马",
+        "利于", "适宜", "不利", "阻碍", "突破", "稳定", "保守", "进取",
+    ]
+    # 单字符关键词（仅匹配不含任何多字符关键词的 key_point）
+    _CONSENSUS_SINGLE_KEYWORDS = [
+        "财", "官", "印", "比", "杀", "食", "伤", "吉", "凶", "利", "贵",
+        "旺", "衰", "合", "冲", "刑", "破", "生", "克",
+    ]
+
+    # 各术法内部共识专用关键词（扩展现有的5词表）
+    _METHOD_CONSENSUS_KEYWORDS = {
+        "八字": ["身强", "身弱", "用神得力", "格局", "大运", "利", "吉", "旺", "顺", "宜"],
+        "紫微": ["命宫", "主星", "化禄", "化权", "三方四正", "吉", "旺", "顺", "利"],
+        "奇门": ["吉格", "吉门", "生门", "开门", "值符", "利", "吉", "顺", "旺"],
+        "六爻": ["用神", "旺相", "世爻", "吉", "利", "顺", "宜", "旺"],
+        "大六壬": ["贵人", "三传", "吉将", "利", "吉", "顺", "旺"],
+        "太乙": ["吉算", "主算", "利", "吉", "顺", "旺"],
+        "占星": ["入庙", "吉相位", "和谐", "利", "吉", "顺"],
+    }
+
     def _extract_consensus(self, opinions: List[PerspectiveOpinion],
                            exchanges: List[Exchange]) -> List[str]:
-        """提取共识——相同关键词出现频率高的观点"""
+        """提取共识——多维度关键词频率 + 立场聚类 + 同术法内部共识"""
+        from collections import Counter
+
         all_points = []
+        all_stances = []
         for o in opinions:
             all_points.extend(o.key_points)
+            all_stances.append(o.stance)
 
-        # 统计关键词频率
-        from collections import Counter
-        # 按字符拆分关键点的关键词
+        n = len(opinions)
+        consensus = []
+
+        # ── 1. 多字符术法关键词频率统计（优先匹配长词） ──
         word_counts = Counter()
         for point in all_points:
-            for word in ["进", "守", "稳", "动", "突破", "顺", "自然", "财", "官",
-                         "印", "比", "杀", "食", "伤", "吉", "凶", "利", "贵"]:
+            matched_multi = set()
+            for word in self._CONSENSUS_MULTI_KEYWORDS:
                 if word in point:
-                    word_counts[word] += 1
+                    matched_multi.add(word)
+            # 仅在没有匹配到多字符关键词时，才尝试单字符匹配（避免子串重复计数）
+            if not matched_multi:
+                for word in self._CONSENSUS_SINGLE_KEYWORDS:
+                    if word in point:
+                        matched_multi.add(word)
+            for word in matched_multi:
+                word_counts[word] += 1
 
-        consensus = []
-        n = len(opinions)
-        for word, count in word_counts.most_common(5):
-            if count >= max(2, n * 0.1):  # 至少10%的人提到
-                consensus.append(f"多数人提及「{word}」（{count}/{n}人）")
+        # 术法关键词共识（取top 6，阈值降为≥2人且≥8%）
+        for word, count in word_counts.most_common(6):
+            if count >= max(2, n * 0.08):
+                consensus.append(f"多人提及「{word}」（{count}/{n}人）")
 
-        # 同术法共识
+        # ── 2. 立场层面的共识（检测stance中共享的立场关键词） ──
+        stance_keywords = Counter()
+        stance_terms = [
+            "积极进取", "谨慎保守", "顺势而为", "厚积薄发", "稳中求进",
+            "审时度势", "守正出奇", "无为而治", "借势而为", "避实击虚",
+            "贵人相助", "突破", "守成", "转型", "深耕", "积累",
+        ]
+        for stance in all_stances:
+            for term in stance_terms:
+                if term in stance:
+                    stance_keywords[term] += 1
+
+        for term, count in stance_keywords.most_common(3):
+            if count >= max(2, n * 0.1):
+                consensus.append(f"{count}人持「{term}」立场")
+
+        # ── 3. 同术法内部共识（扩展现有逻辑） ──
         method_groups = {}
         for o in opinions:
             method_groups.setdefault(o.primary_method, []).append(o)
 
         for method, group in method_groups.items():
-            if len(group) >= 2:
-                stances = [o.stance for o in group]
-                # 找共同关键词
-                common = []
-                for kw in ["利", "吉", "顺", "宜", "旺"]:
-                    if sum(1 for s in stances if kw in s) >= len(group) * 0.5:
-                        common.append(kw)
-                if common:
-                    consensus.append(f"{method}内部共识：多认为含「{''.join(common)}」之象")
+            if len(group) < 2:
+                continue
+            stances = [o.stance for o in group]
+            all_group_points = []
+            for o in group:
+                all_group_points.extend(o.key_points)
+            group_texts = stances + all_group_points
 
-        return consensus[:8]
+            # 使用该术法的专用关键词
+            method_kws = self._METHOD_CONSENSUS_KEYWORDS.get(method, ["利", "吉", "顺", "宜", "旺"])
+            common = []
+            for kw in method_kws:
+                if sum(1 for t in group_texts if kw in t) >= max(2, len(group) * 0.4):
+                    common.append(kw)
+            if common:
+                consensus.append(f"{method}内部共识：多人论及「{'、'.join(common[:3])}」")
+
+        return consensus[:10]
 
     def _extract_disagreements(self, opinions: List[PerspectiveOpinion],
                                exchanges: List[Exchange]) -> List[Dict]:
