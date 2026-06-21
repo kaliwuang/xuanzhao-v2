@@ -951,18 +951,19 @@ class CrossValidator:
                     if wx:
                         hidden_counts[wx] = hidden_counts.get(wx, 0) + 1
 
-            max_wx = max(counts, key=counts.get)
-            min_wx = min(counts, key=counts.get)
+            # 使用含中气/余气的 hidden_counts 做旺衰判定（比仅用天干+本气更准确）
+            max_wx = max(hidden_counts, key=hidden_counts.get)
+            min_wx = min(hidden_counts, key=hidden_counts.get)
 
-            if counts[max_wx] >= 4:
+            if hidden_counts[max_wx] >= 4:
                 organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
                 items.append(ConsensusItem(
                     aspect="健康体质",
-                    finding=f"{max_wx}过旺（{counts[max_wx]}个），注意{organs}功能",
+                    finding=f"{max_wx}过旺（{hidden_counts[max_wx]}个，含藏干中气余气），注意{organs}功能",
                     supporting_methods=["八字"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
-            if counts[min_wx] == 0:
+            if hidden_counts[min_wx] == 0:
                 organs = self.WUXING_ORGAN.get(min_wx, "相关脏腑")
                 # 检查藏干中是否有补充（藏干有的五行不算完全缺失）
                 if hidden_counts.get(min_wx, 0) > 0:
