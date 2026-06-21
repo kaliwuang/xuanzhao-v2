@@ -270,7 +270,12 @@ class LiuYaoEngine(DivinationEngine):
                 continue
             gan = gz[0]
             dizhi = gz[1]
-            wz_idx = ZHIS.index(dizhi)
+            try:
+                wz_idx = ZHIS.index(dizhi)
+            except ValueError:
+                logger.warning(f"najia返回未知地支'{dizhi}'(位置{i+1}，干支'{gz}')，回退子水")
+                dizhi = '子'
+                wz_idx = 0
             wuxing = XING5[ZHI5[wz_idx]]
             # 阴阳由卦码mark决定（1=阳爻，0=阴爻），而非地支奇偶
             yinyang = '阳' if i < len(mark) and mark[i] == '1' else '阴'
