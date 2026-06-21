@@ -1384,6 +1384,14 @@ class BaziEngine(DivinationEngine):
         # 五行映射
         day_wx = GAN_WUXING_STR.get(day_gan, '')
         
+        # 防御：日主五行为空时无法计算喜用神，返回中和默认值
+        if not day_wx:
+            return {
+                'xi': [], 'ji': [], 'xian': ['木', '火', '土', '金', '水'],
+                'strength': '未知', 'reason': f'日主{day_gan}五行无法识别',
+                'day_score': 0, 'total_score': 0, 'ratio': 0,
+            }
+        
         # 计算日主得分占比
         total = sum(wuxing_score.values()) if wuxing_score else 1
         day_score = wuxing_score.get(day_wx, 0) if wuxing_score else 0
