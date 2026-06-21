@@ -684,57 +684,46 @@ class XingMingEngine:
     def _evaluate_sancai_wuxing(self, tian: str, ren: str, di: str) -> Tuple[str, str]:
         """
         Evaluate 三才 configuration when not in the lookup table.
-        Uses wuxing 生克 relationships (双向检测：天→人、人→地、天→地 及其反向).
+        区分生克方向：天→人(上生下=吉) vs 人→天(下生上=泄气)。
         """
-        sheng_count = 0
-        ke_count = 0
+        favorable = 0  # 有利关系数（上生下、下克上、比和）
+        unfavorable = 0  # 不利关系数（下生上=泄气、上克下=压制）
 
-        def _check_pair(a: str, b: str) -> str:
-            """检查a与b的五行关系，返回 'sheng'/'ke'/'same'/'none'"""
-            if a == b:
-                return 'same'
-            if WUXING_SHENG.get(a) == b:
-                return 'sheng'  # a生b
-            if WUXING_SHENG.get(b) == a:
-                return 'sheng'  # b生a（反向相生）
-            if WUXING_KE.get(a) == b:
-                return 'ke'     # a克b
-            if WUXING_KE.get(b) == a:
-                return 'ke'     # b克a（反向相克）
-            return 'none'
+        def _check_directional(upper: str, lower: str) -> str:
+            """检查上位与下位的五行关系，区分方向返回含义"""
+            if upper == lower:
+                return '比和'
+            if WUXING_SHENG.get(upper) == lower:
+                return '上生下'  # 天生人/人→地：上位扶持下位，吉
+            if WUXING_SHENG.get(lower) == upper:
+                return '下生上'  # 人→天/地→人：下位泄气给上位，不利
+            if WUXING_KE.get(upper) == lower:
+                return '上克下'  # 天克人/人克地：上位压制下位，凶
+            if WUXING_KE.get(lower) == upper:
+                return '下克上'  # 人克天/地克人：下位克服上位，吉
+            return '无关'
 
-        # 天格 ↔ 人格
-        rel_tr = _check_pair(tian, ren)
-        if rel_tr == 'sheng':
-            sheng_count += 1
-        elif rel_tr == 'ke':
-            ke_count += 1
+        # 天格→人格（上下关系）
+        rel_tr = _check_directional(tian, ren)
+        # 人格→地格（上下关系）
+        rel_rd = _check_directional(ren, di)
 
-        # 人格 ↔ 地格
-        rel_rd = _check_pair(ren, di)
-        if rel_rd == 'sheng':
-            sheng_count += 1
-        elif rel_rd == 'ke':
-            ke_count += 1
+        for rel in [rel_tr, rel_rd]:
+            if rel in ('上生下', '下克上', '比和'):
+                favorable += 1
+            elif rel in ('下生上', '上克下'):
+                unfavorable += 1
 
-        # 天格 ↔ 地格
-        rel_td = _check_pair(tian, di)
-        if rel_td == 'sheng':
-            sheng_count += 1
-        elif rel_td == 'ke':
-            ke_count += 1
+        total_pairs = 2  # 天→人、人→地两组核心关系
 
-        # Same element count
-        same_count = sum(1 for r in [rel_tr, rel_rd, rel_td] if r == 'same')
-
-        if ke_count >= 2:
-            return ("凶", f"三才配置为{tian}{ren}{di}，克制较多，基础不稳，须注意化解。")
-        elif ke_count == 1 and sheng_count == 0 and same_count == 0:
-            return ("凶", f"三才配置为{tian}{ren}{di}，有克制之象，人生多波折。")
-        elif sheng_count >= 2:
-            return ("大吉", f"三才配置为{tian}{ren}{di}，相生流畅，运势亨通。")
-        elif sheng_count >= 1 or same_count >= 2:
-            return ("吉", f"三才配置为{tian}{ren}{di}，配合尚可，运势平稳。")
+        if unfavorable >= 2:
+            return ("凶", f"三才配置为{tian}{ren}{di}，{rel_tr}+{rel_rd}，基础不稳，须注意化解。")
+        elif unfavorable == 1 and favorable == 0:
+            return ("凶", f"三才配置为{tian}{ren}{di}，{rel_tr}+{rel_rd}，有克制之象，人生多波折。")
+        elif favorable >= 2:
+            return ("大吉", f"三才配置为{tian}{ren}{di}，{rel_tr}+{rel_rd}，相生流畅，运势亨通。")
+        elif favorable >= 1:
+            return ("吉", f"三才配置为{tian}{ren}{di}，{rel_tr}+{rel_rd}，配合尚可，运势平稳。")
         else:
             return ("半吉", f"三才配置为{tian}{ren}{di}，配合一般，中平之象。")
 
