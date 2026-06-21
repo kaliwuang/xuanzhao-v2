@@ -391,7 +391,7 @@ class BaziEngine(DivinationEngine):
 
         solar = self.Solar.fromYmdHms(
             dt.year, dt.month, dt.day,
-            hour, time.original.minute, 0
+            hour, time.true_solar.minute, 0
         )
         lunar = solar.getLunar()
         ec = self.EightChar(lunar)
