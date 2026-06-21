@@ -772,21 +772,21 @@ class LiuYaoEngine(DivinationEngine):
         """
         ge_ju = []
 
-        # 1. 伏吟/反吟（基于世爻地支变化判定——传统定义）
+        # 1. 伏吟/反吟（基于完整六爻地支对比——传统定义）
         if lines and bian_lines and len(lines) == 6 and len(bian_lines) == 6:
-            shi_yao = next((l for l in lines if l.get('is_shi')), {})
-            bian_shi_yao = next((l for l in bian_lines if l.get('is_shi')), {})
-            shi_zhi = shi_yao.get('dizhi', '')
-            bian_shi_zhi = bian_shi_yao.get('dizhi', '')
-
-            if shi_zhi and bian_shi_zhi:
-                # 伏吟：世爻地支不变（变卦世爻=本卦世爻，且至少一个非动爻保持不变）
-                dong_count = sum(1 for l in lines if l.get('is_dong'))
-                if shi_zhi == bian_shi_zhi and dong_count < 6:
-                    ge_ju.append('伏吟')
-                # 反吟：世爻地支六冲（变卦世爻冲本卦世爻）
-                elif self.ZHI_CHONG.get(shi_zhi) == bian_shi_zhi:
-                    ge_ju.append('反吟')
+            # 伏吟：变卦与本卦所有爻地支完全相同（卦象不变）
+            all_same = all(
+                l.get('dizhi') == bl.get('dizhi')
+                for l, bl in zip(lines, bian_lines)
+            )
+            if all_same:
+                ge_ju.append('伏吟')
+            # 反吟：变卦与本卦所有爻地支六冲（卦象完全相反）
+            elif all(
+                self.ZHI_CHONG.get(l.get('dizhi', '')) == bl.get('dizhi', '')
+                for l, bl in zip(lines, bian_lines)
+            ):
+                ge_ju.append('反吟')
 
         # 2. 六冲/六合（检查上卦与下卦的地支配对）
         if lines and len(lines) == 6:
