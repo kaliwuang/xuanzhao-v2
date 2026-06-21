@@ -519,8 +519,9 @@ class LiuYaoEngine(DivinationEngine):
         # 7. 六神
         liu_shen = self.LIU_SHEN.get(day_gan, self.LIU_SHEN["甲"])
 
-        # 8. 变爻纳甲
-        bian_yao_list = self._najia_zhuanggua(bian_shang, bian_xia, bian_lines_raw, day_gan, day_zhi, gua_gong_wuxing)
+        # 8. 变爻纳甲（变卦使用自身宫五行计算六亲，而非本卦宫五行）
+        bian_gua_gong_wuxing = self.GUA_GONG_WUXING.get(bian_name, self.GUA_WUXING.get(bian_shang, gua_gong_wuxing))
+        bian_yao_list = self._najia_zhuanggua(bian_shang, bian_xia, bian_lines_raw, day_gan, day_zhi, bian_gua_gong_wuxing)
         bian_yao_list[shi_pos - 1]['is_shi'] = True
         bian_yao_list[ying_pos - 1]['is_ying'] = True
 
