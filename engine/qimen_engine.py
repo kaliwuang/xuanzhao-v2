@@ -496,8 +496,12 @@ class QiMenEngine(DivinationEngine):
                 xiong_ge.append({'name': '小格', 'gong': g, 'desc': '庚加癸，格局不通'})
             if tp == '丙' and dp == '辛':
                 ji_ge.append({'name': '欢怡', 'gong': g, 'desc': '丙辛合化水，谋事有成'})
+            if tp == '辛' and dp == '丙':
+                ji_ge.append({'name': '欢怡', 'gong': g, 'desc': '辛丙合化水，以柔克刚'})
             if tp == '乙' and dp == '庚':
                 ji_ge.append({'name': '奇合', 'gong': g, 'desc': '乙庚合化金，合作有利'})
+            if tp == '庚' and dp == '乙':
+                ji_ge.append({'name': '奇合', 'gong': g, 'desc': '庚乙合化金，刚柔相济'})
             if tp == '丙' and dp == '戊':
                 ji_ge.append({'name': '飞鸟跌穴', 'gong': g, 'desc': '丙加戊，百事吉昌，如飞鸟归巢'})
             if tp == '戊' and dp == '丙':
