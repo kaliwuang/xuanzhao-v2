@@ -111,9 +111,17 @@ class TaiYiEngine(DivinationEngine):
         wu_fu_gua = r.get('五福', '')
         wu_fu_gong = self._gua_to_gong(wu_fu_gua) if wu_fu_gua else ''
 
-        # 大游/小游
-        da_you = r.get('大游', 0)
-        xiao_you = r.get('小游', 0)
+        # 大游/小游（防御numpy类型和非数字值）
+        da_you_raw = r.get('大游', 0)
+        xiao_you_raw = r.get('小游', 0)
+        try:
+            da_you = int(da_you_raw) if da_you_raw is not None else 0
+        except (ValueError, TypeError):
+            da_you = 0
+        try:
+            xiao_you = int(xiao_you_raw) if xiao_you_raw is not None else 0
+        except (ValueError, TypeError):
+            xiao_you = 0
 
         # 局式
         ju_shi = r.get('局式', {}) or {}
