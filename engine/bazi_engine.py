@@ -970,9 +970,8 @@ class BaziEngine(DivinationEngine):
         # 2.9 地支三合局（三支齐全时强力聚合，两支半合也有引力）
         # 申子辰→水局，寅午戌→火局，巳酉丑→金局，亥卯未→木局
         # SAN_HE_GROUPS, BAN_HE_PAIRS 已提升为模块级常量
-        zhi_set_for_he = set(zhis)
         for group, wx, name in SAN_HE_GROUPS:
-            if group <= zhi_set_for_he:
+            if group <= zhi_set:
                 # 按年月日时顺序列出位置
                 positions = [pos_names[i] for i, z in enumerate(zhis) if z in group]
                 features.append(f"{name}三合{wx}局 — {'、'.join(positions)}支三合齐全，{wx}气汇聚，能量强大")
@@ -980,7 +979,7 @@ class BaziEngine(DivinationEngine):
                 # 检查半合（两支）
                 matched_pairs = []
                 for pair, (p_wx, _) in BAN_HE_PAIRS.items():
-                    if pair <= zhi_set_for_he and pair <= group:
+                    if pair <= zhi_set and pair <= group:
                         z_sorted = sorted(pair, key=lambda z: '子丑寅卯辰巳午未申酉戌亥'.index(z))
                         # 按年月日时顺序列出位置
                         positions = [pos_names[i] for i, z in enumerate(zhis) if z in pair]
@@ -992,7 +991,7 @@ class BaziEngine(DivinationEngine):
         # 寅卯辰→东方木，巳午未→南方火，申酉戌→西方金，亥子丑→北方水
         # SAN_HUI_GROUPS 已提升为模块级常量
         for group, wx, direction in SAN_HUI_GROUPS:
-            if group <= zhi_set_for_he:
+            if group <= zhi_set:
                 # 按年月日时顺序列出位置
                 positions = [pos_names[i] for i, z in enumerate(zhis) if z in group]
                 features.append(f"{direction}三会{wx}局 — {'、'.join(positions)}支方位齐聚，{wx}势磅礴，力量极强")
