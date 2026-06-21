@@ -494,9 +494,9 @@ class QiMenEngine(DivinationEngine):
 
             # 凶格：门宫组合
             if men == '景门' and g == 1:
-                xiong_ge.append({'name': '朱雀投江', 'gong': 1, 'desc': '景门入坎，文书有失'})
+                xiong_ge.append({'name': '朱雀投江', 'gong': g, 'desc': '景门入坎，文书有失'})
             if men == '死门' and g == 4:
-                xiong_ge.append({'name': '螣蛇夭矫', 'gong': 4, 'desc': '死门入巽，虚惊怪异'})
+                xiong_ge.append({'name': '螣蛇夭矫', 'gong': g, 'desc': '死门入巽，虚惊怪异'})
 
             # 天盘+地盘格局（原13个独立for循环合并）
             if tp == '庚' and dp == '丙':
