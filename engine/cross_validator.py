@@ -2225,6 +2225,52 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
+        # 格局（伏吟/反吟/六冲/六合等，六爻核心判断要素）
+        ge_ju = ly.get('ge_ju', [])
+        if ge_ju and ge_ju != ['普通']:
+            ge_ju_desc_map = {
+                '伏吟': '变卦世爻地支不变，事有反复、停滞之象',
+                '反吟': '变卦世爻地支冲本卦世爻，事有剧烈变动',
+                '六冲': '六爻地支两两相冲，主散、主变、主快',
+                '六合': '六爻地支两两相合，主聚、主成、主慢',
+                '世应冲': '世爻与应爻相冲，主客对立，合作有碍',
+                '世应合': '世爻与应爻相合，主客和谐，合作有利',
+            }
+            ge_details = []
+            for ge in ge_ju:
+                desc = ge_ju_desc_map.get(ge, '')
+                ge_details.append(f"{ge}（{desc}）" if desc else ge)
+            # 伏吟/反吟/六冲为重要格局，置信度较高
+            is_major = any(g in ('伏吟', '反吟', '六冲', '六合') for g in ge_ju)
+            items.append(ConsensusItem(
+                aspect="六爻格局",
+                finding="；".join(ge_details),
+                supporting_methods=["六爻"],
+                confidence=ConfidenceLevel.HIGH if is_major else ConfidenceLevel.MEDIUM
+            ))
+
+        # 动爻数量与含义
+        dong_yao = ly.get('dong_yao', [])
+        dong_count = len(dong_yao) if dong_yao else 0
+        dong_meanings = {
+            0: '无动爻，卦象静止，事情稳定不变',
+            1: '一爻动，事有专主，变化明确，易断',
+            2: '二爻动，事情有两方面变化，需看动爻关系',
+            3: '三爻动，事情变化较多，以中间动爻为主',
+            4: '四爻动，变化纷繁，以不变之爻为主断',
+            5: '五爻动，以唯一静爻为主断',
+            6: '六爻全动，事情剧变，需看变卦整体',
+        }
+        if dong_count > 0:
+            dong_desc = dong_meanings.get(dong_count, '动爻异常')
+            dong_positions = '、'.join(str(d) for d in dong_yao)
+            items.append(ConsensusItem(
+                aspect="六爻动爻",
+                finding=f"动爻{dong_count}个（第{dong_positions}爻）：{dong_desc}",
+                supporting_methods=["六爻"],
+                confidence=ConfidenceLevel.MEDIUM
+            ))
+
         # 六神
         liu_shen = ly.get('liu_shen', [])
         if liu_shen:
