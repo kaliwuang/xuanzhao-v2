@@ -263,10 +263,10 @@ class TimeEngine:
 
         简化公式（精度约+-1分钟，足够命理用）：
         e = 9.87*sin(2B) - 7.53*cos(B) - 1.5*sin(B)
-        其中 B = 360*(N-81)/364，N为年积日
+        其中 B = 360*(N-81)/365，N为年积日
         """
         N = dt.timetuple().tm_yday
-        B = math.radians(360 * (N - 81) / 364)
+        B = math.radians(360 * (N - 81) / 365)
         e = 9.87 * math.sin(2 * B) - 7.53 * math.cos(B) - 1.5 * math.sin(B)
         return e
 
