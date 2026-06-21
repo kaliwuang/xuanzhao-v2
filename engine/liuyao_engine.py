@@ -64,6 +64,12 @@ class LiuYaoEngine(DivinationEngine):
         "兑": (["巳", "卯", "丑"], ["亥", "酉", "未"]),
     }
 
+    # 卦码(bit tuple)→八卦名 的反向映射（消除 GUAS 二进制索引的位序 bug）
+    LINES_TO_GUA = {
+        (1, 1, 1): "乾", (1, 1, 0): "兑", (1, 0, 1): "离", (1, 0, 0): "震",
+        (0, 1, 1): "巽", (0, 1, 0): "坎", (0, 0, 1): "艮", (0, 0, 0): "坤",
+    }
+
     GUA64_NAMES = {
         ("乾", "乾"): "乾为天", ("乾", "坤"): "天地否", ("乾", "震"): "天雷无妄",
         ("乾", "巽"): "天风姤", ("乾", "坎"): "天水讼", ("乾", "离"): "天火同人",
@@ -290,12 +296,10 @@ class LiuYaoEngine(DivinationEngine):
             bian_qin6 = bian_data.get('qin6', [])
             bian_name = bian_data.get('name', '')
 
-            # 变卦也需要反转位序
+            # 变卦也需要正确查卦名（直接用 LINES_TO_GUA，无需反转）
             if len(bian_mark) >= 6:
-                bian_xia_bits = bian_mark[:3][::-1]
-                bian_shang_bits = bian_mark[3:][::-1]
-                bian_shang_gua = GUAS[int(bian_shang_bits, 2)]
-                bian_xia_gua = GUAS[int(bian_xia_bits, 2)]
+                bian_xia_gua = self.LINES_TO_GUA.get(tuple(int(c) for c in bian_mark[:3]), '')
+                bian_shang_gua = self.LINES_TO_GUA.get(tuple(int(c) for c in bian_mark[3:]), '')
             else:
                 bian_shang_gua = bian_xia_gua = ''
             bian_gua = {
@@ -331,12 +335,10 @@ class LiuYaoEngine(DivinationEngine):
                     })
 
         # 7. 本卦信息（先算上下卦名，供卦宫五行回退使用）
-        # ⚠️ 位序修正：mark 从初爻到上爻存储（bit0=初爻），需反转位序再查GUAS
+        # ⚠️ 位序：mark 从初爻到上爻存储（bit0=初爻），直接用 LINES_TO_GUA 查卦名（无需反转）
         if len(mark) >= 6:
-            xia_bits = mark[:3][::-1]  # 下卦3位反转
-            shang_bits = mark[3:][::-1]  # 上卦3位反转
-            shang_gua = GUAS[int(shang_bits, 2)]
-            xia_gua = GUAS[int(xia_bits, 2)]
+            xia_gua = self.LINES_TO_GUA.get(tuple(int(c) for c in mark[:3]), '')
+            shang_gua = self.LINES_TO_GUA.get(tuple(int(c) for c in mark[3:]), '')
         else:
             shang_gua = xia_gua = ''
         # GUA64 以 (上卦, 下卦) 元组为键，不能用字符串 mark 查找
