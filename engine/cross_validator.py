@@ -2224,6 +2224,27 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
+        # 四课与日干关系（si_ke_analysis 由 liuren_engine._analyze_si_ke 生成）
+        si_ke_analysis = lr.get("si_ke_analysis", {})
+        if si_ke_analysis:
+            ke_relation_parts = []
+            for key in ['一課', '二課', '三課', '四課']:
+                info = si_ke_analysis.get(key, {})
+                if not info:
+                    continue
+                relation = info.get("relation_to_day", "")
+                gz = info.get("gan_zhi", "")
+                name = info.get("name", key)
+                if relation:
+                    ke_relation_parts.append(f"{name}（{gz}）{relation}")
+            if ke_relation_parts:
+                items.append(ConsensusItem(
+                    aspect="六壬四课五行",
+                    finding="；".join(ke_relation_parts),
+                    supporting_methods=["大六壬"],
+                    confidence=ConfidenceLevel.MEDIUM
+                ))
+
         # 日马
         day_ma = lr.get("day_ma", "")
         if day_ma:

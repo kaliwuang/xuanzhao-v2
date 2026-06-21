@@ -951,6 +951,8 @@ class LiuYaoEngine(DivinationEngine):
                 _tai_sui_vs_shi = '世爻与太岁六合，年运顺遂'
             elif self.ZHI_CHONG.get(_shi_dizhi) == _year_zhi:
                 _tai_sui_vs_shi = '世爻与太岁六冲，年运多变'
+            else:
+                _tai_sui_vs_shi = f'太岁{_year_zhi}({_tai_sui_wx})与世爻{_shi_dizhi}无特殊关系'
 
         _tai_sui_yao_rel = []
         for _line in lines:
