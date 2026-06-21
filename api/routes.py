@@ -469,7 +469,7 @@ def get_chart(
                     'day_master': udm.day_master or '',
                     'day_master_wuxing': udm.day_master_wuxing or '',
                     'tiaohou': udm.tiaohou or '',
-                    'ri_zhu': udm.day_master or '',
+                    'ri_zhu': udm.bazi_day.ganzhi if udm.bazi_day else udm.day_master or '',
                     'xi_shen': xi_shen,
                     'ji_shen': ji_shen,
                 }
