@@ -320,6 +320,30 @@ WUXING_SHENG = {'木':'火', '火':'土', '土':'金', '金':'水', '水':'木'}
 WUXING_BEI_KE = {'木':'金', '金':'火', '火':'水', '水':'土', '土':'木'}   # 克我=官杀
 WUXING_BEI_SHENG = {v: k for k, v in WUXING_SHENG.items()}               # 生我=印
 
+# ─── 地支三合/半合/三会（模块级常量，消除 _extract_features 内重复构建）───
+SAN_HE_GROUPS = [
+    (frozenset({'申', '子', '辰'}), '水', '申子辰'),
+    (frozenset({'寅', '午', '戌'}), '火', '寅午戌'),
+    (frozenset({'巳', '酉', '丑'}), '金', '巳酉丑'),
+    (frozenset({'亥', '卯', '未'}), '木', '亥卯未'),
+]
+BAN_HE_PAIRS = {
+    frozenset({'申', '子'}): ('水', '子'), frozenset({'子', '辰'}): ('水', '子'),
+    frozenset({'申', '辰'}): ('水', '辰'),  # 子水缺位，水库半合
+    frozenset({'寅', '午'}): ('火', '午'), frozenset({'午', '戌'}): ('火', '午'),
+    frozenset({'寅', '戌'}): ('火', '戌'),
+    frozenset({'巳', '酉'}): ('金', '酉'), frozenset({'酉', '丑'}): ('金', '酉'),
+    frozenset({'巳', '丑'}): ('金', '丑'),
+    frozenset({'亥', '卯'}): ('木', '卯'), frozenset({'卯', '未'}): ('木', '卯'),
+    frozenset({'亥', '未'}): ('木', '未'),
+}
+SAN_HUI_GROUPS = [
+    (frozenset({'寅', '卯', '辰'}), '木', '东方'),
+    (frozenset({'巳', '午', '未'}), '火', '南方'),
+    (frozenset({'申', '酉', '戌'}), '金', '西方'),
+    (frozenset({'亥', '子', '丑'}), '水', '北方'),
+]
+
 
 class BaziEngine(DivinationEngine):
     """八字引擎"""
@@ -926,23 +950,7 @@ class BaziEngine(DivinationEngine):
 
         # 2.9 地支三合局（三支齐全时强力聚合，两支半合也有引力）
         # 申子辰→水局，寅午戌→火局，巳酉丑→金局，亥卯未→木局
-        SAN_HE_GROUPS = [
-            (frozenset({'申', '子', '辰'}), '水', '申子辰'),
-            (frozenset({'寅', '午', '戌'}), '火', '寅午戌'),
-            (frozenset({'巳', '酉', '丑'}), '金', '巳酉丑'),
-            (frozenset({'亥', '卯', '未'}), '木', '亥卯未'),
-        ]
-        # 半合对（每组中两两组合，取靠近的两个）
-        BAN_HE_PAIRS = {
-            frozenset({'申', '子'}): ('水', '子'), frozenset({'子', '辰'}): ('水', '子'),
-            frozenset({'申', '辰'}): ('水', '辰'),  # 子水缺位，水库半合
-            frozenset({'寅', '午'}): ('火', '午'), frozenset({'午', '戌'}): ('火', '午'),
-            frozenset({'寅', '戌'}): ('火', '戌'),
-            frozenset({'巳', '酉'}): ('金', '酉'), frozenset({'酉', '丑'}): ('金', '酉'),
-            frozenset({'巳', '丑'}): ('金', '丑'),
-            frozenset({'亥', '卯'}): ('木', '卯'), frozenset({'卯', '未'}): ('木', '卯'),
-            frozenset({'亥', '未'}): ('木', '未'),
-        }
+        # SAN_HE_GROUPS, BAN_HE_PAIRS 已提升为模块级常量
         zhi_set_for_he = set(zhis)
         for group, wx, name in SAN_HE_GROUPS:
             if group <= zhi_set_for_he:
@@ -963,12 +971,7 @@ class BaziEngine(DivinationEngine):
 
         # 2.10 地支三会局（同一方位三支齐全，力量极强于三合）
         # 寅卯辰→东方木，巳午未→南方火，申酉戌→西方金，亥子丑→北方水
-        SAN_HUI_GROUPS = [
-            (frozenset({'寅', '卯', '辰'}), '木', '东方'),
-            (frozenset({'巳', '午', '未'}), '火', '南方'),
-            (frozenset({'申', '酉', '戌'}), '金', '西方'),
-            (frozenset({'亥', '子', '丑'}), '水', '北方'),
-        ]
+        # SAN_HUI_GROUPS 已提升为模块级常量
         for group, wx, direction in SAN_HUI_GROUPS:
             if group <= zhi_set_for_he:
                 # 按年月日时顺序列出位置
