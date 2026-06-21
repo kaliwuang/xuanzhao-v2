@@ -164,7 +164,7 @@ class QiMenEngine(DivinationEngine):
             'xun_kong': xun_kong,
             # 天地人三盘摘要（便于前端快速展示）
             'san_pan_summary': self._build_san_pan_summary(palaces),
-            'ge_ju_analysis': self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong),
+            'ge_ju_analysis': self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong, day_gan_zhi, hour_gan_zhi),
             # 流年分析
             'liunian': self._build_liunian(solar_dt, di_pan, tian_pan, palaces),
         }
@@ -436,10 +436,23 @@ class QiMenEngine(DivinationEngine):
             })
         return palaces
 
-    def _analyze_ge_ju(self, palaces: list, ba_men: dict, jiu_xing: dict, ba_shen: dict, xun_kong: dict) -> dict:
+    def _analyze_ge_ju(self, palaces: list, ba_men: dict, jiu_xing: dict, ba_shen: dict, xun_kong: dict, day_gan_zhi: str = '', hour_gan_zhi: str = '') -> dict:
         """奇门格局判断：识别吉格和凶格"""
         ji_ge = []   # 吉格
         xiong_ge = []  # 凶格
+
+        # ---- 时运凶格（全局性，不依赖宫位） ----
+
+        # 五不遇时：时干克日干，百事不宜，是奇门最基础的时运凶格之一
+        # 规则：时干五行 克 日干五行（如日甲木时庚金→金克木）
+        if day_gan_zhi and hour_gan_zhi:
+            day_gan = day_gan_zhi[0]
+            hour_gan = hour_gan_zhi[0]
+            day_wx = self.GAN_WUXING.get(day_gan, '')
+            hour_wx = self.GAN_WUXING.get(hour_gan, '')
+            if hour_wx and day_wx and self.WUXING_KE.get(hour_wx) == day_wx:
+                xiong_ge.append({'name': '五不遇时', 'gong': 0,
+                                 'desc': f'时干{hour_gan}({hour_wx})克日干{day_gan}({day_wx})，百事不宜，谋事难成'})
 
         # ---- 吉格检测 ----
 
