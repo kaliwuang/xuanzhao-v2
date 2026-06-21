@@ -218,9 +218,6 @@ class ZiWeiEngine(DivinationEngine):
         # 起运年龄（简化模型：起运虚岁=局数）
         start_age = ju_shu
 
-        # 四柱
-        ganzhi = r.chinese_date.split()  # "乙酉 壬午 甲子 庚午"
-
         # 排十二宫
         palaces = []
         star_placements = {}
