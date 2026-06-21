@@ -836,23 +836,25 @@ class LiuYaoEngine(DivinationEngine):
 
         # 4. 三合局（检查六爻中是否有三支组成三合局）
         #    传统六爻重要格局：申子辰合水、寅午戌合火、巳酉丑合金、亥卯未合木
+        #    注意：必须对地支去重计数，否则重复地支（如两个子+一个申）会被误判为三合
         if lines and len(lines) == 6:
             zhis = [l.get('dizhi', '') for l in lines]
-            # 统计各三合局出现的爻位
+            # 统计各三合局出现的爻位（按去重后的地支计数）
             _san_he_groups = {}
             for i, z in enumerate(zhis):
                 if not z or z not in self.ZHI_SAN_HE:
                     continue
                 ju_name, ju_wx = self.ZHI_SAN_HE[z]
                 if ju_name not in _san_he_groups:
-                    _san_he_groups[ju_name] = {'wx': ju_wx, 'positions': []}
+                    _san_he_groups[ju_name] = {'wx': ju_wx, 'positions': [], 'unique_zhis': set()}
                 _san_he_groups[ju_name]['positions'].append(i + 1)
+                _san_he_groups[ju_name]['unique_zhis'].add(z)
 
             for ju_name, info in _san_he_groups.items():
-                pos_list = info['positions']
-                if len(pos_list) == 3:
+                distinct_count = len(info['unique_zhis'])
+                if distinct_count == 3:
                     ge_ju.append(f'三合{ju_name}')
-                elif len(pos_list) == 2:
+                elif distinct_count == 2:
                     ge_ju.append(f'半合{ju_name}')
 
         return ge_ju if ge_ju else ['普通']
