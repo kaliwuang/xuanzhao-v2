@@ -858,38 +858,21 @@ class LiuYaoEngine(DivinationEngine):
         """
         ge_ju = []
 
-        # 1. 伏吟/反吟（通过比较本卦和变卦 lines 的爻码）
+        # 1. 伏吟/反吟（基于世爻地支变化判定——传统定义）
         if lines and bian_lines and len(lines) == 6 and len(bian_lines) == 6:
-            # 比较阴阳
-            ben_yinyang = []
-            bian_yinyang = []
-            for i in range(6):
-                ben_wx = lines[i].get('wuxing', '')
-                bian_wx = bian_lines[i].get('wuxing', '') if i < len(bian_lines) else ''
-                ben_zhi = lines[i].get('dizhi', '')
-                bian_zhi = bian_lines[i].get('dizhi', '') if i < len(bian_lines) else ''
-                ben_yinyang.append((ben_wx, ben_zhi))
-                bian_yinyang.append((bian_wx, bian_zhi))
+            shi_yao = next((l for l in lines if l.get('is_shi')), {})
+            bian_shi_yao = next((l for l in bian_lines if l.get('is_shi')), {})
+            shi_zhi = shi_yao.get('dizhi', '')
+            bian_shi_zhi = bian_shi_yao.get('dizhi', '')
 
-            # 伏吟：所有爻的地支五行相同（需6爻均有有效数据）
-            all_same = all(
-                ben_yinyang[i] == bian_yinyang[i] and ben_yinyang[i] != ('', '')
-                for i in range(6)
-            )
-            if all_same:
-                ge_ju.append('伏吟')
-
-            # 反吟：所有爻的地支五行都相冲（需全部6爻都有有效地支）
-            chong_pairs = [
-                i for i in range(6)
-                if ben_yinyang[i][1] and bian_yinyang[i][1]
-            ]
-            all_chong = len(chong_pairs) == 6 and all(
-                self.ZHI_CHONG.get(ben_yinyang[i][1]) == bian_yinyang[i][1]
-                for i in chong_pairs
-            )
-            if all_chong:
-                ge_ju.append('反吟')
+            if shi_zhi and bian_shi_zhi:
+                # 伏吟：世爻地支不变（变卦世爻=本卦世爻，且至少一个非动爻保持不变）
+                dong_count = sum(1 for l in lines if l.get('is_dong'))
+                if shi_zhi == bian_shi_zhi and dong_count < 6:
+                    ge_ju.append('伏吟')
+                # 反吟：世爻地支六冲（变卦世爻冲本卦世爻）
+                elif self.ZHI_CHONG.get(shi_zhi) == bian_shi_zhi:
+                    ge_ju.append('反吟')
 
         # 2. 六冲/六合（检查上卦与下卦的地支配对）
         if lines and len(lines) == 6:
