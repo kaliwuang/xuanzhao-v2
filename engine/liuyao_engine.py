@@ -615,10 +615,7 @@ class LiuYaoEngine(DivinationEngine):
     def _lines_to_gua(self, three_lines) -> str:
         """三爻二进制 → 八卦名"""
         t = tuple(three_lines)
-        for name, lines in self.GUA_LINES.items():
-            if lines == t:
-                return name
-        return "乾"
+        return self.LINES_TO_GUA.get(t, "乾")
 
     def _najia_zhuanggua(self, shang_gua: str, xia_gua: str,
                          lines: list, day_gan: str, day_zhi: str,
