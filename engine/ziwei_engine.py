@@ -442,7 +442,7 @@ class ZiWeiEngine(DivinationEngine):
             'chinese_date': r.chinese_date if hasattr(r, 'chinese_date') else '',
             'zodiac': r.zodiac if hasattr(r, 'zodiac') else '',
             'dai_xian': dai_xian,
-            'nominal_age': datetime.now().year - birth_dt.year + 1 if birth_dt else 0,
+            'nominal_age': current_year - birth_dt.year + 1 if birth_dt else 0,
             'zi_dou': zi_dou,
             'liunian': liunian_info,
         }
