@@ -1446,7 +1446,7 @@ class BaziEngine(DivinationEngine):
                 xian = ['木', '火', '土', '金', '水']
                 reason = f"中和命局，五行均衡，无需特别扶抑"
             else:
-                xi = base_xi if base_xi else ['木', '火', '土', '金', '水']
+                xi = base_xi
                 ji = base_ji
                 xian = [w for w in ['木', '火', '土', '金', '水'] if w not in xi and w not in ji]
                 reason = f"{strength}，无特殊调候：喜{'+'.join(xi)}"
