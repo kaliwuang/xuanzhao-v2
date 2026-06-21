@@ -103,7 +103,7 @@ def get_orchestrator():
 
 def _parse_gender(gender: str) -> int:
     """性别字符串→编码"""
-    return 1 if gender in ("男", "male", "m") else 0
+    return 1 if gender.lower() in ("男", "male", "m") else 0
 
 
 def _validate_birth(birth: str):
@@ -474,7 +474,7 @@ def get_chart(
                     'ji_shen': ji_shen,
                 }
             
-            xm_result = _xingming_engine.analyze_name(surname, given_name, "男" if gender in ("男", "male", "m") else "女", bazi_info)
+            xm_result = _xingming_engine.analyze_name(surname, given_name, "男" if gender.lower() in ("男", "male", "m") else "女", bazi_info)
             result["xingming"] = xm_result
             result["methods"].append("姓名学")
 
