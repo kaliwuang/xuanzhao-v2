@@ -737,8 +737,10 @@ class LiuYaoEngine(DivinationEngine):
     }
 
     def _calc_liuqin(self, gua_wuxing: str, yao_wuxing: str) -> str:
-        """计算六亲"""
-        return self.LIUQIN_TABLE.get((gua_wuxing, yao_wuxing), "兄弟")
+        """计算六亲。当五行参数无效时返回空字符串而非默认'兄弟'（兄弟仅在同五行时成立）"""
+        if not gua_wuxing or not yao_wuxing:
+            return ''
+        return self.LIUQIN_TABLE.get((gua_wuxing, yao_wuxing), '')
 
     def _get_wuxing_relation(self, wx_a: str, wx_b: str) -> str:
         """计算两个五行之间的关系（A 对 B）"""
