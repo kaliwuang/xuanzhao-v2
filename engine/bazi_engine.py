@@ -6,7 +6,7 @@
 """
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
-from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as ZHI_HE_MOD, ZHI_CHONG as ZHI_CHONG_MOD
+from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as ZHI_HE_MOD, ZHI_CHONG as ZHI_CHONG_MOD, WUXING_CHARS
 import logging
 from datetime import datetime
 
@@ -1287,10 +1287,9 @@ class BaziEngine(DivinationEngine):
         # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
         # 注：部分现代派系简化为所有命格均查，此处按传统纳音五行判定
         # 提取纳音五行（复用于天罗地网和天转煞）
-        _NAYIN_WX_CHARS = {'金', '木', '水', '火', '土'}
         _nayin_str = year_pillar.nayin or ''
         _nayin_wx = ''
-        for _wx in _NAYIN_WX_CHARS:
+        for _wx in WUXING_CHARS:
             if _wx in _nayin_str:
                 _nayin_wx = _wx
                 break
@@ -1366,7 +1365,7 @@ class BaziEngine(DivinationEngine):
         # 注意：天转煞用日柱纳音五行，与天罗地网用年柱纳音五行不同
         _day_nayin_str = day_pillar.nayin or ''
         _day_nayin_wx = ''
-        for _wx in _NAYIN_WX_CHARS:
+        for _wx in WUXING_CHARS:
             if _wx in _day_nayin_str:
                 _day_nayin_wx = _wx
                 break
