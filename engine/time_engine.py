@@ -292,7 +292,8 @@ class TimeEngine:
                 "next_jie": str(next_jie) if next_jie else None,
                 "list": [str(j) for j in jieqi_list if j],
             }
-        except Exception:
+        except Exception as e:
+            logger.debug(f"lunar_python节气上下文获取异常，回退到空数据: {e}")
             return {"current": None, "prev_jie": None, "next_jie": None, "list": []}
 
 

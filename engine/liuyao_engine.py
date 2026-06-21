@@ -483,8 +483,8 @@ class LiuYaoEngine(DivinationEngine):
             ec = lunar.getEightChar()
             day_gan = ec.getDayGan()
             day_zhi = ec.getDayZhi()
-        except Exception:
-            logger.warning("lunar_python 不可用，使用公历近似起卦")
+        except Exception as e:
+            logger.warning(f"lunar_python 异常，使用公历近似起卦: {e}")
             year_num = orig.year
             month_num = orig.month
             day_num = orig.day
