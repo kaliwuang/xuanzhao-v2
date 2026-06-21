@@ -659,7 +659,8 @@ class BaziEngine(DivinationEngine):
 
         # 五行得分
         wuxing_score = self._calc_wuxing_score(
-            [year_pillar, month_pillar, day_pillar, time_pillar]
+            [year_pillar, month_pillar, day_pillar, time_pillar],
+            hidden_gans
         )
 
         # 命宫·胎元·身宫的十神（天干对日主）
@@ -1445,7 +1446,7 @@ class BaziEngine(DivinationEngine):
             'ratio': round(ratio * 100, 1),
         }
 
-    def _calc_wuxing_score(self, pillars: list) -> Dict[str, float]:
+    def _calc_wuxing_score(self, pillars: list, hidden_gans: dict = None) -> Dict[str, float]:
         """
         五行得分计算。
 
@@ -1454,7 +1455,9 @@ class BaziEngine(DivinationEngine):
         地支中气: 0.5分
         地支余气: 0.3分
 
-        使用 ZHI_CANGGAN 映射获取藏干数据。
+        优先使用 analyze 中已校正的藏干数据（hidden_gans），
+        确保五行得分与展示给用户的藏干一致。
+        回退到 ZHI_CANGGAN（当 hidden_gans 未提供时）。
         """
         score: Dict[str, float] = {"木": 0.0, "火": 0.0, "土": 0.0, "金": 0.0, "水": 0.0}
 
@@ -1466,6 +1469,9 @@ class BaziEngine(DivinationEngine):
         YUE_LING_BEN_QI = 1.5      # 月令本气加权（月令为命局提纲）
         ZHONG_QI_WEIGHT = 0.5      # 地支中气
         YU_QI_WEIGHT = 0.3         # 地支余气
+
+        # 藏干数据来源：优先用已校正的 hidden_gans，回退到 ZHI_CANGGAN
+        _HIDDEN_KEYS = ['year', 'month', 'day', 'time']
 
         for idx, pillar in enumerate(pillars):
             if not pillar:
@@ -1479,8 +1485,11 @@ class BaziEngine(DivinationEngine):
             if gan_wx:
                 score[gan_wx] += BEN_QI_WEIGHT
 
-            # 地支藏干
-            canggan_list = ZHI_CANGGAN.get(pillar.zhi, [])
+            # 地支藏干：优先用已校正的 hidden_gans，回退到 ZHI_CANGGAN
+            if hidden_gans and idx < len(_HIDDEN_KEYS):
+                canggan_list = hidden_gans.get(_HIDDEN_KEYS[idx], [])
+            else:
+                canggan_list = ZHI_CANGGAN.get(pillar.zhi, [])
             for cidx, canggan in enumerate(canggan_list):
                 canggan_wx = gan_wuxing_map.get(canggan)
                 if not canggan_wx:
