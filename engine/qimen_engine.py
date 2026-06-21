@@ -455,14 +455,34 @@ class QiMenEngine(DivinationEngine):
                 xiong_ge.append({'name': '五不遇时', 'gong': 0,
                                  'desc': f'时干{hour_gan}({hour_wx})克日干{day_gan}({day_wx})，百事不宜，谋事难成'})
 
-        # ---- 吉格/凶格检测（单次遍历9宫，消除重复for循环）----
+        # ---- 格局检测常量（提升到循环外，避免每次迭代重建）----
+        # 击刑
+        XING_MAP = {1: '子', 8: '丑', 3: '卯', 4: '辰', 9: '午', 2: '未', 7: '酉', 6: '戌'}
+        GAN_XING = {'戊': 3, '己': 2, '庚': 8, '辛': 9, '壬': 4, '癸': 4}
+        GAN_XING_BRANCH = {'戊': '卯', '己': '未', '庚': '寅', '辛': '午', '壬': '辰', '癸': '巳'}
+        # 入墓（不含三奇，三奇由 SAN_QI_MU 专项处理）
+        GAN_MU = {'戊': 4, '己': 4, '庚': 8, '辛': 8, '壬': 4, '癸': 4}
+        # 三奇入墓
+        SAN_QI_MU = {'乙': 2, '丙': 6, '丁': 6}
+        # 悖格排除集（已有专用名称的天地盘组合 + 天干五合）
+        ALREADY_CHECKED = {('庚', '丙'), ('丙', '庚'), ('庚', '癸'), ('戊', '丙'),
+                           ('丙', '戊'), ('辛', '乙'), ('丙', '辛'), ('乙', '庚'),
+                           ('庚', '乙'), ('丁', '壬'), ('壬', '丁'),
+                           ('辛', '丙'), ('戊', '癸'), ('癸', '戊')}
+        # 天地合德（排除乙庚→奇合、丙辛→欢怡）
+        GAN_HE_GEDE = {'甲': '己', '己': '甲', '丁': '壬', '壬': '丁',
+                        '戊': '癸', '癸': '戊'}
+
+        # ---- 吉格/凶格检测（单次遍历9宫）----
         for p in palaces:
             g = p['gong']
             men = p.get('men', '')
             xing = p.get('xing', '')
             shen = p.get('shen', '')
+            tp = p.get('tian_pan', '')
+            dp = p.get('di_pan', '')
 
-            # 吉格
+            # 吉格：门星组合
             if men == '生门' and xing == '天辅':
                 ji_ge.append({'name': '天遁', 'gong': g, 'desc': '生门配天辅，谋事大吉'})
             if men == '开门' and xing == '天心':
@@ -474,124 +494,60 @@ class QiMenEngine(DivinationEngine):
             if men in ('开门', '生门') and shen == '白虎':
                 ji_ge.append({'name': '虎遁', 'gong': g, 'desc': f'{men}配白虎，威猛有力'})
 
-            # 凶格
+            # 凶格：门宫组合
             if men == '景门' and g == 1:
                 xiong_ge.append({'name': '朱雀投江', 'gong': 1, 'desc': '景门入坎，文书有失'})
             if men == '死门' and g == 4:
                 xiong_ge.append({'name': '螣蛇夭矫', 'gong': 4, 'desc': '死门入巽，虚惊怪异'})
 
-        # 3. 太白入荧：庚+丙（天盘庚，地盘丙）
-        for p in palaces:
-            if p.get('tian_pan') == '庚' and p.get('di_pan') == '丙':
-                xiong_ge.append({'name': '太白入荧', 'gong': p['gong'], 'desc': '庚加丙，贼来为患'})
+            # 天盘+地盘格局（原13个独立for循环合并）
+            if tp == '庚' and dp == '丙':
+                xiong_ge.append({'name': '太白入荧', 'gong': g, 'desc': '庚加丙，贼来为患'})
+            if tp == '丙' and dp == '庚':
+                xiong_ge.append({'name': '荧入太白', 'gong': g, 'desc': '丙加庚，贼去平安'})
+            if tp == '庚' and dp == '癸':
+                xiong_ge.append({'name': '小格', 'gong': g, 'desc': '庚加癸，格局不通'})
+            if tp == '丙' and dp == '辛':
+                ji_ge.append({'name': '欢怡', 'gong': g, 'desc': '丙辛合化水，谋事有成'})
+            if tp == '乙' and dp == '庚':
+                ji_ge.append({'name': '奇合', 'gong': g, 'desc': '乙庚合化金，合作有利'})
+            if tp == '丙' and dp == '戊':
+                ji_ge.append({'name': '飞鸟跌穴', 'gong': g, 'desc': '丙加戊，百事吉昌，如飞鸟归巢'})
+            if tp == '戊' and dp == '丙':
+                ji_ge.append({'name': '青龙返首', 'gong': g, 'desc': '戊加丙，贵人相助，逢凶化吉'})
+            if tp == '辛' and dp == '乙':
+                xiong_ge.append({'name': '白虎猖狂', 'gong': g, 'desc': '辛加乙，金木相克，主伤灾破败'})
 
-        # 4. 荧入太白：丙+庚
-        for p in palaces:
-            if p.get('tian_pan') == '丙' and p.get('di_pan') == '庚':
-                xiong_ge.append({'name': '荧入太白', 'gong': p['gong'], 'desc': '丙加庚，贼去平安'})
-
-        # 5. 击刑：天盘天干落地盘相刑之宫
-        # 六仪击刑规则：甲子戊→震三(子刑卯)、甲戌己→坤二(戌刑未)、
-        # 甲申庚→艮八(申刑寅)、甲午辛→离九(午自刑)、
-        # 甲辰壬→巽四(辰自刑)、甲寅癸→巽四(寅刑巳)
-        XING_MAP = {1: '子', 8: '丑', 3: '卯', 4: '辰', 9: '午', 2: '未', 7: '酉', 6: '戌'}
-        GAN_XING = {'戊': 3, '己': 2, '庚': 8, '辛': 9, '壬': 4, '癸': 4}
-        # 六仪击刑：每个天干所刑之地支（巽四宫有辰巳两支，壬用辰、癸用巳）
-        GAN_XING_BRANCH = {'戊': '卯', '己': '未', '庚': '寅', '辛': '午', '壬': '辰', '癸': '巳'}
-        for p in palaces:
-            g = p['gong']
-            tp = p.get('tian_pan', '')
+            # 击刑
             if tp in GAN_XING and GAN_XING[tp] == g:
                 branch_name = GAN_XING_BRANCH.get(tp, XING_MAP.get(g, '中'))
                 gong_name = self.PALACE_NAMES.get(g, f'{branch_name}宫')
                 xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{gong_name}，刑伤之象'})
 
-        # 6. 入墓：天干落墓宫（排除三奇乙丙丁，由下方三奇入墓专项检测）
-        # 天干入墓表（五行墓库法）：乙木→未(坤二=2)，丙丁火→戌(乾六=6)，庚辛金→丑(艮八=8)，戊己壬癸→辰(巽四=4)
-        # 注：甲遁于六仪，不直接出现在天盘，故不列入
-        GAN_MU = {'乙': 2, '丙': 6, '丁': 6, '戊': 4, '己': 4, '庚': 8, '辛': 8, '壬': 4, '癸': 4}
-        SAN_QI = {'乙', '丙', '丁'}  # 三奇，由专项检测处理
-        for p in palaces:
-            g = p['gong']
-            tp = p.get('tian_pan', '')
-            if tp in SAN_QI:
-                continue  # 三奇入墓由下方专项检测，避免重复
-            if tp in GAN_MU and GAN_MU[tp] == g:
+            # 入墓（排除三奇，三奇由 SAN_QI_MU 处理）
+            if tp not in SAN_QI_MU and tp in GAN_MU and GAN_MU[tp] == g:
                 xiong_ge.append({'name': '入墓', 'gong': g, 'desc': f'{tp}入墓，事有阻碍'})
 
-        # 7. 欢怡：天盘丙+地盘辛（丙辛合化水，谋事有成）
-        for p in palaces:
-            if p.get('tian_pan') == '丙' and p.get('di_pan') == '辛':
-                ji_ge.append({'name': '欢怡', 'gong': p['gong'], 'desc': '丙辛合化水，谋事有成'})
-
-        # 8. 奇合：天盘乙+地盘庚（乙庚合化金，合作有利）
-        for p in palaces:
-            if p.get('tian_pan') == '乙' and p.get('di_pan') == '庚':
-                ji_ge.append({'name': '奇合', 'gong': p['gong'], 'desc': '乙庚合化金，合作有利'})
-
-        # 9. 小格：庚+癸
-        for p in palaces:
-            if p.get('tian_pan') == '庚' and p.get('di_pan') == '癸':
-                xiong_ge.append({'name': '小格', 'gong': p['gong'], 'desc': '庚加癸，格局不通'})
-
-        # 10. 飞鸟跌穴：天盘丙+地盘戊（丙奇到位，大吉格局）
-        for p in palaces:
-            if p.get('tian_pan') == '丙' and p.get('di_pan') == '戊':
-                ji_ge.append({'name': '飞鸟跌穴', 'gong': p['gong'], 'desc': '丙加戊，百事吉昌，如飞鸟归巢'})
-
-        # 11. 青龙返首：天盘戊+地盘丙（戊丙相合，大吉格局）
-        for p in palaces:
-            if p.get('tian_pan') == '戊' and p.get('di_pan') == '丙':
-                ji_ge.append({'name': '青龙返首', 'gong': p['gong'], 'desc': '戊加丙，贵人相助，逢凶化吉'})
-
-        # 12. 白虎猖狂：天盘辛+地盘乙（辛金克乙木，大凶格局）
-        for p in palaces:
-            if p.get('tian_pan') == '辛' and p.get('di_pan') == '乙':
-                xiong_ge.append({'name': '白虎猖狂', 'gong': p['gong'], 'desc': '辛加乙，金木相克，主伤灾破败'})
-
-        # 13. 三奇入墓：乙(木)入未(坤二=2)、丙(火)入戌(乾六=6)、丁(火)入戌(乾六=6)
-        # 三奇为乙丙丁，入墓则奇不显灵，百事不顺
-        # 五行墓库：木墓在未(坤二=2)，火墓在戌(乾六=6)
-        SAN_QI_MU = {'乙': 2, '丙': 6, '丁': 6}
-        for p in palaces:
-            g = p['gong']
-            tp = p.get('tian_pan', '')
+            # 三奇入墓
             if tp in SAN_QI_MU and SAN_QI_MU[tp] == g:
                 xiong_ge.append({'name': '三奇入墓', 'gong': g, 'desc': f'{tp}奇入墓，奇不显灵，百事不顺'})
 
-        # 14. 悖格：天盘天干五行克制地盘天干五行（排除已检测的特殊格局）
-        # 天克地为"悖"，行事多阻，进退维谷
-        # 注：甲遁于六仪，不出现在天地盘，故甲己合无需排除
-        ALREADY_CHECKED = {('庚', '丙'), ('丙', '庚'), ('庚', '癸'), ('戊', '丙'),
-                           ('丙', '戊'), ('辛', '乙'), ('丙', '辛'), ('乙', '庚'),
-                           # 天干五合（合不为悖）：乙庚、丙辛、丁壬、戊癸
-                           ('庚', '乙'), ('丁', '壬'), ('壬', '丁'),
-                           ('辛', '丙'), ('戊', '癸'), ('癸', '戊')}
-        for p in palaces:
-            tp = p.get('tian_pan', '')
-            dp = p.get('di_pan', '')
+            # 悖格：天盘克地盘（排除已有专用名称的组合）
             if tp and dp and (tp, dp) not in ALREADY_CHECKED:
                 tp_wx = self.GAN_WUXING.get(tp, '')
                 dp_wx = self.GAN_WUXING.get(dp, '')
                 if tp_wx and dp_wx and self.WUXING_KE.get(tp_wx) == dp_wx:
-                    xiong_ge.append({'name': '悖格', 'gong': p['gong'],
+                    xiong_ge.append({'name': '悖格', 'gong': g,
                                      'desc': f'{tp}({tp_wx})克{dp}({dp_wx})，天克地，行事多阻'})
 
-        # 15. 玉女守门：天盘丁奇与门同宫（丁为玉女，守门则百事皆宜）
-        for p in palaces:
-            if p.get('tian_pan') == '丁' and p.get('men') and p['men'] != '':
-                ji_ge.append({'name': '玉女守门', 'gong': p['gong'],
-                              'desc': f'丁奇守{p["men"]}，百事皆宜，利于文书'})
+            # 玉女守门
+            if tp == '丁' and men and men != '':
+                ji_ge.append({'name': '玉女守门', 'gong': g,
+                              'desc': f'丁奇守{men}，百事皆宜，利于文书'})
 
-        # 16. 天地合德：天盘地盘天干相合（排除已有专用名称的组合）
-        # 甲己、丁壬、戊癸 合（乙庚→奇合、丙辛→欢怡已有独立条目，不重复）
-        GAN_HE = {'甲': '己', '己': '甲', '丁': '壬', '壬': '丁',
-                   '戊': '癸', '癸': '戊'}
-        for p in palaces:
-            tp = p.get('tian_pan', '')
-            dp = p.get('di_pan', '')
-            if tp and dp and GAN_HE.get(tp) == dp:
-                ji_ge.append({'name': '天地合德', 'gong': p['gong'],
+            # 天地合德
+            if tp and dp and GAN_HE_GEDE.get(tp) == dp:
+                ji_ge.append({'name': '天地合德', 'gong': g,
                               'desc': f'{tp}{dp}合，天地和合，谋事易成'})
 
         # 旬空宫
