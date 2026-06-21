@@ -996,18 +996,27 @@ class LiuYaoEngine(DivinationEngine):
         yue_wx = self.ZHI_WUXING.get(yue_jian, '')
         
         def _wx_relation(wx: str, ref_wx: str) -> str:
+            """计算爻的五行相对于日建/月建的旺衰状态
+
+            传统旺相休囚死定义（从令/日建月建的角度）：
+              旺 = 与令同五行
+              相 = 爻生令（令被生，令旺则爻也受益）
+              休 = 令生爻（令去生爻，令泄气）
+              囚 = 爻克令（爻耗力去克令）
+              死 = 令克爻（令克制爻）
+            """
             if not wx or not ref_wx:
                 return '无'
             if wx == ref_wx:
                 return '旺（比和）'
             if self.SHENG_REV.get(ref_wx) == wx:
-                return '相（生我）'
+                return '相（爻生令）'
             if self.SHENG.get(ref_wx) == wx:
-                return '休（我生）'
+                return '休（令生爻）'
             if self.KE.get(ref_wx) == wx:
-                return '死（克我）'
+                return '死（令克爻）'
             if self.KE_REV.get(ref_wx) == wx:
-                return '囚（我克）'
+                return '囚（爻克令）'
             return '无'
 
         # 为每个五行计算日建/月建旺衰
