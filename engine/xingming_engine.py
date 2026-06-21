@@ -630,6 +630,7 @@ class XingMingEngine(DivinationEngine):
     def _to_jishu(self, stroke: int) -> int:
         """Convert stroke count to 吉凶数理 (1-81 cycle)."""
         if stroke <= 0:
+            logger.warning(f"无效笔画数 {stroke}，回退到1（请检查字符笔画数据）")
             return 1
         result = stroke % 81
         if result == 0:
