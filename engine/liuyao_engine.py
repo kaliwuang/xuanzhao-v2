@@ -315,7 +315,7 @@ class LiuYaoEngine(DivinationEngine):
                 'gong': bian_data.get('gong', ''),
             }
 
-            if bian_mark:
+            if bian_mark and len(bian_mark) >= 6:
                 bian_najia = get_najia(bian_mark)
                 for i in range(6):
                     gz = bian_najia[i]
