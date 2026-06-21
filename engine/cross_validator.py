@@ -3450,6 +3450,36 @@ class CrossValidator:
                 career_trend.append("六爻子孙爻旺相克官，适合创业或技术路线")
                 career_suggest.append("六爻提示自由发展空间大，可争取更多自主权")
 
+        # 大六壬：看初传天将和用神六亲（事业信号）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            ys = lr.get("yong_shen", {})
+            if ys:
+                chu_jiang = ys.get("chu_chuan_jiang", "")
+                chu_liuqin = ys.get("chu_chuan_liuqin", "")
+                jiang_jx = ys.get("jiang_ji_xiong", "")
+                # 天将→事业信号
+                _LIUREN_CAREER = {
+                    "貴人": "六壬初传见贵人，事业有贵人提携",
+                    "貴": "六壬初传见贵人，事业有贵人提携",
+                    "青龍": "六壬初传见青龙，财喜临门，事业有名声",
+                    "龍": "六壬初传见青龙，财喜临门，事业有名声",
+                    "龙": "六壬初传见青龙，财喜临门，事业有名声",
+                    "六合": "六壬初传见六合，利于合作合伙",
+                    "合": "六壬初传见六合，利于合作合伙",
+                }
+                if chu_jiang in _LIUREN_CAREER:
+                    career_trend.append(_LIUREN_CAREER[chu_jiang])
+                    if jiang_jx in ("大吉", "吉") and career_luck != "凶":
+                        career_luck = "吉"
+                # 六亲→事业方向
+                if chu_liuqin == "官鬼":
+                    career_trend.append("六壬初传官鬼，适合管理或执法类工作")
+                elif chu_liuqin == "子孙":
+                    career_trend.append("六壬初传子孙克官，适合创业或技术路线")
+                elif chu_liuqin in ("妻财", "财"):
+                    career_trend.append("六壬初传财爻，事业与商业密切相关")
+
         judgment["事业"]["趋势"] = "；".join(career_trend) if career_trend else "平稳发展"
         judgment["事业"]["建议"] = "；".join(career_suggest) if career_suggest else "稳扎稳打，借势而为"
         judgment["事业"]["吉凶"] = career_luck
@@ -3492,6 +3522,22 @@ class CrossValidator:
                 elif cy_is_dong:
                     wealth_trend.append("六爻妻财爻发动，财运有变动，进财或破财看变爻")
                     break
+
+        # 大六壬：初传财爻和青龙（财运信号）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            ys = lr.get("yong_shen", {})
+            if ys:
+                chu_jiang = ys.get("chu_chuan_jiang", "")
+                chu_liuqin = ys.get("chu_chuan_liuqin", "")
+                if chu_jiang in ("青龍", "龍", "龙"):
+                    wealth_trend.append("六壬初传青龙，财喜临门，有进财之机")
+                    if wealth_luck != "凶":
+                        wealth_luck = "吉"
+                if chu_liuqin in ("妻财", "财"):
+                    wealth_trend.append("六壬初传财爻，当下求财有利")
+                    if wealth_luck != "凶":
+                        wealth_luck = "吉"
 
         # 日支冲影响财运（日支为夫妻宫，也关联财位）
         day_zhi = self.udm.bazi_day.zhi if self.udm.bazi_day else ''
@@ -3543,6 +3589,27 @@ class CrossValidator:
                     if love_luck != "凶":
                         love_luck = "吉"
                     break
+
+        # 大六壬：看初传天将（感情信号——六合/天后=婚姻吉，白虎/螣蛇=波折）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            ys = lr.get("yong_shen", {})
+            if ys:
+                chu_jiang = ys.get("chu_chuan_jiang", "")
+                _LIUREN_LOVE = {
+                    "六合": ("六壬初传六合，利于婚恋和合，人际协调", "吉"),
+                    "合": ("六壬初传六合，利于婚恋和合，人际协调", "吉"),
+                    "天后": ("六壬初传天后，恩泽庇护，感情有福缘", "吉"),
+                    "后": ("六壬初传天后，恩泽庇护，感情有福缘", "吉"),
+                    "太陰": ("六壬初传太阴，女眷缘分好，感情细腻", "吉"),
+                    "陰": ("六壬初传太阴，女眷缘分好，感情细腻", "吉"),
+                    "阴": ("六壬初传太阴，女眷缘分好，感情细腻", "吉"),
+                }
+                if chu_jiang in _LIUREN_LOVE:
+                    desc, luck = _LIUREN_LOVE[chu_jiang]
+                    love_trend.append(desc)
+                    if love_luck != "凶":
+                        love_luck = luck
 
         if not love_trend:
             love_trend.append("感情运势平稳")
@@ -3640,6 +3707,31 @@ class CrossValidator:
                     if health_luck == "凶":
                         health_luck = "中"  # 子孙旺可缓解官鬼之凶
                     break
+
+        # 大六壬：初传天将健康信号
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            ys = lr.get("yong_shen", {})
+            if ys:
+                chu_jiang = ys.get("chu_chuan_jiang", "")
+                ri_relation = ys.get("ri_gan_relation", "")
+                _LIUREN_HEALTH = {
+                    "白虎": ("六壬初传白虎，注意意外伤害或急性病症", "凶"),
+                    "虎": ("六壬初传白虎，注意意外伤害或急性病症", "凶"),
+                    "螣蛇": ("六壬初传螣蛇，神经或心理层面有压力，易焦虑", "凶"),
+                    "蛇": ("六壬初传螣蛇，神经或心理层面有压力，易焦虑", "凶"),
+                    "玄武": ("六壬初传玄武，有不易察觉的暗病，宜定期体检", "凶"),
+                    "武": ("六壬初传玄武，有不易察觉的暗病，宜定期体检", "凶"),
+                }
+                if chu_jiang in _LIUREN_HEALTH:
+                    desc, luck = _LIUREN_HEALTH[chu_jiang]
+                    health_trend.append(desc)
+                    health_luck = luck
+                # 日干受克→体质偏弱
+                if "克我" in ri_relation:
+                    health_trend.append("六壬初传克日干，当下体质偏弱，需增强免疫力")
+                    if health_luck != "凶":
+                        health_luck = "中"
 
         judgment["健康"]["趋势"] = "；".join(health_trend)
         judgment["健康"]["建议"] = "；".join(health_suggest) if health_suggest else "规律作息，适度运动"
