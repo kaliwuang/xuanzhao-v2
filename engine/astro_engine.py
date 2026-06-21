@@ -51,13 +51,25 @@ def _find_house(lon: float, cusps: list[float]) -> int:
     for i in range(12):
         start = cusps[i]
         end = cusps[(i + 1) % 12]
+        if start == end:
+            continue  # 两宫首重叠（极端情况），跳过避免误分配
         if start < end:
             if start <= lon < end:
                 return i + 1
         else:  # wraps around 360
             if lon >= start or lon < end:
                 return i + 1
-    return 12
+    # 回退：找到最近的宫首
+    min_dist = 360.0
+    closest = 12
+    for i in range(12):
+        dist = abs(lon - cusps[i])
+        if dist > 180:
+            dist = 360 - dist
+        if dist < min_dist:
+            min_dist = dist
+            closest = i + 1
+    return closest
 
 
 class AstroEngine(DivinationEngine):
