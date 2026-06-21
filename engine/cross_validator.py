@@ -214,7 +214,7 @@ class CrossValidator:
             if bazi_xiyong_raw and ziwei_dayun:
                 birth_year = self._get_birth_year()
                 if not birth_year:
-                    return items  # 出生年份未知，跳过大运年龄匹配
+                    return results  # 出生年份未知，跳过大运年龄匹配
                 age = current_year - birth_year + 1  # 虚岁
                 for dy in ziwei_dayun:
                     start = dy.get("start_age", 0)
@@ -234,7 +234,7 @@ class CrossValidator:
         if bazi_dayun:
             birth_year = self._get_birth_year()
             if not birth_year:
-                return items  # 出生年份未知，跳过大运年龄匹配
+                return results  # 出生年份未知，跳过大运年龄匹配
             age = current_year - birth_year + 1  # 虚岁
 
             # 预计算十神→五行映射（仅依赖日主五行，循环外一次性构建）
