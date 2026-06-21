@@ -325,6 +325,7 @@ class LiuYaoEngine(DivinationEngine):
                     bian_yinyang = '阳' if i < len(bian_mark) and bian_mark[i] == '1' else '阴'
                     bian_lines.append({
                         'liu_qin': bian_qin6[i] if i < len(bian_qin6) else '',
+                        'liu_shen': god6[i] if i < len(god6) else '',
                         'wuxing': wuxing,
                         'dizhi': dizhi,
                         'gan': gan,
