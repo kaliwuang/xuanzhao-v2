@@ -1508,6 +1508,9 @@ class BaziEngine(DivinationEngine):
                 canggan_list = hidden_gans.get(_HIDDEN_KEYS[idx], [])
             else:
                 canggan_list = ZHI_CANGGAN.get(pillar.zhi, [])
+            # 防御：canggan_list 可能是字符串（如"己癸辛"）而非列表
+            if isinstance(canggan_list, str):
+                canggan_list = list(canggan_list)
             for cidx, canggan in enumerate(canggan_list):
                 canggan_wx = gan_wuxing_map.get(canggan)
                 if not canggan_wx:
