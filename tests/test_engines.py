@@ -187,6 +187,10 @@ class TestPerspectiveEngine:
         assert pe._classify_question("找工作难不难") == "事业"
         assert pe._classify_question("人际关系怎么样") == "人际"
         assert pe._classify_question("考研考公哪个好") == "学业"
+        # 子女分类（新增）
+        assert pe._classify_question("子女运势如何") == "子女"
+        assert pe._classify_question("什么时候能怀孕") == "子女"
+        assert pe._classify_question("子女缘如何") == "子女"  # "子女"匹配到子女分类
 
     def test_extract_bazi_data(self):
         """八字数据提取应包含日主和五行"""
