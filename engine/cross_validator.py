@@ -601,6 +601,62 @@ class CrossValidator:
                     ))
                     break
 
+        # 大六壬：看初传天将和用神六亲（事业权威/合作/竞争信号）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            if yong_shen:
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                chu_liuqin = yong_shen.get("chu_chuan_liuqin", "")
+                ji_xiong = yong_shen.get("jiang_ji_xiong", "")
+
+                # 天将→事业含义映射
+                _CAREER_JIANG = {
+                    "貴人": ("初传见贵人，事业有贵人提携，利于晋升和人脉拓展", ConfidenceLevel.HIGH),
+                    "貴": ("初传见贵人，事业有贵人提携，利于晋升和人脉拓展", ConfidenceLevel.HIGH),
+                    "青龍": ("初传见青龙，财喜临门，事业有名声和晋升机会", ConfidenceLevel.HIGH),
+                    "龍": ("初传见青龙，财喜临门，事业有名声和晋升机会", ConfidenceLevel.HIGH),
+                    "龙": ("初传见青龙，财喜临门，事业有名声和晋升机会", ConfidenceLevel.HIGH),
+                    "六合": ("初传见六合，利于合作合伙，事业中人际协调能力强", ConfidenceLevel.MEDIUM),
+                    "合": ("初传见六合，利于合作合伙，事业中人际协调能力强", ConfidenceLevel.MEDIUM),
+                    "白虎": ("初传见白虎，事业有压力和竞争，需防突发变动或职场冲突", ConfidenceLevel.MEDIUM),
+                    "虎": ("初传见白虎，事业有压力和竞争，需防突发变动或职场冲突", ConfidenceLevel.MEDIUM),
+                    "勾陳": ("初传见勾陈，事业有阻滞缠绵之象，进展缓慢但终有结果", ConfidenceLevel.LOW),
+                    "勾": ("初传见勾陈，事业有阻滞缠绵之象，进展缓慢但终有结果", ConfidenceLevel.LOW),
+                }
+
+                if chu_jiang in _CAREER_JIANG:
+                    desc, conf = _CAREER_JIANG[chu_jiang]
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=desc,
+                        supporting_methods=["大六壬"],
+                        confidence=conf,
+                    ))
+
+                # 用神六亲→事业方向
+                if chu_liuqin == "官鬼":
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding="六壬初传官鬼，事业有权威感，适合管理或执法类工作",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                elif chu_liuqin == "子孙":
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding="六壬初传子孙克官，适合创业、自由职业或技术路线",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                elif chu_liuqin in ("妻财", "财"):
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding="六壬初传财爻，事业与财务、商业密切相关，利于经营类工作",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
         return items
 
     def _validate_relationship(self) -> List[ConsensusItem]:
