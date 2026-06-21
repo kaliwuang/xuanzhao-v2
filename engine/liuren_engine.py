@@ -441,8 +441,8 @@ class LiuRenEngine(DivinationEngine):
             prev_jieqi = lunar.getPrevJieQi()
             if prev_jieqi:
                 return prev_jieqi.getName()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"六壬getPrevJieQi异常，尝试近似表: {e}")
 
         try:
             current_solar = lunar.getSolar()
@@ -454,8 +454,8 @@ class LiuRenEngine(DivinationEngine):
                     break
                 prev_name = name
             return prev_name
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"六壬节气近似表计算异常，回退农历月份估算: {e}")
 
         # 最终回退：按农历月份估算节气（用于月将判定）
         # 月将由"节"决定（非中气），每个节继承前一个中气的月将
