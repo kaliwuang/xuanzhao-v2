@@ -252,12 +252,14 @@ class LiuYaoEngine(DivinationEngine):
         n.compile(params=params, gender=gender, date=date_str)
         data = n.data
 
-        mark = data['mark']          # 二进制卦码 "111000"
+        mark = data.get('mark', '')          # 二进制卦码 "111000"
         dong = data.get('dong') or []  # 动爻列表（0-indexed），防御None
-        shi_ying = data['shiy']      # (世爻, 应爻, 宫位) 世应1-indexed
-        qin6 = data['qin6']          # 六亲 list[6]
-        god6 = data['god6']          # 六神 list[6]
-        gong_name = data['gong']     # 卦宫名 e.g. "乾"
+        # 过滤dong列表中的None值（najia库可能返回[0, None, 2]等异常列表）
+        dong = [d for d in dong if d is not None]
+        shi_ying = data.get('shiy', (6, 3, 0))  # (世爻, 应爻, 宫位) 世应1-indexed
+        qin6 = data.get('qin6', [])          # 六亲 list[6]
+        god6 = data.get('god6', [])          # 六神 list[6]
+        gong_name = data.get('gong', '')     # 卦宫名 e.g. "乾"
 
         # 3. 获取纳甲干支
         najia_gz = get_najia(mark)   # list[6] e.g. ["甲子", "甲寅", ...]
