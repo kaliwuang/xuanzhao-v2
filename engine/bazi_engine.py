@@ -1054,27 +1054,27 @@ class BaziEngine(DivinationEngine):
         if has_zhenguan and has_zhengyin:
             features.append("官印相生 — 体制内发展有利，稳中有升，有贵人提携")
 
-        # 5. 印星
-        yin_count = sum(1 for v in ss.values() if "印" in v)
+        # 5. 印星（排除日元位置，与十神组合检查保持一致）
+        yin_count = sum(1 for k, v in ss.items() if k != "day" and "印" in v)
         if yin_count >= 2:
             features.append("印星多现 — 学习能力强，有贵人")
         elif yin_count == 0:
             features.append("印星不显 — 缺乏外部支持")
 
         # 6. 财星
-        cai_count = sum(1 for v in ss.values() if "财" in v)
+        cai_count = sum(1 for k, v in ss.items() if k != "day" and "财" in v)
         if cai_count >= 2:
             features.append("财星多现 — 对物质敏感")
         elif cai_count == 0:
             features.append("财星不显 — 不重物质")
 
         # 7. 食伤
-        shis = [v for v in ss.values() if "食" in v or "伤" in v]
+        shis = [v for k, v in ss.items() if k != "day" and ("食" in v or "伤" in v)]
         if len(shis) >= 2:
             features.append("食伤旺 — 表达欲强，创造力佳")
 
         # 8. 比劫
-        bijian = [v for v in ss.values() if "比" in v or "劫" in v]
+        bijian = [v for k, v in ss.items() if k != "day" and ("比" in v or "劫" in v)]
         if len(bijian) >= 2:
             features.append("比劫多 — 朋友多，竞争也多")
 
