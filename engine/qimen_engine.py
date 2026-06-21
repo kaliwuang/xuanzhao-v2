@@ -603,8 +603,8 @@ class QiMenEngine(DivinationEngine):
         """流年太岁分析 — 当前年份太岁落在哪个宫，与各宫的关系"""
         try:
             from lunar_python import Solar
-            now = datetime.now()
-            solar = Solar.fromYmdHms(now.year, now.month, now.day, now.hour, now.minute, 0)
+            # 使用查询时间而非系统当前时间，确保历史/未来日期排盘准确
+            solar = Solar.fromYmdHms(solar_dt.year, solar_dt.month, solar_dt.day, solar_dt.hour, solar_dt.minute, solar_dt.second)
             lunar = solar.getLunar()
             year_gan = lunar.getYearGan()
             year_zhi = lunar.getYearZhi()
@@ -621,7 +621,7 @@ class QiMenEngine(DivinationEngine):
                     break
 
             return {
-                'year': now.year,
+                'year': solar_dt.year,
                 'year_ganzhi': year_ganzhi,
                 'year_gan': year_gan,
                 'year_zhi': year_zhi,
