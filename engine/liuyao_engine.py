@@ -545,9 +545,10 @@ class LiuYaoEngine(DivinationEngine):
             })
 
         bian_lines = []
-        for yao in bian_yao_list:
+        for i, yao in enumerate(bian_yao_list):
             bian_lines.append({
                 'liu_qin': yao['liuqin'],
+                'liu_shen': liu_shen[i] if i < len(liu_shen) else '',
                 'wuxing': yao['wuxing'],
                 'dizhi': yao['zhi'],
                 'gan': yao['gan'],
