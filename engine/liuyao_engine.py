@@ -259,6 +259,9 @@ class LiuYaoEngine(DivinationEngine):
         lines = []
         for i in range(6):
             gz = najia_gz[i]
+            if len(gz) < 2:
+                logger.warning(f"najia返回异常干支'{gz}'(位置{i+1})，跳过")
+                continue
             gan = gz[0]
             dizhi = gz[1]
             wz_idx = ZHIS.index(dizhi)
@@ -307,6 +310,9 @@ class LiuYaoEngine(DivinationEngine):
                 bian_najia = get_najia(bian_mark)
                 for i in range(6):
                     gz = bian_najia[i]
+                    if len(gz) < 2:
+                        logger.warning(f"变卦najia返回异常干支'{gz}'(位置{i+1})，跳过")
+                        continue
                     gan = gz[0]
                     dizhi = gz[1]
                     wz_idx = ZHIS.index(dizhi)
