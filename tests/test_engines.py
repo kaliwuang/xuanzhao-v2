@@ -746,7 +746,7 @@ class TestXingMingEngine:
     def test_basic_xingming(self):
         """姓名学分析应返回五格和评分"""
         engine = self._get_engine()
-        result = engine.analyze("张", "伟", "男")
+        result = engine.analyze_name("张", "伟", "男")
 
         assert "wuge" in result, "缺少五格"
         assert "score" in result, "缺少评分"
@@ -755,7 +755,7 @@ class TestXingMingEngine:
     def test_xingming_wuge_structure(self):
         """五格应包含天格人格地格外格总格"""
         engine = self._get_engine()
-        result = engine.analyze("张", "伟", "男")
+        result = engine.analyze_name("张", "伟", "男")
 
         wuge = result["wuge"]
         for key in ["天格", "人格", "地格", "外格", "总格"]:
@@ -767,7 +767,7 @@ class TestXingMingEngine:
     def test_xingming_compound_surname(self):
         """复姓姓名分析应正常"""
         engine = self._get_engine()
-        result = engine.analyze("欧阳", "明", "女")
+        result = engine.analyze_name("欧阳", "明", "女")
 
         assert "wuge" in result
         assert result["is_compound_surname"] is True
@@ -783,8 +783,8 @@ class TestXingMingEngine:
     def test_xingming_gender_difference(self):
         """男女名字评分应有差异"""
         engine = self._get_engine()
-        result_m = engine.analyze("张", "伟", "男")
-        result_f = engine.analyze("张", "伟", "女")
+        result_m = engine.analyze_name("张", "伟", "男")
+        result_f = engine.analyze_name("张", "伟", "女")
 
         # 至少结构应完整
         assert "score" in result_m
@@ -793,7 +793,7 @@ class TestXingMingEngine:
     def test_xingming_long_name(self):
         """多字名应正常分析"""
         engine = self._get_engine()
-        result = engine.analyze("司马", "懿", "男")
+        result = engine.analyze_name("司马", "懿", "男")
 
         assert "wuge" in result
         assert result["is_compound_surname"] is True
