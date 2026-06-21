@@ -462,6 +462,8 @@ class ZiWeiEngine(DivinationEngine):
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
+        if data.get('error'):
+            return False, data['error']
         if not data.get('ming_gong'):
             return False, "命宫为空"
         if not data.get('palaces'):

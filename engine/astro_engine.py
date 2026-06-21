@@ -236,6 +236,9 @@ class AstroEngine(DivinationEngine):
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
+        # Check for engine errors first
+        if data.get('error'):
+            return False, data['error']
         # Check that key astrology fields are present
         required_fields = ['sun_sign', 'moon_sign', 'planets']
         for field in required_fields:

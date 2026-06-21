@@ -299,9 +299,13 @@ class LiuRenEngine(DivinationEngine):
         验证排盘结果是否合理。
 
         检查：
+        0. 无引擎错误
         1. 四课不为空
         2. 三传不为空
         """
+        if data.get('error'):
+            return False, data['error']
+
         si_ke = data.get("si_ke")
         if not si_ke or (isinstance(si_ke, list) and all(not k for k in si_ke)):
             return False, "四课为空"

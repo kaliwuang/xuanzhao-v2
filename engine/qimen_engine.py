@@ -94,6 +94,8 @@ class QiMenEngine(DivinationEngine):
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
         """校验排盘数据"""
+        if data.get('error'):
+            return False, data['error']
         if 'ju_shu' not in data or not (1 <= data['ju_shu'] <= 9):
             return False, '局数必须在1-9之间'
         if 'palaces' not in data or len(data.get('palaces', [])) != 9:

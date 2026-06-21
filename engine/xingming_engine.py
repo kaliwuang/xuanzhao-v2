@@ -324,6 +324,8 @@ class XingMingEngine:
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
         """校验排盘数据"""
+        if data.get('error'):
+            return False, data['error']
         if not data.get('wuge'):
             return False, '五格数据为空'
         if data.get('score') is None:
