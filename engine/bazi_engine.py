@@ -1360,8 +1360,15 @@ class BaziEngine(DivinationEngine):
 
         # NOTE: 天赦日检测已在上方第18条天赦中统一处理（两者判定条件完全一致：春戊寅/夏甲午/秋戊申/冬甲子）
 
-        # 44. 天转煞（以日柱纳音五行查）— 使用模块级 SHENSHA_TIANZHUAN_MAP（复用上方_nayin_wx）
-        tianzhuan_ri = SHENSHA_TIANZHUAN_MAP.get(_nayin_wx, '')
+        # 44. 天转煞（以日柱纳音五行查）— 使用模块级 SHENSHA_TIANZHUAN_MAP
+        # 注意：天转煞用日柱纳音五行，与天罗地网用年柱纳音五行不同
+        _day_nayin_str = day_pillar.nayin or ''
+        _day_nayin_wx = ''
+        for _wx in _NAYIN_WX_CHARS:
+            if _wx in _day_nayin_str:
+                _day_nayin_wx = _wx
+                break
+        tianzhuan_ri = SHENSHA_TIANZHUAN_MAP.get(_day_nayin_wx, '')
         if day_gz == tianzhuan_ri:
             shensha.append('天转煞')
 
