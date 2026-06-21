@@ -481,17 +481,22 @@ class QiMenEngine(DivinationEngine):
             tp = p.get('tian_pan', '')
             dp = p.get('di_pan', '')
 
-            # 吉格：门星组合
-            if men == '生门' and xing == '天辅':
-                ji_ge.append({'name': '天遁', 'gong': g, 'desc': '生门配天辅，谋事大吉'})
-            if men == '开门' and xing == '天心':
-                ji_ge.append({'name': '地遁', 'gong': g, 'desc': '开门配天心，百事可为'})
-            if men == '休门' and xing == '天任':
-                ji_ge.append({'name': '人遁', 'gong': g, 'desc': '休门配天任，贵人相助'})
-            if men in ('开门', '休门') and shen == '九天':
-                ji_ge.append({'name': '龙遁', 'gong': g, 'desc': f'{men}配九天，飞龙在天'})
-            if men in ('开门', '生门') and shen == '白虎':
-                ji_ge.append({'name': '虎遁', 'gong': g, 'desc': f'{men}配白虎，威猛有力'})
+            # 吉格：门星+三奇组合（传统奇门格局必须同时满足门、星、三奇三要素）
+            # 天遁：生门+天辅+丙/丁（天盘）
+            if men == '生门' and xing == '天辅' and tp in ('丙', '丁'):
+                ji_ge.append({'name': '天遁', 'gong': g, 'desc': f'生门+天辅+{tp}，谋事大吉，上天护佑'})
+            # 地遁：开门+天心+乙（天盘）
+            if men == '开门' and xing == '天心' and tp == '乙':
+                ji_ge.append({'name': '地遁', 'gong': g, 'desc': '开门+天心+乙奇，百事可为，地利人和'})
+            # 人遁：休门+天任+丁（天盘）
+            if men == '休门' and xing == '天任' and tp == '丁':
+                ji_ge.append({'name': '人遁', 'gong': g, 'desc': '休门+天任+丁奇，贵人相助，人事和谐'})
+            # 龙遁：乙奇+开门/休门+九天
+            if tp == '乙' and men in ('开门', '休门') and shen == '九天':
+                ji_ge.append({'name': '龙遁', 'gong': g, 'desc': f'乙奇+{men}+九天，飞龙在天，大吉'})
+            # 虎遁：乙奇+开门/生门+白虎
+            if tp == '乙' and men in ('开门', '生门') and shen == '白虎':
+                ji_ge.append({'name': '虎遁', 'gong': g, 'desc': f'乙奇+{men}+白虎，威猛有力，利武事'})
 
             # 凶格：门宫组合
             if men == '景门' and g == 1:
