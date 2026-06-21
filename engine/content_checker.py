@@ -163,7 +163,7 @@ class ContentChecker:
             p = p.strip()
             if not p:
                 continue
-            sentences = re.split(r'[。！？]', p)
+            sentences = re.split(r'[。！？；…—.!?;]', p)
             sentences = [s for s in sentences if s.strip()]
             if len(sentences) > max_sentences:
                 long_paragraphs.append(p[:50] + "...")
