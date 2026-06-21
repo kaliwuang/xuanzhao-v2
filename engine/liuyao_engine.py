@@ -990,8 +990,17 @@ class LiuYaoEngine(DivinationEngine):
 
     def _calc_ri_yue_jian(self, day_gan: str, day_zhi: str, month_zhi: str, gua_gong_wuxing: str = '') -> dict:
         """计算日建月建对各爻的影响"""
+        # 防御空值（lunar_python不可用时day_zhi/month_zhi可能为空）
         ri_jian = day_zhi  # 日建 = 日支
         yue_jian = month_zhi  # 月建 = 月支
+        if not ri_jian or not yue_jian:
+            return {
+                'ri_jian': ri_jian, 'ri_jian_wuxing': '',
+                'yue_jian': yue_jian, 'yue_jian_wuxing': '',
+                'day_gan': day_gan, 'day_liuqin': '',
+                'ri_wangshuai': {wx: '无' for wx in ['木','火','土','金','水']},
+                'yue_wangshuai': {wx: '无' for wx in ['木','火','土','金','水']},
+            }
         
         # 日建月建五行
         ri_wx = self.ZHI_WUXING.get(ri_jian, '')
