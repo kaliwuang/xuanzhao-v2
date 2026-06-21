@@ -150,8 +150,8 @@ class AstroEngine(DivinationEngine):
         # Sun/Moon signs and elements
         sun_sign = planets['太阳']['sign']
         moon_sign = planets['月亮']['sign']
-        sun_element = SIGN_ELEMENTS[sun_sign]
-        moon_element = SIGN_ELEMENTS[moon_sign]
+        sun_element = SIGN_ELEMENTS.get(sun_sign, '')
+        moon_element = SIGN_ELEMENTS.get(moon_sign, '')
 
         # ASC and MC
         asc_sign, asc_deg, _ = _sign_degree(ascmc[0])
