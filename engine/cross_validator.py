@@ -153,6 +153,7 @@ class CrossValidator:
     def _validate_dayun(self) -> List[ConsensusItem]:
         """大运流年交叉验证 — 利用八字详细大运数据（十神/藏干/纳音/长生/神煞/流年）"""
         results = []
+        current_year = datetime.now().year  # 缓存当前年份，避免重复调用
         
         # 检查八字大运数据
         bazi_dayun = self.udm.dayun if self.udm.dayun else []
@@ -196,7 +197,6 @@ class CrossValidator:
         # 检查紫微当前大限
         try:
             if bazi_xiyong_raw and ziwei_dayun:
-                current_year = datetime.now().year
                 birth_year = self._get_birth_year()
                 age = current_year - birth_year + 1  # 虚岁
                 for dy in ziwei_dayun:
@@ -215,7 +215,6 @@ class CrossValidator:
 
         # ── 新增：利用八字详细大运数据做深层互证 ──
         if bazi_dayun:
-            current_year = datetime.now().year
             birth_year = self._get_birth_year()
             age = current_year - birth_year + 1  # 虚岁
 
@@ -276,7 +275,7 @@ class CrossValidator:
 
                 # 流年分析（最近3年）
                 if liunian:
-                    _now = datetime.now().year
+                    _now = current_year
                     recent = [ln for ln in liunian if _now - 2 <= ln.get("year", 0) <= _now]
                     for ln in recent:
                         ln_gz = ln.get("ganzhi", "")
