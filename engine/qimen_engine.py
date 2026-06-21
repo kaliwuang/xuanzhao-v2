@@ -166,7 +166,7 @@ class QiMenEngine(DivinationEngine):
             'xun_kong': xun_kong,
             # 天地人三盘摘要（便于前端快速展示）
             'san_pan_summary': self._build_san_pan_summary(palaces),
-            'ge_ju_analysis': self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong, day_gan_zhi, hour_gan_zhi),
+            'ge_ju_analysis': self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong, day_gan_zhi, hour_gan_zhi, zhi_shi_door),
             # 流年分析
             'liunian': self._build_liunian(solar_dt, di_pan, tian_pan, palaces),
         }
@@ -423,7 +423,7 @@ class QiMenEngine(DivinationEngine):
             })
         return palaces
 
-    def _analyze_ge_ju(self, palaces: list, ba_men: dict, jiu_xing: dict, ba_shen: dict, xun_kong: dict, day_gan_zhi: str = '', hour_gan_zhi: str = '') -> dict:
+    def _analyze_ge_ju(self, palaces: list, ba_men: dict, jiu_xing: dict, ba_shen: dict, xun_kong: dict, day_gan_zhi: str = '', hour_gan_zhi: str = '', zhi_shi_door: str = '') -> dict:
         """奇门格局判断：识别吉格和凶格"""
         ji_ge = []   # 吉格
         xiong_ge = []  # 凶格
@@ -535,6 +535,13 @@ class QiMenEngine(DivinationEngine):
             if tp == '丁' and men and men != '':
                 ji_ge.append({'name': '玉女守门', 'gong': g,
                               'desc': f'丁奇守{men}，百事皆宜，利于文书'})
+
+            # 三奇得使：天盘乙/丙丁落在值使门所在宫位，为奇门大吉之格
+            # 规则：天盘为三奇（乙丙丁）之一 + 该宫八门恰好是值使门
+            # 含义：三奇得使，天地人三才相合，主凡事有贵人暗助，谋事易成
+            if zhi_shi_door and men == zhi_shi_door and tp in ('乙', '丙', '丁'):
+                ji_ge.append({'name': '三奇得使', 'gong': g,
+                              'desc': f'{tp}奇得值使{men}，三才相合，贵人暗助，百事可为'})
 
             # 天地合德
             if tp and dp and GAN_HE_GEDE.get(tp) == dp:
