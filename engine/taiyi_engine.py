@@ -135,19 +135,19 @@ class TaiYiEngine(DivinationEngine):
         zhi_fu = r.get('直符', '')
 
         # 文昌/始击
-        wen_chang = r.get('文昌', [])
+        wen_chang = r.get('文昌') or []
         shi_ji = r.get('始擊', '')
 
         # 主算/客算/定算
         def _native_list(lst):
             """Convert numpy types to native Python types for JSON serialization"""
             if not isinstance(lst, list):
-                return lst
+                return []
             return [int(x) if hasattr(x, 'item') else x for x in lst]
 
-        zhu_suan = _native_list(r.get('主算', []))
-        ke_suan = _native_list(r.get('客算', []))
-        ding_suan = _native_list(r.get('定算', []))
+        zhu_suan = _native_list(r.get('主算') or [])
+        ke_suan = _native_list(r.get('客算') or [])
+        ding_suan = _native_list(r.get('定算') or [])
 
         # 八门
         ba_men = r.get('八門值事', '')
