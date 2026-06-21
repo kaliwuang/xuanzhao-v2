@@ -140,3 +140,5 @@ class EngineOrchestrator:
             udm.taiyi_chart = data
         elif engine_name == "占星":
             udm.astro_chart = data
+        elif engine_name == "姓名学":
+            udm.xingming_chart = data

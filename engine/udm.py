@@ -279,6 +279,9 @@ class DestinyModel:
     # === 占星数据 ===
     astro_chart: Optional[Dict] = None
 
+    # === 姓名学数据 ===
+    xingming_chart: Optional[Dict] = None
+
     # === 引擎错误记录 ===
     engine_errors: Dict[str, str] = field(default_factory=dict)
 
@@ -395,4 +398,6 @@ class DestinyModel:
             methods.append("太乙")
         if self.astro_chart:
             methods.append("占星")
+        if self.xingming_chart:
+            methods.append("姓名学")
         return methods

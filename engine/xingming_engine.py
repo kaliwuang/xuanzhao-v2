@@ -9,6 +9,7 @@ Includes 三才五行配置 analysis and optional 八字喜用神 matching.
 import unicodedata
 from typing import Optional, Dict, List, Tuple
 import logging
+from .base import DivinationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -300,7 +301,7 @@ DIZHI_WUXING = {
 }
 
 
-class XingMingEngine:
+class XingMingEngine(DivinationEngine):
     """姓名学引擎 - 五格剖象法
 
     注意：姓名学需要额外的姓名输入。
