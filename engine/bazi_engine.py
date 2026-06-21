@@ -948,6 +948,16 @@ class BaziEngine(DivinationEngine):
                         hai_found.add(pair_key)
                         features.append(f"{z1}{z2}害 — {pos_names[i]}支与{pos_names[j]}支相害，暗中损耗")
 
+        # 2.8.5 地支破（六破：子酉/丑辰/寅亥/卯午/巳申/未戌）
+        po_found = set()
+        for i, z1 in enumerate(zhis):
+            for j, z2 in enumerate(zhis[i+1:], i+1):
+                if ZHI_PO_MOD.get(z1) == z2:
+                    pair_key = frozenset({pos_names[i], pos_names[j]})
+                    if pair_key not in po_found:
+                        po_found.add(pair_key)
+                        features.append(f"{z1}{z2}破 — {pos_names[i]}支与{pos_names[j]}支相破，暗中消耗")
+
         # 2.9 地支三合局（三支齐全时强力聚合，两支半合也有引力）
         # 申子辰→水局，寅午戌→火局，巳酉丑→金局，亥卯未→木局
         # SAN_HE_GROUPS, BAN_HE_PAIRS 已提升为模块级常量
