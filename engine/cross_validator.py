@@ -85,6 +85,7 @@ class CrossValidator:
         self.udm = udm
 
     _cached_current_year = None
+    _cached_current_year_ts = 0  # 缓存时间戳，跨年时自动刷新
 
     def _get_birth_year(self) -> int:
         """从UDM获取出生公历年份，优先用birth_year字段，回退到corrected_time"""
@@ -97,9 +98,12 @@ class CrossValidator:
         return self._get_current_year()  # 最终回退：用当前年份（影响最小）
 
     def _get_current_year(self) -> int:
-        """缓存当前年份，避免多次datetime.now()调用"""
-        if CrossValidator._cached_current_year is None:
+        """缓存当前年份，跨年时自动刷新"""
+        import time as _time
+        now_ts = _time.time()
+        if CrossValidator._cached_current_year is None or (now_ts - CrossValidator._cached_current_year_ts > 86400):
             CrossValidator._cached_current_year = datetime.now().year
+            CrossValidator._cached_current_year_ts = now_ts
         return CrossValidator._cached_current_year
 
     def validate(self) -> dict:
