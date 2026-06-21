@@ -85,8 +85,8 @@ class TimeEngine:
                 with open(cities_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 return {name: (info["lat"], info["lon"]) for name, info in data.items()}
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"城市数据库加载失败，回退到内置城市: {e}")
 
         # 回退：硬编码核心城市
         return {

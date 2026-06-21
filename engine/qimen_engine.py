@@ -248,7 +248,8 @@ class QiMenEngine(DivinationEngine):
                 solar_dt.hour, solar_dt.minute, solar_dt.second
             ).getLunar()
             return lunar.getTimeInGanZhi()
-        except Exception:
+        except Exception as e:
+            logger.debug(f"lunar_python时柱计算异常，使用近似: {e}")
             hour = solar_dt.hour
             zhi_idx = ((hour + 1) % 24) // 2
             # 晚子时(23:xx)日柱用次日，但时支仍为子时
@@ -266,8 +267,8 @@ class QiMenEngine(DivinationEngine):
                 solar_dt.hour, solar_dt.minute, solar_dt.second
             ).getLunar()
             return lunar.getDayInGanZhi()
-        except Exception:
-            # 晚子时(23:xx)日柱用次日
+        except Exception as e:
+            logger.debug(f"lunar_python日柱计算异常，使用近似: {e}")
             calc_dt = solar_dt + timedelta(days=1) if solar_dt.hour == 23 else solar_dt
             ga = (calc_dt.toordinal() + 4) % 10
             zi = (calc_dt.toordinal() + 2) % 12

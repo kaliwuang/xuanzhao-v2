@@ -832,7 +832,8 @@ class BaziEngine(DivinationEngine):
                 try:
                     with open(tiaohou_file, "r", encoding="utf-8") as f:
                         BaziEngine._tiaohou_cache = json.load(f)
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"调候用神JSON加载失败: {e}")
                     BaziEngine._tiaohou_cache = {}
             else:
                 BaziEngine._tiaohou_cache = {}
