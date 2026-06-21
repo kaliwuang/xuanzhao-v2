@@ -2022,6 +2022,122 @@ class CrossValidator:
                     ))
                     break
 
+        # 大六壬：初传天将人际关系信号（贵人=社交层次、六合=合作、朱雀=口舌、勾陈=人际纠缠）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            if yong_shen:
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                chu_liuqin = yong_shen.get("chu_chuan_liuqin", "")
+
+                _INTERPERSONAL_JIANG = {
+                    "貴人": ("初传见贵人，社交层次高，易结交有权势或有资源之人，人脉广阔", ConfidenceLevel.HIGH),
+                    "貴": ("初传见贵人，社交层次高，易结交有权势或有资源之人，人脉广阔", ConfidenceLevel.HIGH),
+                    "六合": ("初传见六合，人际关系和谐，善于合作协调，团队协作能力强", ConfidenceLevel.HIGH),
+                    "合": ("初传见六合，人际关系和谐，善于合作协调，团队协作能力强", ConfidenceLevel.HIGH),
+                    "青龍": ("初传见青龙，社交中有声望，易获得他人好感和信任", ConfidenceLevel.MEDIUM),
+                    "龍": ("初传见青龙，社交中有声望，易获得他人好感和信任", ConfidenceLevel.MEDIUM),
+                    "龙": ("初传见青龙，社交中有声望，易获得他人好感和信任", ConfidenceLevel.MEDIUM),
+                    "朱雀": ("初传见朱雀，口才表达力强但需防口舌是非，社交中易因言语引发争端", ConfidenceLevel.MEDIUM),
+                    "雀": ("初传见朱雀，口才表达力强但需防口舌是非，社交中易因言语引发争端", ConfidenceLevel.MEDIUM),
+                    "勾陳": ("初传见勾陈，人际关系中有纠缠或牵绊，难以干净利落处理社交关系", ConfidenceLevel.LOW),
+                    "勾": ("初传见勾陈，人际关系中有纠缠或牵绊，难以干净利落处理社交关系", ConfidenceLevel.LOW),
+                    "太陰": ("初传见太阴，社交中有暗中助力或隐秘关系，善于私下沟通运作", ConfidenceLevel.LOW),
+                    "阴": ("初传见太阴，社交中有暗中助力或隐秘关系，善于私下沟通运作", ConfidenceLevel.LOW),
+                    "白虎": ("初传见白虎，社交中易遇强硬对手或冲突，需注意人际关系中的竞争和对抗", ConfidenceLevel.MEDIUM),
+                    "虎": ("初传见白虎，社交中易遇强硬对手或冲突，需注意人际关系中的竞争和对抗", ConfidenceLevel.MEDIUM),
+                }
+
+                if chu_jiang in _INTERPERSONAL_JIANG:
+                    desc, conf = _INTERPERSONAL_JIANG[chu_jiang]
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=desc,
+                        supporting_methods=["大六壬"],
+                        confidence=conf,
+                    ))
+
+                # 用神六亲→人际角色分析
+                _INTERPERSONAL_LIUQIN = {
+                    "比劫": ("六壬用神比劫，同辈朋友关系活跃，社交圈广泛，但也需防同行竞争", ConfidenceLevel.MEDIUM),
+                    "官鬼": ("六壬用神官鬼，与上级或权威人士关系密切，贵人运佳但压力也大", ConfidenceLevel.MEDIUM),
+                    "父母": ("六壬用神父母，长辈师长助力多，善于从前辈处获取资源和指导", ConfidenceLevel.MEDIUM),
+                    "子孙": ("六壬用神子孙，善于与晚辈或下属相处，有带动力和感召力", ConfidenceLevel.LOW),
+                    "妻财": ("六壬用神妻财，人际关系中善于利益交换和资源整合，务实型社交", ConfidenceLevel.LOW),
+                }
+                if chu_liuqin in _INTERPERSONAL_LIUQIN:
+                    desc, conf = _INTERPERSONAL_LIUQIN[chu_liuqin]
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=desc,
+                        supporting_methods=["大六壬"],
+                        confidence=conf,
+                    ))
+
+        # 奇门遁甲：六合神（合作合和）、值符（核心社交力量）、惊门（口舌争端）、太阴（暗中关系）
+        if self.udm.qimen_chart:
+            qm = self.udm.qimen_chart
+            ba_men = qm.get("ba_men", {})
+            ba_shen = qm.get("ba_shen", {})
+
+            # 六合神落宫→合作关系分析
+            liuhe_gong = next((int(g) for g, v in ba_shen.items() if v == "六合"), None)
+            if liuhe_gong:
+                gong_name = ""
+                for p in qm.get("palaces", []):
+                    if p.get("gong") == liuhe_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="人际关系",
+                    finding=f"六合神落{gong_name}，合作合和之力强，善于团队协作和人际关系调和",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 值符落宫→核心社交力量
+            zhi_fu = qm.get("zhi_fu", {})
+            zf_gong = zhi_fu.get("gong", "")
+            zf_star = zhi_fu.get("star", "")
+            if zf_gong:
+                zf_gong_name = self.QIMEN_GONG_NAMES.get(str(zf_gong), str(zf_gong))
+                items.append(ConsensusItem(
+                    aspect="人际关系",
+                    finding=f"值符（{zf_star}）落{zf_gong_name}，核心社交圈稳固，有主导人际格局的能力",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 惊门落宫→口舌争端信号
+            jingmen_gong = next((int(g) for g, v in ba_men.items() if v == "惊门"), None)
+            if jingmen_gong:
+                gong_name = ""
+                for p in qm.get("palaces", []):
+                    if p.get("gong") == jingmen_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="人际关系",
+                    finding=f"惊门落{gong_name}，社交中需防口舌争端和言语冲突",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 太阴神落宫→暗中关系/私下社交
+            taiyin_gong = next((int(g) for g, v in ba_shen.items() if v == "太阴"), None)
+            if taiyin_gong:
+                gong_name = ""
+                for p in qm.get("palaces", []):
+                    if p.get("gong") == taiyin_gong:
+                        gong_name = p.get("name", "")
+                        break
+                items.append(ConsensusItem(
+                    aspect="人际关系",
+                    finding=f"太阴神落{gong_name}，善于私下沟通运作，有暗中贵人或隐性社交资源",
+                    supporting_methods=["奇门"],
+                    confidence=ConfidenceLevel.LOW,
+                ))
+
         return items
 
 
