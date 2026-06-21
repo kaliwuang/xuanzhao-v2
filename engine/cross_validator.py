@@ -226,6 +226,29 @@ class CrossValidator:
             birth_year = self._get_birth_year()
             age = current_year - birth_year + 1  # 虚岁
 
+            # 预计算十神→五行映射（仅依赖日主五行，循环外一次性构建）
+            _day_wx = self.udm.day_master_wuxing or ''
+            _SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
+            _KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
+            _ss_wx_map = {}
+            if _day_wx:
+                _bei_ke = {v:k for k,v in _KE.items()}  # 克我→我(被克之五行)
+                _SHENG_REV = {v:k for k,v in _SHENG.items()}  # 生我→生我者的五行
+                _ss_wx_map = {
+                    '正印': _SHENG_REV[_day_wx],
+                    '偏印': _SHENG_REV[_day_wx],
+                    '印':   _SHENG_REV[_day_wx],
+                    '比肩': _day_wx, '比': _day_wx,
+                    '劫财': _day_wx, '劫': _day_wx,
+                    '食神': _SHENG[_day_wx], '食': _SHENG[_day_wx],
+                    '伤官': _SHENG[_day_wx], '伤': _SHENG[_day_wx],
+                    '正财': _KE[_day_wx], '财': _KE[_day_wx],
+                    '偏财': _KE[_day_wx],
+                    '正官': _bei_ke.get(_day_wx, ''),
+                    '七杀': _bei_ke.get(_day_wx, ''),
+                    '杀': _bei_ke.get(_day_wx, ''),
+                }
+
             for dy in bazi_dayun:
                 start = dy.get("start_age", 0)
                 end = dy.get("end_age", 0)
@@ -241,27 +264,6 @@ class CrossValidator:
 
                 # 大运十神与喜用关系
                 if shishen and bazi_xiyong_raw:
-                    # 使用日主天干五行（非纳音五行）推导十神对应五行
-                    _day_wx = self.udm.day_master_wuxing or ''
-                    _SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
-                    _KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
-                    _ss_wx_map = {}
-                    if _day_wx:
-                        _bei_ke = {v:k for k,v in _KE.items()}  # 克我→我(被克之五行)
-                        _ss_wx_map = {
-                            '正印': {v:k for k,v in _SHENG.items()}[_day_wx],
-                            '偏印': {v:k for k,v in _SHENG.items()}[_day_wx],
-                            '印':   {v:k for k,v in _SHENG.items()}[_day_wx],
-                            '比肩': _day_wx, '比': _day_wx,
-                            '劫财': _day_wx, '劫': _day_wx,
-                            '食神': _SHENG[_day_wx], '食': _SHENG[_day_wx],
-                            '伤官': _SHENG[_day_wx], '伤': _SHENG[_day_wx],
-                            '正财': _KE[_day_wx], '财': _KE[_day_wx],
-                            '偏财': _KE[_day_wx],
-                            '正官': _bei_ke.get(_day_wx, ''),
-                            '七杀': _bei_ke.get(_day_wx, ''),
-                            '杀': _bei_ke.get(_day_wx, ''),
-                        }
                     _ss_wx = _ss_wx_map.get(shishen, '')
                     xi_list = bazi_xiyong_raw if isinstance(bazi_xiyong_raw, list) else [bazi_xiyong_raw]
                     is_favorable = _ss_wx in xi_list if _ss_wx else False
