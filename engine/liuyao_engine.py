@@ -994,9 +994,9 @@ class LiuYaoEngine(DivinationEngine):
                 return '无'
             if wx == ref_wx:
                 return '旺（比和）'
-            if self.SHENG.get(ref_wx) == wx:
-                return '相（生我）'
             if self.SHENG_REV.get(ref_wx) == wx:
+                return '相（生我）'
+            if self.SHENG.get(ref_wx) == wx:
                 return '休（我生）'
             if self.KE.get(ref_wx) == wx:
                 return '死（克我）'
