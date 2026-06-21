@@ -1286,7 +1286,7 @@ class BaziEngine(DivinationEngine):
         # 注：部分现代派系简化为所有命格均查，此处按传统纳音五行判定
         # 提取纳音五行（复用于天罗地网和天转煞）
         _NAYIN_WX_CHARS = {'金', '木', '水', '火', '土'}
-        _nayin_str = day_pillar.nayin or ''
+        _nayin_str = year_pillar.nayin or ''
         _nayin_wx = ''
         for _wx in _NAYIN_WX_CHARS:
             if _wx in _nayin_str:
