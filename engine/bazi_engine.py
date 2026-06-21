@@ -1098,12 +1098,15 @@ class BaziEngine(DivinationEngine):
             s = sorted(set(indices))
             if len(s) < 4:
                 return False
-            # 计算4个环形间距（含绕回间距）
-            gaps = [s[i+1] - s[i] for i in range(3)]
-            wrap_gap = cycle_len - s[3] + s[0]
-            # 4个连续元素在环形中：3个非绕回间距均为1，绕回间距为cycle_len-3
-            # 例：天干环[0,1,2,3]→gaps=[1,1,1],wrap=7 ✓; [0,1,8,9]→gaps=[1,7,1],wrap=1 ✗
-            return all(g == 1 for g in gaps) and wrap_gap == cycle_len - 3
+            # 计算所有4个环形间距（3个正向 + 1个绕回）
+            all_gaps = [s[i+1] - s[i] for i in range(3)]
+            all_gaps.append(cycle_len - s[3] + s[0])
+            # 4个连续元素在环形中：恰好3个间距为1，1个间距为cycle_len-3
+            # 例：[0,1,2,3]→gaps=[1,1,1,7] ✓; [7,8,9,0]→gaps=[1,1,1,7] ✓（绕回）
+            #     [0,1,8,9]→gaps=[1,7,1,3] ✗（不连续）
+            ones = sum(1 for g in all_gaps if g == 1)
+            big = sum(1 for g in all_gaps if g == cycle_len - 3)
+            return ones == 3 and big == 1
 
         if _is_consecutive_4(gan_indices, 10):
             features.append("天干连珠 — 四天干连续排列，五行流转顺畅")
