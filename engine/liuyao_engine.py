@@ -267,10 +267,11 @@ class LiuYaoEngine(DivinationEngine):
         for i in range(6):
             gz = najia_gz[i]
             if len(gz) < 2:
-                logger.warning(f"najia返回异常干支'{gz}'(位置{i+1})，跳过")
-                continue
-            gan = gz[0]
-            dizhi = gz[1]
+                logger.warning(f"najia返回异常干支'{gz}'(位置{i+1})，用默认值甲子替代")
+                gan, dizhi = '甲', '子'
+            else:
+                gan = gz[0]
+                dizhi = gz[1]
             try:
                 wz_idx = ZHIS.index(dizhi)
             except ValueError:
@@ -321,10 +322,11 @@ class LiuYaoEngine(DivinationEngine):
                 for i in range(6):
                     gz = bian_najia[i]
                     if len(gz) < 2:
-                        logger.warning(f"变卦najia返回异常干支'{gz}'(位置{i+1})，跳过")
-                        continue
-                    gan = gz[0]
-                    dizhi = gz[1]
+                        logger.warning(f"变卦najia返回异常干支'{gz}'(位置{i+1})，用默认值甲子替代")
+                        gan, dizhi = '甲', '子'
+                    else:
+                        gan = gz[0]
+                        dizhi = gz[1]
                     try:
                         wz_idx = ZHIS.index(dizhi)
                     except ValueError:
