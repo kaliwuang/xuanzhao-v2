@@ -124,7 +124,7 @@ class QiMenEngine(DivinationEngine):
         di_pan = self._build_di_pan(ju, yin_yang)
 
         # 4. 天盘、八门、九星
-        tian_pan, ba_men, jiu_xing = self._build_tian_pan(di_pan, hour_gan_zhi, ju, yin_yang)
+        tian_pan, ba_men, jiu_xing = self._build_tian_pan(di_pan, hour_gan_zhi, ju)
 
         # 5. 值符 & 值使
         zhi_fu_gong = self._find_gong_for_gan(di_pan, hour_gan_zhi)
@@ -292,7 +292,7 @@ class QiMenEngine(DivinationEngine):
             di_pan[palace] = yi_order[yi_idx]
         return di_pan
 
-    def _build_tian_pan(self, di_pan: dict, hour_gan_zhi: str, ju: int, yin_yang: str):
+    def _build_tian_pan(self, di_pan: dict, hour_gan_zhi: str, ju: int):
         """构建天盘、八门、九星
 
         天盘旋转规则：值符随时干转。
