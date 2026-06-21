@@ -79,11 +79,8 @@ ADJECTIVE_STAR_MAP = {
     'tianguan': '天官', 'tianyue': '天月',
 }
 
-# 亮度映射
-BRIGHTNESS_MAP = {
-    '庙': '庙', '旺': '旺', '得': '得', '利': '利', '平': '平',
-    '不': '不', '陷': '陷',
-}
+# 亮度有效值集合（iztro-py已返回中文标签，用于校验非预期值）
+VALID_BRIGHTNESS = {'庙', '旺', '得', '利', '平', '不', '陷'}
 
 # 天干四化表（完整版，用于计算自化）
 # {天干: {禄星, 权星, 科星, 忌星}}
@@ -231,7 +228,7 @@ class ZiWeiEngine(DivinationEngine):
             major_stars = []
             for s in p.major_stars:
                 star_cn = _cn_star(s.name, 'major')
-                brightness = BRIGHTNESS_MAP.get(s.brightness, s.brightness) if s.brightness else ''
+                brightness = s.brightness if s.brightness and s.brightness in VALID_BRIGHTNESS else ''
                 mutagen = s.mutagen or ''
                 major_stars.append({
                     'name': star_cn,
@@ -246,7 +243,7 @@ class ZiWeiEngine(DivinationEngine):
                 star_cn = _cn_star(s.name, 'minor')
                 minor_stars.append({
                     'name': star_cn,
-                    'brightness': BRIGHTNESS_MAP.get(s.brightness, s.brightness) if s.brightness else '',
+                    'brightness': s.brightness if s.brightness and s.brightness in VALID_BRIGHTNESS else '',
                     'mutagen': s.mutagen or '',
                 })
                 star_placements[star_cn] = palace_name
