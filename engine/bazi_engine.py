@@ -1119,6 +1119,14 @@ class BaziEngine(DivinationEngine):
                 if z == target_zhi:
                     shensha.append(f'{name}（{POS_NAMES[pos_idx]}支{z}）')
 
+        # 辅助函数：扫描四柱地支，targets 为地支集合（多个目标地支）
+        def _scan_zhi_set(name: str, targets: set):
+            if not targets:
+                return
+            for pos_idx, z in enumerate(all_zhis):
+                if z in targets:
+                    shensha.append(f'{name}（{POS_NAMES[pos_idx]}支{z}）')
+
         # 1. 天乙贵人（以日干查四支）
         tianyi_zhis = SHENSHA_TIANYI_MAP.get(day_gan, [])
         tianyi_found = set()
@@ -1132,31 +1140,19 @@ class BaziEngine(DivinationEngine):
 
         # 2. 华盖（以年支和日支查四支，与大运一致）
         huagai_targets = set(filter(None, [SHENSHA_HUAGAI_MAP.get(year_zhi, ''), SHENSHA_HUAGAI_MAP.get(day_zhi, '')]))
-        for pos_idx, z in enumerate(all_zhis):
-            if z in huagai_targets:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'华盖（{pos}支{z}）')
+        _scan_zhi_set('华盖', huagai_targets)
 
         # 3. 驿马（以年支和日支查三合局冲位，与大运一致）
         yima_targets = set(filter(None, [SHENSHA_YIMA_MAP.get(year_zhi, ''), SHENSHA_YIMA_MAP.get(day_zhi, '')]))
-        for pos_idx, z in enumerate(all_zhis):
-            if z in yima_targets:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'驿马（{pos}支{z}）')
+        _scan_zhi_set('驿马', yima_targets)
 
         # 4. 桃花（以年支和日支查，与大运一致）
         taohua_targets = set(filter(None, [SHENSHA_TAOHUA_MAP.get(year_zhi, ''), SHENSHA_TAOHUA_MAP.get(day_zhi, '')]))
-        for pos_idx, z in enumerate(all_zhis):
-            if z in taohua_targets:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'桃花（{pos}支{z}）')
+        _scan_zhi_set('桃花', taohua_targets)
 
         # 5. 将星（以年支和日支查，与大运一致）
         jiangxing_targets = set(filter(None, [SHENSHA_JIANGXING_MAP.get(year_zhi, ''), SHENSHA_JIANGXING_MAP.get(day_zhi, '')]))
-        for pos_idx, z in enumerate(all_zhis):
-            if z in jiangxing_targets:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'将星（{pos}支{z}）')
+        _scan_zhi_set('将星', jiangxing_targets)
 
         # 6. 天德贵人（以月支查天干或地支）— 使用模块级 SHENSHA_TIANDEREN_MAP
         tiande = SHENSHA_TIANDEREN_MAP.get(month_pillar.zhi, '')
@@ -1181,17 +1177,11 @@ class BaziEngine(DivinationEngine):
 
         # 10. 红鸾（以年支和日支查，与华盖/驿马/桃花/将星一致）
         hongluan_targets = set(filter(None, [SHENSHA_HONGLUAN_MAP.get(year_zhi, ''), SHENSHA_HONGLUAN_MAP.get(day_zhi, '')]))
-        for pos_idx, z in enumerate(all_zhis):
-            if z in hongluan_targets:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'红鸾（{pos}支{z}）')
+        _scan_zhi_set('红鸾', hongluan_targets)
 
         # 11. 天喜（以年支和日支查，红鸾对冲）
         tianxi_targets = set(filter(None, [SHENSHA_TIANXI_MAP.get(year_zhi, ''), SHENSHA_TIANXI_MAP.get(day_zhi, '')]))
-        for pos_idx, z in enumerate(all_zhis):
-            if z in tianxi_targets:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'天喜（{pos}支{z}）')
+        _scan_zhi_set('天喜', tianxi_targets)
 
         # 12. 月德（以月支查天干）
         yuede = SHENSHA_YUEDE_MAP.get(month_pillar.zhi, '')
@@ -1205,24 +1195,15 @@ class BaziEngine(DivinationEngine):
         taiji_targets = set()
         for gan in [day_gan, year_gan]:
             taiji_targets.update(SHENSHA_TAIJI_MAP.get(gan, []))
-        for pos_idx, z in enumerate(all_zhis):
-            if z in taiji_targets:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'太极贵人（{pos}支{z}）')
+        _scan_zhi_set('太极贵人', taiji_targets)
 
         # 14. 福星贵人（以日干查）— 使用模块级 SHENSHA_FUXING_MAP
-        fuxing_zhis = SHENSHA_FUXING_MAP.get(day_gan, [])
-        for pos_idx, z in enumerate(all_zhis):
-            if z in fuxing_zhis:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'福星贵人（{pos}支{z}）')
+        fuxing_zhis = set(SHENSHA_FUXING_MAP.get(day_gan, []))
+        _scan_zhi_set('福星贵人', fuxing_zhis)
 
         # 15. 金舆（以日干查）— 使用模块级 SHENSHA_JINYU_MAP
-        jinyu_zhi = SHENSHA_JINYU_MAP.get(day_gan, [])
-        for pos_idx, z in enumerate(all_zhis):
-            if z in jinyu_zhi:
-                pos = ['年','月','日','时'][pos_idx]
-                shensha.append(f'金舆（{pos}支{z}）')
+        jinyu_zhi = set(SHENSHA_JINYU_MAP.get(day_gan, []))
+        _scan_zhi_set('金舆', jinyu_zhi)
 
         # 16. 天德合（以月支查天干，天德的六合）
         # tiande 已在第6步（天德贵人）赋值，此处复用
