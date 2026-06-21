@@ -76,6 +76,28 @@ class QiMenEngine(DivinationEngine):
     # 五行相克（我克）
     WUXING_KE = {'木': '土', '土': '水', '水': '火', '火': '金', '金': '木'}
 
+    # ---- 格局检测常量（提升到类级别，避免每次 _analyze_ge_ju 调用重建）----
+
+    # 击刑宫位映射
+    XING_MAP = {1: '子', 8: '丑', 3: '卯', 4: '辰', 9: '午', 2: '未', 7: '酉', 6: '戌'}
+    # 天干击刑对应宫位
+    GAN_XING = {'戊': 3, '己': 2, '庚': 8, '辛': 9, '壬': 4, '癸': 4}
+    # 天干击刑对应地支名
+    GAN_XING_BRANCH = {'戊': '卯', '己': '未', '庚': '寅', '辛': '午', '壬': '辰', '癸': '巳'}
+    # 入墓（不含三奇，三奇由 SAN_QI_MU 专项处理）
+    GAN_MU = {'戊': 4, '己': 4, '庚': 8, '辛': 8, '壬': 4, '癸': 4}
+    # 三奇入墓
+    SAN_QI_MU = {'乙': 2, '丙': 6, '丁': 6}
+    # 悖格排除集（已有专用名称的天地盘组合 + 天干五合）
+    ALREADY_CHECKED = {('庚', '丙'), ('丙', '庚'), ('庚', '癸'), ('戊', '丙'),
+                       ('丙', '戊'), ('辛', '乙'), ('丙', '辛'), ('乙', '庚'),
+                       ('庚', '乙'), ('丁', '壬'), ('壬', '丁'),
+                       ('辛', '丙'), ('戊', '癸'), ('癸', '戊'),
+                       ('甲', '己'), ('己', '甲')}
+    # 天地合德（排除乙庚→奇合、丙辛→欢怡）
+    GAN_HE_GEDE = {'甲': '己', '己': '甲', '丁': '壬', '壬': '丁',
+                    '戊': '癸', '癸': '戊'}
+
     # ---- abstract property implementations ----
 
     @property
@@ -441,24 +463,7 @@ class QiMenEngine(DivinationEngine):
                 xiong_ge.append({'name': '五不遇时', 'gong': 0,
                                  'desc': f'时干{hour_gan}({hour_wx})克日干{day_gan}({day_wx})，百事不宜，谋事难成'})
 
-        # ---- 格局检测常量（提升到循环外，避免每次迭代重建）----
-        # 击刑
-        XING_MAP = {1: '子', 8: '丑', 3: '卯', 4: '辰', 9: '午', 2: '未', 7: '酉', 6: '戌'}
-        GAN_XING = {'戊': 3, '己': 2, '庚': 8, '辛': 9, '壬': 4, '癸': 4}
-        GAN_XING_BRANCH = {'戊': '卯', '己': '未', '庚': '寅', '辛': '午', '壬': '辰', '癸': '巳'}
-        # 入墓（不含三奇，三奇由 SAN_QI_MU 专项处理）
-        GAN_MU = {'戊': 4, '己': 4, '庚': 8, '辛': 8, '壬': 4, '癸': 4}
-        # 三奇入墓
-        SAN_QI_MU = {'乙': 2, '丙': 6, '丁': 6}
-        # 悖格排除集（已有专用名称的天地盘组合 + 天干五合）
-        ALREADY_CHECKED = {('庚', '丙'), ('丙', '庚'), ('庚', '癸'), ('戊', '丙'),
-                           ('丙', '戊'), ('辛', '乙'), ('丙', '辛'), ('乙', '庚'),
-                           ('庚', '乙'), ('丁', '壬'), ('壬', '丁'),
-                           ('辛', '丙'), ('戊', '癸'), ('癸', '戊'),
-                           ('甲', '己'), ('己', '甲')}
-        # 天地合德（排除乙庚→奇合、丙辛→欢怡）
-        GAN_HE_GEDE = {'甲': '己', '己': '甲', '丁': '壬', '壬': '丁',
-                        '戊': '癸', '癸': '戊'}
+        # ---- 格局检测常量已提升到类级别（见 QiMenEngine.XING_MAP 等）----
 
         # ---- 吉格/凶格检测（单次遍历9宫）----
         for p in palaces:
@@ -510,21 +515,21 @@ class QiMenEngine(DivinationEngine):
                 xiong_ge.append({'name': '白虎猖狂', 'gong': g, 'desc': '辛加乙，金木相克，主伤灾破败'})
 
             # 击刑
-            if tp in GAN_XING and GAN_XING[tp] == g:
-                branch_name = GAN_XING_BRANCH.get(tp, XING_MAP.get(g, '中'))
+            if tp in self.GAN_XING and self.GAN_XING[tp] == g:
+                branch_name = self.GAN_XING_BRANCH.get(tp, self.XING_MAP.get(g, '中'))
                 gong_name = self.PALACE_NAMES.get(g, f'{branch_name}宫')
                 xiong_ge.append({'name': '击刑', 'gong': g, 'desc': f'{tp}落{gong_name}，刑伤之象'})
 
             # 入墓（排除三奇，三奇由 SAN_QI_MU 处理）
-            if tp not in SAN_QI_MU and tp in GAN_MU and GAN_MU[tp] == g:
+            if tp not in self.SAN_QI_MU and tp in self.GAN_MU and self.GAN_MU[tp] == g:
                 xiong_ge.append({'name': '入墓', 'gong': g, 'desc': f'{tp}入墓，事有阻碍'})
 
             # 三奇入墓
-            if tp in SAN_QI_MU and SAN_QI_MU[tp] == g:
+            if tp in self.SAN_QI_MU and self.SAN_QI_MU[tp] == g:
                 xiong_ge.append({'name': '三奇入墓', 'gong': g, 'desc': f'{tp}奇入墓，奇不显灵，百事不顺'})
 
             # 悖格：天盘克地盘（排除已有专用名称的组合）
-            if tp and dp and (tp, dp) not in ALREADY_CHECKED:
+            if tp and dp and (tp, dp) not in self.ALREADY_CHECKED:
                 tp_wx = self.GAN_WUXING.get(tp, '')
                 dp_wx = self.GAN_WUXING.get(dp, '')
                 if tp_wx and dp_wx and self.WUXING_KE.get(tp_wx) == dp_wx:
@@ -545,7 +550,7 @@ class QiMenEngine(DivinationEngine):
                               'desc': f'{tp}奇得值使{men}，三才相合，贵人暗助，百事可为'})
 
             # 天地合德
-            if tp and dp and GAN_HE_GEDE.get(tp) == dp:
+            if tp and dp and self.GAN_HE_GEDE.get(tp) == dp:
                 ji_ge.append({'name': '天地合德', 'gong': g,
                               'desc': f'{tp}{dp}合，天地和合，谋事易成'})
 
