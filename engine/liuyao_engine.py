@@ -326,6 +326,8 @@ class LiuYaoEngine(DivinationEngine):
                         'gan': gan,
                         'yinyang': bian_yinyang,
                         'position': i + 1,
+                        'is_shi': (i + 1) == shi_ying[0],
+                        'is_ying': (i + 1) == shi_ying[1],
                     })
 
         # 7. 本卦信息（先算上下卦名，供卦宫五行回退使用）
@@ -594,6 +596,8 @@ class LiuYaoEngine(DivinationEngine):
                 'gan': yao['gan'],
                 'position': yao['position'],
                 'yinyang': yao.get('yinyang', ''),
+                'is_shi': yao.get('is_shi', False),
+                'is_ying': yao.get('is_ying', False),
             })
 
         result = {
