@@ -3785,6 +3785,43 @@ class CrossValidator:
                 academic_trend.append(f"水星{mercury['sign']}入庙，思维敏捷，学习能力强")
                 academic_luck = "吉"
 
+        # 大六壬：看初传天将和六亲（学业信号）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            ys = lr.get("yong_shen", {})
+            if ys:
+                chu_jiang = ys.get("chu_chuan_jiang", "")
+                chu_liuqin = ys.get("chu_chuan_liuqin", "")
+                # 天将→学业信号
+                _LIUREN_ACADEMIC = {
+                    "貴人": ("六壬初传见贵人，学业有贵人指点，师长助力多", "吉"),
+                    "貴": ("六壬初传见贵人，学业有贵人指点，师长助力多", "吉"),
+                    "太陰": ("六壬初传太阴，擅长深度钻研和学术研究，思维缜密", "吉"),
+                    "陰": ("六壬初传太阴，擅长深度钻研和学术研究，思维缜密", "吉"),
+                    "阴": ("六壬初传太阴，擅长深度钻研和学术研究，思维缜密", "吉"),
+                    "六合": ("六壬初传六合，善于合作学习，团队学术能力强", "吉"),
+                    "合": ("六壬初传六合，善于合作学习，团队学术能力强", "吉"),
+                    "朱雀": ("六壬初传朱雀，文书运佳，善于表达和写作", "吉"),
+                    "雀": ("六壬初传朱雀，文书运佳，善于表达和写作", "吉"),
+                }
+                if chu_jiang in _LIUREN_ACADEMIC:
+                    desc, luck = _LIUREN_ACADEMIC[chu_jiang]
+                    academic_trend.append(desc)
+                    if academic_luck != "凶":
+                        academic_luck = luck
+                # 六亲→学业方向
+                if chu_liuqin == "父母":
+                    academic_trend.append("六壬初传父母爻，学业根基扎实，适合考试和文书工作")
+                    if academic_luck != "凶":
+                        academic_luck = "吉"
+                elif chu_liuqin == "子孙":
+                    academic_trend.append("六壬初传子孙爻，思维活跃有创意，适合研究型学习")
+                # 初传克日干→学业有压力
+                ri_relation = ys.get("ri_gan_relation", "")
+                if "克我" in ri_relation and chu_liuqin == "官鬼":
+                    academic_trend.append("六壬初传官鬼克日干，学业竞争压力大，需加倍努力")
+                    academic_suggest.append("六壬提示学业压力来自外部竞争，宜化压力为动力")
+
         if not academic_trend:
             academic_trend.append("学业运势平稳，无特别突出信号")
 
