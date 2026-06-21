@@ -1116,7 +1116,7 @@ class BaziEngine(DivinationEngine):
         if _is_consecutive_4(zhi_indices, 12):
             features.append("地支连珠 — 四地支连续排列，气势连贯，格局特殊")
 
-        # 最多25条基础特征（身强/身弱特征由analyze()方法insert(0,...)注入，不占此名额）
+        # 最多30条基础特征（身强/身弱特征由analyze()方法insert(0,...)注入，不占此名额）
         # 原20条上限仍不足：冲/合/刑/害/三合/三会+十神组合+日支日禄已占15+条，天干连珠/地支连珠等稀有特征仍可能丢失
         return features[:self.MAX_BASE_FEATURES]
 
