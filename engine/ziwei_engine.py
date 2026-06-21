@@ -369,10 +369,18 @@ class ZiWeiEngine(DivinationEngine):
                         break
                     h = r.horoscope(_safe_date_str(test_year, birth_dt.month, birth_dt.day), time_index)
                     dx = h.decadal
-                    stem_en = (dx.heavenly_stem or '').replace('Heavenly', '')
-                    branch_en = (dx.earthly_branch or '').replace('Earthly', '')
+                    stem_en = (dx.heavenly_stem or '').replace('Heavenly', '').strip()
+                    branch_en = (dx.earthly_branch or '').replace('Earthly', '').strip()
+                    # 防御：pinyin解析失败时跳过该大限，避免产生空干支条目
+                    if not stem_en or not branch_en:
+                        logger.debug(f"大限{test_age}岁: pinyin解析为空(stem='{dx.heavenly_stem}', branch='{dx.earthly_branch}')，跳过")
+                        continue
                     s = PINYIN_STEM_MAP.get(stem_en, stem_en)
                     b = PINYIN_BRANCH_MAP.get(branch_en, branch_en)
+                    # 防御：解析结果不是合法天干地支时跳过
+                    if len(s) != 1 or len(b) != 1:
+                        logger.debug(f"大限{test_age}岁: 干支解析异常(gz='{s}{b}')，跳过")
+                        continue
                     gz = f'{s}{b}'
                     if gz not in seen_palaces:
                         seen_palaces.add(gz)
