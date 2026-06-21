@@ -407,10 +407,13 @@ class LiuYaoEngine(DivinationEngine):
             'ge_ju': ge_ju,
         }
 
-        # 日月建分析
+        # 日月建分析（使用bazi统一的晚子时修正，与_builtin路径保持一致）
         try:
             from lunar_python import Solar
-            solar = Solar.fromYmdHms(orig.year, orig.month, orig.day, orig.hour, orig.minute, 0)
+            # 晚子时(23:xx)用次日日期+子时(hour=0)，与八字引擎统一
+            ri_dt = time.bazi_day_pillar_date
+            ri_hour = time.bazi_hour
+            solar = Solar.fromYmdHms(ri_dt.year, ri_dt.month, ri_dt.day, ri_hour, orig.minute, 0)
             lunar = solar.getLunar()
             ec = lunar.getEightChar()
             day_g = ec.getDayGan()
