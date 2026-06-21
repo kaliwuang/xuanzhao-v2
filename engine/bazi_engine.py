@@ -598,6 +598,7 @@ class BaziEngine(DivinationEngine):
                                 ln_zhi = ln_gz[1]
                                 # 流年神煞（复用 _check_yl_shensha）
                                 ln_shensha = _check_yl_shensha(ln_zhi, ln_gan)
+                                ln_hidden = _fix_hide_gan(ln_zhi, TRADITIONAL_HIDE_GAN.get(ln_zhi, ''))
                                 ln_info = {
                                     "year": ln.getYear(),
                                     "age": ln.getAge(),
@@ -605,14 +606,13 @@ class BaziEngine(DivinationEngine):
                                     "shishen_gan": SHISHEN_MAP.get((day_master, ln_gan), '?'),
                                     "nayin": NAYIN_TABLE.get(ln_gz, ''),
                                     "shensha": ln_shensha,
-                                    "hidden_gans": _fix_hide_gan(ln_zhi, TRADITIONAL_HIDE_GAN.get(ln_zhi, '')),
-                                    "shishen_zhi": [SHISHEN_MAP.get((day_master, h), '?') for h in _fix_hide_gan(ln_zhi, TRADITIONAL_HIDE_GAN.get(ln_zhi, ''))],
+                                    "hidden_gans": ln_hidden,
+                                    "shishen_zhi": [SHISHEN_MAP.get((day_master, h), '?') for h in ln_hidden],
                                     "changsheng": _calc_changsheng(day_master, ln_zhi),
                                 }
                                 liunian_list.append(ln_info)
                                 # 找出当前年份的流年
                                 if ln.getYear() == current_year:
-                                    ln_hidden = _fix_hide_gan(ln_zhi, TRADITIONAL_HIDE_GAN.get(ln_zhi, ''))
                                     current_liunian = {
                                         "year": ln.getYear(),
                                         "age": ln.getAge(),
