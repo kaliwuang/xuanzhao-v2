@@ -98,7 +98,7 @@ class TaiYiEngine(DivinationEngine):
         except (ValueError, TypeError):
             taiyi_num = 0
         taiyi_gua = r.get('太乙', '')
-        taiyi_gong = NUM_TO_GONG.get(taiyi_num, f'{taiyi_gua}宫')
+        taiyi_gong = NUM_TO_GONG.get(taiyi_num, f'{taiyi_gua}宫' if taiyi_gua else '')
 
         # 三基
         san_ji = {
@@ -273,6 +273,8 @@ class TaiYiEngine(DivinationEngine):
 
     def _zhi_to_gong(self, zhi: str) -> str:
         """地支→九宫名"""
+        if not zhi:
+            return ''
         return ZHI_TO_GONG.get(zhi, f'{zhi}宫')
 
     @staticmethod
@@ -294,6 +296,8 @@ class TaiYiEngine(DivinationEngine):
 
     def _gua_to_gong(self, gua: str) -> str:
         """八卦→九宫名"""
+        if not gua:
+            return ''
         return self.GUA_TO_GONG.get(gua, f'{gua}宫')
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
