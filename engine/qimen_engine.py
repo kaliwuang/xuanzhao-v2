@@ -497,6 +497,12 @@ class QiMenEngine(DivinationEngine):
             # 虎遁：乙奇+开门/生门+白虎
             if tp == '乙' and men in ('开门', '生门') and shen == '白虎':
                 ji_ge.append({'name': '虎遁', 'gong': g, 'desc': f'乙奇+{men}+白虎，威猛有力，利武事'})
+            # 风遁：乙奇+休门/开门+天辅/天冲
+            if tp == '乙' and men in ('休门', '开门') and xing in ('天辅', '天冲'):
+                ji_ge.append({'name': '风遁', 'gong': g, 'desc': f'乙奇+{men}+{xing}，顺风得利，事遂心愿'})
+            # 云遁：乙奇+生门+天芮/天柱
+            if tp == '乙' and men == '生门' and xing in ('天芮', '天柱'):
+                ji_ge.append({'name': '云遁', 'gong': g, 'desc': f'乙奇+生门+{xing}，云起龙骧，暗中有助'})
 
             # 凶格：门宫组合
             if men == '景门' and g == 1:
