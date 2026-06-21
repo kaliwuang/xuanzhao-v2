@@ -894,44 +894,11 @@ class LiuYaoEngine(DivinationEngine):
         _lunar = _solar.getLunar()
         _year_zhi = _lunar.getYearZhi()
         _year_gan = _lunar.getYearGan()
-        _tai_sui_wx = self.ZHI_WUXING.get(_year_zhi, '')
-
-        _shi_yao = next((l for l in lines if l.get('is_shi')), {})
-        _shi_dizhi = _shi_yao.get('dizhi', '')
-        _tai_sui_vs_shi = ''
-        if _shi_dizhi and _year_zhi:
-            if _shi_dizhi == _year_zhi:
-                _tai_sui_vs_shi = '太岁临世爻，年运有靠'
-            elif self.ZHI_HE.get(_shi_dizhi) == _year_zhi:
-                _tai_sui_vs_shi = '世爻与太岁六合，年运顺遂'
-            elif self.ZHI_CHONG.get(_shi_dizhi) == _year_zhi:
-                _tai_sui_vs_shi = '世爻与太岁六冲，年运多变'
-            else:
-                _tai_sui_vs_shi = f'太岁{_year_zhi}({_tai_sui_wx})与世爻{_shi_dizhi}无特殊关系'
-
-        _tai_sui_yao_rel = []
-        for _line in lines:
-            _dz = _line.get('dizhi', '')
-            if _dz == _year_zhi:
-                _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '太岁临爻'})
-            elif self.ZHI_HE.get(_dz) == _year_zhi:
-                _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六合太岁'})
-            elif self.ZHI_CHONG.get(_dz) == _year_zhi:
-                _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六冲太岁'})
-
-        return {
-            'year': now.year,
-            'year_ganzhi': f'{_year_gan}{_year_zhi}',
-            'tai_sui_zhi': _year_zhi,
-            'tai_sui_wuxing': _tai_sui_wx,
-            'tai_sui_vs_shi': _tai_sui_vs_shi,
-            'tai_sui_yao_rel': _tai_sui_yao_rel,
-        }
+        return self._analyze_tai_sui_lines(lines, now.year, _year_gan, _year_zhi)
 
     def _build_liunian_fallback(self, lines: list) -> dict:
         """lunar_python不可用时的流年近似分析"""
         now = datetime.now()
-        # 近似年干支（以立春为界，简化处理）
         year_offset = now.year - 1984  # 1984=甲子年
         gan_idx = year_offset % 10
         zhi_idx = year_offset % 12
@@ -939,35 +906,39 @@ class LiuYaoEngine(DivinationEngine):
         DIZHI = '子丑寅卯辰巳午未申酉戌亥'
         _year_gan = TIANGAN[gan_idx]
         _year_zhi = DIZHI[zhi_idx]
-        _tai_sui_wx = self.ZHI_WUXING.get(_year_zhi, '')
+        return self._analyze_tai_sui_lines(lines, now.year, _year_gan, _year_zhi)
+
+    def _analyze_tai_sui_lines(self, lines: list, year: int, year_gan: str, year_zhi: str) -> dict:
+        """太岁与六爻各爻的关系分析（主路径/fallback共用，消除~45行重复代码）"""
+        _tai_sui_wx = self.ZHI_WUXING.get(year_zhi, '')
 
         _shi_yao = next((l for l in lines if l.get('is_shi')), {})
         _shi_dizhi = _shi_yao.get('dizhi', '')
         _tai_sui_vs_shi = ''
-        if _shi_dizhi and _year_zhi:
-            if _shi_dizhi == _year_zhi:
+        if _shi_dizhi and year_zhi:
+            if _shi_dizhi == year_zhi:
                 _tai_sui_vs_shi = '太岁临世爻，年运有靠'
-            elif self.ZHI_HE.get(_shi_dizhi) == _year_zhi:
+            elif self.ZHI_HE.get(_shi_dizhi) == year_zhi:
                 _tai_sui_vs_shi = '世爻与太岁六合，年运顺遂'
-            elif self.ZHI_CHONG.get(_shi_dizhi) == _year_zhi:
+            elif self.ZHI_CHONG.get(_shi_dizhi) == year_zhi:
                 _tai_sui_vs_shi = '世爻与太岁六冲，年运多变'
             else:
-                _tai_sui_vs_shi = f'太岁{_year_zhi}({_tai_sui_wx})与世爻{_shi_dizhi}无特殊关系'
+                _tai_sui_vs_shi = f'太岁{year_zhi}({_tai_sui_wx})与世爻{_shi_dizhi}无特殊关系'
 
         _tai_sui_yao_rel = []
         for _line in lines:
             _dz = _line.get('dizhi', '')
-            if _dz == _year_zhi:
+            if _dz == year_zhi:
                 _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '太岁临爻'})
-            elif self.ZHI_HE.get(_dz) == _year_zhi:
+            elif self.ZHI_HE.get(_dz) == year_zhi:
                 _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六合太岁'})
-            elif self.ZHI_CHONG.get(_dz) == _year_zhi:
+            elif self.ZHI_CHONG.get(_dz) == year_zhi:
                 _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六冲太岁'})
 
         return {
-            'year': now.year,
-            'year_ganzhi': f'{_year_gan}{_year_zhi}',
-            'tai_sui_zhi': _year_zhi,
+            'year': year,
+            'year_ganzhi': f'{year_gan}{year_zhi}',
+            'tai_sui_zhi': year_zhi,
             'tai_sui_wuxing': _tai_sui_wx,
             'tai_sui_vs_shi': _tai_sui_vs_shi,
             'tai_sui_yao_rel': _tai_sui_yao_rel,
