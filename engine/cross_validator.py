@@ -1860,6 +1860,89 @@ class CrossValidator:
                         confidence=ConfidenceLevel.MEDIUM,
                     ))
 
+        # 六爻：看兄弟爻（同辈/同事关系）、官鬼爻（权威/上级关系）、子孙爻（下属/晚辈关系）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            lines = ly.get("lines", [])
+            ri_yue = ly.get("ri_yue_jian", {})
+            ri_ws = ri_yue.get("ri_wangshuai", {})
+
+            xiongdi_yaos = [l for l in lines if l.get("liu_qin") == "兄弟"]
+            guangui_yaos = [l for l in lines if l.get("liu_qin") == "官鬼"]
+            zisun_yaos = [l for l in lines if l.get("liu_qin") == "子孙"]
+
+            # 兄弟爻——同辈关系、同事、朋友
+            for xd in xiongdi_yaos:
+                xd_wx = xd.get("wuxing", "")
+                xd_dizhi = xd.get("dizhi", "")
+                xd_is_dong = xd.get("is_dong", False)
+                xd_is_shi = xd.get("is_shi", False)
+                xd_wang = ri_ws.get(xd_wx, "").startswith(("旺", "相")) if xd_wx and ri_ws else False
+
+                if xd_wang and xd_is_dong:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"六爻兄弟爻{xd_dizhi}（{xd_wx}）旺动，社交活跃但竞争多，需防同行或朋友间的利益冲突",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                    break
+                elif xd_is_shi:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"六爻兄弟爻{xd_dizhi}持世，重情义，以同辈关系为重心，善于团队协作",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+                elif xd_wang:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"六爻兄弟爻{xd_dizhi}（{xd_wx}）旺相，朋友圈活跃，同辈助力多",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+
+            # 官鬼爻——权威关系、上级、领导运
+            for gg in guangui_yaos:
+                gg_wx = gg.get("wuxing", "")
+                gg_dizhi = gg.get("dizhi", "")
+                gg_is_shi = gg.get("is_shi", False)
+                gg_wang = ri_ws.get(gg_wx, "").startswith(("旺", "相")) if gg_wx and ri_ws else False
+
+                if gg_wang:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"六爻官鬼爻{gg_dizhi}（{gg_wx}）旺相，与上级关系佳，有贵人或权威人士提携",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+                elif gg_is_shi:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"六爻官鬼爻{gg_dizhi}持世，自身有权威感，适合做领导或管理角色",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                    break
+
+            # 子孙爻——下属、晚辈、被指导者
+            for zs in zisun_yaos:
+                zs_wx = zs.get("wuxing", "")
+                zs_dizhi = zs.get("dizhi", "")
+                zs_wang = ri_ws.get(zs_wx, "").startswith(("旺", "相")) if zs_wx and ri_ws else False
+
+                if zs_wang:
+                    items.append(ConsensusItem(
+                        aspect="人际关系",
+                        finding=f"六爻子孙爻{zs_dizhi}（{zs_wx}）旺相，善于指导晚辈或下属，有亲和力和带动力",
+                        supporting_methods=["六爻"],
+                        confidence=ConfidenceLevel.LOW,
+                    ))
+                    break
+
         return items
 
 
