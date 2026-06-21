@@ -98,11 +98,14 @@ class CrossValidator:
         return self._get_current_year()  # 最终回退：用当前年份（影响最小）
 
     def _get_current_year(self) -> int:
-        """缓存当前年份，跨年时自动刷新"""
+        """缓存当前年份，跨年时自动刷新（检查年份变化+24小时双条件）"""
         import time as _time
         now_ts = _time.time()
-        if CrossValidator._cached_current_year is None or (now_ts - CrossValidator._cached_current_year_ts > 86400):
-            CrossValidator._cached_current_year = datetime.now().year
+        now_year = datetime.now().year
+        if (CrossValidator._cached_current_year is None
+                or CrossValidator._cached_current_year != now_year
+                or now_ts - CrossValidator._cached_current_year_ts > 86400):
+            CrossValidator._cached_current_year = now_year
             CrossValidator._cached_current_year_ts = now_ts
         return CrossValidator._cached_current_year
 
