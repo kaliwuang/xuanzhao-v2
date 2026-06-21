@@ -455,48 +455,29 @@ class QiMenEngine(DivinationEngine):
                 xiong_ge.append({'name': '五不遇时', 'gong': 0,
                                  'desc': f'时干{hour_gan}({hour_wx})克日干{day_gan}({day_wx})，百事不宜，谋事难成'})
 
-        # ---- 吉格检测 ----
-
-        # 1. 天遁：生门+天辅星同宫
+        # ---- 吉格/凶格检测（单次遍历9宫，消除重复for循环）----
         for p in palaces:
             g = p['gong']
-            if p['men'] == '生门' and p['xing'] == '天辅':
+            men = p.get('men', '')
+            xing = p.get('xing', '')
+            shen = p.get('shen', '')
+
+            # 吉格
+            if men == '生门' and xing == '天辅':
                 ji_ge.append({'name': '天遁', 'gong': g, 'desc': '生门配天辅，谋事大吉'})
-
-        # 2. 地遁：开门+天心星同宫
-        for p in palaces:
-            g = p['gong']
-            if p['men'] == '开门' and p['xing'] == '天心':
+            if men == '开门' and xing == '天心':
                 ji_ge.append({'name': '地遁', 'gong': g, 'desc': '开门配天心，百事可为'})
-
-        # 3. 人遁：休门+天任星同宫
-        for p in palaces:
-            g = p['gong']
-            if p['men'] == '休门' and p['xing'] == '天任':
+            if men == '休门' and xing == '天任':
                 ji_ge.append({'name': '人遁', 'gong': g, 'desc': '休门配天任，贵人相助'})
+            if men in ('开门', '休门') and shen == '九天':
+                ji_ge.append({'name': '龙遁', 'gong': g, 'desc': f'{men}配九天，飞龙在天'})
+            if men in ('开门', '生门') and shen == '白虎':
+                ji_ge.append({'name': '虎遁', 'gong': g, 'desc': f'{men}配白虎，威猛有力'})
 
-        # 4. 龙遁：开门/休门+九天同宫
-        for p in palaces:
-            g = p['gong']
-            if p['men'] in ('开门', '休门') and p['shen'] == '九天':
-                ji_ge.append({'name': '龙遁', 'gong': g, 'desc': f"{p['men']}配九天，飞龙在天"})
-
-        # 5. 虎遁：开门/生门+白虎同宫
-        for p in palaces:
-            g = p['gong']
-            if p['men'] in ('开门', '生门') and p['shen'] == '白虎':
-                ji_ge.append({'name': '虎遁', 'gong': g, 'desc': f"{p['men']}配白虎，威猛有力"})
-
-        # ---- 凶格检测 ----
-
-        # 1. 朱雀投江：景门落坎宫(1)
-        for p in palaces:
-            if p['men'] == '景门' and p['gong'] == 1:
+            # 凶格
+            if men == '景门' and g == 1:
                 xiong_ge.append({'name': '朱雀投江', 'gong': 1, 'desc': '景门入坎，文书有失'})
-
-        # 2. 螣蛇夭矫：死门落巽宫(4)
-        for p in palaces:
-            if p['men'] == '死门' and p['gong'] == 4:
+            if men == '死门' and g == 4:
                 xiong_ge.append({'name': '螣蛇夭矫', 'gong': 4, 'desc': '死门入巽，虚惊怪异'})
 
         # 3. 太白入荧：庚+丙（天盘庚，地盘丙）
