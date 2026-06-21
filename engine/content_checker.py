@@ -132,8 +132,8 @@ class ContentChecker:
     def _check_sentence_length(self, text: str, max_len: int = 25) -> List[str]:
         """检查超长句"""
         long_sentences = []
-        # 按标点分句
-        sentences = re.split(r'[。！？；.!?;]', text)
+        # 按标点分句（含中文省略号和破折号作为句末边界）
+        sentences = re.split(r'[。！？；…—.!?;]', text)
         for s in sentences:
             s = s.strip()
             if len(s) > max_len:
