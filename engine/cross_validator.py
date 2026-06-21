@@ -4196,104 +4196,107 @@ class CrossValidator:
         if bazi_dayun:
             current_year = self._get_current_year()
             birth_year = self._get_birth_year()
-            age = current_year - birth_year + 1  # 虚岁
+            if not birth_year:
+                pass  # 出生年份未知，跳过大运年龄匹配
+            else:
+                age = current_year - birth_year + 1  # 虚岁
 
-            for dy in bazi_dayun:
-                start = dy.get("start_age", 0)
-                end = dy.get("end_age", 0)
-                if not (start <= age <= end):
-                    continue
+                for dy in bazi_dayun:
+                    start = dy.get("start_age", 0)
+                    end = dy.get("end_age", 0)
+                    if not (start <= age <= end):
+                        continue
 
-                ganzhi = dy.get("ganzhi", "")
-                shishen = dy.get("shishen_gan", "")
-                nayin = dy.get("nayin", "")
-                changsheng = dy.get("changsheng", "")
-                shensha = dy.get("shensha", [])
-                liunian = dy.get("liunian", [])
+                    ganzhi = dy.get("ganzhi", "")
+                    shishen = dy.get("shishen_gan", "")
+                    nayin = dy.get("nayin", "")
+                    changsheng = dy.get("changsheng", "")
+                    shensha = dy.get("shensha", [])
+                    liunian = dy.get("liunian", [])
 
-                # 大运干支与十神
-                if ganzhi and shishen:
-                    dayun_parts.append(f"当前大运{ganzhi}（{shishen}）")
+                    # 大运干支与十神
+                    if ganzhi and shishen:
+                        dayun_parts.append(f"当前大运{ganzhi}（{shishen}）")
 
-                # 纳音五行
-                if nayin:
-                    dayun_parts.append(f"纳音{nayin}")
+                    # 纳音五行
+                    if nayin:
+                        dayun_parts.append(f"纳音{nayin}")
 
-                # 长生十二宫状态
-                if changsheng:
-                    _CS_TREND = {
-                        "长生": "元气初生，适合起步开拓",
-                        "沐浴": "初有成果但需防散漫",
-                        "冠带": "渐入佳境，适合展示才华",
-                        "临官": "事业上升期，贵人助力",
-                        "帝旺": "运势巅峰，但需防盛极而衰",
-                        "衰": "运程渐缓，宜守不宜攻",
-                        "病": "需注意身心调养，暂缓重大决策",
-                        "死": "低谷期，韬光养晦为上",
-                        "墓": "积蓄期，适合沉淀积累",
-                        "绝": "触底阶段，静待转机",
-                        "胎": "酝酿期，新机会正在萌芽",
-                        "养": "恢复期，厚积薄发之时",
-                    }
-                    cs_trend = _CS_TREND.get(changsheng, "")
-                    if cs_trend:
-                        dayun_parts.append(f"长生{changsheng}：{cs_trend}")
-
-                # 大运十神与喜用关系
-                if shishen and self.udm.xi_yong:
-                    xi_val = self.udm.xi_yong.get("xi", "")
-                    ji_val = self.udm.xi_yong.get("ji", "")
-                    _day_wx = self.udm.day_master_wuxing or ""
-                    _SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
-                    _KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
-                    _ss_wx = ""
-                    if _day_wx:
-                        _bei_ke = {v: k for k, v in _KE.items()}
-                        _bei_sheng = {v: k for k, v in _SHENG.items()}
-                        _ss_wx_map = {
-                            "正印": _bei_sheng.get(_day_wx, ""), "偏印": _bei_sheng.get(_day_wx, ""),
-                            "比肩": _day_wx, "劫财": _day_wx,
-                            "食神": _SHENG.get(_day_wx, ""), "伤官": _SHENG.get(_day_wx, ""),
-                            "正财": _KE.get(_day_wx, ""), "偏财": _KE.get(_day_wx, ""),
-                            "正官": _bei_ke.get(_day_wx, ""), "七杀": _bei_ke.get(_day_wx, ""),
+                    # 长生十二宫状态
+                    if changsheng:
+                        _CS_TREND = {
+                            "长生": "元气初生，适合起步开拓",
+                            "沐浴": "初有成果但需防散漫",
+                            "冠带": "渐入佳境，适合展示才华",
+                            "临官": "事业上升期，贵人助力",
+                            "帝旺": "运势巅峰，但需防盛极而衰",
+                            "衰": "运程渐缓，宜守不宜攻",
+                            "病": "需注意身心调养，暂缓重大决策",
+                            "死": "低谷期，韬光养晦为上",
+                            "墓": "积蓄期，适合沉淀积累",
+                            "绝": "触底阶段，静待转机",
+                            "胎": "酝酿期，新机会正在萌芽",
+                            "养": "恢复期，厚积薄发之时",
                         }
-                        _ss_wx = _ss_wx_map.get(shishen, "")
-                    xi_list = xi_val if isinstance(xi_val, list) else [xi_val] if xi_val else []
-                    ji_list = ji_val if isinstance(ji_val, list) else [ji_val] if ji_val else []
-                    if _ss_wx and _ss_wx in xi_list:
-                        dayun_parts.append(f"大运{shishen}属{_ss_wx}为喜用，运势助力")
-                    elif _ss_wx and _ss_wx in ji_list:
-                        dayun_parts.append(f"大运{shishen}属{_ss_wx}为忌神，宜谨慎行事")
+                        cs_trend = _CS_TREND.get(changsheng, "")
+                        if cs_trend:
+                            dayun_parts.append(f"长生{changsheng}：{cs_trend}")
 
-                # 大运神煞
-                if shensha:
-                    favorable_shensha = {"天乙贵人", "文昌贵人", "天德贵人", "月德贵人",
-                                         "太极贵人", "福星贵人", "禄神", "将星", "华盖"}
-                    unfavorable_shensha = {"劫煞", "亡神", "羊刃", "飞刃",
-                                           "灾煞", "孤辰", "寡宿", "桃花"}
-                    good = [s for s in shensha if s in favorable_shensha]
-                    bad = [s for s in shensha if s in unfavorable_shensha]
-                    if good:
-                        dayun_parts.append(f"大运带{'、'.join(good[:3])}，贵人运佳")
-                    if bad:
-                        dayun_parts.append(f"大运带{'、'.join(bad[:3])}，需防小人或意外")
+                    # 大运十神与喜用关系
+                    if shishen and self.udm.xi_yong:
+                        xi_val = self.udm.xi_yong.get("xi", "")
+                        ji_val = self.udm.xi_yong.get("ji", "")
+                        _day_wx = self.udm.day_master_wuxing or ""
+                        _SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
+                        _KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+                        _ss_wx = ""
+                        if _day_wx:
+                            _bei_ke = {v: k for k, v in _KE.items()}
+                            _bei_sheng = {v: k for k, v in _SHENG.items()}
+                            _ss_wx_map = {
+                                "正印": _bei_sheng.get(_day_wx, ""), "偏印": _bei_sheng.get(_day_wx, ""),
+                                "比肩": _day_wx, "劫财": _day_wx,
+                                "食神": _SHENG.get(_day_wx, ""), "伤官": _SHENG.get(_day_wx, ""),
+                                "正财": _KE.get(_day_wx, ""), "偏财": _KE.get(_day_wx, ""),
+                                "正官": _bei_ke.get(_day_wx, ""), "七杀": _bei_ke.get(_day_wx, ""),
+                            }
+                            _ss_wx = _ss_wx_map.get(shishen, "")
+                        xi_list = xi_val if isinstance(xi_val, list) else [xi_val] if xi_val else []
+                        ji_list = ji_val if isinstance(ji_val, list) else [ji_val] if ji_val else []
+                        if _ss_wx and _ss_wx in xi_list:
+                            dayun_parts.append(f"大运{shishen}属{_ss_wx}为喜用，运势助力")
+                        elif _ss_wx and _ss_wx in ji_list:
+                            dayun_parts.append(f"大运{shishen}属{_ss_wx}为忌神，宜谨慎行事")
 
-                # 流年提示（当年和下一年）
-                if liunian:
-                    for ln in liunian:
-                        ln_year = ln.get("year", 0)
-                        if ln_year in (current_year, current_year + 1):
-                            ln_gz = ln.get("ganzhi", "")
-                            ln_ss = ln.get("shishen_gan", "")
-                            label = "今年" if ln_year == current_year else "明年"
-                            if ln_gz:
-                                ln_parts = [f"{label}流年{ln_gz}"]
-                                if ln_ss:
-                                    ln_parts.append(f"（{ln_ss}）")
-                                dayun_parts.append("".join(ln_parts))
-                            break
+                    # 大运神煞
+                    if shensha:
+                        favorable_shensha = {"天乙贵人", "文昌贵人", "天德贵人", "月德贵人",
+                                             "太极贵人", "福星贵人", "禄神", "将星", "华盖"}
+                        unfavorable_shensha = {"劫煞", "亡神", "羊刃", "飞刃",
+                                               "灾煞", "孤辰", "寡宿", "桃花"}
+                        good = [s for s in shensha if s in favorable_shensha]
+                        bad = [s for s in shensha if s in unfavorable_shensha]
+                        if good:
+                            dayun_parts.append(f"大运带{'、'.join(good[:3])}，贵人运佳")
+                        if bad:
+                            dayun_parts.append(f"大运带{'、'.join(bad[:3])}，需防小人或意外")
 
-                break  # 只分析当前大运
+                    # 流年提示（当年和下一年）
+                    if liunian:
+                        for ln in liunian:
+                            ln_year = ln.get("year", 0)
+                            if ln_year in (current_year, current_year + 1):
+                                ln_gz = ln.get("ganzhi", "")
+                                ln_ss = ln.get("shishen_gan", "")
+                                label = "今年" if ln_year == current_year else "明年"
+                                if ln_gz:
+                                    ln_parts = [f"{label}流年{ln_gz}"]
+                                    if ln_ss:
+                                        ln_parts.append(f"（{ln_ss}）")
+                                    dayun_parts.append("".join(ln_parts))
+                                break
+
+                    break  # 只分析当前大运
 
         # 冲合基础提示
         if chong:
