@@ -33,23 +33,23 @@
       "size": 470,
       "keywords": {
         "wuxing": [
-          "水",
-          "火",
           "土",
+          "火",
           "木",
-          "金"
+          "金",
+          "水"
         ],
         "zhi": [
           "子",
-          "辰",
-          "戌",
           "未",
-          "丑"
+          "戌",
+          "丑",
+          "辰"
         ],
         "face": [
+          "耳朵",
           "眼睛",
-          "鼻子",
-          "耳朵"
+          "鼻子"
         ]
       }
     },
@@ -62,14 +62,14 @@
       "size": 506,
       "keywords": {
         "shishen": [
-          "偏印",
-          "偏财",
           "正财",
-          "七杀",
-          "劫财",
-          "比肩",
-          "正官",
           "正印",
+          "比肩",
+          "劫财",
+          "偏印",
+          "正官",
+          "偏财",
+          "七杀",
           "伤官",
           "食神"
         ],
@@ -104,8 +104,8 @@
       "keywords": {
         "relation": [
           "冲",
-          "刑",
           "害",
+          "刑",
           "合"
         ],
         "theme": [
@@ -123,42 +123,42 @@
       "size": 619,
       "keywords": {
         "day_master": [
-          "丙",
-          "庚",
-          "戊",
-          "丁",
-          "甲",
-          "辛",
-          "己",
           "壬",
           "乙",
-          "癸"
+          "辛",
+          "戊",
+          "甲",
+          "癸",
+          "己",
+          "庚",
+          "丙",
+          "丁"
         ],
         "wuxing": [
-          "水",
-          "火",
           "土",
+          "火",
           "木",
-          "金"
+          "金",
+          "水"
         ],
         "zhi": [
-          "卯",
           "巳",
           "子",
-          "午",
-          "寅",
-          "辰",
-          "酉",
-          "戌",
           "申",
+          "亥",
           "未",
+          "午",
+          "戌",
+          "酉",
           "丑",
-          "亥"
+          "辰",
+          "寅",
+          "卯"
         ],
         "relation": [
           "冲",
-          "刑",
           "害",
+          "刑",
           "合"
         ],
         "general12": [
@@ -175,23 +175,23 @@
       "size": 606,
       "keywords": {
         "day_master": [
-          "甲",
-          "庚"
+          "庚",
+          "甲"
         ],
         "shishen": [
-          "偏印",
-          "七杀",
           "正财",
-          "偏财",
-          "正官",
           "正印",
+          "偏印",
+          "正官",
+          "偏财",
+          "七杀",
           "伤官",
           "食神"
         ],
         "zhi": [
-          "卯",
           "酉",
-          "寅"
+          "寅",
+          "卯"
         ],
         "relation": [
           "破"
@@ -199,14 +199,14 @@
         "pattern": [
           "偏印格",
           "食神格",
-          "正官格",
-          "月刃格",
-          "正财格",
           "建禄格",
           "七杀格",
-          "正印格",
+          "正财格",
           "伤官格",
-          "偏财格"
+          "偏财格",
+          "月刃格",
+          "正官格",
+          "正印格"
         ],
         "star": [
           "七杀"
@@ -225,33 +225,33 @@
       "size": 677,
       "keywords": {
         "day_master": [
-          "丙",
-          "庚",
-          "戊",
-          "丁",
-          "甲",
-          "辛",
-          "己",
           "壬",
           "乙",
-          "癸"
+          "辛",
+          "戊",
+          "甲",
+          "癸",
+          "己",
+          "庚",
+          "丙",
+          "丁"
         ],
         "shishen": [
           "七杀"
         ],
         "zhi": [
-          "卯",
           "巳",
           "子",
-          "午",
-          "寅",
-          "辰",
-          "酉",
-          "戌",
           "申",
+          "亥",
           "未",
+          "午",
+          "戌",
+          "酉",
           "丑",
-          "亥"
+          "辰",
+          "寅",
+          "卯"
         ],
         "star": [
           "七杀"
@@ -280,8 +280,8 @@
           "合"
         ],
         "palace": [
-          "疾厄",
           "官禄",
+          "疾厄",
           "夫妻",
           "财帛"
         ],
@@ -289,16 +289,16 @@
           "紫微"
         ],
         "method": [
-          "奇门",
-          "八字",
           "紫微",
+          "八字",
+          "奇门",
           "六爻"
         ],
         "theme": [
-          "感情",
           "财运",
           "健康",
-          "事业"
+          "事业",
+          "感情"
         ]
       }
     },
@@ -319,18 +319,18 @@
           "土"
         ],
         "zhi": [
-          "卯",
           "巳",
           "子",
-          "午",
-          "寅",
-          "辰",
-          "酉",
-          "戌",
           "申",
+          "亥",
           "未",
+          "午",
+          "戌",
+          "酉",
           "丑",
-          "亥"
+          "辰",
+          "寅",
+          "卯"
         ],
         "relation": [
           "冲",
@@ -344,28 +344,28 @@
           "大六壬"
         ],
         "theme": [
-          "婚姻",
-          "贵人"
+          "贵人",
+          "婚姻"
         ],
         "god6": [
-          "白虎",
           "朱雀",
-          "螣蛇",
           "玄武",
+          "螣蛇",
+          "白虎",
           "青龙",
           "勾陈"
         ],
         "general12": [
-          "天空",
-          "太常",
-          "白虎",
           "朱雀",
-          "天后",
-          "螣蛇",
-          "贵人",
-          "太阴",
           "玄武",
+          "螣蛇",
+          "天空",
+          "白虎",
+          "太阴",
+          "天后",
           "六合",
+          "贵人",
+          "太常",
           "青龙",
           "勾陈"
         ]
@@ -386,38 +386,38 @@
           "土"
         ],
         "zhi": [
-          "辰",
-          "子"
+          "子",
+          "辰"
         ],
         "relation": [
           "冲",
           "合"
         ],
         "palace": [
-          "父母",
-          "兄弟"
+          "兄弟",
+          "父母"
         ],
         "method": [
           "六爻"
         ],
         "theme": [
-          "父母",
-          "贵人"
+          "贵人",
+          "父母"
         ],
         "god6": [
-          "白虎",
           "朱雀",
-          "螣蛇",
           "玄武",
+          "螣蛇",
+          "白虎",
           "青龙",
           "勾陈"
         ],
         "general12": [
-          "白虎",
           "朱雀",
-          "螣蛇",
-          "贵人",
           "玄武",
+          "螣蛇",
+          "白虎",
+          "贵人",
           "青龙",
           "勾陈"
         ]
@@ -438,40 +438,40 @@
           "子"
         ],
         "palace": [
+          "夫妻",
+          "财帛",
+          "福德",
           "疾厄",
-          "迁移",
+          "田宅",
+          "命宫",
           "奴仆",
           "官禄",
-          "福德",
-          "父母",
-          "子女",
+          "迁移",
           "兄弟",
-          "财帛",
-          "命宫",
-          "夫妻",
-          "田宅"
+          "父母",
+          "子女"
         ],
         "method": [
           "面相"
         ],
         "theme": [
-          "婚姻",
-          "感情",
           "财运",
-          "父母",
           "健康",
           "事业",
-          "子女"
+          "父母",
+          "婚姻",
+          "子女",
+          "感情"
         ],
         "face": [
-          "印堂",
           "眼睛",
           "鼻子",
-          "眉毛",
           "嘴巴",
-          "耳朵",
           "额头",
-          "山根"
+          "印堂",
+          "耳朵",
+          "山根",
+          "眉毛"
         ]
       }
     },
@@ -484,21 +484,21 @@
       "size": 605,
       "keywords": {
         "day_master": [
-          "丙",
-          "庚",
-          "戊",
-          "丁",
-          "甲",
-          "辛",
-          "己",
           "壬",
           "乙",
-          "癸"
+          "辛",
+          "戊",
+          "甲",
+          "癸",
+          "己",
+          "庚",
+          "丙",
+          "丁"
         ],
         "relation": [
           "冲",
-          "刑",
           "害",
+          "刑",
           "合"
         ],
         "star": [
@@ -511,37 +511,37 @@
           "婚姻"
         ],
         "gate": [
-          "景门",
-          "死门",
-          "开门",
-          "休门",
           "惊门",
+          "开门",
+          "生门",
+          "死门",
+          "休门",
           "杜门",
-          "伤门",
-          "生门"
+          "景门",
+          "伤门"
         ],
         "star9": [
-          "天蓬",
-          "天辅",
-          "天冲",
-          "天芮",
-          "天禽",
-          "天任",
           "天心",
-          "天柱",
-          "天英"
+          "天英",
+          "天禽",
+          "天辅",
+          "天芮",
+          "天冲",
+          "天任",
+          "天蓬",
+          "天柱"
         ],
         "god6": [
           "白虎",
-          "螣蛇",
-          "玄武"
+          "玄武",
+          "螣蛇"
         ],
         "general12": [
+          "螣蛇",
           "白虎",
           "太阴",
-          "玄武",
           "六合",
-          "螣蛇"
+          "玄武"
         ]
       }
     },
@@ -575,37 +575,37 @@
       "size": 614,
       "keywords": {
         "day_master": [
-          "丙",
-          "庚",
-          "戊",
-          "丁",
-          "甲",
-          "辛",
-          "己",
           "壬",
           "乙",
-          "癸"
+          "辛",
+          "戊",
+          "甲",
+          "癸",
+          "己",
+          "庚",
+          "丙",
+          "丁"
         ],
         "wuxing": [
-          "水",
-          "火",
           "土",
+          "火",
           "木",
-          "金"
+          "金",
+          "水"
         ],
         "zhi": [
-          "卯",
           "巳",
           "子",
-          "午",
-          "寅",
-          "辰",
-          "酉",
-          "戌",
           "申",
+          "亥",
           "未",
+          "午",
+          "戌",
+          "酉",
           "丑",
-          "亥"
+          "辰",
+          "寅",
+          "卯"
         ],
         "relation": [
           "冲",
@@ -622,11 +622,11 @@
       "size": 621,
       "keywords": {
         "wuxing": [
-          "水",
-          "火",
           "土",
+          "火",
           "木",
-          "金"
+          "金",
+          "水"
         ],
         "relation": [
           "合"
@@ -638,13 +638,13 @@
           "人际"
         ],
         "name": [
-          "人格",
+          "三才",
           "地格",
-          "五格",
           "天格",
-          "外格",
+          "五格",
+          "人格",
           "总格",
-          "三才"
+          "外格"
         ]
       }
     },
@@ -670,20 +670,20 @@
           "破"
         ],
         "star": [
-          "廉贞",
-          "贪狼",
-          "七杀",
-          "天相",
-          "太阴",
-          "武曲",
-          "巨门",
-          "天府",
           "太阳",
-          "天同",
+          "天府",
+          "天机",
+          "太阴",
           "天梁",
           "破军",
-          "天机",
-          "紫微"
+          "巨门",
+          "武曲",
+          "七杀",
+          "紫微",
+          "贪狼",
+          "天同",
+          "天相",
+          "廉贞"
         ],
         "method": [
           "紫微"
@@ -716,18 +716,18 @@
           "合"
         ],
         "palace": [
+          "夫妻",
+          "财帛",
+          "福德",
           "疾厄",
-          "迁移",
+          "田宅",
+          "命宫",
           "奴仆",
           "官禄",
-          "福德",
-          "父母",
-          "子女",
+          "迁移",
           "兄弟",
-          "财帛",
-          "命宫",
-          "夫妻",
-          "田宅"
+          "父母",
+          "子女"
         ],
         "star": [
           "紫微"
@@ -736,14 +736,14 @@
           "紫微"
         ],
         "theme": [
-          "婚姻",
-          "感情",
           "财运",
-          "父母",
+          "人际",
           "健康",
           "事业",
+          "父母",
+          "婚姻",
           "子女",
-          "人际"
+          "感情"
         ]
       }
     },
@@ -756,64 +756,64 @@
       "size": 439,
       "keywords": {
         "day_master": [
-          "丙",
-          "庚",
-          "戊",
-          "丁",
-          "甲",
-          "辛",
-          "己",
           "壬",
           "乙",
-          "癸"
+          "辛",
+          "戊",
+          "甲",
+          "癸",
+          "己",
+          "庚",
+          "丙",
+          "丁"
         ],
         "relation": [
           "破"
         ],
         "palace": [
-          "父母",
           "官禄",
           "财帛",
-          "命宫"
+          "命宫",
+          "父母"
         ],
         "star": [
-          "廉贞",
-          "贪狼",
-          "太阴",
-          "武曲",
-          "巨门",
           "太阳",
-          "天同",
+          "天机",
+          "太阴",
           "天梁",
           "破军",
-          "天机",
-          "紫微"
+          "巨门",
+          "武曲",
+          "紫微",
+          "贪狼",
+          "天同",
+          "廉贞"
         ],
         "method": [
           "紫微"
         ],
         "theme": [
           "财运",
-          "父母",
           "贵人",
-          "事业"
+          "事业",
+          "父母"
         ],
         "general12": [
           "太阴",
           "贵人"
         ],
         "hua": [
-          "化权",
+          "化忌",
           "化禄",
           "化科",
-          "化忌"
+          "化权"
         ]
       }
     }
   ],
   "inverted_index": {
     "wuxing": {
-      "水": [
+      "土": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
           "title": "五行生克",
@@ -824,6 +824,18 @@
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
           "title": "天干地支",
           "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
+          "title": "六爻基础",
+          "category": "liuyao",
           "subcategory": ""
         },
         {
@@ -877,44 +889,6 @@
           "subcategory": ""
         }
       ],
-      "土": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
-          "title": "五行生克",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
-          "title": "六爻基础",
-          "category": "liuyao",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
-          "title": "姓名学基础",
-          "category": "xingming",
-          "subcategory": ""
-        }
-      ],
       "木": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
@@ -942,6 +916,32 @@
         }
       ],
       "金": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
+          "title": "五行生克",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
+          "title": "姓名学基础",
+          "category": "xingming",
+          "subcategory": ""
+        }
+      ],
+      "水": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
           "title": "五行生克",
@@ -1031,7 +1031,7 @@
           "subcategory": ""
         }
       ],
-      "辰": [
+      "未": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
           "title": "五行生克",
@@ -1054,12 +1054,6 @@
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
           "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
-          "title": "六爻基础",
-          "category": "liuyao",
           "subcategory": ""
         },
         {
@@ -1070,38 +1064,6 @@
         }
       ],
       "戌": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
-          "title": "五行生克",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        }
-      ],
-      "未": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
           "title": "五行生克",
@@ -1165,16 +1127,16 @@
           "subcategory": ""
         }
       ],
-      "卯": [
+      "辰": [
         {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
+          "title": "五行生克",
           "category": "bazi",
           "subcategory": ""
         },
         {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
           "category": "bazi",
           "subcategory": ""
         },
@@ -1188,6 +1150,12 @@
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
           "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
+          "title": "六爻基础",
+          "category": "liuyao",
           "subcategory": ""
         },
         {
@@ -1201,96 +1169,6 @@
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
           "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        }
-      ],
-      "午": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        }
-      ],
-      "寅": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        }
-      ],
-      "酉": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
           "category": "bazi",
           "subcategory": ""
         },
@@ -1364,9 +1242,145 @@
           "category": "wuxing",
           "subcategory": ""
         }
+      ],
+      "午": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        }
+      ],
+      "酉": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        }
+      ],
+      "寅": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        }
+      ],
+      "卯": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        }
       ]
     },
     "face": {
+      "耳朵": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
+          "title": "五行生克",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        }
+      ],
       "眼睛": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
@@ -1395,36 +1409,6 @@
           "subcategory": ""
         }
       ],
-      "耳朵": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\五行生克.md",
-          "title": "五行生克",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        }
-      ],
-      "印堂": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        }
-      ],
-      "眉毛": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        }
-      ],
       "嘴巴": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
@@ -1441,7 +1425,23 @@
           "subcategory": ""
         }
       ],
+      "印堂": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        }
+      ],
       "山根": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        }
+      ],
+      "眉毛": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
           "title": "面相基础",
@@ -1451,6 +1451,50 @@
       ]
     },
     "shishen": {
+      "正财": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
+          "title": "十神详解",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        }
+      ],
+      "正印": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
+          "title": "十神详解",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        }
+      ],
+      "比肩": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
+          "title": "十神详解",
+          "category": "bazi",
+          "subcategory": ""
+        }
+      ],
+      "劫财": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
+          "title": "十神详解",
+          "category": "bazi",
+          "subcategory": ""
+        }
+      ],
       "偏印": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
@@ -1465,7 +1509,7 @@
           "subcategory": ""
         }
       ],
-      "偏财": [
+      "正官": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
           "title": "十神详解",
@@ -1479,7 +1523,7 @@
           "subcategory": ""
         }
       ],
-      "正财": [
+      "偏财": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
           "title": "十神详解",
@@ -1516,50 +1560,6 @@
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
           "title": "主星详解",
           "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "劫财": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
-          "title": "十神详解",
-          "category": "bazi",
-          "subcategory": ""
-        }
-      ],
-      "比肩": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
-          "title": "十神详解",
-          "category": "bazi",
-          "subcategory": ""
-        }
-      ],
-      "正官": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
-          "title": "十神详解",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
-          "subcategory": ""
-        }
-      ],
-      "正印": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\十神详解.md",
-          "title": "十神详解",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
           "subcategory": ""
         }
       ],
@@ -1723,7 +1723,7 @@
           "subcategory": ""
         }
       ],
-      "刑": [
+      "害": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\大运流年.md",
           "title": "大运流年",
@@ -1743,7 +1743,7 @@
           "subcategory": ""
         }
       ],
-      "害": [
+      "刑": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\大运流年.md",
           "title": "大运流年",
@@ -1811,26 +1811,6 @@
           "subcategory": ""
         }
       ],
-      "疾厄": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
-          "title": "交叉验证",
-          "category": "cross",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
-          "title": "十二宫位",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
       "官禄": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
@@ -1853,6 +1833,26 @@
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
           "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "疾厄": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
+          "title": "交叉验证",
+          "category": "cross",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
+          "title": "十二宫位",
           "category": "ziwei",
           "subcategory": ""
         }
@@ -1929,34 +1929,6 @@
           "subcategory": ""
         }
       ],
-      "迁移": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
-          "title": "十二宫位",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "奴仆": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
-          "title": "十二宫位",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
       "福德": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
@@ -1971,7 +1943,7 @@
           "subcategory": ""
         }
       ],
-      "子女": [
+      "田宅": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
           "title": "面相基础",
@@ -2005,7 +1977,35 @@
           "subcategory": ""
         }
       ],
-      "田宅": [
+      "奴仆": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
+          "title": "十二宫位",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "迁移": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
+          "title": "十二宫位",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "子女": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
           "title": "面相基础",
@@ -2099,57 +2099,7 @@
           "subcategory": ""
         }
       ],
-      "廉贞": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
-          "title": "主星详解",
-          "category": "ziwei",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "贪狼": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
-          "title": "主星详解",
-          "category": "ziwei",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "天相": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
-          "title": "主星详解",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "武曲": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
-          "title": "主星详解",
-          "category": "ziwei",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "巨门": [
+      "太阳": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
           "title": "主星详解",
@@ -2171,21 +2121,7 @@
           "subcategory": ""
         }
       ],
-      "太阳": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
-          "title": "主星详解",
-          "category": "ziwei",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "天同": [
+      "天机": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
           "title": "主星详解",
@@ -2227,7 +2163,71 @@
           "subcategory": ""
         }
       ],
-      "天机": [
+      "巨门": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
+          "title": "主星详解",
+          "category": "ziwei",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "武曲": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
+          "title": "主星详解",
+          "category": "ziwei",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "贪狼": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
+          "title": "主星详解",
+          "category": "ziwei",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "天同": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
+          "title": "主星详解",
+          "category": "ziwei",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "天相": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
+          "title": "主星详解",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "廉贞": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\主星详解.md",
           "title": "主星详解",
@@ -2333,26 +2333,6 @@
           "subcategory": ""
         }
       ],
-      "感情": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
-          "title": "交叉验证",
-          "category": "cross",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
-          "title": "十二宫位",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
       "财运": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
@@ -2427,6 +2407,26 @@
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
           "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "感情": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
+          "title": "交叉验证",
+          "category": "cross",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\十二宫位.md",
+          "title": "十二宫位",
           "category": "ziwei",
           "subcategory": ""
         }
@@ -2531,23 +2531,21 @@
           "subcategory": ""
         }
       ],
-      "天空": [
+      "朱雀": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
           "category": "daliuren",
           "subcategory": ""
-        }
-      ],
-      "太常": [
+        },
         {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
+          "title": "六爻基础",
+          "category": "liuyao",
           "subcategory": ""
         }
       ],
-      "白虎": [
+      "玄武": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
@@ -2567,7 +2565,7 @@
           "subcategory": ""
         }
       ],
-      "朱雀": [
+      "螣蛇": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
@@ -2579,9 +2577,15 @@
           "title": "六爻基础",
           "category": "liuyao",
           "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
         }
       ],
-      "天后": [
+      "天空": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
@@ -2589,7 +2593,7 @@
           "subcategory": ""
         }
       ],
-      "螣蛇": [
+      "白虎": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
@@ -2635,23 +2639,19 @@
           "subcategory": ""
         }
       ],
-      "玄武": [
+      "天后": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
           "category": "daliuren",
           "subcategory": ""
-        },
+        }
+      ],
+      "太常": [
         {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
-          "title": "六爻基础",
-          "category": "liuyao",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
           "subcategory": ""
         }
       ],
@@ -2685,260 +2685,6 @@
       ]
     },
     "day_master": {
-      "丙": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "庚": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "戊": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "丁": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "甲": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "辛": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
-          "title": "面相基础",
-          "category": "mianxiang",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
-      "己": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
-          "title": "天干地支",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
-          "title": "神煞",
-          "category": "bazi",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
-          "title": "六爻基础",
-          "category": "liuyao",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
-          "title": "五行喜忌",
-          "category": "wuxing",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
-          "title": "四化",
-          "category": "ziwei",
-          "subcategory": ""
-        }
-      ],
       "壬": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
@@ -3027,7 +2773,261 @@
           "subcategory": ""
         }
       ],
+      "辛": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\mianxiang\\面相基础.md",
+          "title": "面相基础",
+          "category": "mianxiang",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "戊": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "甲": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
       "癸": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "己": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
+          "title": "六爻基础",
+          "category": "liuyao",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "庚": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "丙": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
+          "title": "天干地支",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\神煞.md",
+          "title": "神煞",
+          "category": "bazi",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\wuxing\\五行喜忌.md",
+          "title": "五行喜忌",
+          "category": "wuxing",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
+          "title": "四化",
+          "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "丁": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\天干地支.md",
           "title": "天干地支",
@@ -3077,30 +3077,6 @@
           "subcategory": ""
         }
       ],
-      "正官格": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
-          "subcategory": ""
-        }
-      ],
-      "月刃格": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
-          "subcategory": ""
-        }
-      ],
-      "正财格": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
-          "title": "格局判断",
-          "category": "bazi",
-          "subcategory": ""
-        }
-      ],
       "建禄格": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
@@ -3117,7 +3093,7 @@
           "subcategory": ""
         }
       ],
-      "正印格": [
+      "正财格": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
           "title": "格局判断",
@@ -3134,6 +3110,30 @@
         }
       ],
       "偏财格": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        }
+      ],
+      "月刃格": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        }
+      ],
+      "正官格": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
+          "title": "格局判断",
+          "category": "bazi",
+          "subcategory": ""
+        }
+      ],
+      "正印格": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\bazi\\格局判断.md",
           "title": "格局判断",
@@ -3169,20 +3169,6 @@
           "subcategory": ""
         }
       ],
-      "奇门": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
-          "title": "交叉验证",
-          "category": "cross",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        }
-      ],
       "紫微": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
@@ -3206,6 +3192,20 @@
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
           "title": "四化",
           "category": "ziwei",
+          "subcategory": ""
+        }
+      ],
+      "奇门": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\cross\\交叉验证.md",
+          "title": "交叉验证",
+          "category": "cross",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
           "subcategory": ""
         }
       ],
@@ -3255,7 +3255,21 @@
       ]
     },
     "god6": {
-      "白虎": [
+      "朱雀": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
+          "title": "大六壬基础",
+          "category": "daliuren",
+          "subcategory": ""
+        },
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
+          "title": "六爻基础",
+          "category": "liuyao",
+          "subcategory": ""
+        }
+      ],
+      "玄武": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
@@ -3272,20 +3286,6 @@
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
           "category": "qimen",
-          "subcategory": ""
-        }
-      ],
-      "朱雀": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
-          "title": "大六壬基础",
-          "category": "daliuren",
-          "subcategory": ""
-        },
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\liuyao\\六爻基础.md",
-          "title": "六爻基础",
-          "category": "liuyao",
           "subcategory": ""
         }
       ],
@@ -3309,7 +3309,7 @@
           "subcategory": ""
         }
       ],
-      "玄武": [
+      "白虎": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\daliuren\\大六壬基础.md",
           "title": "大六壬基础",
@@ -3359,15 +3359,7 @@
       ]
     },
     "gate": {
-      "景门": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        }
-      ],
-      "死门": [
+      "惊门": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3383,7 +3375,7 @@
           "subcategory": ""
         }
       ],
-      "休门": [
+      "生门": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3391,7 +3383,15 @@
           "subcategory": ""
         }
       ],
-      "惊门": [
+      "死门": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        }
+      ],
+      "休门": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3407,7 +3407,7 @@
           "subcategory": ""
         }
       ],
-      "伤门": [
+      "景门": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3415,7 +3415,7 @@
           "subcategory": ""
         }
       ],
-      "生门": [
+      "伤门": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3425,7 +3425,7 @@
       ]
     },
     "star9": {
-      "天蓬": [
+      "天心": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3433,23 +3433,7 @@
           "subcategory": ""
         }
       ],
-      "天辅": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        }
-      ],
-      "天冲": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        }
-      ],
-      "天芮": [
+      "天英": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3465,6 +3449,30 @@
           "subcategory": ""
         }
       ],
+      "天辅": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        }
+      ],
+      "天芮": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        }
+      ],
+      "天冲": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
+          "title": "奇门基础",
+          "category": "qimen",
+          "subcategory": ""
+        }
+      ],
       "天任": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
@@ -3473,7 +3481,7 @@
           "subcategory": ""
         }
       ],
-      "天心": [
+      "天蓬": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
           "title": "奇门基础",
@@ -3488,18 +3496,10 @@
           "category": "qimen",
           "subcategory": ""
         }
-      ],
-      "天英": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\奇门基础.md",
-          "title": "奇门基础",
-          "category": "qimen",
-          "subcategory": ""
-        }
       ]
     },
     "name": {
-      "人格": [
+      "三才": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
           "title": "姓名学基础",
@@ -3515,14 +3515,6 @@
           "subcategory": ""
         }
       ],
-      "五格": [
-        {
-          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
-          "title": "姓名学基础",
-          "category": "xingming",
-          "subcategory": ""
-        }
-      ],
       "天格": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
@@ -3531,7 +3523,15 @@
           "subcategory": ""
         }
       ],
-      "外格": [
+      "五格": [
+        {
+          "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
+          "title": "姓名学基础",
+          "category": "xingming",
+          "subcategory": ""
+        }
+      ],
+      "人格": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
           "title": "姓名学基础",
@@ -3547,7 +3547,7 @@
           "subcategory": ""
         }
       ],
-      "三才": [
+      "外格": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\xingming\\姓名学基础.md",
           "title": "姓名学基础",
@@ -3557,7 +3557,7 @@
       ]
     },
     "hua": {
-      "化权": [
+      "化忌": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
           "title": "四化",
@@ -3581,7 +3581,7 @@
           "subcategory": ""
         }
       ],
-      "化忌": [
+      "化权": [
         {
           "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\ziwei\\四化.md",
           "title": "四化",
