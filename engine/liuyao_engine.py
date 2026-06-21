@@ -883,7 +883,11 @@ class LiuYaoEngine(DivinationEngine):
 
     def _build_liunian(self, lines: list) -> dict:
         """流年太岁分析（najia/builtin路径共用）"""
-        from lunar_python import Solar as _Solar
+        try:
+            from lunar_python import Solar as _Solar
+        except ImportError:
+            logger.debug("lunar_python不可用，流年分析使用datetime近似")
+            return self._build_liunian_fallback(lines)
         now = datetime.now()
         _solar = _Solar.fromYmdHms(now.year, now.month, now.day, now.hour, now.minute, 0)
         _lunar = _solar.getLunar()
@@ -913,6 +917,45 @@ class LiuYaoEngine(DivinationEngine):
                 _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六合太岁'})
             elif self.ZHI_CHONG.get(_dz) == _year_zhi:
                 _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '六冲太岁'})
+
+        return {
+            'year': now.year,
+            'year_ganzhi': f'{_year_gan}{_year_zhi}',
+            'tai_sui_zhi': _year_zhi,
+            'tai_sui_wuxing': _tai_sui_wx,
+            'tai_sui_vs_shi': _tai_sui_vs_shi,
+            'tai_sui_yao_rel': _tai_sui_yao_rel,
+        }
+
+    def _build_liunian_fallback(self, lines: list) -> dict:
+        """lunar_python不可用时的流年近似分析"""
+        now = datetime.now()
+        # 近似年干支（以立春为界，简化处理）
+        year_offset = now.year - 1984  # 1984=甲子年
+        gan_idx = year_offset % 10
+        zhi_idx = year_offset % 12
+        TIANGAN = '甲乙丙丁戊己庚辛壬癸'
+        DIZHI = '子丑寅卯辰巳午未申酉戌亥'
+        _year_gan = TIANGAN[gan_idx]
+        _year_zhi = DIZHI[zhi_idx]
+        _tai_sui_wx = self.ZHI_WUXING.get(_year_zhi, '')
+
+        _shi_yao = next((l for l in lines if l.get('is_shi')), {})
+        _shi_dizhi = _shi_yao.get('dizhi', '')
+        _tai_sui_vs_shi = ''
+        if _shi_dizhi and _year_zhi:
+            if _shi_dizhi == _year_zhi:
+                _tai_sui_vs_shi = '太岁临世爻，年运有靠'
+            elif self.ZHI_HE.get(_shi_dizhi) == _year_zhi:
+                _tai_sui_vs_shi = '世爻与太岁六合，年运顺遂'
+            elif self.ZHI_CHONG.get(_shi_dizhi) == _year_zhi:
+                _tai_sui_vs_shi = '世爻与太岁六冲，年运多变'
+
+        _tai_sui_yao_rel = []
+        for _line in lines:
+            _dz = _line.get('dizhi', '')
+            if _dz == _year_zhi:
+                _tai_sui_yao_rel.append({'position': _line['position'], 'relation': '太岁临爻'})
 
         return {
             'year': now.year,
