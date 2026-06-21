@@ -1293,7 +1293,7 @@ class BaziEngine(DivinationEngine):
                 break
         tianluo_set = {'戌', '亥'}
         diwang_set = {'辰', '巳'}
-        ref_zhis = {year_zhi, day_zhi}
+        ref_zhis = set(all_zhis)  # 查四柱全部地支（传统规则，非仅年支日支）
         if _nayin_wx == '火' and ref_zhis & tianluo_set:
             shensha.append('天罗')
         if _nayin_wx in ('水', '土') and ref_zhis & diwang_set:
