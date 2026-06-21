@@ -134,7 +134,13 @@ class QiMenEngine(DivinationEngine):
         Returns:
             dict: 奇门排盘结果
         """
-        solar_dt = time.true_solar or time.original
+        # 统一使用八字引擎的晚子时处理（与八字/六壬/六爻保持一致）
+        # 晚子时(23:xx)：日柱用次日日期，时辰用子时(hour=0)
+        # 避免各helper方法内部重复做晚子时判定导致不一致
+        pillar_date = time.bazi_day_pillar_date
+        bazi_hour = time.bazi_hour
+        solar_dt = datetime(pillar_date.year, pillar_date.month, pillar_date.day,
+                            bazi_hour, time.original.minute, 0)
 
         # 1. 节气 & 局数
         jieqi, ju, yin_yang = self._get_jieqi_info(solar_dt)
