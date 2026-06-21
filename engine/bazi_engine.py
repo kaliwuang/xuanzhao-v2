@@ -1261,22 +1261,26 @@ class BaziEngine(DivinationEngine):
             if day_gz == tianshe:
                 shensha.append('天赦')
 
-        # 19~31. 以日干/年支查地支的神煞（统一用 _scan_zhi 消除重复代码）
-        _scan_zhi('天医', SHENSHA_TIANYI_MEDICAL_MAP.get(month_pillar.zhi, ''))
-        _scan_zhi('天厨', SHENSHA_TIANCHU_MAP.get(day_gan, ''))
-        _scan_zhi('学堂', SHENSHA_XUETANG_MAP.get(day_gan, ''))
-        _scan_zhi('词馆', SHENSHA_CIGUAN_MAP.get(day_gan, ''))
-        _scan_zhi('羊刃', SHENSHA_YANGREN_MAP.get(day_gan, ''))
-        _scan_zhi('飞刃', SHENSHA_FEIREN_MAP.get(day_gan, ''))
-        _scan_zhi('流霞', SHENSHA_LIUXIA_MAP.get(day_gan, ''))
-        _scan_zhi('亡神', SHENSHA_WANGSHEN_MAP.get(year_zhi, ''))
-        _scan_zhi('劫煞', SHENSHA_JIESHA_MAP.get(year_zhi, ''))
-        _scan_zhi('灾煞', SHENSHA_ZAISHA_MAP.get(year_zhi, ''))
-        _scan_zhi('勾煞', SHENSHA_GOUSHA_MAP.get(year_zhi, ''))
-        _scan_zhi('绞煞', SHENSHA_JIAOSHA_MAP.get(year_zhi, ''))
-        # 孤辰寡宿（以年支查，分别查两支）
-        _scan_zhi('孤辰', SHENSHA_GUICHEN_MAP.get(year_zhi, ''))
-        _scan_zhi('寡宿', SHENSHA_GUASU_MAP.get(year_zhi, ''))
+        # 19~31. 以日干/年支/月支查地支的神煞（数据驱动循环，消除逐行重复调用）
+        _SCAN_DEFS = [
+            # (名称, 查表字典, 查表key)
+            ('天医', SHENSHA_TIANYI_MEDICAL_MAP, month_pillar.zhi),
+            ('天厨', SHENSHA_TIANCHU_MAP, day_gan),
+            ('学堂', SHENSHA_XUETANG_MAP, day_gan),
+            ('词馆', SHENSHA_CIGUAN_MAP, day_gan),
+            ('羊刃', SHENSHA_YANGREN_MAP, day_gan),
+            ('飞刃', SHENSHA_FEIREN_MAP, day_gan),
+            ('流霞', SHENSHA_LIUXIA_MAP, day_gan),
+            ('亡神', SHENSHA_WANGSHEN_MAP, year_zhi),
+            ('劫煞', SHENSHA_JIESHA_MAP, year_zhi),
+            ('灾煞', SHENSHA_ZAISHA_MAP, year_zhi),
+            ('勾煞', SHENSHA_GOUSHA_MAP, year_zhi),
+            ('绞煞', SHENSHA_JIAOSHA_MAP, year_zhi),
+            ('孤辰', SHENSHA_GUICHEN_MAP, year_zhi),
+            ('寡宿', SHENSHA_GUASU_MAP, year_zhi),
+        ]
+        for name, sha_map, key in _SCAN_DEFS:
+            _scan_zhi(name, sha_map.get(key, ''))
 
         # 32. 天罗地网（以纳音五行+年支/日支查）
         # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
