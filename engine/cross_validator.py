@@ -2540,7 +2540,7 @@ class CrossValidator:
             items.append(ConsensusItem(
                 aspect="奇门局数",
                 finding=f"起局：{ju_name}",
-                supporting_methods=["奇门遁甲"],
+                supporting_methods=["奇门"],
                 confidence=ConfidenceLevel.MEDIUM
             ))
 
@@ -2553,7 +2553,7 @@ class CrossValidator:
             items.append(ConsensusItem(
                 aspect="奇门值符值使",
                 finding=f"值符：{zhi_fu.get('star','')}落{zf_gong_name}，值使：{zhi_shi.get('door','')}",
-                supporting_methods=["奇门遁甲"],
+                supporting_methods=["奇门"],
                 confidence=ConfidenceLevel.MEDIUM
             ))
 
@@ -2571,7 +2571,7 @@ class CrossValidator:
             items.append(ConsensusItem(
                 aspect="奇门吉格",
                 finding="；".join(ji_details),
-                supporting_methods=["奇门遁甲"],
+                supporting_methods=["奇门"],
                 confidence=ConfidenceLevel.HIGH if len(ji_ge) >= 2 else ConfidenceLevel.MEDIUM
             ))
 
@@ -2584,7 +2584,7 @@ class CrossValidator:
             items.append(ConsensusItem(
                 aspect="奇门凶格",
                 finding="；".join(xiong_details),
-                supporting_methods=["奇门遁甲"],
+                supporting_methods=["奇门"],
                 confidence=ConfidenceLevel.HIGH if len(xiong_ge) >= 2 else ConfidenceLevel.MEDIUM
             ))
 
@@ -2595,7 +2595,7 @@ class CrossValidator:
             items.append(ConsensusItem(
                 aspect="奇门旬空",
                 finding=f"旬空宫：{'、'.join(kong_names)}，落空之宫事多不实",
-                supporting_methods=["奇门遁甲"],
+                supporting_methods=["奇门"],
                 confidence=ConfidenceLevel.MEDIUM
             ))
 
@@ -2611,7 +2611,7 @@ class CrossValidator:
                 items.append(ConsensusItem(
                     aspect="奇门流年太岁",
                     finding=f"{year_ganzhi}太岁落{tai_sui_palace}宫（{tai_sui_men}/{tai_sui_xing}）",
-                    supporting_methods=["奇门遁甲"],
+                    supporting_methods=["奇门"],
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
