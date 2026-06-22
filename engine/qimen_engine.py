@@ -93,7 +93,11 @@ class QiMenEngine(DivinationEngine):
                        ('丙', '戊'), ('辛', '乙'), ('丙', '辛'), ('乙', '庚'),
                        ('庚', '乙'), ('丁', '壬'), ('壬', '丁'),
                        ('辛', '丙'), ('戊', '癸'), ('癸', '戊'),
-                       ('甲', '己'), ('己', '甲')}
+                       ('甲', '己'), ('己', '甲'),
+                       # 六庚完整克应（新增）
+                       ('庚', '丁'), ('庚', '己'), ('庚', '辛'), ('庚', '壬'), ('庚', '庚'),
+                       # 丁癸干支级克应（新增）
+                       ('丁', '癸'), ('癸', '丁')}
     # 天地合德（排除乙庚→奇合、丙辛→欢怡）
     GAN_HE_GEDE = {'甲': '己', '己': '甲', '丁': '壬', '壬': '丁',
                     '戊': '癸', '癸': '戊'}
@@ -511,13 +515,29 @@ class QiMenEngine(DivinationEngine):
             if men == '死门' and g == 4:
                 xiong_ge.append({'name': '螣蛇夭矫', 'gong': g, 'desc': '死门入巽，虚惊怪异'})
 
-            # 天盘+地盘格局（原13个独立for循环合并）
+            # 天盘+地盘格局（十干克应）
+            # ---- 六庚克应（庚为天乙飞符，奇门最重要凶干）----
             if tp == '庚' and dp == '丙':
-                xiong_ge.append({'name': '太白入荧', 'gong': g, 'desc': '庚加丙，贼来为患'})
+                xiong_ge.append({'name': '太白入荧', 'gong': g, 'desc': '庚加丙，贼来为患，主外患内忧'})
             if tp == '丙' and dp == '庚':
-                xiong_ge.append({'name': '荧入太白', 'gong': g, 'desc': '丙加庚，贼去平安'})
+                xiong_ge.append({'name': '荧入太白', 'gong': g, 'desc': '丙加庚，贼去门户破败，宜守不宜进'})
             if tp == '庚' and dp == '癸':
-                xiong_ge.append({'name': '小格', 'gong': g, 'desc': '庚加癸，格局不通'})
+                xiong_ge.append({'name': '小格', 'gong': g, 'desc': '庚加癸，格局不通，谋事受阻'})
+            # 庚加丁：大格（庚丁相刑，出行大凶）
+            if tp == '庚' and dp == '丁':
+                xiong_ge.append({'name': '大格', 'gong': g, 'desc': '庚加丁，大格出行凶，谋事不成'})
+            # 庚加己：刑格（庚入己墓，主刑狱诉讼）
+            if tp == '庚' and dp == '己':
+                xiong_ge.append({'name': '刑格', 'gong': g, 'desc': '庚加己，刑格主官司刑狱，暗昧不明'})
+            # 庚加辛：白虎出力（庚辛同类金气相搏，主刀刃伤灾）
+            if tp == '庚' and dp == '辛':
+                xiong_ge.append({'name': '白虎出力', 'gong': g, 'desc': '庚加辛，白虎出力，主刀刃相残，不可强为'})
+            # 庚加壬：上格（庚壬相冲，主变动不安）
+            if tp == '庚' and dp == '壬':
+                xiong_ge.append({'name': '上格', 'gong': g, 'desc': '庚加壬，上格主变动不安，出行迷路'})
+            # 庚加庚：太白同宫（庚庚自刑，战格，主兄弟失和、官灾横祸）
+            if tp == '庚' and dp == '庚':
+                xiong_ge.append({'name': '太白同宫', 'gong': g, 'desc': '庚加庚，太白同宫，官灾横祸，兄弟失和'})
             if tp == '丙' and dp == '辛':
                 ji_ge.append({'name': '欢怡', 'gong': g, 'desc': '丙辛合化水，谋事有成'})
             if tp == '辛' and dp == '丙':
@@ -532,6 +552,14 @@ class QiMenEngine(DivinationEngine):
                 ji_ge.append({'name': '青龙返首', 'gong': g, 'desc': '戊加丙，贵人相助，逢凶化吉'})
             if tp == '辛' and dp == '乙':
                 xiong_ge.append({'name': '白虎猖狂', 'gong': g, 'desc': '辛加乙，金木相克，主伤灾破败'})
+
+            # ---- 丁癸干支级克应（区别于门级同名格局）----
+            # 丁加癸：朱雀投江（干支级）——丁火入癸水，文书遗失，音信杳然
+            if tp == '丁' and dp == '癸':
+                xiong_ge.append({'name': '朱雀投江', 'gong': g, 'desc': '丁加癸，朱雀投江，文书遗失，音信不通'})
+            # 癸加丁：螣蛇夭矫（干支级）——癸水克丁火，虚惊怪异，文书官司
+            if tp == '癸' and dp == '丁':
+                xiong_ge.append({'name': '螣蛇夭矫', 'gong': g, 'desc': '癸加丁，螣蛇夭矫，虚惊怪异，文书有灾'})
 
             # 击刑
             if tp in self.GAN_XING and self.GAN_XING[tp] == g:
