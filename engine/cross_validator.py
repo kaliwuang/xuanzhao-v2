@@ -3936,6 +3936,45 @@ class CrossValidator:
         if self.udm.tiaohou:
             health_suggest.append(f"调候用神{self.udm.tiaohou}，养生可参考")
 
+        # 八字：日柱长生十二宫看先天元气
+        changsheng = self.udm.changsheng or {}
+        day_cs = changsheng.get("day", "")
+        if day_cs:
+            desc = self.CS_HEALTH_DESC.get(day_cs, "")
+            if desc:
+                health_trend.append(desc)
+                if day_cs in self.CS_WEAK:
+                    health_luck = "凶"
+                    health_suggest.append("先天元气偏弱，需系统调养，注意劳逸结合")
+                elif day_cs in self.CS_STRONG and health_luck != "凶":
+                    health_luck = "吉"
+
+        # 月柱长生十二宫（月令为提纲，反映出生季节对体质的影响）
+        month_cs = changsheng.get("month", "")
+        if month_cs and month_cs not in ("长生", "临官", "帝旺", "冠带"):
+            # 月柱不在旺地，季节对日主支撑力不足，补充体质提示
+            if month_cs in self.CS_WEAK:
+                health_suggest.append(f"月令{month_cs}，出生季节对日主支撑不足，注意时令养生")
+                if health_luck == "吉":
+                    health_luck = "中"
+
+        # 紫微：疾厄宫（健康体质的核心宫位）
+        if self.udm.ziwei_chart:
+            palaces = self.udm.ziwei_chart.get("palaces", [])
+            p = self._find_palace(palaces, "疾厄")
+            if p:
+                stars = self._get_palace_stars(p)
+                if stars:
+                    good_stars = [s for s in stars if s in ("天同", "天梁", "天府", "紫微")]
+                    bad_stars = [s for s in stars if s in ("七杀", "破军", "贪狼", "廉贞", "擎羊", "陀罗")]
+                    if good_stars:
+                        health_trend.append(f"疾厄宫有{'、'.join(good_stars)}，有化解之力，病后恢复快")
+                        if health_luck != "凶":
+                            health_luck = "吉"
+                    if bad_stars:
+                        health_trend.append(f"疾厄宫有{'、'.join(bad_stars)}，需注意突发性疾病或手术")
+                        health_luck = "凶"
+
         # 奇门：天芮病星分析
         if self.udm.qimen_chart:
             qm = self.udm.qimen_chart
