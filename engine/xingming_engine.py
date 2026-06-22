@@ -710,8 +710,9 @@ class XingMingEngine(DivinationEngine):
             if WUXING_KE.get(lower) == upper:
                 return '下克上'  # 人克天/地克人：下位克服上位，吉
             # 五行之间必有生克关系，'无关'仅在输入无效时出现
-            logger.warning(f"三才五行关系异常：upper='{upper}', lower='{lower}'，请检查笔画数理")
-            return '无关'
+            # 按凶论处（保守策略），避免漏检导致评分虚高
+            logger.warning(f"三才五行关系异常：upper='{upper}', lower='{lower}'，按凶论处")
+            return '上克下'
 
         # 天格→人格（上下关系）
         rel_tr = _check_directional(tian, ren)
