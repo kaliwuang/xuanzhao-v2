@@ -427,8 +427,7 @@ class QiMenEngine(DivinationEngine):
         """计算日柱旬空（空亡地支）和旬首奇仪"""
         TIANGAN = self.TIAN_GAN
         DIZHI = self.DI_ZHI
-        # 旬首对应的奇仪（甲子→戊, 甲戌→己, 甲申→庚, 甲午→辛, 甲辰→壬, 甲寅→癸）
-        XUN_HIDDEN_YI = {'子': '戊', '戌': '己', '申': '庚', '午': '辛', '辰': '壬', '寅': '癸'}
+        # 旬首对应的奇仪复用类级 JIA_HIDE 常量（消除重复定义）
         if len(day_gan_zhi) < 2:
             return {'xun_shou': '', 'kong_wang': [], 'hidden_yi': ''}
         gan_idx = TIANGAN.index(day_gan_zhi[0]) if day_gan_zhi[0] in TIANGAN else 0
@@ -438,7 +437,7 @@ class QiMenEngine(DivinationEngine):
         xun_shou = TIANGAN[0] + xun_shou_zhi
         kong1 = DIZHI[(xun_start_zhi + 10) % 12]
         kong2 = DIZHI[(xun_start_zhi + 11) % 12]
-        hidden_yi = XUN_HIDDEN_YI.get(xun_shou_zhi, '戊')
+        hidden_yi = self.JIA_HIDE.get(xun_shou_zhi, '戊')
         return {'xun_shou': xun_shou, 'kong_wang': [kong1, kong2], 'hidden_yi': hidden_yi}
 
     def _build_palaces(self, di_pan, tian_pan, ba_men, jiu_xing, ba_shen) -> list:
