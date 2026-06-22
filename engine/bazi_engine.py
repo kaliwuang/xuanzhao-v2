@@ -354,7 +354,7 @@ SAN_HUI_GROUPS = [
 class BaziEngine(DivinationEngine):
     """八字引擎"""
 
-    MAX_BASE_FEATURES = 30  # 基础特征条数上限（25→30，避免复杂命盘丢失天干连珠/地支连珠等稀有特征）
+    MAX_BASE_FEATURES = 40  # 基础特征条数上限（30→40，复杂命盘冲/合/刑/害/三合/三会+十神组合+透干易超30条）
 
     # 身强/身弱判定阈值（日主五行得分占比）
     STRONG_THRESHOLD = 0.40   # >=40% 为身强
