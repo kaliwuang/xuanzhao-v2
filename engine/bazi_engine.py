@@ -1098,6 +1098,11 @@ class BaziEngine(DivinationEngine):
         # 注：正官+偏印不构成官印相生，偏印为枭神，性质不同
         if has_zhenguan and has_zhengyin:
             features.append("官印相生 — 体制内发展有利，稳中有升，有贵人提携")
+        # 伤官配印：伤官与印星同透——伤官的叛逆创造力被印星的学识涵养所驾驭
+        # 《子平真诠》列为上格：伤官虽凶，有印则吉。才华有了底蕴，表达有了深度。
+        # 与"伤官见官"（凶）形成对比：伤官见官是才华与规矩冲突，伤官配印是才华被学识驯化。
+        if has_shangguan and has_yin:
+            features.append("伤官配印 — 才华有底蕴，表达有深度，化叛逆为创造力")
 
         # 5. 印星（排除日元位置，与十神组合检查保持一致）
         yin_count = sum(1 for k, v in ss.items() if k != "day" and "印" in v)
