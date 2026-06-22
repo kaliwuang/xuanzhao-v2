@@ -989,16 +989,13 @@ class CrossValidator:
         counts = self.udm.get_wuxing_count()
         if counts:
             # 补充藏干五行计数（藏干反映体内隐藏的五行能量）
-            GAN_WUXING_LOCAL = {
-                '甲':'木','乙':'木','丙':'火','丁':'火','戊':'土',
-                '己':'土','庚':'金','辛':'金','壬':'水','癸':'水',
-            }
+            from engine.bazi_engine import GAN_WUXING_STR as _GAN_WX
             hidden_counts = dict(counts)  # 复制天干+本气计数
             for pillar_key, gans_list in (self.udm.hidden_gans or {}).items():
                 for cidx, g in enumerate(gans_list):
                     if cidx == 0:
                         continue  # 本气已在get_wuxing_count()中计算过，跳过避免重复
-                    wx = GAN_WUXING_LOCAL.get(g, '')
+                    wx = _GAN_WX.get(g, '')
                     if wx:
                         hidden_counts[wx] = hidden_counts.get(wx, 0) + 1
 
