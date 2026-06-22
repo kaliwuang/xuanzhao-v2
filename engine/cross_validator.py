@@ -450,7 +450,7 @@ class CrossValidator:
         if traits:
             items.append(ConsensusItem(
                 aspect="性格特质",
-                finding="；".join(list(set(traits))),
+                finding="；".join(list(dict.fromkeys(traits))),
                 supporting_methods=methods,
                 confidence=ConfidenceLevel.HIGH if len(methods) >= 2 else ConfidenceLevel.MEDIUM
             ))
