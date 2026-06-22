@@ -18,6 +18,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# 甲子年基准年（用于干支年份近似计算，lunar_python不可用时的回退路径）
+JIA_ZI_YEAR = 1984
+
 
 class LiuYaoEngine(DivinationEngine):
     """六爻引擎（najia 库主路径 + 自包含回退）"""
@@ -1011,7 +1014,7 @@ class LiuYaoEngine(DivinationEngine):
     def _build_liunian_fallback(self, lines: list) -> dict:
         """lunar_python不可用时的流年近似分析"""
         now = datetime.now()
-        year_offset = now.year - 1984  # 1984=甲子年
+        year_offset = now.year - JIA_ZI_YEAR  # 甲子年基准
         gan_idx = year_offset % 10
         zhi_idx = year_offset % 12
         _year_gan = '甲乙丙丁戊己庚辛壬癸'[gan_idx]
