@@ -63,12 +63,15 @@ class TaiYiEngine(DivinationEngine):
         return 7
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
-        # 使用真太阳时排盘
+        # 使用真太阳时排盘，同时处理晚子时（与其他引擎保持一致）
+        # 晚子时(23:xx)：日柱用次日日期，时辰用子时(hour=0)
         orig = time.true_solar
-        year = orig.year
-        month = orig.month
-        day = orig.day
-        hour = orig.hour
+        pillar_date = time.bazi_day_pillar_date
+        bazi_hour = time.bazi_hour
+        year = pillar_date.year
+        month = pillar_date.month
+        day = pillar_date.day
+        hour = bazi_hour
 
         try:
             if _TAIYI_AVAILABLE:
