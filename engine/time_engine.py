@@ -249,8 +249,8 @@ class TimeEngine:
         # 经度修正（分钟）
         longitude_correction = (longitude - 120.0) * 4.0
 
-        # 均时差（equation of time）
-        eot = self._equation_of_time(beijing_time)
+        # 均时差（equation of time）——基于UTC日期计算（地球轨道位置与观测者时区无关）
+        eot = self._equation_of_time(utc)
 
         # 总修正（分钟）
         total_minutes = longitude_correction + eot
