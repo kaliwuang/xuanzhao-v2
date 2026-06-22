@@ -463,6 +463,65 @@ class CrossValidator:
             if sun_sign in sign_traits:
                 traits.append(sign_traits[sun_sign])
 
+        # 大六壬：初传天将→性格核心驱动力（天将是六壬最直接的性格信号）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            if yong_shen:
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                _PERSONALITY_JIANG = {
+                    "貴人": "有贵人气质，善于结交权贵，社交层次高",
+                    "貴": "有贵人气质，善于结交权贵，社交层次高",
+                    "青龍": "乐观积极，有魅力和感染力，做事大气",
+                    "龍": "乐观积极，有魅力和感染力，做事大气",
+                    "龙": "乐观积极，有魅力和感染力，做事大气",
+                    "六合": "善于协调合作，性格温和包容，人缘极佳",
+                    "合": "善于协调合作，性格温和包容，人缘极佳",
+                    "朱雀": "口才出众，表达力强，善于言辞和文书",
+                    "雀": "口才出众，表达力强，善于言辞和文书",
+                    "勾陳": "性格执着固稳，做事有韧性，但不易变通",
+                    "勾": "性格执着固稳，做事有韧性，但不易变通",
+                    "太陰": "内敛细腻，善于观察和私下运作，直觉力强",
+                    "阴": "内敛细腻，善于观察和私下运作，直觉力强",
+                    "白虎": "果断刚强，行动力强，性格中有锋芒和压迫感",
+                    "虎": "果断刚强，行动力强，性格中有锋芒和压迫感",
+                    "太常": "稳重踏实，重视传统和规范，行事有章法",
+                    "常": "稳重踏实，重视传统和规范，行事有章法",
+                    "玄武": "心思缜密，洞察力强，但易多疑或暗中算计",
+                    "武": "心思缜密，洞察力强，但易多疑或暗中算计",
+                    "騰蛇": "思维活跃，想象力丰富，但易焦虑多变",
+                    "蛇": "思维活跃，想象力丰富，但易焦虑多变",
+                    "天空": "思想独立，不拘世俗，有超脱和创新精神",
+                    "空": "思想独立，不拘世俗，有超脱和创新精神",
+                }
+                if chu_jiang in _PERSONALITY_JIANG:
+                    methods.append("大六壬")
+                    traits.append(f"六壬初传{chu_jiang}：{_PERSONALITY_JIANG[chu_jiang]}")
+
+        # 六爻：世爻六亲→性格核心倾向（世爻代表求测者自身）
+        if self.udm.liuyao_chart:
+            ly = self.udm.liuyao_chart
+            lines = ly.get("lines", [])
+            shi_yao = None
+            for l in lines:
+                if l.get("is_shi"):
+                    shi_yao = l
+                    break
+            if shi_yao:
+                liuqin = shi_yao.get("liu_qin", "")
+                shi_wx = shi_yao.get("wuxing", "")
+                shi_dizhi = shi_yao.get("dizhi", "")
+                _LIUYAO_PERSONALITY = {
+                    "父母": "重视知识和文书，责任心强，有保护欲，善于教导",
+                    "兄弟": "重情义，竞争意识强，善于合作但也需防争执",
+                    "子孙": "心态年轻，有创造力和童心，不喜欢受约束",
+                    "妻财": "务实重利，重视物质生活，理财意识强",
+                    "官鬼": "有权威感和责任心，重视规则但易有压力",
+                }
+                if liuqin in _LIUYAO_PERSONALITY:
+                    methods.append("六爻")
+                    traits.append(f"六爻世爻{liuqin}（{shi_dizhi}）：{_LIUYAO_PERSONALITY[liuqin]}")
+
         if traits:
             items.append(ConsensusItem(
                 aspect="性格特质",
