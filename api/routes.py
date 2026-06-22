@@ -119,19 +119,33 @@ def _validate_birth(birth: str):
         r'^\d{4}/\d{1,2}/\d{1,2}\s+\d{1,2}:\d{2}$',
         r'^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}:\d{2}$',
         r'^\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{2}$',
+        r'^\d{8}\s+\d{6}$',      # YYYYMMDD HHMMSS
+        r'^\d{8}\s+\d{4}$',      # YYYYMMDD HHMM
+        r'^\d{8}$',               # YYYYMMDD
     ]
     if not any(re.match(p, birth.strip()) for p in patterns):
         raise ValueError(f"时间格式错误: {birth}，应为 YYYY-MM-DD HH:MM")
-    # 检查范围（统一用正则提取年月日时分，兼容ISO格式T分隔符和仅小时格式）
+    # 检查范围（统一用正则提取年月日时分，兼容ISO格式T分隔符、紧凑YYYYMMDD和仅小时格式）
     clean = re.sub(r'T', ' ', birth.strip())
-    parts = re.split(r'[-/ ]+', clean)
-    year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
-    if len(parts) >= 4:
-        hour_min = parts[3].split(':')
-        hour = int(hour_min[0])
+    # 紧凑格式 YYYYMMDD / YYYYMMDD HHMM / YYYYMMDD HHMMSS 先拆解为标准格式
+    if re.match(r'^\d{8}', clean):
+        digits = clean.replace(' ', '')
+        year = int(digits[0:4])
+        month = int(digits[4:6])
+        day = int(digits[6:8])
+        hour = int(digits[8:10]) if len(digits) >= 10 else 0
+        minute = int(digits[10:12]) if len(digits) >= 12 else 0
+        second = int(digits[12:14]) if len(digits) >= 14 else 0
+        hour_min = [str(hour), str(minute)] + ([str(second)] if len(digits) >= 14 else [])
     else:
-        hour_min = []
-        hour = 0
+        parts = re.split(r'[-/ ]+', clean)
+        year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+        if len(parts) >= 4:
+            hour_min = parts[3].split(':')
+            hour = int(hour_min[0])
+        else:
+            hour_min = []
+            hour = 0
     if not (1900 <= year <= 2100):
         raise ValueError(f"年份超出范围: {year}")
     if not (1 <= month <= 12):
