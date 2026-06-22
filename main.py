@@ -159,6 +159,15 @@ def serve_chart_result():
     return {"error": "not found"}
 
 
+
+
+@app.get("/test")
+def serve_test():
+    p = os.path.join(frontend_dir, "test_chart.html")
+    if os.path.exists(p):
+        return FileResponse(p, headers=NO_CACHE_HEADERS)
+    return {"error": "not found"}
+
 if __name__ == "__main__":
     # 启动前校验配置
     warnings = validate_config()

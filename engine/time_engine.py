@@ -202,11 +202,35 @@ class TimeEngine:
                 continue
         return None
 
+    # 英文城市名映射
+    EN_CITY_MAP = {
+        "beijing": "北京", "shanghai": "上海", "tianjin": "天津", "chongqing": "重庆",
+        "harbin": "哈尔滨", "changchun": "长春", "shenyang": "沈阳", "hohhot": "呼和浩特",
+        "shijiazhuang": "石家庄", "taiyuan": "太原", "jinan": "济南", "zhengzhou": "郑州",
+        "xian": "西安", "lanzhou": "兰州", "yinchuan": "银川", "xining": "西宁",
+        "urumqi": "乌鲁木齐", "hefei": "合肥", "nanjing": "南京", "hangzhou": "杭州",
+        "fuzhou": "福州", "nanchang": "南昌", "changsha": "长沙", "wuhan": "武汉",
+        "guangzhou": "广州", "nanning": "南宁", "haikou": "海口", "chengdu": "成都",
+        "guiyang": "贵阳", "kunming": "昆明", "lhasa": "拉萨", "taipei": "台北",
+        "hongkong": "香港", "macau": "澳门", "shenzhen": "深圳", "dalian": "大连",
+        "qingdao": "青岛", "suzhou": "苏州", "xiamen": "厦门", "dali": "大理",
+        "wuxi": "无锡", "changzhou": "常州", "guilin": "桂林", "lijiang": "丽江",
+        "xishuangbanna": "西双版纳", "zhuhai": "珠海", "dongguan": "东莞", "foshan": "佛山",
+        "ningbo": "宁波", "wenzhou": "温州", "yantai": "烟台", "weihai": "威海",
+    }
+
     def _lookup_location(self, loc: str) -> Tuple[float, float]:
         """查询城市经纬度"""
         loc = loc.strip()
+        # 先查中文名
         if loc in self._cities:
             return self._cities[loc]
+        # 英文名转中文
+        loc_lower = loc.lower()
+        if loc_lower in self.EN_CITY_MAP:
+            cn = self.EN_CITY_MAP[loc_lower]
+            if cn in self._cities:
+                return self._cities[cn]
         # 尝试去掉行政区划后缀
         for suffix in ["市", "省", "县", "区", "盟", "州", "地区"]:
             if loc.endswith(suffix) and loc[:-len(suffix)] in self._cities:

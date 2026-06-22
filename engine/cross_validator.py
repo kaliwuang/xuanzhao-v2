@@ -59,6 +59,26 @@ class CrossValidator:
         "水": "肾、膀胱",
     }
 
+    # 长生十二宫分类（健康维度用，提升为类级常量避免每次调用重建）
+    CS_STRONG = {"长生", "临官", "帝旺", "冠带"}       # 先天元气充沛
+    CS_WEAK = {"衰", "病", "死", "绝"}                 # 元气衰弱
+    CS_STORAGE = {"墓"}                                 # 潜伏/积蓄
+    CS_DEVELOPING = {"沐浴", "胎", "养"}               # 发育中
+    CS_HEALTH_DESC = {
+        "长生": "日坐长生，先天元气充沛，生命力旺盛，体质根基好",
+        "临官": "日坐临官，精力充沛，身体素质佳，抗病力强",
+        "帝旺": "日坐帝旺，体能巅峰，但过旺需防亢极则衰，注意劳逸结合",
+        "冠带": "日坐冠带，体质成长良好，青年期精力旺盛",
+        "沐浴": "日坐沐浴（败地），元气初泄，需注意免疫系统和皮肤问题",
+        "衰": "日坐衰地，先天元气开始衰退，中年后需注重养生",
+        "病": "日坐病地，先天体质偏弱，对应脏腑易有慢性隐患，宜早调养",
+        "死": "日坐死地，日主根气薄弱，体质敏感，需格外注意健康管理",
+        "墓": "日坐墓库，能量内收，体质偏内敛，慢性病易积累而不自知，宜定期体检",
+        "绝": "日坐绝地，日主根基最弱，体质敏感易受环境影响，需系统调养",
+        "胎": "日坐胎地，体质如婴儿发育中，后天调养影响大",
+        "养": "日坐养地，体质在孕育中，先天底子一般但后天改善空间大",
+    }
+
     @staticmethod
     def _get_palace_stars(palace: dict) -> list:
         """从紫微宫位数据中提取所有星曜名称（兼容major/minor/adjective_stars结构）"""
@@ -1035,34 +1055,11 @@ class CrossValidator:
         changsheng = self.udm.changsheng or {}
         day_cs = changsheng.get("day", "")
         if day_cs:
-            # 先天元气充沛的状态
-            _CS_STRONG = {"长生", "临官", "帝旺", "冠带"}
-            # 元气衰弱或有健康隐忧的状态
-            _CS_WEAK = {"衰", "病", "死", "绝"}
-            # 潜伏/积蓄状态（墓库，慢性问题易积累）
-            _CS_STORAGE = {"墓"}
-            # 发育中状态
-            _CS_DEVELOPING = {"沐浴", "胎", "养"}
-
-            _CS_HEALTH_DESC = {
-                "长生": "日坐长生，先天元气充沛，生命力旺盛，体质根基好",
-                "临官": "日坐临官，精力充沛，身体素质佳，抗病力强",
-                "帝旺": "日坐帝旺，体能巅峰，但过旺需防亢极则衰，注意劳逸结合",
-                "冠带": "日坐冠带，体质成长良好，青年期精力旺盛",
-                "沐浴": "日坐沐浴（败地），元气初泄，需注意免疫系统和皮肤问题",
-                "衰": "日坐衰地，先天元气开始衰退，中年后需注重养生",
-                "病": "日坐病地，先天体质偏弱，对应脏腑易有慢性隐患，宜早调养",
-                "死": "日坐死地，日主根气薄弱，体质敏感，需格外注意健康管理",
-                "墓": "日坐墓库，能量内收，体质偏内敛，慢性病易积累而不自知，宜定期体检",
-                "绝": "日坐绝地，日主根基最弱，体质敏感易受环境影响，需系统调养",
-                "胎": "日坐胎地，体质如婴儿发育中，后天调养影响大",
-                "养": "日坐养地，体质在孕育中，先天底子一般但后天改善空间大",
-            }
-
-            desc = _CS_HEALTH_DESC.get(day_cs, "")
+            # 使用类级常量 CS_STRONG / CS_WEAK / CS_HEALTH_DESC（避免每次调用重建集合）
+            desc = self.CS_HEALTH_DESC.get(day_cs, "")
             if desc:
-                conf = (ConfidenceLevel.HIGH if day_cs in _CS_STRONG
-                        else ConfidenceLevel.HIGH if day_cs in _CS_WEAK
+                conf = (ConfidenceLevel.HIGH if day_cs in self.CS_STRONG
+                        else ConfidenceLevel.HIGH if day_cs in self.CS_WEAK
                         else ConfidenceLevel.MEDIUM)
                 items.append(ConsensusItem(
                     aspect="健康体质",
