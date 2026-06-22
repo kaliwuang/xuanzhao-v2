@@ -544,6 +544,25 @@ class BaziEngine(DivinationEngine):
                 result.append('月德合')
             if zhi in _jiangxing_targets:
                 result.append('将星')
+            # 补充原局_check_shensha中有但大运/流年遗漏的神煞
+            if zhi == SHENSHA_TIANGUAN_MAP.get(day_master, ''):
+                result.append('天官贵人')
+            if zhi == SHENSHA_TIANFU_MAP.get(day_master, ''):
+                result.append('天福贵人')
+            if zhi in set(SHENSHA_FUXING_MAP.get(day_master, [])):
+                result.append('福星贵人')
+            if zhi in set(SHENSHA_JINYU_MAP.get(day_master, [])):
+                result.append('金舆')
+            if zhi == SHENSHA_HONGYAN_MAP.get(day_master, ''):
+                result.append('红艳煞')
+            if zhi == SHENSHA_YANGREN_MAP.get(day_master, ''):
+                result.append('羊刃')
+            if zhi == SHENSHA_FEIREN_MAP.get(day_master, ''):
+                result.append('飞刃')
+            if zhi == SHENSHA_XUETANG_MAP.get(day_master, ''):
+                result.append('学堂')
+            if zhi == SHENSHA_CIGUAN_MAP.get(day_master, ''):
+                result.append('词馆')
             return result
 
         # 大运（增强版：含十神、藏干、纳音、长生、神煞、流年）
