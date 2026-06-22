@@ -608,13 +608,40 @@ class QiMenEngine(DivinationEngine):
             if zhi in self.ZHI_TO_GONG_NUM:
                 kong_gongs.append(self.ZHI_TO_GONG_NUM[zhi])
 
+        # 标注落在空亡宫的格局（奇门传统：空亡宫格局效力减半或无效）
+        for ge in ji_ge:
+            if ge.get('gong') in kong_gongs:
+                ge['in_kong_wang'] = True
+                ge['desc'] += '【落空亡，效力减半】'
+        for ge in xiong_ge:
+            if ge.get('gong') in kong_gongs:
+                ge['in_kong_wang'] = True
+                ge['desc'] += '【落空亡，凶性减轻】'
+
+        # 值使门遇空亡
+        zhi_shi_kong = False
+        if zhi_shi_door and kong_gongs:
+            # 值使门所在宫如在空亡中，谋事不利
+            zhi_shi_gong = None
+            for p in palaces:
+                if p.get('men') == zhi_shi_door:
+                    zhi_shi_gong = p.get('gong')
+                    break
+            if zhi_shi_gong in kong_gongs:
+                zhi_shi_kong = True
+                xiong_ge.append({'name': '值使落空', 'gong': zhi_shi_gong,
+                                 'in_kong_wang': True,
+                                 'desc': f'值使门{zhi_shi_door}落空亡宫，谋事难成，虚花不实'})
+
         return {
             'ji_ge': ji_ge,
             'xiong_ge': xiong_ge,
             'kong_wang_gongs': kong_gongs,
+            'zhi_shi_kong': zhi_shi_kong,
             'summary': (
                 f"吉格{len(ji_ge)}个，凶格{len(xiong_ge)}个"
                 + (f"，旬空宫：{kong_gongs}" if kong_gongs else "")
+                + (f"，值使门落空" if zhi_shi_kong else "")
             ),
         }
 
