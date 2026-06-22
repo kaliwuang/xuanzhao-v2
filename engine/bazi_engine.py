@@ -1345,23 +1345,25 @@ class BaziEngine(DivinationEngine):
         for name, sha_map, key in _SCAN_DEFS:
             _scan_zhi(name, sha_map.get(key, ''))
 
-        # 32. 天罗地网（以纳音五行+年支/日支查）
+        # 32. 天罗地网（以纳音五行查年柱和日柱）
         # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
-        # 注：部分现代派系简化为所有命格均查，此处按传统纳音五行判定
-        # 提取纳音五行（复用于天罗地网和天转煞）
-        _nayin_str = year_pillar.nayin or ''
-        _nayin_wx = ''
-        for _wx in WUXING_ORDERED:
-            if _wx in _nayin_str:
-                _nayin_wx = _wx
-                break
+        # 注：年柱纳音和日柱纳音均需检查（年命+日命，不同派系侧重不同）
         tianluo_set = {'戌', '亥'}
         diwang_set = {'辰', '巳'}
-        ref_zhis = set(all_zhis)  # 查四柱全部地支（传统规则，非仅年支日支）
-        if _nayin_wx == '火' and ref_zhis & tianluo_set:
-            shensha.append('天罗')
-        if _nayin_wx in ('水', '土') and ref_zhis & diwang_set:
-            shensha.append('地网')
+        ref_zhis = set(all_zhis)  # 查四柱全部地支
+        for _check_pillar in [year_pillar, day_pillar]:
+            _nayin_str = _check_pillar.nayin or ''
+            _nayin_wx = ''
+            for _wx in WUXING_ORDERED:
+                if _wx in _nayin_str:
+                    _nayin_wx = _wx
+                    break
+            if _nayin_wx == '火' and ref_zhis & tianluo_set:
+                shensha.append('天罗')
+                break  # 命中一次即够
+            if _nayin_wx in ('水', '土') and ref_zhis & diwang_set:
+                shensha.append('地网')
+                break
 
         # 33. 十恶大败（以日柱查）— 使用模块级 SHIBA_EBA
         if day_gz in SHIBA_EBA:
