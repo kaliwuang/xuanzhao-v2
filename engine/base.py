@@ -142,3 +142,8 @@ class EngineOrchestrator:
             udm.astro_chart = data
         elif engine_name == "姓名学":
             udm.xingming_chart = data
+        else:
+            import logging
+            logging.getLogger(__name__).warning(
+                f"未知引擎名称 '{engine_name}'，排盘数据未写入UDM，请检查引擎的name属性"
+            )
