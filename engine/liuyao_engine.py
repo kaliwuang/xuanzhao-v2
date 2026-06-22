@@ -475,7 +475,7 @@ class LiuYaoEngine(DivinationEngine):
 
         # 流年太岁分析（复用共享方法）
         try:
-            result['liunian'] = self._build_liunian(lines)
+            result['liunian'] = self._build_liunian(lines, orig)
         except Exception as e:
             logger.debug(f"流年分析失败: {e}")
 
@@ -640,7 +640,7 @@ class LiuYaoEngine(DivinationEngine):
 
         # 流年太岁分析（复用共享方法）
         try:
-            result['liunian'] = self._build_liunian(lines)
+            result['liunian'] = self._build_liunian(lines, orig)
         except Exception as e:
             logger.debug(f"流年分析失败: {e}")
 
@@ -997,23 +997,28 @@ class LiuYaoEngine(DivinationEngine):
     # ─── 验证 ────────────────────────────────────────────
 
 
-    def _build_liunian(self, lines: list) -> dict:
-        """流年太岁分析（najia/builtin路径共用）"""
+    def _build_liunian(self, lines: list, query_time: datetime = None) -> dict:
+        """流年太岁分析（najia/builtin路径共用）
+
+        Args:
+            lines: 六爻列表
+            query_time: 排盘时间，默认为当前时间
+        """
+        now = query_time or datetime.now()
         try:
             from lunar_python import Solar as _Solar
         except ImportError:
             logger.debug("lunar_python不可用，流年分析使用datetime近似")
-            return self._build_liunian_fallback(lines)
-        now = datetime.now()
+            return self._build_liunian_fallback(lines, now)
         _solar = _Solar.fromYmdHms(now.year, now.month, now.day, now.hour, now.minute, 0)
         _lunar = _solar.getLunar()
         _year_zhi = _lunar.getYearZhi()
         _year_gan = _lunar.getYearGan()
         return self._analyze_tai_sui_lines(lines, now.year, _year_gan, _year_zhi)
 
-    def _build_liunian_fallback(self, lines: list) -> dict:
+    def _build_liunian_fallback(self, lines: list, now: datetime = None) -> dict:
         """lunar_python不可用时的流年近似分析"""
-        now = datetime.now()
+        now = now or datetime.now()
         year_offset = now.year - JIA_ZI_YEAR  # 甲子年基准
         gan_idx = year_offset % 10
         zhi_idx = year_offset % 12
