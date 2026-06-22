@@ -722,6 +722,34 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
+        # 八字神煞：桃花、红鸾、天喜、红艳煞（感情婚姻核心信号）
+        if self.udm.shensha:
+            RELATIONSHIP_SHENSHA = {
+                "桃花": ("桃花星入命，异性缘佳，魅力出众，感情机会多", ConfidenceLevel.HIGH),
+                "红鸾": ("红鸾星动，主婚恋喜庆，正缘出现之兆", ConfidenceLevel.HIGH),
+                "天喜": ("天喜星临，主感情欢乐、喜事将近", ConfidenceLevel.MEDIUM),
+                "红艳煞": ("红艳煞入命，魅力非凡，感情丰富，但需防烂桃花", ConfidenceLevel.MEDIUM),
+            }
+            for ss_entry in self.udm.shensha:
+                ss_name = ss_entry.split("（")[0] if "（" in ss_entry else ss_entry
+                if ss_name in RELATIONSHIP_SHENSHA:
+                    desc, conf = RELATIONSHIP_SHENSHA[ss_name]
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"{ss_entry}：{desc}",
+                        supporting_methods=["八字"],
+                        confidence=conf
+                    ))
+
+            # 双桃花（特殊组合信号：异性缘极旺）
+            if "双桃花" in self.udm.shensha:
+                items.append(ConsensusItem(
+                    aspect="感情婚姻",
+                    finding="双桃花入命，异性缘极旺，感情经历丰富，需慎重选择",
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.HIGH
+                ))
+
         # 紫微：看夫妻宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
