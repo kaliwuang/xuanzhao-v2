@@ -187,6 +187,7 @@ class TimeEngine:
             "%Y-%m-%dT%H:%M",
             "%Y%m%d %H%M%S",
             "%Y%m%d %H%M",
+            "%Y%m%d",
             "%Y-%m-%d %H",
             "%Y-%m-%d",
             "%Y年%m月%d日 %H:%M:%S",
