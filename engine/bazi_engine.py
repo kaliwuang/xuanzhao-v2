@@ -974,13 +974,13 @@ class BaziEngine(DivinationEngine):
         }
         return table.get((day_gan, month_zhi), "")
 
-    def _extract_features(self, year, month, day, time, shishen_gan, hidden_gans) -> list:
+    def _extract_features(self, year, month, day, time_pillar, shishen_gan, hidden_gans) -> list:
         """提取命盘核心特征"""
         features = []
 
         # 1. 冲
-        zhis = [p.zhi for p in [year, month, day, time]]
-        all_gans = [p.gan for p in [year, month, day, time]]
+        zhis = [p.zhi for p in [year, month, day, time_pillar]]
+        all_gans = [p.gan for p in [year, month, day, time_pillar]]
         pos_names = ["年","月","日","时"]
         for i, z1 in enumerate(zhis):
             for j, z2 in enumerate(zhis[i+1:], i+1):
