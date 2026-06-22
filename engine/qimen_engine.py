@@ -366,8 +366,8 @@ class QiMenEngine(DivinationEngine):
                     src_idx = (i - offset) % n
                     src_palace = luo8[src_idx]
                     tian_pan[palace] = di_pan.get(src_palace, '')
-                # 中宫寄坤二宫（天盘跟随坤二宫，非保持地盘原值）
-                tian_pan[5] = tian_pan.get(2, di_pan.get(5, ''))
+                # 中宫寄宫（阳遁寄坤二宫，阴遁寄巽四宫，与八神/值符寄宫规则一致）
+                tian_pan[5] = tian_pan.get(_zhong_gong_ji, di_pan.get(5, ''))
 
                 # 九星也按同样偏移旋转
                 new_jiu_xing = {}
