@@ -747,6 +747,44 @@ class BaziEngine(DivinationEngine):
         for pillar_name, pillar in [('year', year_pillar), ('month', month_pillar), ('day', day_pillar), ('time', time_pillar)]:
             changsheng[pillar_name] = _calc_changsheng(day_master, pillar.zhi)
 
+        # ─── 长生十二宫特征提取 ─────────────────────────────────
+        # 日柱长生十二宫是日主先天体质和性格根基的直接体现
+        _CS_FEATURE_DESC = {
+            "长生": "日坐长生——先天元气充沛，生命力旺盛，性格温和而有韧性",
+            "沐浴": "日坐沐浴（败地）——元气初泄，性格敏感细腻，多才但易动摇",
+            "冠带": "日坐冠带——成长之势，进取心强，青年期精力旺盛",
+            "临官": "日坐临官（建禄）——根基扎实，精力充沛，独立自主",
+            "帝旺": "日坐帝旺——体能巅峰，自信果断，但过刚易折",
+            "衰": "日坐衰地——气势渐退，中年后需注重调养，性格趋于沉稳",
+            "病": "日坐病地——先天体质偏弱，但洞察力强，善于反思",
+            "死": "日坐死地——日主根气薄弱，性格内敛，需后天扶助",
+            "墓": "日坐墓库——能量内敛收藏，大智若愚，厚积薄发型",
+            "绝": "日坐绝地——根基最弱，但绝处逢生，适应力极强",
+            "胎": "日坐胎地——如婴儿孕育中，可塑性强，后天环境影响大",
+            "养": "日坐养地——先天底子一般，但滋养成长空间大",
+        }
+        # 月柱长生十二宫反映日主是否得令（当季）
+        _CS_SEASON_DESC = {
+            "长生": "月令长生，日主得气，先天禀赋好",
+            "临官": "月令临官，日主得力，精力充沛",
+            "帝旺": "月令帝旺，日主极旺，需防过刚",
+            "冠带": "月令冠带，日主成长有力",
+            "沐浴": "月令沐浴，日主气泄，需印星扶助",
+            "衰": "月令衰地，日主渐弱，需比劫印星帮身",
+            "病": "月令病地，日主偏弱，喜印比扶助",
+            "死": "月令死地，日主失令，需大力扶助",
+            "墓": "月令墓地，日主收藏，需冲开墓库",
+            "绝": "月令绝地，日主失令最重，急需扶助",
+            "胎": "月令胎地，日主初萌，力量尚弱",
+            "养": "月令养地，日主得养，渐有根基",
+        }
+        day_cs = changsheng.get("day", "")
+        if day_cs and day_cs in _CS_FEATURE_DESC:
+            features.append(_CS_FEATURE_DESC[day_cs])
+        month_cs = changsheng.get("month", "")
+        if month_cs and month_cs in _CS_SEASON_DESC:
+            features.append(_CS_SEASON_DESC[month_cs])
+
         # 每柱神煞（从shensha列表按关键词分组到对应柱）
         shensha_per_pillar = {'year': [], 'month': [], 'day': [], 'time': [], 'general': []}
         PILLAR_KEYWORDS = {
