@@ -1001,6 +1001,66 @@ class CrossValidator:
                     confidence=ConfidenceLevel.LOW,
                 ))
 
+        # 大六壬：看初传天将（感情信号——六合/天后/太阴=婚恋吉，白虎/螣蛇=波折）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            if yong_shen:
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                chu_liuqin = yong_shen.get("chu_chuan_liuqin", "")
+                jiang_jx = yong_shen.get("jiang_ji_xiong", "")
+
+                # 天将→感情含义映射
+                _LOVE_JIANG = {
+                    "六合": ("初传见六合，利于婚恋和合，人际协调能力强，感情中善于沟通", ConfidenceLevel.HIGH),
+                    "合": ("初传见六合，利于婚恋和合，人际协调能力强，感情中善于沟通", ConfidenceLevel.HIGH),
+                    "天后": ("初传见天后，恩泽庇护之神，感情有福缘，女命尤佳", ConfidenceLevel.HIGH),
+                    "后": ("初传见天后，恩泽庇护之神，感情有福缘，女命尤佳", ConfidenceLevel.HIGH),
+                    "太陰": ("初传见太阴，有暗中情缘或细腻感情，女眷缘分好", ConfidenceLevel.MEDIUM),
+                    "陰": ("初传见太阴，有暗中情缘或细腻感情，女眷缘分好", ConfidenceLevel.MEDIUM),
+                    "阴": ("初传见太阴，有暗中情缘或细腻感情，女眷缘分好", ConfidenceLevel.MEDIUM),
+                    "貴人": ("初传见贵人，感情中有贵人相助，或通过社交圈遇到正缘", ConfidenceLevel.MEDIUM),
+                    "貴": ("初传见贵人，感情中有贵人相助，或通过社交圈遇到正缘", ConfidenceLevel.MEDIUM),
+                    "白虎": ("初传见白虎，感情有波折或突发变动，需防冲动分手或激烈争吵", ConfidenceLevel.MEDIUM),
+                    "虎": ("初传见白虎，感情有波折或突发变动，需防冲动分手或激烈争吵", ConfidenceLevel.MEDIUM),
+                    "螣蛇": ("初传见螣蛇，感情中易有纠缠反复或心理压力，需防猜疑", ConfidenceLevel.LOW),
+                    "蛇": ("初传见螣蛇，感情中易有纠缠反复或心理压力，需防猜疑", ConfidenceLevel.LOW),
+                    "玄武": ("初传见玄武，感情中需防暗中纠葛或暧昧不清的关系", ConfidenceLevel.LOW),
+                    "武": ("初传见玄武，感情中需防暗中纠葛或暧昧不清的关系", ConfidenceLevel.LOW),
+                }
+
+                if chu_jiang in _LOVE_JIANG:
+                    desc, conf = _LOVE_JIANG[chu_jiang]
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding=f"六壬{desc}",
+                        supporting_methods=["大六壬"],
+                        confidence=conf,
+                    ))
+
+                # 用神六亲→感情方向
+                if chu_liuqin in ("妻财", "财"):
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding="六壬初传见财爻，感情中重视伴侣和物质基础，利于稳定关系",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                elif chu_liuqin == "官鬼":
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding="六壬初传官鬼爻，感情中有约束感和责任感，伴侣关系有主导方",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                elif chu_liuqin == "兄弟":
+                    items.append(ConsensusItem(
+                        aspect="感情婚姻",
+                        finding="六壬初传兄弟爻，感情中需防竞争或第三者，同辈人对感情有影响",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
         return items
 
     def _validate_health(self) -> List[ConsensusItem]:
