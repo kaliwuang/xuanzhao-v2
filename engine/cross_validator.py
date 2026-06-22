@@ -512,6 +512,7 @@ class CrossValidator:
                 ("伤官见官", "才华与规矩冲突，宜以技立身而非从政", ConfidenceLevel.MEDIUM),
                 ("官杀混杂", "事业需防多头管理，宜化繁为简", ConfidenceLevel.MEDIUM),
                 ("食神制杀", "化压力为动力，逆境中见能力，适合竞争性行业", ConfidenceLevel.MEDIUM),
+                ("伤官配印", "才华有底蕴，适合学术研究、文创策划或教育行业", ConfidenceLevel.MEDIUM),
             ]
             for pattern, desc, conf in career_patterns:
                 if any(pattern in f for f in self.udm.features):
