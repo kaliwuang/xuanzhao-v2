@@ -509,11 +509,11 @@ class QiMenEngine(DivinationEngine):
             if tp == '乙' and men == '生门' and xing in ('天芮', '天柱'):
                 ji_ge.append({'name': '云遁', 'gong': g, 'desc': f'乙奇+生门+{xing}，云起龙骧，暗中有助'})
 
-            # 凶格：门宫组合
+            # 凶格：门宫组合（门级格局，区别于下方干支级同名格局）
             if men == '景门' and g == 1:
-                xiong_ge.append({'name': '朱雀投江', 'gong': g, 'desc': '景门入坎，文书有失'})
+                xiong_ge.append({'name': '朱雀投江（门级）', 'gong': g, 'desc': '景门入坎，文书有失'})
             if men == '死门' and g == 4:
-                xiong_ge.append({'name': '螣蛇夭矫', 'gong': g, 'desc': '死门入巽，虚惊怪异'})
+                xiong_ge.append({'name': '螣蛇夭矫（门级）', 'gong': g, 'desc': '死门入巽，虚惊怪异'})
 
             # 天盘+地盘格局（十干克应）
             # ---- 六庚克应（庚为天乙飞符，奇门最重要凶干）----
@@ -556,10 +556,10 @@ class QiMenEngine(DivinationEngine):
             # ---- 丁癸干支级克应（区别于门级同名格局）----
             # 丁加癸：朱雀投江（干支级）——丁火入癸水，文书遗失，音信杳然
             if tp == '丁' and dp == '癸':
-                xiong_ge.append({'name': '朱雀投江', 'gong': g, 'desc': '丁加癸，朱雀投江，文书遗失，音信不通'})
+                xiong_ge.append({'name': '朱雀投江（干支级）', 'gong': g, 'desc': '丁加癸，朱雀投江，文书遗失，音信不通'})
             # 癸加丁：螣蛇夭矫（干支级）——癸水克丁火，虚惊怪异，文书官司
             if tp == '癸' and dp == '丁':
-                xiong_ge.append({'name': '螣蛇夭矫', 'gong': g, 'desc': '癸加丁，螣蛇夭矫，虚惊怪异，文书有灾'})
+                xiong_ge.append({'name': '螣蛇夭矫（干支级）', 'gong': g, 'desc': '癸加丁，螣蛇夭矫，虚惊怪异，文书有灾'})
 
             # 击刑
             if tp in self.GAN_XING and self.GAN_XING[tp] == g:
