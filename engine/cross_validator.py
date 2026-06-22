@@ -1129,6 +1129,8 @@ class CrossValidator:
             from engine.bazi_engine import GAN_WUXING_STR as _GAN_WX
             hidden_counts = dict(counts)  # 复制天干+本气计数
             for pillar_key, gans_list in (self.udm.hidden_gans or {}).items():
+                if not gans_list or not isinstance(gans_list, (list, str)):
+                    continue  # 防御：藏干数据格式异常时跳过
                 for cidx, g in enumerate(gans_list):
                     if cidx == 0:
                         continue  # 本气已在get_wuxing_count()中计算过，跳过避免重复
