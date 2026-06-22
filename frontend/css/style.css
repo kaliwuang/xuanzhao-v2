@@ -1376,3 +1376,269 @@ select:focus-visible {
 .ziwei-cell-changsheng { color: var(--text-muted); }
 .ziwei-star-adj { color: rgba(255,255,255,0.35); font-size: 0.7rem; }
 .ziwei-cell.shen-gong { border-left: 3px solid var(--accent-jade); }
+
+/* ===== 移动端适配 ===== */
+@media (max-width: 768px) {
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .hero-title { font-size: 2.2rem; letter-spacing: 0.15em; }
+    .hero-subtitle { font-size: 0.85rem; }
+    .nav { padding: 0 1rem; }
+    .nav-links a { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+    .container { padding: 0 0.8rem; }
+    .bazi-pillars { grid-template-columns: repeat(2, 1fr); }
+    .shishen-grid { grid-template-columns: repeat(2, 1fr); }
+    .ziwei-board { max-width: 100%; }
+    .ziwei-cell { min-height: 60px; padding: 0.3rem; }
+    .ziwei-cell-stars { font-size: 0.6rem; }
+    .qimen-grid { max-width: 100%; }
+    .qimen-cell { padding: 0.5rem; min-height: 70px; font-size: 0.75rem; }
+    .data-grid { grid-template-columns: repeat(4, 1fr); }
+    .data-flex { flex-direction: column; align-items: center; }
+    .method-tabs { gap: 0.3rem; }
+    .method-tab { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+    .btn-row { flex-direction: column; }
+    .btn-row .btn { width: 100%; }
+    .perspectives-gallery { grid-template-columns: 1fr; }
+    .figure-grid { grid-template-columns: 1fr; }
+    .chart-layout { grid-template-columns: 1fr !important; }
+    .astro-planets { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 1.8rem; }
+    .ziwei-board { font-size: 0.6rem; }
+    .qimen-grid { font-size: 0.65rem; }
+}
+
+/* 六爻动爻强化 */
+.yao-line { position: relative; transition: all 0.3s ease; }
+.yao-line.dong {
+    background: rgba(255, 215, 0, 0.06);
+    border-left: 3px solid var(--accent-gold);
+}
+.yao-line.dong::after {
+    content: '动';
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    color: var(--accent-gold);
+    background: rgba(201, 169, 110, 0.15);
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+}
+.yao-line.shi-yao { border-right: 3px solid var(--accent-gold); }
+.yao-line.ying-yao { border-right: 3px solid var(--accent-blue); }
+.yao-bian {
+    display: inline-block;
+    margin-left: 0.5rem;
+    color: #ff6b6b;
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+/* 奇门洛书九宫增强 */
+.qimen-grid {
+    position: relative;
+    background: radial-gradient(ellipse at center, rgba(201, 169, 110, 0.03) 0%, transparent 70%);
+}
+.qimen-cell {
+    position: relative;
+    overflow: hidden;
+}
+.qimen-cell::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px solid rgba(201, 169, 110, 0.06);
+    border-radius: var(--radius-sm);
+    pointer-events: none;
+}
+.qimen-cell.center {
+    border-color: var(--accent-gold);
+    background: rgba(201, 169, 110, 0.08);
+    box-shadow: inset 0 0 20px rgba(201, 169, 110, 0.06);
+}
+.qimen-gong {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+.qimen-cell .star-highlight {
+    color: var(--accent-gold);
+    font-weight: 600;
+}
+.qimen-cell .door-highlight {
+    color: #4ecdc4;
+    font-weight: 600;
+}
+
+/* 排盘结果过渡 */
+.chart-result {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.chart-result.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Tab切换过渡 */
+.method-panel {
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 骨架屏 */
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+    border-radius: 6px;
+}
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* 搜索输入美化 */
+.search-input {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    background: rgba(10, 10, 26, 0.6);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    flex: 1;
+    min-width: 200px;
+    transition: var(--transition);
+}
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.1);
+}
+
+/* filter chip */
+.filter-chip {
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.filter-chip:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+}
+.filter-chip.active {
+    background: var(--accent-gold);
+    color: var(--bg-deep);
+    border-color: var(--accent-gold);
+}
+
+/* 神煞标签 */
+.shensha-tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    margin: 0.1rem;
+    background: rgba(255, 217, 61, 0.08);
+    color: #ffd93d;
+    border: 1px solid rgba(255, 217, 61, 0.2);
+}
+.shensha-tag.positive {
+    background: rgba(78, 205, 196, 0.08);
+    color: #4ecdc4;
+    border-color: rgba(78, 205, 196, 0.2);
+}
+.shensha-tag.negative {
+    background: rgba(255, 107, 107, 0.08);
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.2);
+}
+
+/* 大运时间线 */
+.dayun-timeline {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    scrollbar-width: thin;
+}
+.dayun-item {
+    flex-shrink: 0;
+    padding: 0.4rem 0.6rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    min-width: 60px;
+}
+.dayun-item:hover {
+    border-color: var(--accent-gold);
+}
+.dayun-item.current {
+    border-color: var(--accent-gold);
+    background: rgba(201, 169, 110, 0.1);
+}
+.dayun-item .ganzhi {
+    font-weight: 600;
+    color: var(--accent-gold);
+}
+.dayun-item .age {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+
+/* 占星相位 */
+.aspect-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    font-size: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.aspect-symbol {
+    width: 20px;
+    text-align: center;
+    font-size: 0.8rem;
+}
+.aspect-planets {
+    color: var(--accent-gold);
+    font-weight: 600;
+}
+.aspect-angle {
+    color: var(--text-muted);
+    font-size: 0.65rem;
+}
+
+/* 紫微大限标记 */
+.ziwei-cell .daxian-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.5rem;
+    padding: 0.05rem 0.3rem;
+    border-radius: 8px;
+    background: rgba(78, 205, 196, 0.15);
+    color: #4ecdc4;
+    border: 1px solid rgba(78, 205, 196, 0.3);
+}
+.ziwei-cell {
+    position: relative;
+}
