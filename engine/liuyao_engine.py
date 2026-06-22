@@ -278,7 +278,7 @@ class LiuYaoEngine(DivinationEngine):
         mark = data.get('mark', '')          # 二进制卦码 "111000"
         dong = data.get('dong') or []  # 动爻列表（0-indexed），防御None
         # 过滤dong列表中的无效值（None、负数、越界索引）
-        dong = [d for d in dong if d is not None and 0 <= d < 6]
+        dong = list(dict.fromkeys(d for d in dong if d is not None and 0 <= d < 6))  # 过滤+去重，保序
         shi_ying = data.get('shiy', (6, 3, 0))  # (世爻, 应爻, 宫位) 世应1-indexed
         qin6 = data.get('qin6', [])          # 六亲 list[6]
         god6 = data.get('god6', [])          # 六神 list[6]
