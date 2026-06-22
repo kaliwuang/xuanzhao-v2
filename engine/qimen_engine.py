@@ -397,7 +397,7 @@ class QiMenEngine(DivinationEngine):
         """分配八神（阳遁顺排，阴遁逆排）"""
         luo8 = self.LUO_SHU_8
         # 中宫5寄坤二宫（传统规则）
-        effective_gong = 2 if zhi_fu_gong == 5 else zhi_fu_gong
+        effective_gong = (4 if yin_yang == '阴遁' else 2) if zhi_fu_gong == 5 else zhi_fu_gong
         start = luo8.index(effective_gong) if effective_gong in luo8 else 0
         gods = self.EIGHT_GODS
 
