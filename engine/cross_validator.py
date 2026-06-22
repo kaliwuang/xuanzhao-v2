@@ -1157,6 +1157,40 @@ class CrossValidator:
                         confidence=ConfidenceLevel.LOW
                     ))
 
+            # 占星：看第六宫（健康宫）内的行星
+            # 第六宫是占星中最直接的健康指标，行星落此宫影响对应身体系统
+            planets = self.udm.astro_chart.get("planets", {})
+            HOUSE6_BODY = {
+                "火星": ("注意炎症、发热、意外伤害，运动系统和肌肉易劳损", ConfidenceLevel.MEDIUM),
+                "土星": ("慢性病倾向，骨骼关节、皮肤、牙齿需关注，免疫力偏弱", ConfidenceLevel.MEDIUM),
+                "冥王星": ("深层健康隐患，泌尿生殖系统和排泄系统需留意", ConfidenceLevel.LOW),
+                "天王星": ("神经系统敏感，突发性健康问题，循环系统需关注", ConfidenceLevel.LOW),
+                "海王星": ("过敏体质，免疫系统敏感，药物/食物反应需留意", ConfidenceLevel.LOW),
+                "金星": ("咽喉和肾脏偏弱，但恢复力较好，有化解之机", ConfidenceLevel.LOW),
+                "木星": ("第六宫有木星守护，健康底子不错，病后恢复快", ConfidenceLevel.LOW),
+            }
+            house6_planets = [pname for pname, pdata in planets.items()
+                              if isinstance(pdata, dict) and pdata.get("house") == 6]
+            if house6_planets:
+                for hp in house6_planets:
+                    if hp in HOUSE6_BODY:
+                        desc, conf = HOUSE6_BODY[hp]
+                        items.append(ConsensusItem(
+                            aspect="健康体质",
+                            finding=f"{hp}落第六宫（健康宫），{desc}",
+                            supporting_methods=["占星"],
+                            confidence=conf,
+                        ))
+                # 多颗凶星同在第六宫，健康风险叠加
+                malefic_in_6 = [p for p in house6_planets if p in ("火星", "土星", "冥王星")]
+                if len(malefic_in_6) >= 2:
+                    items.append(ConsensusItem(
+                        aspect="健康体质",
+                        finding=f"第六宫有多颗凶星（{'、'.join(malefic_in_6)}），健康需格外重视，宜定期体检",
+                        supporting_methods=["占星"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+
         # 紫微：看疾厄宫
         if self.udm.ziwei_chart:
             palaces = self.udm.ziwei_chart.get("palaces", [])
