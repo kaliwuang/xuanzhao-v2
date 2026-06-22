@@ -461,6 +461,10 @@ class QiMenEngine(DivinationEngine):
         ji_ge = []   # 吉格
         xiong_ge = []  # 凶格
 
+        # 防御：palaces为空时直接返回空结果
+        if not palaces:
+            return {'ji_ge': [], 'xiong_ge': [], 'kong_wang_gongs': [], 'zhi_shi_kong': False, 'summary': '无宫位数据'}
+
         # ---- 时运凶格（全局性，不依赖宫位） ----
 
         # 五不遇时：时干克日干，百事不宜，是奇门最基础的时运凶格之一
