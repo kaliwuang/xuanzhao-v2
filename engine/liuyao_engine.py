@@ -261,7 +261,7 @@ class LiuYaoEngine(DivinationEngine):
         """使用 najia 库进行纳甲六爻排盘"""
         from najia.utils import get_najia
         from najia.const import (
-            ZHI5, ZHIS, XING5, GUA5, GUAS, GUA64, GANS
+            ZHI5, ZHIS, XING5, GUA5, GUAS
         )
 
         orig = time.true_solar
