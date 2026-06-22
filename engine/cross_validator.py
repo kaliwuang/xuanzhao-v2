@@ -257,27 +257,23 @@ class CrossValidator:
                 return results  # 出生年份未知，跳过大运年龄匹配
             age = current_year - birth_year + 1  # 虚岁
 
-            # 预计算十神→五行映射（仅依赖日主五行，循环外一次性构建）
+            # 预计算十神→五行映射（仅依赖日主五行，循环外一次性构建，复用类级五行常量）
             _day_wx = self.udm.day_master_wuxing or ''
-            _SHENG = {'木':'火','火':'土','土':'金','金':'水','水':'木'}
-            _KE = {'木':'土','土':'水','水':'火','火':'金','金':'木'}
             _ss_wx_map = {}
             if _day_wx:
-                _bei_ke = {v:k for k,v in _KE.items()}  # 克我→我(被克之五行)
-                _SHENG_REV = {v:k for k,v in _SHENG.items()}  # 生我→生我者的五行
                 _ss_wx_map = {
-                    '正印': _SHENG_REV[_day_wx],
-                    '偏印': _SHENG_REV[_day_wx],
-                    '印':   _SHENG_REV[_day_wx],
+                    '正印': self._WX_SHENG_REV[_day_wx],
+                    '偏印': self._WX_SHENG_REV[_day_wx],
+                    '印':   self._WX_SHENG_REV[_day_wx],
                     '比肩': _day_wx, '比': _day_wx,
                     '劫财': _day_wx, '劫': _day_wx,
-                    '食神': _SHENG[_day_wx], '食': _SHENG[_day_wx],
-                    '伤官': _SHENG[_day_wx], '伤': _SHENG[_day_wx],
-                    '正财': _KE[_day_wx], '财': _KE[_day_wx],
-                    '偏财': _KE[_day_wx],
-                    '正官': _bei_ke.get(_day_wx, ''),
-                    '七杀': _bei_ke.get(_day_wx, ''),
-                    '杀': _bei_ke.get(_day_wx, ''),
+                    '食神': self._WX_SHENG[_day_wx], '食': self._WX_SHENG[_day_wx],
+                    '伤官': self._WX_SHENG[_day_wx], '伤': self._WX_SHENG[_day_wx],
+                    '正财': self._WX_KE[_day_wx], '财': self._WX_KE[_day_wx],
+                    '偏财': self._WX_KE[_day_wx],
+                    '正官': self._WX_BEI_KE.get(_day_wx, ''),
+                    '七杀': self._WX_BEI_KE.get(_day_wx, ''),
+                    '杀': self._WX_BEI_KE.get(_day_wx, ''),
                 }
 
             for dy in bazi_dayun:
@@ -3671,6 +3667,12 @@ class CrossValidator:
         ConfidenceLevel.LOW: 1,
         ConfidenceLevel.CONTRADICTORY: 0,
     }
+    
+    # 五行生克关系（类级常量，避免 _validate_dayun 每次调用重建字典）
+    _WX_SHENG = {"木": "火", "火": "土", "土": "金", "金": "水", "水": "木"}
+    _WX_KE = {"木": "土", "土": "水", "水": "火", "火": "金", "金": "木"}
+    _WX_SHENG_REV = {"火": "木", "土": "火", "金": "土", "水": "金", "木": "水"}
+    _WX_BEI_KE = {"土": "木", "水": "土", "火": "水", "金": "火", "木": "金"}
 
     def _calc_overall_confidence(self, results: dict) -> ConfidenceLevel:
         """综合置信度计算——加权共识评分法

@@ -1,197 +1,643 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>玄照 v2.0 - 八术排盘</title>
-    <link rel="stylesheet" href="/static/css/chart-pro.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玄照 v2.0 - 八术排盘</title>
+<style>
+:root{--bg:#080810;--bg1:#0c0c1a;--bg2:#12122a;--bg3:#181838;--bg4:#1e1e40;--gold:#c9a96e;--gold-dim:rgba(201,169,110,.15);--gold-border:rgba(201,169,110,.25);--txt:#e8dcc8;--txt2:#b0a890;--txt3:#606080;--fire:#e84040;--wood:#40a060;--water:#4080d0;--metal:#c0a040;--earth:#a08050;--jade:#3aaf6a;--purple:#8060c0;--blue:#4a90d9;--crimson:#d43050}
+*{margin:0;padding:0;box-sizing:border-box}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;line-height:1.6}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:3px}
+
+/* Header */
+.hdr{background:var(--bg1);border-bottom:1px solid var(--gold-border);padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.hdr-title{font-size:1.1rem;font-weight:700;color:var(--gold);letter-spacing:2px}
+.hdr-info{font-size:.75rem;color:var(--txt2)}
+.hdr-pills{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.hdr-pill{font-size:.65rem;padding:2px 8px;border-radius:10px;background:var(--bg2);color:var(--txt3);border:1px solid rgba(255,255,255,.05)}
+
+/* Tabs */
+.tabs{display:flex;background:var(--bg1);border-bottom:2px solid var(--gold-border);overflow-x:auto;position:sticky;top:44px;z-index:99}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:0;padding:10px 0;text-align:center;font-size:.85rem;font-weight:600;color:var(--txt3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:.2s;white-space:nowrap}
+.tab:hover{color:var(--txt2)}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold);background:var(--gold-dim)}
+
+/* Panels */
+.panels{max-width:860px;margin:0 auto;padding:10px}
+.panel{display:none}.panel.on{display:block}
+.sec{background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.sec-t{font-size:.75rem;font-weight:700;color:var(--gold);padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);background:rgba(201,169,110,.03);letter-spacing:1px}
+.sec-b{padding:10px 12px}
+
+/* Loading */
+.ld{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px}
+.spinner{width:36px;height:36px;border:3px solid var(--gold-dim);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== 八字四柱大表 ===== */
+.bz-table{width:100%;border-collapse:collapse;text-align:center}
+.bz-table th{padding:5px 4px;font-size:.65rem;color:var(--txt3);font-weight:600;background:var(--bg3);border:1px solid rgba(255,255,255,.04)}
+.bz-table td{padding:4px;border:1px solid rgba(255,255,255,.04);background:var(--bg)}
+.bz-gan{font-size:1.6rem;font-weight:800;line-height:1.2;padding:10px 4px!important}
+.bz-zhi{font-size:1.6rem;font-weight:800;line-height:1.2;padding:10px 4px!important}
+.bz-sub{font-size:.7rem;color:var(--txt2)}
+.bz-ss{font-size:.75rem;color:var(--gold)}
+.bz-small{font-size:.65rem;color:var(--txt3)}
+.wx-j{color:var(--metal)}.wx-m{color:var(--wood)}.wx-s{color:var(--water)}.wx-h{color:var(--fire)}.wx-t{color:var(--earth)}
+
+/* 五行柱 */
+.wx-bars{display:flex;flex-direction:column;gap:6px;padding:4px 0}
+.wx-row{display:flex;align-items:center;gap:6px}
+.wx-lbl{width:24px;text-align:center;font-weight:700;font-size:.9rem}
+.wx-trk{flex:1;height:18px;background:var(--bg);border-radius:3px;overflow:hidden}
+.wx-fill{height:100%;border-radius:3px;transition:width .5s}
+.wx-val{width:30px;text-align:right;font-size:.7rem;color:var(--txt3)}
+
+/* 大运横滚 */
+.dy-scroll{overflow-x:auto;padding:6px 0;-webkit-overflow-scrolling:touch}
+.dy-row{display:flex;gap:2px;min-width:max-content}
+.dy-col{min-width:52px;text-align:center;background:var(--bg);border-radius:4px;padding:4px 2px}
+.dy-col.now{border:1px solid var(--gold);background:var(--gold-dim)}
+.dy-age{font-size:.6rem;color:var(--txt3)}
+.dy-g,.dy-z{font-size:1rem;font-weight:700}
+.dy-yr{font-size:.55rem;color:var(--txt3)}
+
+/* 喜忌标签 */
+.xy-tags{display:flex;gap:6px;flex-wrap:wrap}
+.xy-t{padding:4px 12px;border-radius:14px;font-size:.8rem;font-weight:600}
+.xy-xi{background:rgba(58,175,106,.12);color:var(--jade);border:1px solid rgba(58,175,106,.25)}
+.xy-ji{background:rgba(212,48,80,.12);color:var(--crimson);border:1px solid rgba(212,48,80,.25)}
+.xy-reason{font-size:.78rem;color:var(--txt2);margin-top:6px}
+
+/* 神煞 */
+.ss-tags{display:flex;flex-wrap:wrap;gap:5px}
+.ss-t{font-size:.7rem;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--txt2);border:1px solid rgba(255,255,255,.04)}
+
+/* ===== 紫微宫格 ===== */
+.zw-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:1px;min-height:500px;background:rgba(255,255,255,.03);border-radius:6px;overflow:hidden}
+.zw-c{background:var(--bg);padding:6px;display:flex;flex-direction:column;min-height:150px;position:relative}
+.zw-c.center{background:var(--bg3);align-items:center;justify-content:center;text-align:center}
+.zw-name{font-size:.78rem;font-weight:700;color:var(--gold)}
+.zw-gz{font-size:.6rem;color:var(--txt3);margin:1px 0}
+.zw-stars{flex:1;display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start;margin-top:3px}
+.zw-s{font-size:.65rem;padding:1px 3px;border-radius:2px;background:rgba(201,169,110,.08);color:var(--txt)}
+.zw-s.main{color:var(--gold);font-weight:700;background:rgba(201,169,110,.15)}
+.zw-s.lu{color:var(--jade)}.zw-s.quan{color:var(--purple)}.zw-s.ke{color:var(--blue)}.zw-s.ji{color:var(--crimson)}
+.zw-sh{position:absolute;top:2px;right:3px;font-size:.55rem;color:var(--crimson);font-weight:700}
+.zw-sihua{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.zw-sh-item{text-align:center;padding:8px 4px;background:var(--bg);border-radius:6px}
+.zw-sh-type{font-size:.6rem;color:var(--txt3)}.zw-sh-star{font-size:.9rem;font-weight:700}
+
+/* ===== 六爻 ===== */
+.ly-dual{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.ly-gua{background:var(--bg);padding:8px;border-radius:4px}
+.ly-gua-t{text-align:center;font-size:.9rem;font-weight:700;color:var(--gold);margin-bottom:4px}
+.ly-gua-sub{text-align:center;font-size:.65rem;color:var(--txt3);margin-bottom:6px}
+.ly-row{display:grid;grid-template-columns:28px 1fr 36px 36px 36px;gap:3px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.75rem}
+.ly-row.hdr{font-size:.6rem;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--gold-border)}
+.ly-yao{height:10px;display:flex;align-items:center;justify-content:center}
+.ly-yang{width:100%;height:4px;background:var(--gold);border-radius:1px}
+.ly-yin{width:100%;height:4px;display:flex;gap:3px}
+.ly-yin span{flex:1;height:4px;background:var(--gold);border-radius:1px}
+.ly-dong{color:var(--crimson);font-weight:700}
+
+/* ===== 奇门九宫 ===== */
+.qm-info{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.qm-tag{font-size:.7rem;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--txt2);border:1px solid rgba(255,255,255,.04)}
+.qm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.03);border-radius:6px;overflow:hidden}
+.qm-c{background:var(--bg);padding:6px;min-height:120px;display:flex;flex-direction:column;gap:1px}
+.qm-gong{text-align:center;font-size:.78rem;font-weight:700;color:var(--gold);margin-bottom:2px}
+.qm-r{display:flex;justify-content:space-between;font-size:.65rem}
+.qm-r .lbl{color:var(--txt3)}
+.qm-r .tian{color:var(--blue)}.qm-r .di{color:var(--earth)}.qm-r .men{color:var(--jade)}.qm-r .xing{color:var(--purple)}.qm-r .shen{color:var(--gold)}
+
+/* ===== 大六壬 ===== */
+.lr-info{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.lr-tag{font-size:.7rem;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--txt2);border:1px solid rgba(255,255,255,.04)}
+.lr-tbl{width:100%;border-collapse:collapse;font-size:.75rem}
+.lr-tbl th{padding:5px 6px;text-align:center;background:var(--bg3);color:var(--gold);font-weight:600;border:1px solid rgba(255,255,255,.04)}
+.lr-tbl td{padding:5px 6px;text-align:center;border:1px solid rgba(255,255,255,.04);background:var(--bg)}
+.sk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px}
+.sk-item{text-align:center;padding:8px 4px;background:var(--bg);border-radius:5px;border:1px solid rgba(255,255,255,.04)}
+.sk-l{font-size:.6rem;color:var(--txt3)}.sk-v{font-size:.9rem;font-weight:700;color:var(--gold)}
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.sc-item{text-align:center;padding:10px 4px;background:var(--bg);border-radius:5px;border:1px solid var(--gold-border)}
+.sc-l{font-size:.6rem;color:var(--gold);font-weight:600}.sc-v{font-size:1rem;font-weight:700;color:#fff}
+
+/* ===== 太乙 ===== */
+.ty-tbl{width:100%;border-collapse:collapse;font-size:.78rem}
+.ty-tbl th{padding:5px 8px;text-align:left;background:var(--bg3);color:var(--gold);font-weight:600;border:1px solid rgba(255,255,255,.04);width:80px}
+.ty-tbl td{padding:5px 8px;border:1px solid rgba(255,255,255,.04);background:var(--bg)}
+
+/* ===== 占星 ===== */
+.astro-wrap{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;padding:10px}
+#astroSvg{border-radius:50%;border:1px solid var(--gold-border)}
+.astro-legend{display:flex;flex-direction:column;gap:3px;font-size:.75rem}
+.astro-lg{display:flex;align-items:center;gap:5px}
+.astro-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.astro-tbl{width:100%;border-collapse:collapse;font-size:.75rem}
+.astro-tbl th{padding:5px 6px;text-align:center;background:var(--bg3);color:var(--gold);font-weight:600;border:1px solid rgba(255,255,255,.04)}
+.astro-tbl td{padding:5px 6px;text-align:center;border:1px solid rgba(255,255,255,.04);background:var(--bg)}
+
+/* ===== 姓名学 ===== */
+.xm-score{text-align:center;padding:16px}
+.xm-num{font-size:3.5rem;font-weight:800;color:var(--gold);line-height:1}
+.xm-lbl{font-size:.8rem;color:var(--txt3);margin-top:4px}
+.xm-wg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:0 0 10px}
+.xm-wg-i{text-align:center;padding:10px 4px;background:var(--bg);border-radius:6px;border:1px solid rgba(255,255,255,.04)}
+.xm-wg-l{font-size:.6rem;color:var(--txt3)}
+.xm-wg-n{font-size:1.3rem;font-weight:700}
+.xm-wg-wx{font-size:.65rem}
+.xm-wg-j{font-size:.6rem;margin-top:2px}
+.xm-wg-j.ok{color:var(--jade)}.xm-wg-j.bad{color:var(--crimson)}
+.sc-card{padding:14px;background:var(--bg);border-radius:8px;border:1px solid var(--gold-border);text-align:center}
+.sc-wx{font-size:1.2rem;font-weight:700;color:var(--gold);letter-spacing:3px}
+.sc-rst{font-size:.9rem;color:var(--jade);font-weight:600;margin:4px 0}
+.sc-desc{font-size:.78rem;color:var(--txt2)}
+.sl-card{padding:10px;background:var(--bg);border-radius:6px;border:1px solid rgba(255,255,255,.04);margin-bottom:6px}
+.sl-title{font-size:.82rem;font-weight:700;margin-bottom:3px}
+.sl-ji{font-size:.7rem;padding:2px 7px;border-radius:8px;margin-left:6px}
+.sl-ji.ok{background:rgba(58,175,106,.12);color:var(--jade)}.sl-ji.bad{background:rgba(212,48,80,.12);color:var(--crimson)}
+.sl-body{font-size:.78rem;color:var(--txt2)}
+
+/* Responsive */
+@media(max-width:600px){
+  html{font-size:13px}
+  .zw-grid{min-height:380px}.zw-c{min-height:110px;padding:4px}
+  .qm-c{min-height:95px;padding:4px}
+  .bz-gan,.bz-zhi{font-size:1.3rem}
+  .ly-dual{grid-template-columns:1fr}
+  .astro-wrap{flex-direction:column}
+  #astroSvg{width:260px!important;height:260px!important}
+}
+</style>
 </head>
 <body>
-    <!-- 顶部信息栏 -->
-    <header class="chart-header">
-        <div class="header-info">
-            <span class="header-title">玄照</span>
-            <span class="header-sub" id="headerBirth"></span>
-            <span class="header-sub" id="headerLocation"></span>
-        </div>
-        <div class="header-pills" id="headerPills"></div>
-    </header>
 
-    <!-- 八术Tab导航 -->
-    <nav class="method-tabs" id="methodTabs">
-        <button class="tab active" data-method="bazi">八字</button>
-        <button class="tab" data-method="ziwei">紫微</button>
-        <button class="tab" data-method="liuyao">六爻</button>
-        <button class="tab" data-method="qimen">奇门</button>
-        <button class="tab" data-method="liuren">大六壬</button>
-        <button class="tab" data-method="taiyi">太乙</button>
-        <button class="tab" data-method="astro">占星</button>
-        <button class="tab" data-method="xingming">姓名</button>
-    </nav>
+<header class="hdr">
+  <span class="hdr-title">玄照</span>
+  <span class="hdr-info" id="hBirth"></span>
+  <span class="hdr-info" id="hLoc"></span>
+  <div class="hdr-pills" id="hPills"></div>
+</header>
 
-    <!-- 加载状态 -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">排盘中...</div>
-    </div>
+<nav class="tabs" id="tabs">
+  <button class="tab on" data-m="bazi">八字</button>
+  <button class="tab" data-m="ziwei">紫微</button>
+  <button class="tab" data-m="liuyao">六爻</button>
+  <button class="tab" data-m="qimen">奇门</button>
+  <button class="tab" data-m="liuren">大六壬</button>
+  <button class="tab" data-m="taiyi">太乙</button>
+  <button class="tab" data-m="astro">占星</button>
+  <button class="tab" data-m="xm">姓名</button>
+</nav>
 
-    <!-- 八术面板容器 -->
-    <main class="panels-container" id="panelsContainer" style="display:none;">
+<div class="ld" id="loader"><div class="spinner"></div><div style="color:var(--txt3);font-size:.85rem">排盘中…</div></div>
 
-        <!-- ===== 八字面板 ===== -->
-        <section class="method-panel active" id="panel-bazi">
-            <!-- 四柱核心 -->
-            <div class="panel-section">
-                <div class="section-title">四柱命盘</div>
-                <div class="bazi-pillars" id="baziPillars"></div>
-            </div>
-            <!-- 五行旺衰 -->
-            <div class="panel-section">
-                <div class="section-title">五行旺衰</div>
-                <div class="wuxing-bars" id="baziWuxing"></div>
-            </div>
-            <!-- 十神 -->
-            <div class="panel-section">
-                <div class="section-title">十神关系</div>
-                <div class="shishen-grid" id="baziShishen"></div>
-            </div>
-            <!-- 神煞 -->
-            <div class="panel-section">
-                <div class="section-title">神煞</div>
-                <div class="shensha-list" id="baziShensha"></div>
-            </div>
-            <!-- 大运 -->
-            <div class="panel-section">
-                <div class="section-title">大运流年</div>
-                <div class="dayun-scroll" id="baziDayun"></div>
-            </div>
-            <!-- 喜忌 -->
-            <div class="panel-section">
-                <div class="section-title">喜用神</div>
-                <div class="xiyong-card" id="baziXiyong"></div>
-            </div>
-        </section>
+<main class="panels" id="panels" style="display:none">
 
-        <!-- ===== 紫微面板 ===== -->
-        <section class="method-panel" id="panel-ziwei">
-            <div class="panel-section">
-                <div class="section-title">紫微命盘</div>
-                <div class="ziwei-grid" id="ziweiGrid"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">四化飞星</div>
-                <div class="sihua-table" id="ziweiSihua"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">大限流年</div>
-                <div class="dayun-scroll" id="ziweiDayun"></div>
-            </div>
-        </section>
+<!-- 八字 -->
+<section class="panel on" id="p-bazi">
+  <div class="sec"><div class="sec-t">四柱命盘</div><div class="sec-b" id="bzPillars"></div></div>
+  <div class="sec"><div class="sec-t">五行旺衰</div><div class="sec-b" id="bzWx"></div></div>
+  <div class="sec"><div class="sec-t">十神</div><div class="sec-b" id="bzSs"></div></div>
+  <div class="sec"><div class="sec-t">神煞</div><div class="sec-b" id="bzShensha"></div></div>
+  <div class="sec"><div class="sec-t">大运流年</div><div class="sec-b" id="bzDayun"></div></div>
+  <div class="sec"><div class="sec-t">喜用神</div><div class="sec-b" id="bzXiYong"></div></div>
+</section>
 
-        <!-- ===== 六爻面板 ===== -->
-        <section class="method-panel" id="panel-liuyao">
-            <div class="panel-section">
-                <div class="section-title">六爻排盘</div>
-                <div class="liuyao-dual" id="liuyaoGua"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">六神配置</div>
-                <div class="liushen-table" id="liuyaoLiushen"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">五行分析</div>
-                <div class="wuxing-analysis" id="liuyaoWuxing"></div>
-            </div>
-        </section>
+<!-- 紫微 -->
+<section class="panel" id="p-ziwei">
+  <div class="sec"><div class="sec-t">紫微命盘</div><div class="sec-b" id="zwGrid"></div></div>
+  <div class="sec"><div class="sec-t">四化飞星</div><div class="sec-b" id="zwSihua"></div></div>
+</section>
 
-        <!-- ===== 奇门面板 ===== -->
-        <section class="method-panel" id="panel-qimen">
-            <div class="panel-section">
-                <div class="section-title">奇门遁甲</div>
-                <div class="qimen-info" id="qimenInfo"></div>
-                <div class="qimen-grid" id="qimenGrid"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">格局分析</div>
-                <div class="geju-analysis" id="qimenGeju"></div>
-            </div>
-        </section>
+<!-- 六爻 -->
+<section class="panel" id="p-liuyao">
+  <div class="sec"><div class="sec-t">六爻排盘</div><div class="sec-b" id="lyGua"></div></div>
+  <div class="sec"><div class="sec-t">六神</div><div class="sec-b" id="lyShen"></div></div>
+</section>
 
-        <!-- ===== 大六壬面板 ===== -->
-        <section class="method-panel" id="panel-liuren">
-            <div class="panel-section">
-                <div class="section-title">大六壬排盘</div>
-                <div class="liuren-info" id="liurenInfo"></div>
-                <div class="liuren-pan" id="liurenPan"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">四课三传</div>
-                <div class="liuren-sike" id="liurenSike"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">天将分析</div>
-                <div class="liuren-tianjiang" id="liurenTianjiang"></div>
-            </div>
-        </section>
+<!-- 奇门 -->
+<section class="panel" id="p-qimen">
+  <div class="sec"><div class="sec-t">奇门遁甲</div><div class="sec-b"><div class="qm-info" id="qmInfo"></div><div class="qm-grid" id="qmGrid"></div></div></div>
+</section>
 
-        <!-- ===== 太乙面板 ===== -->
-        <section class="method-panel" id="panel-taiyi">
-            <div class="panel-section">
-                <div class="section-title">太乙神数</div>
-                <div class="taiyi-info" id="taiyiInfo"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">三基五福</div>
-                <div class="taiyi-sanji" id="taiyiSanji"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">太乙八门</div>
-                <div class="taiyi-bamen" id="taiyiBamen"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">算术分析</div>
-                <div class="taiyi-suan" id="taiyiSuan"></div>
-            </div>
-        </section>
+<!-- 大六壬 -->
+<section class="panel" id="p-liuren">
+  <div class="sec"><div class="sec-t">大六壬</div><div class="sec-b"><div class="lr-info" id="lrInfo"></div><div id="lrPan"></div></div></div>
+  <div class="sec"><div class="sec-t">四课三传</div><div class="sec-b" id="lrSk"></div></div>
+</section>
 
-        <!-- ===== 占星面板 ===== -->
-        <section class="method-panel" id="panel-astro">
-            <div class="panel-section">
-                <div class="section-title">星盘总览</div>
-                <div class="astro-chart-wrap">
-                    <canvas id="astroCanvas" width="360" height="360"></canvas>
-                    <div class="astro-legend" id="astroLegend"></div>
-                </div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">行星落座</div>
-                <div class="astro-planets" id="astroPlanets"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">相位表</div>
-                <div class="astro-aspects" id="astroAspects"></div>
-            </div>
-        </section>
+<!-- 太乙 -->
+<section class="panel" id="p-taiyi">
+  <div class="sec"><div class="sec-t">太乙神数</div><div class="sec-b" id="tyInfo"></div></div>
+  <div class="sec"><div class="sec-t">三基五福</div><div class="sec-b" id="tySanji"></div></div>
+  <div class="sec"><div class="sec-t">主客算</div><div class="sec-b" id="tySuan"></div></div>
+</section>
 
-        <!-- ===== 姓名学面板 ===== -->
-        <section class="method-panel" id="panel-xingming">
-            <div class="panel-section">
-                <div class="section-title">姓名五格</div>
-                <div class="xm-score" id="xmScore"></div>
-                <div class="xm-wuge" id="xmWuge"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">三才配置</div>
-                <div class="xm-sancai" id="xmSancai"></div>
-            </div>
-            <div class="panel-section">
-                <div class="section-title">数理剖析</div>
-                <div class="xm-shuli" id="xmShuli"></div>
-            </div>
-        </section>
+<!-- 占星 -->
+<section class="panel" id="p-astro">
+  <div class="sec"><div class="sec-t">星盘</div><div class="sec-b"><div class="astro-wrap"><svg id="astroSvg" width="320" height="320" viewBox="0 0 320 320"></svg><div class="astro-legend" id="astroLg"></div></div></div></div>
+  <div class="sec"><div class="sec-t">行星落座</div><div class="sec-b" id="astroPlanets"></div></div>
+  <div class="sec"><div class="sec-t">相位</div><div class="sec-b" id="astroAspects"></div></div>
+</section>
 
-    </main>
+<!-- 姓名 -->
+<section class="panel" id="p-xm">
+  <div class="sec"><div class="sec-b"><div class="xm-score"><div class="xm-num" id="xmScore">0</div><div class="xm-lbl">姓名评分</div></div></div></div>
+  <div class="sec"><div class="sec-t">五格命盘</div><div class="sec-b" id="xmWuge"></div></div>
+  <div class="sec"><div class="sec-t">三才配置</div><div class="sec-b" id="xmSancai"></div></div>
+  <div class="sec"><div class="sec-t">数理剖析</div><div class="sec-b" id="xmShuli"></div></div>
+</section>
 
-    <script src="/static/js/chart-pro.js"></script>
+</main>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s),
+WX={'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水','子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'},
+WXC={'金':'var(--metal)','木':'var(--wood)','水':'var(--water)','火':'var(--fire)','土':'var(--earth)'},
+WXCL={'金':'#c0a040','木':'#40a060','水':'#4080d0','火':'#e84040','土':'#a08050'},
+WXK={'金':'wx-j','木':'wx-m','水':'wx-s','火':'wx-h','土':'wx-t'},
+esc=s=>{if(!s)return'';const d=document.createElement('div');d.textContent=s;return d.innerHTML},
+wxC=c=>WXK[WX[c]]||'';
+
+// Tab
+$$('.tab').forEach(t=>t.onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.remove('on'));
+  $$('.panel').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on');
+  const p=$('#p-'+t.dataset.m);
+  if(p)p.classList.add('on');
+});
+
+// Params
+const u=new URL(location.href),BIRTH=u.searchParams.get('birth')||'',LOC=u.searchParams.get('location')||'北京',GENDER=u.searchParams.get('gender')||'男',NAME=u.searchParams.get('name')||'';
+
+async function init(){
+  if(!BIRTH){alert('缺少出生时间');return}
+  $('#hBirth').textContent=BIRTH;$('#hLoc').textContent=LOC;
+  let url=`/api/chart?birth=${encodeURIComponent(BIRTH)}&location=${encodeURIComponent(LOC)}&gender=${encodeURIComponent(GENDER)}`;
+  if(NAME)url+=`&name=${encodeURIComponent(NAME)}`;
+  try{
+    const r=await fetch(url),d=await r.json();
+    if(d.error)throw new Error(d.error);
+    $('#loader').style.display='none';$('#panels').style.display='block';
+    renderPills(d);
+    if(d.bazi)renderBazi(d.bazi);
+    if(d.ziwei)renderZiwei(d.ziwei);
+    if(d.liuyao)renderLiuyao(d.liuyao);
+    if(d.qimen)renderQimen(d.qimen);
+    if(d.liuren)renderLiuren(d.liuren);
+    if(d.taiyi)renderTaiyi(d.taiyi);
+    if(d.astro)renderAstro(d.astro);
+    if(d.xingming)renderXm(d.xingming);
+  }catch(e){
+    $('#loader').innerHTML=`<div style="color:var(--crimson);text-align:center"><div style="font-size:1.1rem;margin-bottom:6px">排盘失败</div><div style="font-size:.8rem;color:var(--txt3)">${esc(e.message)}</div></div>`;
+  }
+}
+
+function renderPills(d){
+  const p=[];
+  if(d.corrected_time&&d.corrected_time.diff_minutes!==undefined)p.push(`真太阳时 ${(d.corrected_time.diff_minutes>0?'+':'')+d.corrected_time.diff_minutes}分`);
+  (d.methods||[]).forEach(m=>p.push(m));
+  $('#hPills').innerHTML=p.map(x=>`<span class="hdr-pill">${esc(x)}</span>`).join('');
+}
+
+/* ===== 八字 ===== */
+function renderBazi(b){
+  // 四柱大表
+  const cols=[
+    {l:'年柱',g:(b.year||'')[0],z:(b.year||'')[1],ss:b.shishen_gan?.year,ny:b.nayin?.year,cs:b.changsheng?.year,ssz:b.shishen_zhi?.year},
+    {l:'月柱',g:(b.month||'')[0],z:(b.month||'')[1],ss:b.shishen_gan?.month,ny:b.nayin?.month,cs:b.changsheng?.month,ssz:b.shishen_zhi?.month},
+    {l:'日柱',g:(b.day||'')[0],z:(b.day||'')[1],ss:'日主',ny:b.nayin?.day,cs:b.changsheng?.day,ssz:b.shishen_zhi?.day},
+    {l:'时柱',g:(b.time||'')[0],z:(b.time||'')[1],ss:b.shishen_gan?.time,ny:b.nayin?.time,cs:b.changsheng?.time,ssz:b.shishen_zhi?.time}
+  ];
+  const hg=b.hidden_gans||{};
+  const hkeys=['year','month','day','time'];
+  let h='<table class="bz-table"><tr><th></th>';
+  cols.forEach(c=>{h+=`<th>${c.l}</th>`});
+  h+='</tr>';
+  // 十神行
+  h+='<tr><td class="bz-small">十神</td>';
+  cols.forEach(c=>{h+=`<td class="bz-ss">${esc(c.ss||'')}</td>`});
+  h+='</tr>';
+  // 天干行
+  h+='<tr><td class="bz-small">天干</td>';
+  cols.forEach(c=>{const wx=WX[c.g]||'';h+=`<td class="bz-gan ${WXK[wx]}" style="color:${WXC[wx]||'var(--txt)'}">${esc(c.g)}</td>`});
+  h+='</tr>';
+  // 地支行
+  h+='<tr><td class="bz-small">地支</td>';
+  cols.forEach(c=>{const wx=WX[c.z]||'';h+=`<td class="bz-zhi ${WXK[wx]}" style="color:${WXC[wx]||'var(--txt)'}">${esc(c.z)}</td>`});
+  h+='</tr>';
+  // 地支十神
+  h+='<tr><td class="bz-small">支十神</td>';
+  cols.forEach(c=>{h+=`<td class="bz-sub">${esc(c.ssz||'')}</td>`});
+  h+='</tr>';
+  // 藏干
+  h+='<tr><td class="bz-small">藏干</td>';
+  cols.forEach((c,i)=>{const hv=hg[hkeys[i]];const t=hv?(Array.isArray(hv)?hv.join(' '):hv):'';h+=`<td class="bz-sub">${esc(t)}</td>`});
+  h+='</tr>';
+  // 纳音
+  h+='<tr><td class="bz-small">纳音</td>';
+  cols.forEach(c=>{h+=`<td class="bz-sub">${esc(c.ny||'')}</td>`});
+  h+='</tr>';
+  // 星运
+  h+='<tr><td class="bz-small">星运</td>';
+  cols.forEach(c=>{h+=`<td class="bz-sub">${esc(c.cs||'')}</td>`});
+  h+='</tr>';
+  // 神煞per柱
+  if(b.shensha_per_pillar){
+    h+='<tr><td class="bz-small">神煞</td>';
+    hkeys.forEach(k=>{const ss=b.shensha_per_pillar[k]||'';h+=`<td class="bz-small">${esc(Array.isArray(ss)?ss.join(' '):ss)}</td>`});
+    h+='</tr>';
+  }
+  h+='</table>';
+  $('#bzPillars').innerHTML=h;
+
+  // 五行旺衰
+  const ws=b.wuxing_score||{};
+  const maxW=Math.max(...Object.values(ws),1);
+  let wh='<div class="wx-bars">';
+  ['金','木','水','火','土'].forEach(w=>{
+    const v=ws[w]||0,pct=Math.round(v/maxW*100);
+    wh+=`<div class="wx-row"><span class="wx-lbl" style="color:${WXCL[w]}">${w}</span><div class="wx-trk"><div class="wx-fill" style="width:${pct}%;background:${WXCL[w]}"></div></div><span class="wx-val">${v}</span></div>`;
+  });
+  wh+='</div>';
+  $('#bzWx').innerHTML=wh;
+
+  // 十神
+  const ss=b.shishen_gan||{};
+  let sh='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">';
+  ['year','month','day','time'].forEach((k,i)=>{
+    const labels=['年干','月干','日干','时干'];
+    const v=k==='day'?'日主':(ss[k]||'');
+    sh+=`<div style="text-align:center;padding:8px;background:var(--bg);border-radius:5px"><div style="font-size:.6rem;color:var(--txt3)">${labels[i]}</div><div style="font-size:.9rem;font-weight:700;color:var(--gold)">${esc(v)}</div></div>`;
+  });
+  sh+='</div>';
+  $('#bzSs').innerHTML=sh;
+
+  // 神煞
+  const shensha=b.shensha||[];
+  if(shensha.length){
+    $('#bzShensha').innerHTML='<div class="ss-tags">'+shensha.map(s=>{
+      const n=typeof s==='string'?s:(s.name||s[0]||'');
+      return `<span class="ss-t">${esc(n)}</span>`;
+    }).join('')+'</div>';
+  }
+
+  // 大运
+  const dy=b.dayun||[];
+  if(dy.length){
+    let dh='<div class="dy-scroll"><div class="dy-row">';
+    dy.forEach((d,i)=>{
+      const cur=d.is_current||i===0;
+      const g=d.gan||'',z=d.zhi||'';
+      dh+=`<div class="dy-col${cur?' now':''}"><div class="dy-age">${d.age||''}岁</div><div class="dy-g ${wxC(g)}" style="color:${WXC[WX[g]]||'var(--txt)'}">${esc(g)}</div><div class="dy-z ${wxC(z)}" style="color:${WXC[WX[z]]||'var(--txt)'}">${esc(z)}</div><div class="dy-yr">${d.start_year||''}</div></div>`;
+    });
+    dh+='</div></div>';
+    $('#bzDayun').innerHTML=dh;
+  }
+
+  // 喜用神
+  const xy=b.xi_yong;
+  if(xy){
+    let xh='<div class="xy-tags">';
+    const xi=xy.xi||xy.favorable||[],ji=xy.ji||xy.unfavorable||[];
+    (Array.isArray(xi)?xi:[xi]).filter(Boolean).forEach(x=>{xh+=`<span class="xy-t xy-xi">喜 ${esc(x)}</span>`});
+    (Array.isArray(ji)?ji:[ji]).filter(Boolean).forEach(j=>{xh+=`<span class="xy-t xy-ji">忌 ${esc(j)}</span>`});
+    xh+='</div>';
+    if(xy.reason||xy.strength)xh+=`<div class="xy-reason">${esc(xy.reason||xy.strength||'')}</div>`;
+    $('#bzXiYong').innerHTML=xh;
+  }
+}
+
+/* ===== 紫微 ===== */
+function renderZiwei(zw){
+  const palaces=zw.palaces;
+  if(!palaces){$('#zwGrid').innerHTML='<div style="padding:20px;text-align:center;color:var(--txt3)">紫微数据不可用</div>';return;}
+  const pm={};
+  if(Array.isArray(palaces))palaces.forEach(p=>{pm[p.branch||'']=p});
+  else Object.entries(palaces).forEach(([k,v])=>{pm[k]=v});
+  const layout=[['巳','午','未','申'],['辰',null,null,'酉'],['卯',null,null,'戌'],['寅','丑','子','亥']];
+  let gh='';
+  layout.forEach(row=>{
+    row.forEach(z=>{
+      if(z===null){
+        if(row.indexOf(z)===1){
+          gh+=`<div class="zw-c center"><div class="zw-name">命盘信息</div><div style="font-size:.65rem;color:var(--txt2)">命宫: ${esc(zw.ming_gong||'')} · 身宫: ${esc(zw.shen_gong||'')}</div><div style="font-size:.65rem;color:var(--txt2)">${esc(zw.wuxing_ju||'')} · ${esc(zw.zodiac||'')}</div><div style="font-size:.65rem;color:var(--txt2)">命主: ${esc(zw.soul_star||'')} · 身主: ${esc(zw.body_star||'')}</div></div>`;
+        }else{
+          gh+='<div class="zw-c" style="background:transparent;border:none"></div>';
+        }
+        return;
+      }
+      const p=pm[z]||{};
+      const name=p.name||p.palace_name||z+'宫';
+      const gan=p.gan||'';
+      const stars=p.stars||p.star_list||[];
+      const sh=zw.self_hua_map?.[z]||'';
+      let stH='';
+      if(Array.isArray(stars)){
+        stars.forEach(s=>{
+          const sn=typeof s==='string'?s:(s.name||'');
+          let cls='zw-s';
+          if(s.is_main||s.type==='main')cls+=' main';
+          if(sn.includes('禄'))cls+=' lu';if(sn.includes('权'))cls+=' quan';if(sn.includes('科'))cls+=' ke';if(sn.includes('忌'))cls+=' ji';
+          stH+=`<span class="${cls}">${esc(sn)}</span>`;
+        });
+      }
+      gh+=`<div class="zw-c"><div class="zw-name">${esc(name)}</div><div class="zw-gz">${esc(gan)}${z}</div><div class="zw-stars">${stH}</div>${sh?`<div class="zw-sh">自${esc(sh)}</div>`:''}</div>`;
+    });
+  });
+  $('#zwGrid').innerHTML=gh;
+
+  // 四化
+  const sihua=zw.sihua;
+  if(sihua){
+    const types=['化禄','化权','化科','化忌'],cls=['lu','quan','ke','ji'];
+    let sh='<div class="zw-sihua">';
+    types.forEach((t,i)=>{
+      const star=sihua[t]||sihua[i]||sihua[['lu','quan','ke','ji'][i]]||'';
+      sh+=`<div class="zw-sh-item"><div class="zw-sh-type">${t}</div><div class="zw-s ${cls[i]}" style="font-size:.95rem">${esc(typeof star==='object'?star.name||'':star)}</div></div>`;
+    });
+    sh+='</div>';
+    $('#zwSihua').innerHTML=sh;
+  }
+}
+
+/* ===== 六爻 ===== */
+function renderLiuyao(ly){
+  const ben=ly.ben_gua||{},bian=ly.bian_gua||{},lines=ly.lines||[],bl=ly.bian_lines||[],dong=ly.dong_yao||[],ls=ly.liu_shen||[];
+  function rendergua(gua,gl,title,isBian){
+    let h=`<div class="ly-gua"><div class="ly-gua-t">${esc(title)}</div><div class="ly-gua-sub">${esc(gua.name||'')} · ${esc(gua.gong||'')}</div>`;
+    h+='<div class="ly-row hdr"><span>爻</span><span>爻象</span><span>六亲</span><span>六神</span><span>干支</span></div>';
+    for(let i=5;i>=0;i--){
+      const yao=gl[i]||{},isDong=!isBian&&dong.includes(i+1);
+      const yn=['初','二','三','四','五','六'][i];
+      const isYang=yao.yang||yao.value===1||yao.value==='阳';
+      const lq=yao.liu_qin||yao.liuqin||'',gz=yao.gan_zhi||yao.ganzhi||'',shen=ls[i]||'';
+      h+=`<div class="ly-row${isDong?' ly-dong':''}"><span>${yn}${isDong?' ○':''}</span><span class="ly-yao">${isYang?'<span class="ly-yang"></span>':'<span class="ly-yin"><span></span><span></span></span>'}</span><span>${esc(lq)}</span><span style="color:var(--purple)">${esc(shen)}</span><span>${esc(gz)}</span></div>`;
+    }
+    h+='</div>';return h;
+  }
+  $('#lyGua').innerHTML=rendergua(ben,lines,'本卦',false)+rendergua(bian,bl,'变卦',true);
+  if(ls.length)$('#lyShen').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap">'+ls.map(s=>`<span class="ss-t" style="color:var(--purple)">${esc(s)}</span>`).join('')+'</div>';
+}
+
+/* ===== 奇门 ===== */
+function renderQimen(qm){
+  const tags=[];
+  if(qm.ju_name)tags.push(qm.ju_name);if(qm.yin_yang)tags.push(qm.yin_yang);if(qm.jieqi)tags.push(qm.jieqi);if(qm.zhi_fu)tags.push('值符: '+qm.zhi_fu);if(qm.zhi_shi)tags.push('值使: '+qm.zhi_shi);
+  $('#qmInfo').innerHTML=tags.map(t=>`<span class="qm-tag">${esc(t)}</span>`).join('');
+  const layout=[['巽','离','坤'],['震','中','兑'],['艮','坎','乾']];
+  let gh='';
+  layout.forEach(row=>{
+    row.forEach(g=>{
+      const dp=(qm.di_pan||{})[g]||'',tp=(qm.tian_pan||{})[g]||'',bm=(qm.ba_men||{})[g]||'',jx=(qm.jiu_xing||{})[g]||'',bs=(qm.ba_shen||{})[g]||'';
+      gh+=`<div class="qm-c"><div class="qm-gong">${esc(g)}宫</div><div class="qm-r"><span class="lbl">天盘</span><span class="tian">${esc(tp)}</span></div><div class="qm-r"><span class="lbl">地盘</span><span class="di">${esc(dp)}</span></div><div class="qm-r"><span class="lbl">八门</span><span class="men">${esc(bm)}</span></div><div class="qm-r"><span class="lbl">九星</span><span class="xing">${esc(jx)}</span></div><div class="qm-r"><span class="lbl">八神</span><span class="shen">${esc(bs)}</span></div></div>`;
+    });
+  });
+  $('#qmGrid').innerHTML=gh;
+}
+
+/* ===== 大六壬 ===== */
+function renderLiuren(lr){
+  const tags=[];
+  if(lr.zhan_shi)tags.push('占时: '+lr.zhan_shi);if(lr.yue_jiang)tags.push('月将: '+lr.yue_jiang);if(lr.jieqi)tags.push(lr.jieqi);if(lr.ge_ju)tags.push(lr.ge_ju);
+  $('#lrInfo').innerHTML=tags.map(t=>`<span class="lr-tag">${esc(t)}</span>`).join('');
+  const tp=lr.tian_pan||{},tj=lr.tian_jiang||{};
+  if(Object.keys(tp).length){
+    const zl=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+    let th='<table class="lr-tbl"><tr><th>地盘</th>';
+    zl.forEach(z=>{th+=`<th>${z}</th>`});
+    th+='</tr><tr><td style="background:var(--bg3);color:var(--gold);font-weight:600">天盘</td>';
+    zl.forEach(z=>{th+=`<td>${esc(tp[z]||'')}</td>`});
+    th+='</tr>';
+    if(Object.keys(tj).length){
+      th+='<tr><td style="background:var(--bg3);color:var(--gold);font-weight:600">天将</td>';
+      zl.forEach(z=>{th+=`<td style="color:var(--purple)">${esc(tj[z]||'')}</td>`});
+      th+='</tr>';
+    }
+    th+='</table>';
+    $('#lrPan').innerHTML=th;
+  }
+  const sk=lr.si_ke||{},sc=lr.san_chuan||{};
+  let skh='<div style="font-size:.7rem;color:var(--gold);font-weight:600;margin-bottom:5px">四课</div><div class="sk-grid">';
+  ['一课','二课','三课','四课'].forEach(n=>{const v=sk[n]||'';skh+=`<div class="sk-item"><div class="sk-l">${n}</div><div class="sk-v">${esc(typeof v==='object'?v.display||'':v)}</div></div>`});
+  skh+='</div><div style="font-size:.7rem;color:var(--gold);font-weight:600;margin:8px 0 5px">三传</div><div class="sc-grid">';
+  ['初传','中传','末传'].forEach(n=>{const v=sc[n]||'';skh+=`<div class="sc-item"><div class="sc-l">${n}</div><div class="sc-v">${esc(typeof v==='object'?v.display||'':v)}</div></div>`});
+  skh+='</div>';
+  $('#lrSk').innerHTML=skh;
+}
+
+/* ===== 太乙 ===== */
+function renderTaiyi(ty){
+  const rows=[['局数',ty.ju_name],['局数',ty.ju_num],['阴阳',ty.yin_yang],['太乙宫',ty.taiyi_gong],['太乙卦',ty.taiyi_gua],['积年',ty.ji_nian],['纪元',ty.ji_yuan],['年干支',ty.year_ganzhi],['月干支',ty.month_ganzhi],['日干支',ty.day_ganzhi],['时干支',ty.hour_ganzhi]].filter(r=>r[1]);
+  $('#tyInfo').innerHTML='<table class="ty-tbl">'+rows.map(r=>`<tr><th>${r[0]}</th><td>${esc(String(r[1]))}</td></tr>`).join('')+'</table>';
+  const sj=[['三基',ty.san_ji],['五福',ty.wu_fu],['大游',ty.da_you],['小游',ty.xiao_you],['天乙',ty.tian_yi],['地乙',ty.di_yi],['四神',ty.si_shen]].filter(r=>r[1]);
+  $('#tySanji').innerHTML='<table class="ty-tbl">'+sj.map(r=>`<tr><th>${r[0]}</th><td>${esc(String(r[1]))}</td></tr>`).join('')+'</table>';
+  const su=[['值符',ty.zhi_fu],['文昌',ty.wen_chang],['始击',ty.shi_ji],['主算',ty.zhu_suan],['客算',ty.ke_suan],['定算',ty.ding_suan]].filter(r=>r[1]);
+  $('#tySuan').innerHTML='<table class="ty-tbl">'+su.map(r=>`<tr><th>${r[0]}</th><td>${esc(String(r[1]))}</td></tr>`).join('')+'</table>';
+}
+
+/* ===== 占星 ===== */
+function renderAstro(astro){
+  // SVG圆盘
+  const svg=$('#astroSvg'),ns='http://www.w3.org/2000/svg',cx=160,cy=160,R=140;
+  svg.innerHTML='';
+  function c(tag,attr){const e=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attr))e.setAttribute(k,v);return e}
+  svg.appendChild(c('circle',{cx,cy,r:R,fill:'#0e0e22',stroke:'rgba(201,169,110,.3)','stroke-width':1}));
+  svg.appendChild(c('circle',{cx,cy,r:R*.85,fill:'none',stroke:'rgba(201,169,110,.15)','stroke-width':.5}));
+  svg.appendChild(c('circle',{cx,cy,r:R*.4,fill:'none',stroke:'rgba(201,169,110,.1)','stroke-width':.5}));
+  const signs=['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'];
+  for(let i=0;i<12;i++){
+    const a=(i*30-90)*Math.PI/180;
+    svg.appendChild(c('line',{x1:cx+R*.4*Math.cos(a),y1:cy+R*.4*Math.sin(a),x2:cx+R*Math.cos(a),y2:cy+R*Math.sin(a),stroke:'rgba(201,169,110,.1)','stroke-width':.5}));
+    const lr=R*.93,la=a+15*Math.PI/180,t=c('text',{x:cx+lr*Math.cos(la),y:cy+lr*Math.sin(la),'text-anchor':'middle','dominant-baseline':'central',fill:'rgba(201,169,110,.5)','font-size':'9'});t.textContent=signs[i];svg.appendChild(t);
+  }
+  const details=astro.planetary_details||{};
+  const ps={'太阳':'☉','月亮':'☽','水星':'☿','金星':'♀','火星':'♂','木星':'♃','土星':'♄','天王':'♅','海王':'♆','冥王':'♇'};
+  const pc={'太阳':'#ffcc00','月亮':'#ccc','水星':'#88ccff','金星':'#ff88aa','火星':'#ff4444','木星':'#44aaff','土星':'#ccaa44','天王':'#44dddd','海王':'#4466ff','冥王':'#884488'};
+  let placed=[];
+  Object.entries(details).forEach(([name,info])=>{
+    if(typeof info==='string')return;
+    const sign=info.sign||'',deg=parseFloat(info.degree||0),si=signs.indexOf(sign);
+    if(si<0)return;
+    const a=((si*30+deg)-90)*Math.PI/180,pr=R*.65;
+    let off=0;placed.forEach(pp=>{if(Math.abs(pp.a-a)<.15)off+=11});
+    const t=c('text',{x:cx+pr*Math.cos(a),y:cy+pr*Math.sin(a)+off,'text-anchor':'middle','dominant-baseline':'central',fill:pc[name]||'#fff','font-size':'12','font-weight':'bold'});t.textContent=ps[name]||name[0];svg.appendChild(t);
+    placed.push({a});
+  });
+  // 图例
+  let lh='';
+  lh+=`<div class="astro-lg"><span class="astro-dot" style="background:#ffcc00"></span><span>太阳: ${esc(astro.sun_sign||'')}</span></div>`;
+  lh+=`<div class="astro-lg"><span class="astro-dot" style="background:#ccc"></span><span>月亮: ${esc(astro.moon_sign||'')}</span></div>`;
+  lh+=`<div class="astro-lg"><span class="astro-dot" style="background:var(--blue)"></span><span>上升: ${esc(astro.ascendant_sign||'')}</span></div>`;
+  if(astro.mc_sign)lh+=`<div class="astro-lg"><span class="astro-dot" style="background:var(--purple)"></span><span>天顶: ${esc(astro.mc_sign)}</span></div>`;
+  $('#astroLg').innerHTML=lh;
+
+  // 行星表
+  if(Object.keys(details).length){
+    let th='<table class="astro-tbl"><tr><th>行星</th><th>星座</th><th>度数</th><th>宫位</th><th>状态</th></tr>';
+    Object.entries(details).forEach(([n,i])=>{
+      if(typeof i==='string'){th+=`<tr><td>${esc(n)}</td><td colspan="4">${esc(i)}</td></tr>`;return}
+      th+=`<tr><td style="color:var(--gold);font-weight:600">${esc(n)}</td><td>${esc(i.sign||'')}</td><td>${esc(i.degree||'')}</td><td>${esc(String(i.house||''))}</td><td style="font-size:.65rem">${i.retrograde?'逆行':''}</td></tr>`;
+    });
+    th+='</table>';
+    $('#astroPlanets').innerHTML=th;
+  }
+  // 相位表
+  const aspects=astro.aspects||[];
+  if(aspects.length){
+    let ah='<table class="astro-tbl"><tr><th>行星A</th><th>相位</th><th>行星B</th><th>容许度</th></tr>';
+    aspects.forEach(a=>{
+      if(typeof a==='string'){ah+=`<tr><td colspan="4">${esc(a)}</td></tr>`;return}
+      ah+=`<tr><td style="color:var(--gold)">${esc(a.planet1||a[0]||'')}</td><td>${esc(a.aspect||a.type||a[1]||'')}</td><td style="color:var(--gold)">${esc(a.planet2||a[2]||'')}</td><td>${esc(a.orb||a[3]||'')}</td></tr>`;
+    });
+    ah+='</table>';
+    $('#astroAspects').innerHTML=ah;
+  }
+}
+
+/* ===== 姓名学 ===== */
+function renderXm(xm){
+  const score=xm.total_score||xm.score||0;
+  $('#xmScore').textContent=score;
+  const wg=xm.wu_ge||xm.wuge||{};
+  const names=['天格','人格','地格','外格','总格'],keys=['tiange','renge','dige','waige','zongge'];
+  let wh='<div class="xm-wg">';
+  names.forEach((n,i)=>{
+    const ge=wg[keys[i]]||wg[n]||{};
+    const num=ge.score||ge.num||'',wx=ge.wuxing||'',ji=ge.ji_xiong||'';
+    const jCls=ji.includes('吉')?'ok':'bad';
+    wh+=`<div class="xm-wg-i"><div class="xm-wg-l">${n}</div><div class="xm-wg-n" style="color:${WXC[wx]||'var(--txt)'}">${num}</div><div class="xm-wg-wx">${esc(wx)}</div><div class="xm-wg-j ${jCls}">${esc(ji)}</div></div>`;
+  });
+  wh+='</div>';
+  $('#xmWuge').innerHTML=wh;
+
+  const sc=xm.san_cai||xm.sancai||{};
+  const scWx=sc.wuxing||'',scRst=sc.result||sc.ji_xiong||'',scDesc=sc.description||sc.analysis||'';
+  $('#xmSancai').innerHTML=`<div class="sc-card"><div class="sc-wx">${esc(scWx)}</div><div class="sc-rst">${esc(scRst)}</div><div class="sc-desc">${esc(scDesc)}</div></div>`;
+
+  const sl=xm.shu_li||xm.shuli||xm.ge_analysis||{};
+  let slh='';
+  names.forEach((n,i)=>{
+    const ge=sl[keys[i]]||sl[n]||wg[keys[i]]||wg[n]||{};
+    const num=ge.score||ge.num||'',ji=ge.ji_xiong||'',desc=ge.analysis||ge.description||ge.detail||ge.含义||'';
+    if(!num&&!desc)return;
+    const jCls=ji.includes('吉')?'ok':'bad';
+    slh+=`<div class="sl-card"><div class="sl-title">${n} <span style="color:var(--gold)">(${num})</span>${ji?`<span class="sl-ji ${jCls}">${esc(ji)}</span>`:''}</div><div class="sl-body">${esc(desc)}</div></div>`;
+  });
+  $('#xmShuli').innerHTML=slh||'<div style="color:var(--txt3);font-size:.8rem">数理数据不可用</div>';
+}
+
+document.addEventListener('DOMContentLoaded',init);
+})();
+</script>
 </body>
 </html>
