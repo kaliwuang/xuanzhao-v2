@@ -464,6 +464,9 @@ class LiuRenEngine(DivinationEngine):
         # 改进：区分月内前半段（节，继承前中气月将）和后半段（中气，用当月中气月将）
         month = abs(lunar.getMonth())
         day = lunar.getDay()
+        # 防御：month为0时回退到冬至（子月），避免字典查找失败
+        if month < 1 or month > 12:
+            month = 12
         # 节（每月前半段，约初一至十四）
         jie_approx = {
             1: "立春", 2: "惊蛰", 3: "清明", 4: "立夏",
