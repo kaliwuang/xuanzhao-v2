@@ -1,0 +1,702 @@
+/* 玄照 v2.0 - 专业排盘深色主题 */
+:root {
+    --bg-deep: #080810;
+    --bg-primary: #0c0c1a;
+    --bg-card: #12122a;
+    --bg-card-alt: #181838;
+    --bg-cell: #0e0e22;
+    --bg-cell-alt: #14142e;
+    --text-primary: #e8dcc8;
+    --text-secondary: #b0a890;
+    --text-muted: #606080;
+    --text-bright: #fff;
+    --gold: #c9a96e;
+    --gold-light: #e8d5a8;
+    --gold-dark: #8b7340;
+    --crimson: #d43050;
+    --jade: #3aaf6a;
+    --purple: #8060c0;
+    --blue: #4a90d9;
+    --fire: #e84040;
+    --wood: #40a060;
+    --water: #4080d0;
+    --metal: #c0a040;
+    --earth: #a08050;
+    --border: rgba(201,169,110,0.1);
+    --border-gold: rgba(201,169,110,0.25);
+    --radius: 8px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.5);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size: 14px; }
+body {
+    font-family: 'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* ===== 顶部信息栏 ===== */
+.chart-header {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.header-info { display:flex; align-items:center; gap:12px; }
+.header-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+}
+.header-sub {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+.header-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.header-pill {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+/* ===== Tab导航 ===== */
+.method-tabs {
+    display: flex;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-gold);
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 48px;
+    z-index: 99;
+}
+.method-tabs::-webkit-scrollbar { display:none; }
+.tab {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.tab:hover { color: var(--text-secondary); }
+.tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: rgba(201,169,110,0.05);
+}
+
+/* ===== 面板容器 ===== */
+.panels-container { padding: 12px; max-width: 900px; margin: 0 auto; }
+.method-panel { display:none; }
+.method-panel.active { display:block; }
+
+/* ===== 通用区块 ===== */
+.panel-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+.section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(201,169,110,0.03);
+    letter-spacing: 1px;
+}
+
+/* ===== 加载状态 ===== */
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+}
+.loading-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { color: var(--text-muted); font-size: 0.9rem; }
+
+/* ===== 八字四柱 ===== */
+.bazi-pillars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    padding: 2px;
+}
+.pillar-col {
+    display: flex;
+    flex-direction: column;
+}
+.pillar-label {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    padding: 4px;
+    background: var(--bg-cell-alt);
+}
+.pillar-cell {
+    text-align: center;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+.pillar-cell.gan {
+    font-size: 1.4rem;
+    font-weight: 700;
+    padding: 12px 4px;
+}
+.pillar-cell.zhi {
+    font-size: 1.4rem;
+    font-weight: 700;
+    padding: 12px 4px;
+}
+.pillar-cell.sub {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    padding: 4px;
+}
+
+/* 五行颜色 */
+.wx-jin { color: var(--metal); }
+.wx-mu { color: var(--wood); }
+.wx-shui { color: var(--water); }
+.wx-huo { color: var(--fire); }
+.wx-tu { color: var(--earth); }
+
+/* ===== 五行旺衰条 ===== */
+.wuxing-bars { padding: 12px 14px; }
+.wx-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.wx-bar-label {
+    width: 28px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+.wx-bar-track {
+    flex: 1;
+    height: 20px;
+    background: var(--bg-cell);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+.wx-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+    min-width: 2px;
+}
+.wx-bar-val {
+    width: 36px;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* ===== 十神格 ===== */
+.shishen-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    padding: 1px;
+}
+.shishen-cell {
+    padding: 6px;
+    text-align: center;
+    font-size: 0.8rem;
+    background: var(--bg-cell);
+}
+.shishen-cell .label { color: var(--text-muted); font-size: 0.65rem; display:block; }
+.shishen-cell .value { color: var(--gold-light); font-weight: 600; }
+
+/* ===== 神煞列表 ===== */
+.shensha-list { padding: 10px 14px; display:flex; flex-wrap:wrap; gap:6px; }
+.shensha-tag {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--bg-cell-alt);
+    color: var(--gold-light);
+    border: 1px solid var(--border);
+}
+
+/* ===== 大运横滚 ===== */
+.dayun-scroll {
+    overflow-x: auto;
+    padding: 10px 14px;
+    scrollbar-width: thin;
+}
+.dayun-table {
+    display: flex;
+    gap: 2px;
+    min-width: max-content;
+}
+.dayun-col {
+    min-width: 56px;
+    text-align: center;
+    background: var(--bg-cell);
+    border-radius: 4px;
+    padding: 4px 2px;
+}
+.dayun-col .dy-age { font-size:0.65rem; color:var(--text-muted); }
+.dayun-col .dy-gan { font-size:1rem; font-weight:700; }
+.dayun-col .dy-zhi { font-size:1rem; font-weight:700; }
+.dayun-col .dy-year { font-size:0.6rem; color:var(--text-muted); }
+.dayun-col.current { border:1px solid var(--gold); background:rgba(201,169,110,0.08); }
+
+/* ===== 喜用神 ===== */
+.xiyong-card { padding: 14px; }
+.xiyong-row { display:flex; gap:12px; margin-bottom:8px; flex-wrap:wrap; }
+.xiyong-item {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.xiyong-item.xi { background:rgba(58,175,106,0.15); color:var(--jade); border:1px solid rgba(58,175,106,0.3); }
+.xiyong-item.ji { background:rgba(212,48,80,0.15); color:var(--crimson); border:1px solid rgba(212,48,80,0.3); }
+.xiyong-reason { font-size:0.8rem; color:var(--text-secondary); margin-top:8px; }
+
+/* ===== 紫微十二宫 ===== */
+.ziwei-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 1px;
+    padding: 1px;
+    min-height: 480px;
+}
+.ziwei-cell {
+    background: var(--bg-cell);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 140px;
+}
+.ziwei-cell.center-cell {
+    background: var(--bg-cell-alt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+}
+.zw-palace-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 2px;
+}
+.zw-palace-gan {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+}
+.zw-stars {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 2px;
+    margin-top: 4px;
+}
+.zw-star {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(201,169,110,0.1);
+    color: var(--text-primary);
+}
+.zw-star.main { color:var(--gold-light); font-weight:700; background:rgba(201,169,110,0.15); }
+.zw-star.hua-lu { color:var(--jade); }
+.zw-star.hua-quan { color:var(--purple); }
+.zw-star.hua-ke { color:var(--blue); }
+.zw-star.hua-ji { color:var(--crimson); }
+.zw-self-hua {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.6rem;
+    color: var(--crimson);
+    font-weight: 700;
+}
+
+/* ===== 四化表 ===== */
+.sihua-table { padding: 10px 14px; }
+.sihua-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+.sihua-item {
+    text-align: center;
+    padding: 8px;
+    background: var(--bg-cell);
+    border-radius: 6px;
+}
+.sihua-type { font-size:0.65rem; color:var(--text-muted); margin-bottom:2px; }
+.sihua-star { font-size:0.9rem; font-weight:700; }
+
+/* ===== 六爻双卦 ===== */
+.liuyao-dual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    padding: 2px;
+}
+.gua-panel {
+    background: var(--bg-cell);
+    padding: 10px;
+}
+.gua-title {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+}
+.gua-subtitle {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.yao-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 40px 40px 40px;
+    gap: 4px;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+}
+.yao-row.header { font-size:0.65rem; color:var(--text-muted); font-weight:600; border-bottom:1px solid var(--border-gold); }
+.yao-line {
+    height: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.yao-line .yang {
+    width: 100%;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 2px;
+}
+.yao-line .yin {
+    width: 100%;
+    height: 4px;
+    display: flex;
+    gap: 4px;
+}
+.yao-line .yin span {
+    flex: 1;
+    height: 4px;
+    background: var(--gold);
+    border-radius: 2px;
+}
+.yao-dong { color: var(--crimson); font-weight:700; }
+
+/* ===== 奇门九宫 ===== */
+.qimen-info { padding: 10px 14px; display:flex; flex-wrap:wrap; gap:8px; }
+.qimen-info-tag {
+    font-size:0.75rem;
+    padding:3px 10px;
+    border-radius:12px;
+    background:var(--bg-cell);
+    color:var(--text-secondary);
+    border:1px solid var(--border);
+}
+.qimen-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    padding: 1px;
+}
+.qm-cell {
+    background: var(--bg-cell);
+    padding: 6px;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.qm-gong-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 2px;
+}
+.qm-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+}
+.qm-label { color:var(--text-muted); }
+.qm-tian { color:var(--blue); }
+.qm-di { color:var(--earth); }
+.qm-men { color:var(--jade); }
+.qm-xing { color:var(--purple); }
+.qm-shen { color:var(--gold-light); }
+
+/* ===== 大六壬 ===== */
+.liuren-info { padding:10px 14px; display:flex; flex-wrap:wrap; gap:8px; }
+.liuren-info-tag {
+    font-size:0.75rem;
+    padding:3px 10px;
+    border-radius:12px;
+    background:var(--bg-cell);
+    color:var(--text-secondary);
+    border:1px solid var(--border);
+}
+.liuren-pan {
+    padding: 10px 14px;
+    overflow-x: auto;
+}
+.lr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+.lr-table th {
+    padding: 6px 8px;
+    text-align: center;
+    background: var(--bg-cell-alt);
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 0.75rem;
+    border: 1px solid var(--border);
+}
+.lr-table td {
+    padding: 6px 8px;
+    text-align: center;
+    border: 1px solid var(--border);
+    background: var(--bg-cell);
+}
+.liuren-sike { padding:10px 14px; }
+.sike-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.sike-item {
+    text-align: center;
+    padding: 10px 6px;
+    background: var(--bg-cell);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+.sike-label { font-size:0.65rem; color:var(--text-muted); margin-bottom:4px; }
+.sike-value { font-size:1rem; font-weight:700; color:var(--gold-light); }
+.sanchuan-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+.sc-item {
+    text-align: center;
+    padding: 10px 6px;
+    background: var(--bg-cell);
+    border-radius: 6px;
+    border: 1px solid var(--border-gold);
+}
+.sc-label { font-size:0.65rem; color:var(--gold); margin-bottom:4px; font-weight:600; }
+.sc-value { font-size:1rem; font-weight:700; color:var(--text-bright); }
+
+/* ===== 太乙 ===== */
+.taiyi-info { padding:10px 14px; }
+.taiyi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+.taiyi-table th {
+    padding: 6px 10px;
+    text-align: left;
+    background: var(--bg-cell-alt);
+    color: var(--gold);
+    font-weight: 600;
+    border: 1px solid var(--border);
+    width: 100px;
+}
+.taiyi-table td {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-cell);
+    color: var(--text-primary);
+}
+.taiyi-sanji, .taiyi-bamen, .taiyi-suan { padding:10px 14px; }
+
+/* ===== 占星 ===== */
+.astro-chart-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+#astroCanvas {
+    border-radius: 50%;
+    background: var(--bg-cell);
+    border: 1px solid var(--border-gold);
+}
+.astro-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.75rem;
+}
+.astro-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.astro-legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.astro-planets, .astro-aspects {
+    padding: 10px 14px;
+}
+.astro-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+.astro-table th {
+    padding: 6px 8px;
+    text-align: center;
+    background: var(--bg-cell-alt);
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 0.75rem;
+    border: 1px solid var(--border);
+}
+.astro-table td {
+    padding: 6px 8px;
+    text-align: center;
+    border: 1px solid var(--border);
+    background: var(--bg-cell);
+}
+
+/* ===== 姓名学 ===== */
+.xm-score { padding:16px; text-align:center; }
+.xm-score-num {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+}
+.xm-score-label { font-size:0.8rem; color:var(--text-muted); margin-top:4px; }
+.xm-wuge { padding: 0 14px 14px; }
+.xm-wuge-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+.xm-wuge-item {
+    text-align: center;
+    padding: 10px 4px;
+    background: var(--bg-cell);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+.xm-wuge-label { font-size:0.65rem; color:var(--text-muted); margin-bottom:2px; }
+.xm-wuge-num { font-size:1.3rem; font-weight:700; }
+.xm-wuge-wx { font-size:0.7rem; }
+.xm-wuge-ji { font-size:0.65rem; margin-top:2px; }
+.xm-wuge-ji.ji { color:var(--crimson); }
+.xm-wuge-ji.xiong { color:var(--crimson); }
+.xm-wuge-ji.ji-ok { color:var(--jade); }
+.xm-sancai { padding:10px 14px; }
+.sancai-card {
+    padding: 14px;
+    background: var(--bg-cell);
+    border-radius: 8px;
+    border: 1px solid var(--border-gold);
+    text-align: center;
+}
+.sancai-wuxing {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+}
+.sancai-result { font-size:0.9rem; color:var(--jade); font-weight:600; margin-bottom:6px; }
+.sancai-desc { font-size:0.8rem; color:var(--text-secondary); }
+.xm-shuli { padding:10px 14px; }
+.shuli-card {
+    padding: 12px;
+    background: var(--bg-cell);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+}
+.shuli-card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.shuli-card-num { color:var(--gold); }
+.shuli-card-ji { font-size:0.75rem; padding:2px 8px; border-radius:10px; margin-left:8px; }
+.shuli-card-ji.ji { background:rgba(58,175,106,0.15); color:var(--jade); }
+.shuli-card-ji.xiong { background:rgba(212,48,80,0.15); color:var(--crimson); }
+.shuli-card-body { font-size:0.8rem; color:var(--text-secondary); }
+
+/* ===== 响应式 ===== */
+@media (max-width: 600px) {
+    html { font-size: 13px; }
+    .ziwei-grid { min-height: 360px; }
+    .ziwei-cell { min-height: 100px; padding: 4px; }
+    .qm-cell { min-height: 100px; padding: 4px; }
+    .bazi-pillars .pillar-cell.gan,
+    .bazi-pillars .pillar-cell.zhi { font-size: 1.2rem; padding: 8px 2px; }
+    .astro-chart-wrap { flex-direction: column; }
+    #astroCanvas { width: 280px; height: 280px; }
+    .liuyao-dual { grid-template-columns: 1fr; }
+}
