@@ -1348,9 +1348,12 @@ class BaziEngine(DivinationEngine):
         # 32. 天罗地网（以纳音五行查年柱和日柱）
         # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
         # 注：年柱纳音和日柱纳音均需检查（年命+日命，不同派系侧重不同）
+        # 修复：年柱和日柱应独立检查，避免break中断导致日柱的天罗/地网被遗漏
         tianluo_set = {'戌', '亥'}
         diwang_set = {'辰', '巳'}
         ref_zhis = set(all_zhis)  # 查四柱全部地支
+        _tianluo_found = False
+        _diwang_found = False
         for _check_pillar in [year_pillar, day_pillar]:
             _nayin_str = _check_pillar.nayin or ''
             _nayin_wx = ''
@@ -1358,12 +1361,12 @@ class BaziEngine(DivinationEngine):
                 if _wx in _nayin_str:
                     _nayin_wx = _wx
                     break
-            if _nayin_wx == '火' and ref_zhis & tianluo_set:
+            if not _tianluo_found and _nayin_wx == '火' and ref_zhis & tianluo_set:
                 shensha.append('天罗')
-                break  # 命中一次即够
-            if _nayin_wx in ('水', '土') and ref_zhis & diwang_set:
+                _tianluo_found = True
+            if not _diwang_found and _nayin_wx in ('水', '土') and ref_zhis & diwang_set:
                 shensha.append('地网')
-                break
+                _diwang_found = True
 
         # 33. 十恶大败（以日柱查）— 使用模块级 SHIBA_EBA
         if day_gz in SHIBA_EBA:
