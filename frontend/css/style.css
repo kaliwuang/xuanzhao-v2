@@ -1642,3 +1642,24 @@ select:focus-visible {
 .ziwei-cell {
     position: relative;
 }
+
+/* ===== 综合评分雷达图 ===== */
+#radarSection {
+    background: linear-gradient(135deg, rgba(20, 20, 46, 0.9), rgba(10, 10, 26, 0.95));
+    border: 1px solid var(--border-gold);
+    box-shadow: var(--shadow-card), 0 0 40px rgba(201, 169, 110, 0.06);
+}
+#radarCanvas { display: block; margin: 0 auto; }
+.radar-score-item {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.45rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.82rem;
+}
+.radar-score-item:last-child { border-bottom: none; }
+.radar-score-label { width: 56px; color: var(--text-muted); flex-shrink: 0; }
+.radar-score-bar { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.radar-score-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+.radar-score-value { width: 32px; text-align: right; font-weight: 600; font-size: 0.8rem; }
+@media (max-width: 768px) {
+    #radarSection > div:last-child { flex-direction: column; }
+    #radarCanvas { width: 260px !important; height: 260px !important; }
+}
