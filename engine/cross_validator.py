@@ -1157,6 +1157,8 @@ class CrossValidator:
             # 第六宫是占星中最直接的健康指标，行星落此宫影响对应身体系统
             planets = self.udm.astro_chart.get("planets", {})
             HOUSE6_BODY = {
+                "太阳": ("心脏和脊椎需关注，过度劳累易影响视力和心血管", ConfidenceLevel.MEDIUM),
+                "月亮": ("消化系统和情绪敏感，胃部和胸部易有不适", ConfidenceLevel.MEDIUM),
                 "火星": ("注意炎症、发热、意外伤害，运动系统和肌肉易劳损", ConfidenceLevel.MEDIUM),
                 "土星": ("慢性病倾向，骨骼关节、皮肤、牙齿需关注，免疫力偏弱", ConfidenceLevel.MEDIUM),
                 "冥王星": ("深层健康隐患，泌尿生殖系统和排泄系统需留意", ConfidenceLevel.LOW),
