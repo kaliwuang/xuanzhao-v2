@@ -722,13 +722,18 @@ class CrossValidator:
                     confidence=ConfidenceLevel.MEDIUM
                 ))
 
-        # 八字神煞：桃花、红鸾、天喜、红艳煞（感情婚姻核心信号）
+        # 八字神煞：桃花、红鸾、天喜、红艳煞、孤辰寡宿、阴阳差错等（感情婚姻核心信号）
         if self.udm.shensha:
             RELATIONSHIP_SHENSHA = {
                 "桃花": ("桃花星入命，异性缘佳，魅力出众，感情机会多", ConfidenceLevel.HIGH),
                 "红鸾": ("红鸾星动，主婚恋喜庆，正缘出现之兆", ConfidenceLevel.HIGH),
                 "天喜": ("天喜星临，主感情欢乐、喜事将近", ConfidenceLevel.MEDIUM),
                 "红艳煞": ("红艳煞入命，魅力非凡，感情丰富，但需防烂桃花", ConfidenceLevel.MEDIUM),
+                "孤辰": ("孤辰入命，性格独立清高，感情上易感孤独，择偶眼光高，婚恋较晚", ConfidenceLevel.MEDIUM),
+                "寡宿": ("寡宿入命，内心孤寂，感情上不易妥协，婚姻缘分来得慢但可稳", ConfidenceLevel.MEDIUM),
+                "阴阳差错": ("阴阳差错日出生，婚姻易有波折或错过良缘，宜晚婚或借合化解", ConfidenceLevel.HIGH),
+                "羊刃": ("羊刃入命，性格刚烈，夫妻间易起冲突，日支见刃尤忌（刃在配偶宫）", ConfidenceLevel.MEDIUM),
+                "飞刃": ("飞刃暗冲配偶宫，感情中易生突发变故，需注意沟通方式", ConfidenceLevel.LOW),
             }
             for ss_entry in self.udm.shensha:
                 ss_name = ss_entry.split("（")[0] if "（" in ss_entry else ss_entry
@@ -746,6 +751,17 @@ class CrossValidator:
                 items.append(ConsensusItem(
                     aspect="感情婚姻",
                     finding="双桃花入命，异性缘极旺，感情经历丰富，需慎重选择",
+                    supporting_methods=["八字"],
+                    confidence=ConfidenceLevel.HIGH
+                ))
+
+            # 孤辰寡宿同见（双重孤独信号，婚姻缘分更弱）
+            has_guchen = any(s.startswith("孤辰") for s in self.udm.shensha)
+            has_gasu = any(s.startswith("寡宿") for s in self.udm.shensha)
+            if has_guchen and has_gasu:
+                items.append(ConsensusItem(
+                    aspect="感情婚姻",
+                    finding="孤辰寡宿双见，婚姻缘分偏弱，感情中易感孤独，宜主动拓展社交圈",
                     supporting_methods=["八字"],
                     confidence=ConfidenceLevel.HIGH
                 ))
