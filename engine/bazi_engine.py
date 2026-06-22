@@ -563,6 +563,27 @@ class BaziEngine(DivinationEngine):
                 result.append('学堂')
             if zhi == SHENSHA_CIGUAN_MAP.get(day_master, ''):
                 result.append('词馆')
+            # 补充原局_calc_shensha中有但大运/流年遗漏的神煞（年支/月支/日干查）
+            if zhi == SHENSHA_TIANYI_MEDICAL_MAP.get(_month_zhi, ''):
+                result.append('天医')
+            if zhi == SHENSHA_TIANCHU_MAP.get(day_master, ''):
+                result.append('天厨')
+            if zhi == SHENSHA_LIUXIA_MAP.get(day_master, ''):
+                result.append('流霞')
+            if zhi == SHENSHA_WANGSHEN_MAP.get(_year_zhi, ''):
+                result.append('亡神')
+            if zhi == SHENSHA_JIESHA_MAP.get(_year_zhi, ''):
+                result.append('劫煞')
+            if zhi == SHENSHA_ZAISHA_MAP.get(_year_zhi, ''):
+                result.append('灾煞')
+            if zhi == SHENSHA_GOUSHA_MAP.get(_year_zhi, ''):
+                result.append('勾煞')
+            if zhi == SHENSHA_JIAOSHA_MAP.get(_year_zhi, ''):
+                result.append('绞煞')
+            if zhi == SHENSHA_GUICHEN_MAP.get(_year_zhi, ''):
+                result.append('孤辰')
+            if zhi == SHENSHA_GUASU_MAP.get(_year_zhi, ''):
+                result.append('寡宿')
             return result
 
         # 大运（增强版：含十神、藏干、纳音、长生、神煞、流年）
