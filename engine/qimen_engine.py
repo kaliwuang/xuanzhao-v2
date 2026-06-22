@@ -154,7 +154,7 @@ class QiMenEngine(DivinationEngine):
         di_pan = self._build_di_pan(ju, yin_yang)
 
         # 4. 天盘、八门、九星
-        tian_pan, ba_men, jiu_xing = self._build_tian_pan(di_pan, hour_gan_zhi, ju)
+        tian_pan, ba_men, jiu_xing = self._build_tian_pan(di_pan, hour_gan_zhi, ju, yin_yang)
 
         # 5. 值符 & 值使
         zhi_fu_gong = self._find_gong_for_gan(di_pan, hour_gan_zhi)
@@ -308,7 +308,7 @@ class QiMenEngine(DivinationEngine):
             di_pan[palace] = yi_order[yi_idx]
         return di_pan
 
-    def _build_tian_pan(self, di_pan: dict, hour_gan_zhi: str, ju: int):
+    def _build_tian_pan(self, di_pan: dict, hour_gan_zhi: str, ju: int, yin_yang: str = '阳遁'):
         """构建天盘、八门、九星
 
         天盘旋转规则：值符随时干转。
@@ -344,8 +344,9 @@ class QiMenEngine(DivinationEngine):
             # 中宫5不在洛书飞宫序列中，寄坤二宫处理
             if gong_int == 5:
                 gong_int = 2
-            # ju=5 也需寄坤二宫
-            ju_lookup = 2 if ju == 5 else ju
+            # 中宫5不在洛书飞宫序列中，需寄宫处理
+            # 阳遁寄坤二宫，阴遁寄巽四宫（传统规则）
+            ju_lookup = 4 if ju == 5 and yin_yang == '阴遁' else (2 if ju == 5 else ju)
             if gong_int in luo8:
                 # 找到值符（ju对应的星）在洛书中的位置
                 zhi_fu_idx = luo8.index(ju_lookup) if ju_lookup in luo8 else 0
@@ -404,7 +405,7 @@ class QiMenEngine(DivinationEngine):
                 # 阴遁：八神逆排（值符起始反向旋转）
                 god_idx = (start - i) % len(gods)
             ba_shen[palace] = gods[god_idx]
-        ba_shen[5] = ba_shen.get(2, '')  # 中宫5寄坤二宫，继承坤二宫八神
+        ba_shen[5] = ba_shen.get(4, '') if yin_yang == '阴遁' else ba_shen.get(2, '')  # 中五宫：阳遁寄坤二，阴遁寄巽四
         return ba_shen
 
     def _find_gong_for_gan(self, di_pan: dict, gan_zhi: str) -> int:
