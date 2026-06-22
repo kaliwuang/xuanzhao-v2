@@ -1120,6 +1120,26 @@ class BaziEngine(DivinationEngine):
         if _is_consecutive_4(zhi_indices, 12):
             features.append("地支连珠 — 四地支连续排列，气势连贯，格局特殊")
 
+        # 13. 藏干透干（地支藏干中的天干在四柱天干中出现，表示该元素力量外露，影响显著）
+        if hidden_gans:
+            gan_set = set(all_gans)
+            pos_keys = ['year', 'month', 'day', 'time']
+            for pos_idx, key in enumerate(pos_keys):
+                hides = hidden_gans.get(key, [])
+                if isinstance(hides, str):
+                    hides = list(hides)
+                for h_gan in hides:
+                    if h_gan in gan_set:
+                        # 找到透干的天干在哪个柱
+                        for g_pos, g in enumerate(all_gans):
+                            if g == h_gan:
+                                # 避免同柱重复（如年柱天干甲+年支寅藏甲）
+                                if g_pos != pos_idx:
+                                    features.append(
+                                        f"{h_gan}透干（{pos_names[pos_idx]}支{zhis[pos_idx]}藏{h_gan}→{pos_names[g_pos]}干{g}）"
+                                    )
+                                break
+
         # 最多30条基础特征（身强/身弱特征由analyze()方法insert(0,...)注入，不占此名额）
         # 原20条上限仍不足：冲/合/刑/害/三合/三会+十神组合+日支日禄已占15+条，天干连珠/地支连珠等稀有特征仍可能丢失
         return features[:self.MAX_BASE_FEATURES]
