@@ -50,6 +50,10 @@ class TaiYiEngine(DivinationEngine):
         '中': '中五宫', '乾': '乾六宫', '兑': '兑七宫', '艮': '艮八宫', '离': '离九宫',
     }
 
+    # 主客算强弱阈值（算数通常1-15范围）
+    SUAN_STRONG = 7   # >=7为强
+    SUAN_MEDIUM = 4   # 4-6为中，<4为弱
+
     @property
     def name(self) -> str:
         return "太乙"
@@ -225,18 +229,16 @@ class TaiYiEngine(DivinationEngine):
         """主客算解读分析 - 将主算、客算、定算数值解读为人类可读的判断"""
         analysis = {}
 
-        # 太乙主客算强弱阈值（算数通常1-15范围）
-        SUAN_STRONG = 7   # ≥7为强
-        SUAN_MEDIUM = 4   # 4-6为中，<4为弱
+        # 太乙主客算强弱阈值（复用类级常量）
 
         # 主算解读
         if zhu_suan:
             zhu_val = zhu_suan[0] if isinstance(zhu_suan, list) and zhu_suan else zhu_suan
             try:
                 zhu_num = int(zhu_val) if not isinstance(zhu_val, int) else zhu_val
-                if zhu_num >= SUAN_STRONG:
+                if zhu_num >= self.SUAN_STRONG:
                     analysis['zhu_ji'] = '主算强盛（{}），自身实力雄厚'.format(zhu_num)
-                elif zhu_num >= SUAN_MEDIUM:
+                elif zhu_num >= self.SUAN_MEDIUM:
                     analysis['zhu_ji'] = '主算中平（{}），守中有进'.format(zhu_num)
                 else:
                     analysis['zhu_ji'] = '主算较弱（{}），宜守不宜攻'.format(zhu_num)
@@ -248,9 +250,9 @@ class TaiYiEngine(DivinationEngine):
             ke_val = ke_suan[0] if isinstance(ke_suan, list) and ke_suan else ke_suan
             try:
                 ke_num = int(ke_val) if not isinstance(ke_val, int) else ke_val
-                if ke_num >= SUAN_STRONG:
+                if ke_num >= self.SUAN_STRONG:
                     analysis['ke_ji'] = '客算强盛（{}），外部压力大'.format(ke_num)
-                elif ke_num >= SUAN_MEDIUM:
+                elif ke_num >= self.SUAN_MEDIUM:
                     analysis['ke_ji'] = '客算中平（{}），外力平和'.format(ke_num)
                 else:
                     analysis['ke_ji'] = '客算较弱（{}），外部阻力小'.format(ke_num)
