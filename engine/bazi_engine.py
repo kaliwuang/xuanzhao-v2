@@ -519,7 +519,7 @@ class BaziEngine(DivinationEngine):
             if zhi in _taohua_targets:
                 result.append('桃花')
             if zhi == SHENSHA_WENCHANG_MAP.get(day_master, ''):
-                result.append('文昌')
+                result.append('文昌贵人')
             if zhi == SHENSHA_LU_MAP.get(day_master, ''):
                 result.append('禄神')
             if zhi in _hongluan_targets:
