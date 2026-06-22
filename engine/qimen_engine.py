@@ -341,12 +341,12 @@ class QiMenEngine(DivinationEngine):
 
         if hour_gan_gong:
             gong_int = int(hour_gan_gong)
-            # 中宫5不在洛书飞宫序列中，寄坤二宫处理
-            if gong_int == 5:
-                gong_int = 2
             # 中宫5不在洛书飞宫序列中，需寄宫处理
             # 阳遁寄坤二宫，阴遁寄巽四宫（传统规则）
-            ju_lookup = 4 if ju == 5 and yin_yang == '阴遁' else (2 if ju == 5 else ju)
+            _zhong_gong_ji = 4 if yin_yang == '阴遁' else 2
+            if gong_int == 5:
+                gong_int = _zhong_gong_ji
+            ju_lookup = _zhong_gong_ji if ju == 5 else ju
             if gong_int in luo8:
                 # 找到值符（ju对应的星）在洛书中的位置
                 zhi_fu_idx = luo8.index(ju_lookup) if ju_lookup in luo8 else 0
