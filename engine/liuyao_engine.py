@@ -501,7 +501,7 @@ class LiuYaoEngine(DivinationEngine):
             solar = Solar.fromYmdHms(pillar_date.year, pillar_date.month, pillar_date.day, bazi_hour, orig.minute, 0)
             lunar = solar.getLunar()
             year_num = lunar.getYear()
-            month_num = lunar.getMonth()
+            month_num = abs(lunar.getMonth())  # abs: 闰月返回负数(如闰四月=-4)，取绝对值
             day_num = lunar.getDay()
             ec = lunar.getEightChar()
             day_gan = ec.getDayGan()
