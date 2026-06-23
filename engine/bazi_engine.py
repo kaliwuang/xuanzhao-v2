@@ -1097,7 +1097,7 @@ class BaziEngine(DivinationEngine):
         has_shangguan = "伤官" in ss_vals_non_day
         has_zhenguan = "正官" in ss_vals_non_day
         has_qisha = "七杀" in ss_vals_non_day
-        has_shishen = "食神" in ss_vals_non_day
+        has_food_god = "食神" in ss_vals_non_day
         has_zhengyin = "正印" in ss_vals_non_day
         has_pianyin = "偏印" in ss_vals_non_day
         has_yin = has_zhengyin or has_pianyin
@@ -1109,7 +1109,7 @@ class BaziEngine(DivinationEngine):
         if has_shangguan and has_zhenguan:
             features.append("伤官见官 — 才华与规矩冲突，宜以技立身而非从政")
         # 食神制杀：食神与七杀同透——化压力为动力的天赋
-        if has_shishen and has_qisha:
+        if has_food_god and has_qisha:
             features.append("食神制杀 — 化压力为动力，逆境中见能力")
         # 杀印相生：七杀与正印同透——权威有根基，有贵人扶
         # 注：偏印+七杀为"枭神驾杀"，性质不同，不归入杀印相生
@@ -1122,10 +1122,10 @@ class BaziEngine(DivinationEngine):
         if has_shangguan and has_cai:
             features.append("伤官生财 — 才华转化为财富，以技谋利")
         # 食神生财：食神与财星同透——稳健生财
-        if has_shishen and has_cai:
+        if has_food_god and has_cai:
             features.append("食神生财 — 稳健求财，生活品质佳")
         # 枭神夺食：偏印与食神同透——才艺受阻
-        if has_pianyin and has_shishen:
+        if has_pianyin and has_food_god:
             features.append("枭神夺食 — 才艺易受干扰，思路易被打断")
         # 官杀混杂：正官与七杀同透天干——压力来源复杂，既有制度约束又有竞争压力
         # 八字中最重要的格局信号之一，需要合杀留官或合官留杀方能化解
