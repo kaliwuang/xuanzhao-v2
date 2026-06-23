@@ -106,8 +106,8 @@ def _parse_gender(gender: str) -> int:
     return 1 if gender.lower() in ("男", "male", "m") else 0
 
 
-def _validate_birth(birth: str):
-    """验证出生时间格式"""
+def _validate_birth(birth: str) -> str:
+    """验证出生时间格式，返回标准化后的时间字符串"""
     if not birth or not birth.strip():
         raise ValueError("出生时间不能为空")
     # 统一处理：下划线、+号作为空格
@@ -166,6 +166,7 @@ def _validate_birth(birth: str):
         second = int(hour_min[2])
         if not (0 <= second <= 59):
             raise ValueError(f"秒数错误: {second}")
+    return birth
 
 
 def _sanitize_name(name: str) -> str:
@@ -178,7 +179,7 @@ def _sanitize_name(name: str) -> str:
 
 def _prepare_udm(birth: str, location: str, gender: str):
     """公共前置：时间校正 + 排盘，返回 (corrected, udm)"""
-    _validate_birth(birth)
+    birth = _validate_birth(birth)
     time_engine = get_time_engine()
     corrected = time_engine.correct(birth, location)
     gender_code = _parse_gender(gender)
