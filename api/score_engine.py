@@ -478,7 +478,6 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
         score += 25
 
     # 2. 用神落宫（+30分）
-    palaces = chart.get("palaces", {}) or {}
     zhi_fu_gong = chart.get("zhi_fu_gong", "")
 
     # 值符落宫一般为吉
