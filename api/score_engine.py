@@ -688,6 +688,13 @@ def _score_astro(udm) -> Tuple[int, str, list, list]:
     }
 
     planet_scores = []
+    # 兼容 planetary_details 为 list 或 dict 两种格式
+    if isinstance(planetary_details, list):
+        planetary_details_dict = {}
+        for item in planetary_details:
+            if isinstance(item, dict) and item.get("name"):
+                planetary_details_dict[item["name"]] = item
+        planetary_details = planetary_details_dict
     for pname, pdetail in planetary_details.items():
         if isinstance(pdetail, dict):
             dignity = pdetail.get("dignity", "") or pdetail.get("essential_dignity", "")
