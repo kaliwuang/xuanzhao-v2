@@ -59,6 +59,12 @@ class CrossValidator:
         "水": "肾、膀胱",
     }
 
+    # 地支→五行映射（六壬/六爻健康分析用，类级常量避免重复构建）
+    _ZHI_WUXING = {
+        "子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火",
+        "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水",
+    }
+
     # 长生十二宫分类（健康维度用，提升为类级常量避免每次调用重建）
     CS_STRONG = {"长生", "临官", "帝旺", "冠带"}       # 先天元气充沛
     CS_WEAK = {"衰", "病", "死", "绝"}                 # 元气衰弱
@@ -1498,18 +1504,13 @@ class CrossValidator:
                     "辰": "脾胃", "巳": "心、小肠", "午": "心、小肠", "未": "脾胃",
                     "申": "肺、大肠", "酉": "肺、大肠", "戌": "脾胃", "亥": "肾、膀胱",
                 }
-                # 初传地支五行映射
-                _ZHI_WX = {
-                    "子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火",
-                    "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水",
-                }
 
                 # 天将健康信号
                 if chu_jiang in _HEALTH_JIANG:
                     desc, conf = _HEALTH_JIANG[chu_jiang]
                     # 初传地支五行→脏腑补充
                     organ_hint = _ZHI_ORGAN.get(chu_zhi, "")
-                    chu_wx = _ZHI_WX.get(chu_zhi, "")
+                    chu_wx = self._ZHI_WUXING.get(chu_zhi, "")
                     finding = desc
                     if organ_hint and chu_wx:
                         finding += f"（初传{chu_zhi}属{chu_wx}，{organ_hint}方向需留意）"
@@ -3678,11 +3679,7 @@ class CrossValidator:
                 ri_relation = yong_shen.get("ri_gan_relation", "")
 
                 # 初传地支五行
-                _ZHI_WX = {
-                    "子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火",
-                    "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水",
-                }
-                chu_wx = _ZHI_WX.get(chu_zhi, "")
+                chu_wx = self._ZHI_WUXING.get(chu_zhi, "")
 
                 # 冲突1：天将吉但初传五行属忌神
                 if jiang_jx in ("大吉", "吉") and chu_wx and chu_wx in ji_list:
