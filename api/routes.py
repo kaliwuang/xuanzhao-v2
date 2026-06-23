@@ -110,6 +110,8 @@ def _validate_birth(birth: str):
     """验证出生时间格式"""
     if not birth or not birth.strip():
         raise ValueError("出生时间不能为空")
+    # 统一处理：下划线、+号作为空格
+    birth = birth.strip().replace('_', ' ').replace('+', ' ')
     # 支持格式：2005-06-09 11:50 或 2005/06/09 11:50
     patterns = [
         r'^\d{4}-\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2}:\d{2}$',
