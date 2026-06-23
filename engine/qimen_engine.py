@@ -549,6 +549,15 @@ class QiMenEngine(DivinationEngine):
                 ji_ge.append({'name': '奇合', 'gong': g, 'desc': '乙庚合化金，合作有利'})
             if tp == '庚' and dp == '乙':
                 ji_ge.append({'name': '奇合', 'gong': g, 'desc': '庚乙合化金，刚柔相济'})
+            # 天干五合：丁壬合化木、戊癸合化火（甲己为天地合德，见下方）
+            if tp == '丁' and dp == '壬':
+                ji_ge.append({'name': '丁壬合', 'gong': g, 'desc': '丁壬合化木，阴阳相合，和合之象'})
+            if tp == '壬' and dp == '丁':
+                ji_ge.append({'name': '丁壬合', 'gong': g, 'desc': '壬丁合化木，以阳配阴，相得益彰'})
+            if tp == '戊' and dp == '癸':
+                ji_ge.append({'name': '戊癸合', 'gong': g, 'desc': '戊癸合化火，刚柔互济，合作有利'})
+            if tp == '癸' and dp == '戊':
+                ji_ge.append({'name': '戊癸合', 'gong': g, 'desc': '癸戊合化火，以柔配刚，化险为夷'})
             if tp == '丙' and dp == '戊':
                 ji_ge.append({'name': '飞鸟跌穴', 'gong': g, 'desc': '丙加戊，百事吉昌，如飞鸟归巢'})
             if tp == '戊' and dp == '丙':
