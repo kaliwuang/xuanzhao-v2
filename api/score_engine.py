@@ -733,11 +733,12 @@ def _score_astro(udm) -> Tuple[int, str, list, list]:
     aspects = chart.get("aspects", []) or []
     aspects_summary = chart.get("aspects_summary", {}) or {}
 
-    ji_aspects = ["trine", "sextile", "conjunction"]
-    xiong_aspects = ["square", "opposition"]
+    # 占星引擎使用中文相位名：'合相','六合','刑','三合','冲'
+    ji_aspects = ["合相", "六合", "三合"]
+    xiong_aspects = ["刑", "冲"]
 
-    ji_a = sum(1 for a in aspects if isinstance(a, dict) and a.get("aspect", "").lower() in ji_aspects)
-    xiong_a = sum(1 for a in aspects if isinstance(a, dict) and a.get("aspect", "").lower() in xiong_aspects)
+    ji_a = sum(1 for a in aspects if isinstance(a, dict) and a.get("aspect", "") in ji_aspects)
+    xiong_a = sum(1 for a in aspects if isinstance(a, dict) and a.get("aspect", "") in xiong_aspects)
 
     if ji_a > xiong_a:
         bonus = min(40, 25 + (ji_a - xiong_a) * 3)
