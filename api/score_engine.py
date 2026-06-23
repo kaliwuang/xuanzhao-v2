@@ -605,14 +605,17 @@ def _score_taiyi(udm) -> Tuple[int, str, list, list]:
     weaknesses = []
 
     # 1. 主客算强弱（+50分）
-    zhu_suan = chart.get("zhu_suan", "") or chart.get("suan_analysis", {}).get("zhu_suan", "") or ""
-    ke_suan = chart.get("ke_suan", "") or chart.get("suan_analysis", {}).get("ke_suan", "") or ""
+    # zhu_suan/ke_suan/ding_suan 是 list（如 [5,3]），需取第一个元素
+    zhu_suan_raw = chart.get("zhu_suan", []) or []
+    ke_suan_raw = chart.get("ke_suan", []) or []
+    zhu_suan_val = zhu_suan_raw[0] if isinstance(zhu_suan_raw, list) and zhu_suan_raw else zhu_suan_raw
+    ke_suan_val = ke_suan_raw[0] if isinstance(ke_suan_raw, list) and ke_suan_raw else ke_suan_raw
 
     # 太乙神数以主算为主
-    if zhu_suan:
+    if zhu_suan_val:
         zhu_num = 0
         try:
-            zhu_num = int(str(zhu_suan).strip())
+            zhu_num = int(zhu_suan_val) if not isinstance(zhu_suan_val, int) else zhu_suan_val
         except (ValueError, TypeError):
             pass
 
@@ -639,18 +642,19 @@ def _score_taiyi(udm) -> Tuple[int, str, list, list]:
         score += 10
 
     # 3. 九宫格局（+25分）
-    ding_suan = chart.get("ding_suan", "") or ""
-    if ding_suan:
+    ding_suan_raw = chart.get("ding_suan", []) or []
+    ding_suan_val = ding_suan_raw[0] if isinstance(ding_suan_raw, list) and ding_suan_raw else ding_suan_raw
+    if ding_suan_val:
         try:
-            ding_num = int(str(ding_suan).strip())
+            ding_num = int(ding_suan_val) if not isinstance(ding_suan_val, int) else ding_suan_val
             if ding_num >= 5:
                 score += 25
-                strengths.append(f"定算{ding_suan}，格局稳固")
+                strengths.append(f"定算{ding_num}，格局稳固")
             elif ding_num >= 3:
                 score += 18
             else:
                 score += 8
-                weaknesses.append(f"定算{ding_suan}，格局不太稳")
+                weaknesses.append(f"定算{ding_num}，格局不太稳")
         except (ValueError, TypeError):
             score += 12
     else:
