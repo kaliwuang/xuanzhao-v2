@@ -478,9 +478,9 @@ class LiuYaoEngine(DivinationEngine):
         except Exception as e:
             logger.debug(f"六爻日月建计算异常: {e}")
 
-        # 流年太岁分析（复用共享方法）
+        # 流年太岁分析（使用当前年份，非出生年份——流年太岁看当年运势）
         try:
-            result['liunian'] = self._build_liunian(lines, orig)
+            result['liunian'] = self._build_liunian(lines)
         except Exception as e:
             logger.debug(f"流年分析失败: {e}")
 
@@ -643,9 +643,9 @@ class LiuYaoEngine(DivinationEngine):
             'ri_yue_jian': self._calc_ri_yue_jian_safe(day_gan, day_zhi, lunar, gua_gong_wuxing),
         }
 
-        # 流年太岁分析（复用共享方法）
+        # 流年太岁分析（使用当前年份，非出生年份）
         try:
-            result['liunian'] = self._build_liunian(lines, orig)
+            result['liunian'] = self._build_liunian(lines)
         except Exception as e:
             logger.debug(f"流年分析失败: {e}")
 
@@ -1002,14 +1002,15 @@ class LiuYaoEngine(DivinationEngine):
     # ─── 验证 ────────────────────────────────────────────
 
 
-    def _build_liunian(self, lines: list, query_time: datetime = None) -> dict:
+    def _build_liunian(self, lines: list) -> dict:
         """流年太岁分析（najia/builtin路径共用）
+
+        始终使用当前年份的太岁（流年分析看当年运势，非出生年份）。
 
         Args:
             lines: 六爻列表
-            query_time: 排盘时间，默认为当前时间
         """
-        now = query_time or datetime.now()
+        now = datetime.now()
         try:
             from lunar_python import Solar as _Solar
         except ImportError:
