@@ -1194,7 +1194,9 @@ class CrossValidator:
         counts = self.udm.get_wuxing_count()
         if counts and any(v > 0 for v in counts.values()):
             # 补充藏干五行计数（藏干反映体内隐藏的五行能量）
-            from engine.bazi_engine import GAN_WUXING_STR as _GAN_WX
+            # 天干→五行映射（从udm模块级常量派生，避免跨模块绝对导入）
+            from .udm import GAN_WUXING as _GAN_WX_TUPLES
+            _GAN_WX = {k: v[0].value for k, v in _GAN_WX_TUPLES.items()}
             hidden_counts = dict(counts)  # 复制天干+本气计数
             for pillar_key, gans_list in (self.udm.hidden_gans or {}).items():
                 if not gans_list or not isinstance(gans_list, (list, str)):
