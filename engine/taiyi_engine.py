@@ -232,8 +232,8 @@ class TaiYiEngine(DivinationEngine):
         # 太乙主客算强弱阈值（复用类级常量）
 
         # 主算解读
-        if zhu_suan:
-            zhu_val = zhu_suan[0] if isinstance(zhu_suan, list) and zhu_suan else zhu_suan
+        if zhu_suan and isinstance(zhu_suan, list) and len(zhu_suan) > 0:
+            zhu_val = zhu_suan[0]
             try:
                 zhu_num = int(zhu_val) if not isinstance(zhu_val, int) else zhu_val
                 if zhu_num >= self.SUAN_STRONG:
@@ -246,8 +246,8 @@ class TaiYiEngine(DivinationEngine):
                 analysis['zhu_ji'] = f'主算：{zhu_val}'
 
         # 客算解读
-        if ke_suan:
-            ke_val = ke_suan[0] if isinstance(ke_suan, list) and ke_suan else ke_suan
+        if ke_suan and isinstance(ke_suan, list) and len(ke_suan) > 0:
+            ke_val = ke_suan[0]
             try:
                 ke_num = int(ke_val) if not isinstance(ke_val, int) else ke_val
                 if ke_num >= self.SUAN_STRONG:
@@ -260,8 +260,8 @@ class TaiYiEngine(DivinationEngine):
                 analysis['ke_ji'] = f'客算：{ke_val}'
 
         # 定算综合（与主算/客算相同的强弱解读逻辑）
-        if ding_suan:
-            ding_val = ding_suan[0] if isinstance(ding_suan, list) and ding_suan else ding_suan
+        if ding_suan and isinstance(ding_suan, list) and len(ding_suan) > 0:
+            ding_val = ding_suan[0]
             try:
                 ding_num = int(ding_val) if not isinstance(ding_val, int) else ding_val
                 if ding_num >= self.SUAN_STRONG:
@@ -275,11 +275,11 @@ class TaiYiEngine(DivinationEngine):
 
         # 主客对比（安全转换，处理numpy类型和非数字值）
         try:
-            zhu_num_safe = int(zhu_suan[0]) if zhu_suan and isinstance(zhu_suan, list) else 0
+            zhu_num_safe = int(zhu_suan[0]) if zhu_suan and isinstance(zhu_suan, list) and len(zhu_suan) > 0 else 0
         except (ValueError, TypeError, IndexError):
             zhu_num_safe = 0
         try:
-            ke_num_safe = int(ke_suan[0]) if ke_suan and isinstance(ke_suan, list) else 0
+            ke_num_safe = int(ke_suan[0]) if ke_suan and isinstance(ke_suan, list) and len(ke_suan) > 0 else 0
         except (ValueError, TypeError, IndexError):
             ke_num_safe = 0
         # 两个算数都有效时才对比（0表示数据缺失，不参与对比）
