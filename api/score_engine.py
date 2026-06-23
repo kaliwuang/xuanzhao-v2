@@ -323,8 +323,21 @@ def _score_ziwei(udm) -> Tuple[int, str, list, list]:
     sha_in_ming = 0
     mg_data = palaces.get("命宫", {})
     if isinstance(mg_data, dict):
-        ming_stars_text = str(mg_data.get("major_stars", "")) + str(mg_data.get("minor_stars", "")) + str(mg_data.get("stars", ""))
-        sha_in_ming = sum(1 for s in sha_stars if s in ming_stars_text)
+        # 从结构化数据中提取星名列表，避免str(dict)子串匹配的脆弱模式
+        _ming_star_names = []
+        for s in (mg_data.get("major_stars") or []):
+            if isinstance(s, dict):
+                _ming_star_names.append(s.get("name", ""))
+            else:
+                _ming_star_names.append(str(s))
+        for s in (mg_data.get("minor_stars") or []):
+            if isinstance(s, dict):
+                _ming_star_names.append(s.get("name", ""))
+            else:
+                _ming_star_names.append(str(s))
+        for s in (mg_data.get("stars") or []):
+            _ming_star_names.append(str(s))
+        sha_in_ming = sum(1 for s in sha_stars if s in _ming_star_names)
 
     if sha_in_ming == 0:
         score += 30
