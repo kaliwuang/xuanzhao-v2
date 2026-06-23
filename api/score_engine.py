@@ -19,6 +19,12 @@ GAN_WX = {
     "甲": "木", "乙": "木", "丙": "火", "丁": "火", "戊": "土",
     "己": "土", "庚": "金", "辛": "金", "壬": "水", "癸": "水",
 }
+# 地支五行（喜用神检查需要同时考虑天干和地支的五行）
+ZHI_WX = {
+    "子": "水", "丑": "土", "寅": "木", "卯": "木",
+    "辰": "土", "巳": "火", "午": "火", "未": "土",
+    "申": "金", "酉": "金", "戌": "土", "亥": "水",
+}
 
 # 吉神/凶神分类
 JISHEN_KEYWORDS = ["天乙", "文昌", "禄", "天德", "月德", "太极", "天喜", "红鸾", "将星"]
@@ -87,11 +93,13 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
             pillars.append(p.ganzhi)
 
     all_chars = "".join(pillars)
-    # 提取天干地支的五行
+    # 提取天干地支的五行（天干和地支都要检查，避免遗漏地支中的喜用五行）
     all_wx = set()
     for ch in all_chars:
         if ch in GAN_WX:
             all_wx.add(GAN_WX[ch])
+        elif ch in ZHI_WX:
+            all_wx.add(ZHI_WX[ch])
 
     xi_present = any(wx in all_wx for wx in xi_list) if xi_list else False
     ji_present = any(wx in all_wx for wx in ji_list) if ji_list else False
