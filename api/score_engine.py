@@ -362,10 +362,12 @@ def _score_liuyao(udm) -> Tuple[int, str, list, list]:
     wuxing_analysis = chart.get("wuxing_analysis", {}) or {}
     ge_ju = chart.get("ge_ju", []) or []
 
-    # 从格局判断
+    # 从格局判断（关键词须匹配 _identify_ge_ju 实际输出）
     ge_ju_str = " ".join(str(g) for g in ge_ju)
-    ji_ge = ["回头生", "生合", "帝旺", "临官", "长生", "进神"]
-    xiong_ge = ["回头克", "绝", "死", "墓", "退神", "空亡"]
+    # 吉格：世应合、六合、三合局、半合局
+    ji_ge = ["世应合", "六合", "三合", "半合"]
+    # 凶格：世应冲、六冲、反吟、游魂卦
+    xiong_ge = ["世应冲", "六冲", "反吟", "游魂卦"]
 
     ji_count = sum(1 for g in ji_ge if g in ge_ju_str)
     xiong_count = sum(1 for g in xiong_ge if g in ge_ju_str)
