@@ -865,8 +865,8 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
 
     # 1. 五格吉凶统计（+40分）
     ge_names = ["天格", "人格", "地格", "外格", "总格"]
-    ji_count = 0
-    xiong_count = 0
+    ji_count = 0.0
+    xiong_count = 0.0
     ge_details = []
 
     for ge_name in ge_names:
@@ -894,7 +894,7 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
     net = ji_count - xiong_count
     if net >= 3:
         score += 40
-        strengths.append(f"五格中{ji_count}个吉数，姓名数理配置非常好")
+        strengths.append(f"五格中{ji_count:g}个吉数，姓名数理配置非常好")
     elif net >= 1:
         score += 30
         strengths.append(f"五格吉多凶少，姓名基础不错")
@@ -902,10 +902,10 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
         score += 20
     elif net >= -2:
         score += 12
-        weaknesses.append(f"五格凶数偏多（{xiong_count}个），姓名数理有改善空间")
+        weaknesses.append(f"五格凶数偏多（{xiong_count:g}个），姓名数理有改善空间")
     else:
         score += 5
-        weaknesses.append(f"五格凶数较多（{xiong_count}个），建议考虑调整姓名")
+        weaknesses.append(f"五格凶数较多（{xiong_count:g}个），建议考虑调整姓名")
 
     # 2. 三才配置（+30分）
     sancai_jixiong = sancai.get("吉凶", "") if isinstance(sancai, dict) else ""
