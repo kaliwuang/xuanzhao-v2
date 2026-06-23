@@ -509,23 +509,25 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
         score += 8
 
     # 3. 八门（+30分）
+    # 注意：八门系统固定3吉门+4凶门+1中性门，遍历全盘ji/xiong计数永远3>4无意义。
+    # 奇门传统以值使门（当前值事之门）为八门核心，其吉凶决定八门整体质量。
     ba_men = chart.get("ba_men", {}) or {}
     ji_men = ["开门", "休门", "生门"]
     xiong_men = ["死门", "惊门", "伤门", "杜门"]
+    # 取值使门（zhi_shi.door）作为八门评分核心
+    zhi_shi = chart.get("zhi_shi", {}) or {}
+    zhi_shi_door = zhi_shi.get("door", "") if isinstance(zhi_shi, dict) else ""
 
-    # 遍历ba_men字典值，避免str(dict)子串匹配的脆弱模式
-    men_values = [v for v in ba_men.values() if v]
-    ji_m = sum(1 for m in ji_men if m in men_values)
-    xiong_m = sum(1 for m in xiong_men if m in men_values)
-
-    if ji_m > xiong_m:
-        score += 25
-        strengths.append("八门格局不错，做事有门路")
-    elif xiong_m > ji_m:
+    if zhi_shi_door in ji_men:
+        score += 28
+        strengths.append(f"值使门是{zhi_shi_door}，吉门值事，做事有门路")
+    elif zhi_shi_door in xiong_men:
         score += 10
-        weaknesses.append("八门凶门多，行事要谨慎，避免硬碰硬")
-    else:
+        weaknesses.append(f"值使门是{zhi_shi_door}，凶门值事，行事要谨慎")
+    elif zhi_shi_door:
         score += 18
+    else:
+        score += 15
 
     analysis_parts = []
     ju_name = chart.get("ju_name", "")
