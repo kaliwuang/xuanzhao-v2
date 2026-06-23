@@ -9,7 +9,7 @@ from .time_engine import CorrectedTime
 from .udm import Pillar, SHISHEN_MAP, ZHI_CANGGAN, GAN_WUXING, ZHI_LIUHE as ZHI_HE_MOD, ZHI_CHONG as ZHI_CHONG_MOD, WUXING_CHARS
 
 # 五行有序列表（纳音解析用，替代 WUXING_CHARS 集合的非确定性迭代顺序）
-WUXING_ORDERED = ['金', '木', '水', '火', '土']
+WUXING_ORDERED = ('金', '木', '水', '火', '土')
 import logging
 from datetime import datetime
 
