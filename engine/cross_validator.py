@@ -2901,10 +2901,11 @@ class CrossValidator:
                     # 贪狼/廉贞在夫妻宫也暗示感情复杂
                     ziwei_love_good = False
 
-        # 八字感情正面信号（有合）
+        # 八字感情正面信号（有六合——两字+"合"格式，排除三合/三会）
         bazi_love_good = False
         bazi_love_good_reason = ""
-        if any(("子" in h and "丑" in h) or ("寅" in h and "亥" in h) or ("卯" in h and "戌" in h) or ("辰" in h and "酉" in h) or ("巳" in h and "申" in h) or ("午" in h and "未" in h) for h in he):
+        liuhe_items = [h for h in he if len(h) == 3 and h.endswith("合")]
+        if liuhe_items:
             bazi_love_good = True
             bazi_love_good_reason = f"八字有合（{'、'.join(he[:2])}），感情缘分佳"
 
