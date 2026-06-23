@@ -243,18 +243,33 @@ def _score_ziwei(udm) -> Tuple[int, str, list, list]:
 
     # 1. 命宫主星（+35分）
     ming_gong = chart.get("ming_gong", "")
-    palaces = chart.get("palaces", {}) or {}
+    palaces_raw = chart.get("palaces", []) or []
     soul_star = chart.get("soul_star", "")
 
     # 吉星/煞星分类
     ji_main = ["紫微", "天府", "天相", "太阳", "太阴", "天同", "武曲", "天梁"]
     sha_main = ["贪狼", "巨门", "廉贞", "七杀", "破军"]
 
+    # 统一将 palaces 转为 {宫名: palace_dict} 映射（兼容 list 和 dict 两种格式）
+    palaces = {}
+    if isinstance(palaces_raw, list):
+        for p in palaces_raw:
+            if isinstance(p, dict) and p.get("name"):
+                palaces[p["name"]] = p
+    elif isinstance(palaces_raw, dict):
+        palaces = palaces_raw
+
     ming_palace_stars = []
-    if isinstance(palaces, dict):
-        mg = palaces.get("命宫", {})
-        if isinstance(mg, dict):
-            ming_palace_stars = mg.get("major_stars", []) or mg.get("stars", []) or []
+    mg = palaces.get("命宫", {})
+    if isinstance(mg, dict):
+        # 提取命宫中的星曜名称（兼容 major_stars 列表和 stars 列表格式）
+        for star_info in (mg.get("major_stars", []) or []):
+            if isinstance(star_info, dict):
+                ming_palace_stars.append(star_info.get("name", ""))
+            else:
+                ming_palace_stars.append(str(star_info))
+        if not ming_palace_stars:
+            ming_palace_stars = mg.get("stars", []) or []
 
     has_ji_main = any(s in str(ming_palace_stars) for s in ji_main)
     has_sha_main = any(s in str(ming_palace_stars) for s in sha_main)
@@ -298,12 +313,10 @@ def _score_ziwei(udm) -> Tuple[int, str, list, list]:
     # 3. 煞星分布（+30分）
     sha_stars = ["擎羊", "陀罗", "火星", "铃星", "地空", "地劫"]
     sha_in_ming = 0
-    for s in sha_stars:
-        for pname, pdata in (palaces or {}).items():
-            if isinstance(pdata, dict):
-                stars = str(pdata.get("major_stars", "")) + str(pdata.get("minor_stars", "")) + str(pdata.get("stars", ""))
-                if s in stars and pname == "命宫":
-                    sha_in_ming += 1
+    mg_data = palaces.get("命宫", {})
+    if isinstance(mg_data, dict):
+        ming_stars_text = str(mg_data.get("major_stars", "")) + str(mg_data.get("minor_stars", "")) + str(mg_data.get("stars", ""))
+        sha_in_ming = sum(1 for s in sha_stars if s in ming_stars_text)
 
     if sha_in_ming == 0:
         score += 30
