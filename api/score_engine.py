@@ -568,8 +568,9 @@ def _score_liuren(udm) -> Tuple[int, str, list, list]:
         score += 15
 
     # 3. 四课三传（+30分）
-    si_ke = chart.get("si_ke", {}) or {}
-    san_chuan = chart.get("san_chuan", {}) or {}
+    # 注：si_ke/san_chuan 在引擎中是 list（非 dict），默认值类型需匹配
+    si_ke = chart.get("si_ke", []) or []
+    san_chuan = chart.get("san_chuan", []) or []
 
     if si_ke:
         score += 15
