@@ -159,6 +159,14 @@ def serve_chart_result():
     return {"error": "not found"}
 
 
+@app.get("/chart_v2")
+def serve_chart_v2():
+    p = os.path.join(frontend_dir, "chart_v2.html")
+    if os.path.exists(p):
+        return FileResponse(p, headers=NO_CACHE_HEADERS)
+    return {"error": "chart_v2.html not found"}
+
+
 
 
 @app.get("/test")
