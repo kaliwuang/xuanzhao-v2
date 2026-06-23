@@ -178,8 +178,8 @@ class TimeEngine:
         """解析多种时间格式"""
         if not s:
             return None
-        # 统一处理：+号作为空格（URL编码兼容）
-        s = s.strip().replace('+', ' ')
+        # 统一处理：+号和下划线作为空格（URL编码兼容）
+        s = s.strip().replace('+', ' ').replace('_', ' ')
         formats = [
             "%Y-%m-%d %H:%M:%S",
             "%Y-%m-%d %H:%M",
