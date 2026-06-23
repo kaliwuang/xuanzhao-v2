@@ -280,9 +280,13 @@ YINYANG_CHACUO = frozenset([
     '丙午','丁未','戊申','辛酉','壬戌','癸亥'
 ])
 
-# ─── 天转煞（以日柱纳音五行查）────────────────
+# ─── 天转煞（以月支所在季节查日柱）────────────────
+# 传统规则（《协纪辨方书》）：春乙卯、夏丙午、秋辛酉、冬壬子
 SHENSHA_TIANZHUAN_MAP = {
-    '金': '辛卯', '木': '癸巳', '水': '丁未', '火': '丙戌', '土': '己丑'
+    '寅': '乙卯', '卯': '乙卯', '辰': '乙卯',  # 春
+    '巳': '丙午', '午': '丙午', '未': '丙午',  # 夏
+    '申': '辛酉', '酉': '辛酉', '戌': '辛酉',  # 秋
+    '亥': '壬子', '子': '壬子', '丑': '壬子',  # 冬
 }
 # ─── 六甲空亡（以日柱查）────────────────────────────
 XUNKONG_MAP = {
@@ -1505,16 +1509,10 @@ class BaziEngine(DivinationEngine):
 
         # NOTE: 天赦日检测已在上方第18条天赦中统一处理（两者判定条件完全一致：春戊寅/夏甲午/秋戊申/冬甲子）
 
-        # 44. 天转煞（以日柱纳音五行查）— 使用模块级 SHENSHA_TIANZHUAN_MAP
-        # 注意：天转煞用日柱纳音五行，与天罗地网用年柱纳音五行不同
-        _day_nayin_str = day_pillar.nayin or ''
-        _day_nayin_wx = ''
-        for _wx in WUXING_ORDERED:
-            if _wx in _day_nayin_str:
-                _day_nayin_wx = _wx
-                break
-        tianzhuan_ri = SHENSHA_TIANZHUAN_MAP.get(_day_nayin_wx, '')
-        if day_gz == tianzhuan_ri:
+        # 44. 天转煞（以月支所在季节查日柱）— 使用模块级 SHENSHA_TIANZHUAN_MAP
+        # 传统规则：春乙卯、夏丙午、秋辛酉、冬壬子
+        tianzhuan_ri = SHENSHA_TIANZHUAN_MAP.get(month_pillar.zhi, '')
+        if tianzhuan_ri and day_gz == tianzhuan_ri:
             shensha.append('天转煞')
 
         return shensha
