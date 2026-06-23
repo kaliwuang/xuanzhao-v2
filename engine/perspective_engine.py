@@ -453,8 +453,18 @@ class PerspectiveEngine:
         )
 
     def _extract_method_data(self, udm, method: str) -> Dict:
-        """从UDM提取特定术法的数据"""
+        """从UDM提取特定术法的数据。
+
+        非标准术法（如"多元模型"、"反脆弱"、"第一性原理"、"哲学推演"等）
+        自动回退到综合模式——提取所有可用术法数据，让现代思想家也能基于命盘数据推理。
+        """
+        # 标准术法集合：7大术法 + 综合；非标准方法回退到综合
+        STANDARD_METHODS = {"八字", "紫微", "六爻", "奇门", "大六壬", "太乙", "占星", "综合"}
         data = {"method": method}
+
+        # 非标准术法自动回退到综合模式
+        if method not in STANDARD_METHODS:
+            method = "综合"
 
         if method == "八字":
             data["pillars"] = {
@@ -1043,6 +1053,42 @@ class PerspectiveEngine:
                 suan_jx = suan_analysis.get("ji_xiong", suan_analysis.get("summary", ""))
                 if suan_jx:
                     reasoning_parts.append(f"算分析：{suan_jx}")
+
+        else:
+            # 非标准术法（多元模型、反脆弱、第一性原理等）：
+            # _extract_method_data 已回退到综合模式，提取全部术法数据。
+            # 此处从综合数据中提取核心摘要，让现代思想家也能基于数据推理。
+            bazi = method_data.get("bazi", {})
+            if bazi:
+                dm = bazi.get("day_master", "")
+                wx = bazi.get("day_master_wuxing", "")
+                features = bazi.get("features", [])
+                if dm:
+                    reasoning_parts.append(f"日主{dm}属{wx}")
+                    key_points.append(f"日主{dm}")
+                if features:
+                    reasoning_parts.append(f"命局特征：{features[0]}")
+                    key_points.append(features[0])
+            ziwei = method_data.get("ziwei", {})
+            if ziwei:
+                mg = ziwei.get("ming_gong", "")
+                stars = ziwei.get("star_placements", {})
+                if mg:
+                    reasoning_parts.append(f"命宫在{mg}")
+                main_stars = [s for s in stars if s in (
+                    "紫微", "天机", "太阳", "武曲", "天同", "廉贞",
+                    "天府", "太阴", "贪狼", "巨门", "天相", "天梁",
+                    "七杀", "破军",
+                )]
+                if main_stars:
+                    reasoning_parts.append(f"主星：{'、'.join(main_stars[:3])}")
+                    key_points.append(f"主星{'、'.join(main_stars[:2])}")
+            astro = method_data.get("astro", {})
+            if astro:
+                sun = astro.get("sun_sign", "")
+                if sun:
+                    reasoning_parts.append(f"太阳{sun}")
+                    key_points.append(f"太阳{sun}")
 
         # 2. 根据人物阵营(faction)和名言生成差异化stance
         faction = figure.faction if hasattr(figure, 'faction') else "其他"
