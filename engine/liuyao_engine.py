@@ -347,6 +347,8 @@ class LiuYaoEngine(DivinationEngine):
 
             if bian_mark and len(bian_mark) >= 6:
                 bian_najia = get_najia(bian_mark)
+                # 防御：najia可能返回不完整的干支列表，补齐空字符串防止IndexError
+                bian_najia = list(bian_najia) + [''] * max(0, 6 - len(bian_najia))
                 for i in range(6):
                     gz = bian_najia[i]
                     if len(gz) < 2:
