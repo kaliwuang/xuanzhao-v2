@@ -237,6 +237,17 @@ class TimeEngine:
         for suffix in ["市", "省", "县", "区", "盟", "州", "地区"]:
             if loc.endswith(suffix) and loc[:-len(suffix)] in self._cities:
                 return self._cities[loc[:-len(suffix)]]
+        # 尝试去掉省级前缀（如"内蒙古呼和浩特市"→"呼和浩特"）
+        province_prefixes = ["内蒙古", "新疆", "西藏", "广西", "宁夏", "黑龙江", "河北", "河南", "湖北", "湖南", "山东", "山西", "广东", "四川", "云南", "贵州", "甘肃", "青海", "吉林", "辽宁", "江苏", "浙江", "安徽", "福建", "江西", "陕西", "海南", "台湾"]
+        for prefix in province_prefixes:
+            if loc.startswith(prefix):
+                rest = loc[len(prefix):]
+                # 去掉可能的"自治区"后缀
+                for sub_suffix in ["自治区", "市", "盟", "州", "地区"]:
+                    if rest.endswith(sub_suffix):
+                        rest = rest[:-len(sub_suffix)]
+                if rest and rest in self._cities:
+                    return self._cities[rest]
         # 尝试取第一个词（如"北京市朝阳区"→"北京"）
         if len(loc) > 2:
             for end in range(2, min(5, len(loc))):
