@@ -625,8 +625,8 @@ def _score_taiyi(udm) -> Tuple[int, str, list, list]:
     # zhu_suan/ke_suan/ding_suan 是 list（如 [5,3]），需取第一个元素
     zhu_suan_raw = chart.get("zhu_suan", []) or []
     ke_suan_raw = chart.get("ke_suan", []) or []
-    zhu_suan_val = zhu_suan_raw[0] if isinstance(zhu_suan_raw, list) and zhu_suan_raw else zhu_suan_raw
-    ke_suan_val = ke_suan_raw[0] if isinstance(ke_suan_raw, list) and ke_suan_raw else ke_suan_raw
+    zhu_suan_val = zhu_suan_raw[0] if isinstance(zhu_suan_raw, list) and zhu_suan_raw else None
+    ke_suan_val = ke_suan_raw[0] if isinstance(ke_suan_raw, list) and ke_suan_raw else None
 
     # 太乙神数以主算为主
     # 注意：0是有效的算数值，不能用 truthiness 判断（if 0 会跳过）
@@ -661,7 +661,7 @@ def _score_taiyi(udm) -> Tuple[int, str, list, list]:
 
     # 3. 九宫格局（+25分）
     ding_suan_raw = chart.get("ding_suan", []) or []
-    ding_suan_val = ding_suan_raw[0] if isinstance(ding_suan_raw, list) and ding_suan_raw else ding_suan_raw
+    ding_suan_val = ding_suan_raw[0] if isinstance(ding_suan_raw, list) and ding_suan_raw else None
     # 注意：0是有效的算数值，不能用 truthiness 判断（与主算/客算保持一致）
     if ding_suan_val is not None and ding_suan_val != '':
         try:
