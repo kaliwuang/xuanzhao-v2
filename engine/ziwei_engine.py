@@ -320,12 +320,15 @@ class ZiWeiEngine(DivinationEngine):
         for p in r.palaces:
             for s in p.major_stars:
                 if s.mutagen:
-                    mutagen_map = {'禄': '禄', '权': '权', '科': '科', '忌': '忌'}
+                    # 兼容"禄"和"化禄"两种格式
+                    mutagen_map = {'禄': '禄', '权': '权', '科': '科', '忌': '忌',
+                                   '化禄': '禄', '化权': '权', '化科': '科', '化忌': '忌'}
                     if s.mutagen in mutagen_map:
                         sihua[mutagen_map[s.mutagen]] = _cn_star(s.name, 'major')
             for s in p.minor_stars:
                 if s.mutagen:
-                    mutagen_map = {'禄': '禄', '权': '权', '科': '科', '忌': '忌'}
+                    mutagen_map = {'禄': '禄', '权': '权', '科': '科', '忌': '忌',
+                                   '化禄': '禄', '化权': '权', '化科': '科', '化忌': '忌'}
                     if s.mutagen in mutagen_map:
                         sihua[mutagen_map[s.mutagen]] = _cn_star(s.name, 'minor')
 
