@@ -366,8 +366,9 @@ def _score_liuyao(udm) -> Tuple[int, str, list, list]:
     ge_ju_str = " ".join(str(g) for g in ge_ju)
     # 吉格：世应合、六合、三合局、半合局
     ji_ge = ["世应合", "六合", "三合", "半合"]
-    # 凶格：世应冲、六冲、反吟、游魂卦
-    xiong_ge = ["世应冲", "六冲", "反吟", "游魂卦"]
+    # 凶格：世应冲、六冲、伏吟、反吟、游魂卦、归魂卦
+    # 伏吟=变卦与本卦完全相同，事有停滞；归魂卦=京房八宫第8卦，主回归定局
+    xiong_ge = ["世应冲", "六冲", "伏吟", "反吟", "游魂卦", "归魂卦"]
 
     ji_count = sum(1 for g in ji_ge if g in ge_ju_str)
     xiong_count = sum(1 for g in xiong_ge if g in ge_ju_str)
