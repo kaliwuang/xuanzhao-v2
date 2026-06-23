@@ -356,8 +356,11 @@ class QiMenEngine(DivinationEngine):
                 zhi_fu_idx = luo8.index(ju_lookup) if ju_lookup in luo8 else 0
                 # 时干宫在洛书中的位置
                 target_idx = luo8.index(gong_int)
-                # 计算旋转偏移
-                offset = target_idx - zhi_fu_idx
+                # 计算旋转偏移（阳遁顺飞，阴遁逆飞）
+                if yin_yang == '阳遁':
+                    offset = target_idx - zhi_fu_idx
+                else:
+                    offset = zhi_fu_idx - target_idx  # 阴遁逆飞
 
                 # 天盘 = 地盘元素按offset旋转
                 n = len(luo8)
