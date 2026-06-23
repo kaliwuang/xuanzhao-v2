@@ -136,16 +136,13 @@ class TimeEngine:
         }
 
     def correct(self, birth_str: str, location: str) -> CorrectedTime:
-        """主入口：原始时间 -> 修正后的时间
-        注意：不再使用真太阳时校正，直接用客户选择的原始时间排盘。
-        真太阳时校正会导致时柱变化，与用户预期不符。
-        """
+        """主入口：原始时间 -> 修正后的精确时间"""
         # 1. 解析原始时间
         original = self._parse_time(birth_str)
         if original is None:
             raise ValueError(f"无法解析出生时间: {birth_str}")
 
-        # 2. 查经纬度（保留用于其他用途，但不影响排盘时间）
+        # 2. 查经纬度
         lat, lon = self._lookup_location(location)
 
         # 3. 夏令时回退（在本地时间上检查，DST边界是北京时间）
@@ -154,10 +151,10 @@ class TimeEngine:
         # 4. 时区转换（默认东八区）
         utc = self._to_utc(original)
 
-        # 5. 直接使用原始时间，不做真太阳时修正
-        true_solar = original  # 直接用原始时间
+        # 5. 真太阳时修正
+        true_solar = self._true_solar_time(utc, lon)
 
-        # 6. 早晚子时判定（基于原始时间）
+        # 6. 早晚子时判定（基于真太阳时）
         is_late_zi = self._is_late_zi_hour(true_solar)
 
         # 7. 节气上下文
