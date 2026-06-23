@@ -499,9 +499,10 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
     ji_men = ["开门", "休门", "生门"]
     xiong_men = ["死门", "惊门", "伤门", "杜门"]
 
-    men_str = str(ba_men)
-    ji_m = sum(1 for m in ji_men if m in men_str)
-    xiong_m = sum(1 for m in xiong_men if m in men_str)
+    # 遍历ba_men字典值，避免str(dict)子串匹配的脆弱模式
+    men_values = [v for v in ba_men.values() if v]
+    ji_m = sum(1 for m in ji_men if m in men_values)
+    xiong_m = sum(1 for m in xiong_men if m in men_values)
 
     if ji_m > xiong_m:
         score += 25
