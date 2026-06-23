@@ -558,16 +558,22 @@ def _score_liuren(udm) -> Tuple[int, str, list, list]:
     # 2. 用神（+30分）
     yong_shen = chart.get("yong_shen", {}) or {}
     if yong_shen:
-        ys_status = yong_shen.get("status", "") or yong_shen.get("旺衰", "")
-        if "旺" in str(ys_status) or "相" in str(ys_status):
+        # 六壬引擎返回的用神键: jiang_ji_xiong(天将吉凶), ri_gan_relation(与日干关系)
+        jiang_ji_xiong = yong_shen.get("jiang_ji_xiong", "") or ""
+        ri_gan_relation = yong_shen.get("ri_gan_relation", "") or ""
+        # 天将吉凶：大吉/吉 → 旺相，凶 → 休囚
+        if "大吉" in jiang_ji_xiong or "吉" in jiang_ji_xiong:
             score += 30
-            strengths.append("用神旺相，所问之事有力量支撑")
-        elif "休" in str(ys_status) or "囚" in str(ys_status):
-            score += 15
-            weaknesses.append("用神休囚，事情推进动力不足")
-        elif "死" in str(ys_status) or "绝" in str(ys_status):
-            score += 5
-            weaknesses.append("用神很弱，这个事情目前条件不成熟")
+            strengths.append("初传天将吉利，所问之事有力量支撑")
+        elif "凶" in jiang_ji_xiong:
+            score += 10
+            weaknesses.append("初传天将凶，事情推进有阻力")
+        elif "得助" in ri_gan_relation or "得财" in ri_gan_relation:
+            score += 25
+            strengths.append("初传与日干关系有利，事态向好")
+        elif "受制" in ri_gan_relation or "泄气" in ri_gan_relation:
+            score += 12
+            weaknesses.append("初传与日干关系不利，需要谨慎")
         else:
             score += 20
     else:
