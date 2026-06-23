@@ -16,7 +16,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from pathlib import Path
-import math
 import json
 import logging
 
@@ -261,42 +260,6 @@ class TimeEngine:
                 if start <= dt < end:
                     return dt - timedelta(hours=1)
         return dt
-
-    def _true_solar_time(self, utc: datetime, longitude: float) -> datetime:
-        """
-        真太阳时 = 平太阳时 + 经度修正 + 均时差
-
-        经度修正：每度4分钟。东经为正。
-        北京在东经120°，所以如果出生地在东经111.7°（呼和浩特），
-        真太阳时比北京时间慢 (120-111.7) x 4 = 33.2分钟。
-        """
-        # 先转回东八区平太阳时
-        beijing_time = utc + timedelta(hours=8)
-
-        # 经度修正（分钟）
-        longitude_correction = (longitude - 120.0) * 4.0
-
-        # 均时差（equation of time）——基于UTC日期计算（地球轨道位置与观测者时区无关）
-        eot = self._equation_of_time(utc)
-
-        # 总修正（分钟）
-        total_minutes = longitude_correction + eot
-
-        return beijing_time + timedelta(minutes=total_minutes)
-
-    def _equation_of_time(self, dt: datetime) -> float:
-        """
-        均时差：由于地球轨道椭圆和自转轴倾斜导致。
-        范围约 -14分钟 到 +16分钟。
-
-        简化公式（精度约+-1分钟，足够命理用）：
-        e = 9.87*sin(2B) - 7.53*cos(B) - 1.5*sin(B)
-        其中 B = 360*(N-81)/365，N为年积日
-        """
-        N = dt.timetuple().tm_yday
-        B = math.radians(360 * (N - 81) / 365)
-        e = 9.87 * math.sin(2 * B) - 7.53 * math.cos(B) - 1.5 * math.sin(B)
-        return e
 
     def _is_late_zi_hour(self, dt: datetime) -> bool:
         """晚子时：23:00-24:00"""
