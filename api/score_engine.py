@@ -482,8 +482,8 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
     elif isinstance(ge_ju, list):
         ge_ju_names = [str(g) for g in ge_ju]
 
-    ji_ge_kw = ["天遁", "地遁", "人遁", "龙遁", "虎遁", "风遁", "云遁", "神遁",
-                 "鬼遁", "仪奇", "三奇", "玉女守门", "九天", "九地"]
+    ji_ge_kw = ["天遁", "地遁", "人遁", "龙遁", "虎遁", "风遁", "云遁",
+                 "仪奇", "三奇", "玉女守门", "飞鸟跌穴", "青龙返首", "欢怡", "奇合", "天地合德"]
     xiong_ge_kw = ["悖格", "刑格", "大格", "小格", "飞格", "伏格", "六仪击刑", "五不遇时"]
 
     ji_g = sum(1 for g in ge_ju_names if any(k in str(g) for k in ji_ge_kw))
