@@ -282,6 +282,9 @@ class LiuYaoEngine(DivinationEngine):
         shi_ying = data.get('shiy', (6, 3, 0))  # (世爻, 应爻, 宫位) 世应1-indexed
         qin6 = data.get('qin6', [])          # 六亲 list[6]
         god6 = data.get('god6', [])          # 六神 list[6]
+        # 防御：najia可能返回不完整的六亲/六神列表（少于6项），补空字符串防止IndexError
+        qin6 = list(qin6) + [''] * max(0, 6 - len(qin6))
+        god6 = list(god6) + [''] * max(0, 6 - len(god6))
         gong_name = data.get('gong', '')     # 卦宫名 e.g. "乾"
 
         # 3. 获取纳甲干支
