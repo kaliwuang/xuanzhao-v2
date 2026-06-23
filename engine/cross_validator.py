@@ -1124,7 +1124,7 @@ class CrossValidator:
 
         # 八字五行平衡（含藏干，更准确反映体内五行分布）
         counts = self.udm.get_wuxing_count()
-        if counts:
+        if counts and any(v > 0 for v in counts.values()):
             # 补充藏干五行计数（藏干反映体内隐藏的五行能量）
             from engine.bazi_engine import GAN_WUXING_STR as _GAN_WX
             hidden_counts = dict(counts)  # 复制天干+本气计数
