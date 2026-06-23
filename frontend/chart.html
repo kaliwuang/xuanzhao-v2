@@ -193,8 +193,9 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
 
 <main class="panels" id="panels" style="display:none">
 
-<!-- 八字 -->
+<!-- 综合评估 -->
 <section class="panel on" id="p-bazi">
+  <div class="sec" id="overviewSection" style="display:none"><div class="sec-t">综合评估</div><div class="sec-b" id="overviewPanel"></div></div>
   <div class="sec"><div class="sec-t">四柱命盘</div><div class="sec-b" id="bzPillars"></div></div>
   <div class="sec"><div class="sec-t">五行旺衰</div><div class="sec-b" id="bzWx"></div></div>
   <div class="sec"><div class="sec-t">十神</div><div class="sec-b" id="bzSs"></div></div>
@@ -291,6 +292,8 @@ async function init(){
     if(d.taiyi)renderTaiyi(d.taiyi);
     if(d.astro)renderAstro(d.astro);
     if(d.xingming)renderXm(d.xingming);
+    // 异步加载综合评估
+    loadOverview();
   }catch(e){
     $('#loader').innerHTML=`<div style="color:var(--crimson);text-align:center"><div style="font-size:1.1rem;margin-bottom:6px">排盘失败</div><div style="font-size:.8rem;color:var(--txt3)">${esc(e.message)}</div></div>`;
   }
@@ -301,6 +304,79 @@ function renderPills(d){
   if(d.corrected_time&&d.corrected_time.diff_minutes!==undefined&&d.corrected_time.diff_minutes!==0)p.push(`真太阳时 ${(d.corrected_time.diff_minutes>0?'+':'')+d.corrected_time.diff_minutes}分`);
   (d.methods||[]).forEach(m=>p.push(m));
   $('#hPills').innerHTML=p.map(x=>`<span class="hdr-pill">${esc(x)}</span>`).join('');
+}
+
+/* ===== 综合评估 ===== */
+async function loadOverview(){
+  try{
+    let url=`/api/cross-validate?birth=${encodeURIComponent(BIRTH)}&location=${encodeURIComponent(LOC)}&gender=${encodeURIComponent(GENDER)}`;
+    const r=await fetch(url),d=await r.json();
+    if(d.comprehensive_judgment)renderOverview(d);
+  }catch(e){/* 静默失败 */}
+}
+
+function renderOverview(d){
+  const cj=d.comprehensive_judgment||{};
+  const conf=d.overall_confidence||'';
+  const methods=d.available_methods||[];
+
+  // 维度卡片
+  const dims=[
+    {key:'事业',icon:'💼'},
+    {key:'财运',icon:'💰'},
+    {key:'感情',icon:'❤️'},
+    {key:'健康',icon:'🏥'},
+    {key:'学业',icon:'📚'},
+    {key:'人际关系',icon:'🤝'}
+  ];
+
+  const jxColor={'吉':'var(--jade)','中':'var(--metal)','凶':'var(--crimson)'};
+  const jxBg={'吉':'rgba(58,175,106,.1)','中':'rgba(192,160,64,.1)','凶':'rgba(212,48,80,.1)'};
+
+  let h='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">';
+  // 置信度
+  h+=`<div style="font-size:.7rem;color:var(--txt2)">七术交叉验证 · 置信度: <span style="color:var(--gold);font-weight:700">${esc(conf)}</span> · ${methods.join('/')}</div>`;
+  h+='</div>';
+
+  // 命格总评
+  if(cj['命格总评']){
+    h+=`<div style="background:var(--bg);border-radius:6px;padding:10px;margin-bottom:10px;font-size:.8rem;line-height:1.7;color:var(--txt2)">${esc(cj['命格总评'])}</div>`;
+  }
+
+  // 六维卡片
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">';
+  dims.forEach(d=>{
+    const v=cj[d.key];
+    if(!v)return;
+    const jx=v['吉凶']||'';
+    const trend=(v['趋势']||'').substring(0,50);
+    const advice=v['建议']||'';
+    h+=`<div style="background:${jxBg[jx]||'var(--bg)'};border:1px solid ${jxColor[jx]||'transparent'};border-radius:8px;padding:8px;min-height:90px">`;
+    h+=`<div style="font-size:.7rem;font-weight:700;color:${jxColor[jx]||'var(--txt)'};margin-bottom:4px">${d.icon} ${d.key} <span style="float:right">${esc(jx)}</span></div>`;
+    h+=`<div style="font-size:.65rem;color:var(--txt2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(trend)}</div>`;
+    if(advice)h+=`<div style="font-size:.6rem;color:var(--txt3);margin-top:4px">💡 ${esc(advice.substring(0,30))}</div>`;
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // 性格
+  if(cj['性格']){
+    const gx=cj['性格'];
+    h+='<div style="background:var(--bg);border-radius:6px;padding:10px;margin-top:10px">';
+    h+='<div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:6px">🧠 性格特征</div>';
+    if(gx['优势'])h+=`<div style="font-size:.65rem;color:var(--jade);margin-bottom:3px">✅ ${esc(gx['优势'])}</div>`;
+    if(gx['劣势'])h+=`<div style="font-size:.65rem;color:var(--crimson);margin-bottom:3px">⚠️ ${esc(gx['劣势'])}</div>`;
+    if(gx['建议'])h+=`<div style="font-size:.65rem;color:var(--txt2)">💡 ${esc(gx['建议'])}</div>`;
+    h+='</div>';
+  }
+
+  // 大运提示
+  if(cj['大运提示']){
+    h+=`<div style="background:var(--bg);border-radius:6px;padding:10px;margin-top:10px"><div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:4px">🔮 大运提示</div><div style="font-size:.65rem;color:var(--txt2);line-height:1.6">${esc(cj['大运提示'])}</div></div>`;
+  }
+
+  $('#overviewPanel').innerHTML=h;
+  $('#overviewSection').style.display='block';
 }
 
 /* ===== 八字 ===== */
