@@ -196,9 +196,12 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
         for d in dayun[:5]:
             gz = d.get("ganzhi", "") if isinstance(d, dict) else ""
             if gz:
+                # 检查天干和地支的五行是否在喜用列表中
+                gan = gz[0] if len(gz) >= 1 else ""
                 zhi = gz[1:] if len(gz) >= 2 else ""
+                gwx = GAN_WX.get(gan, "")
                 dwx = ZHI_WX.get(zhi, "")
-                if dwx in xi_list:
+                if gwx in xi_list or dwx in xi_list:
                     good_dayun += 1
         if good_dayun >= 3:
             score += 15
