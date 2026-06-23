@@ -28,7 +28,8 @@ ZHI_WX = {
 
 # 吉神/凶神分类
 JISHEN_KEYWORDS = ["天乙", "文昌", "禄", "天德", "月德", "太极", "天喜", "红鸾", "将星"]
-XIONGSHA_KEYWORDS = ["羊刃", "七杀", "劫煞", "亡神", "孤辰", "寡宿", "天罗", "地网", "华盖"]
+XIONGSHA_KEYWORDS = ["羊刃", "七杀", "劫煞", "亡神", "孤辰", "寡宿", "天罗", "地网"]
+# 华盖属中性偏吉（主艺术/宗教/哲学天赋），不归入凶煞
 
 # ─── 主入口 ──────────────────────────────────────────────
 def score_all(udm, method: str = "all") -> Dict[str, Dict]:
@@ -195,9 +196,7 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
             gz = d.get("ganzhi", "") if isinstance(d, dict) else ""
             if gz:
                 zhi = gz[1:] if len(gz) >= 2 else ""
-                zhi_wx = {"子": "水", "丑": "土", "寅": "木", "卯": "木", "辰": "土", "巳": "火",
-                          "午": "火", "未": "土", "申": "金", "酉": "金", "戌": "土", "亥": "水"}
-                dwx = zhi_wx.get(zhi, "")
+                dwx = ZHI_WX.get(zhi, "")
                 if dwx in xi_list:
                     good_dayun += 1
         if good_dayun >= 3:
@@ -279,8 +278,8 @@ def _score_ziwei(udm) -> Tuple[int, str, list, list]:
         if not ming_palace_stars:
             ming_palace_stars = mg.get("stars", []) or []
 
-    has_ji_main = any(s in str(ming_palace_stars) for s in ji_main)
-    has_sha_main = any(s in str(ming_palace_stars) for s in sha_main)
+    has_ji_main = any(s in ming_palace_stars for s in ji_main)
+    has_sha_main = any(s in ming_palace_stars for s in sha_main)
 
     if has_ji_main and not has_sha_main:
         score += 35
