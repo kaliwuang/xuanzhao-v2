@@ -662,7 +662,8 @@ def _score_taiyi(udm) -> Tuple[int, str, list, list]:
     # 3. 九宫格局（+25分）
     ding_suan_raw = chart.get("ding_suan", []) or []
     ding_suan_val = ding_suan_raw[0] if isinstance(ding_suan_raw, list) and ding_suan_raw else ding_suan_raw
-    if ding_suan_val:
+    # 注意：0是有效的算数值，不能用 truthiness 判断（与主算/客算保持一致）
+    if ding_suan_val is not None and ding_suan_val != '':
         try:
             ding_num = int(ding_suan_val) if not isinstance(ding_suan_val, int) else ding_suan_val
             if ding_num >= 5:
