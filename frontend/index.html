@@ -42,22 +42,15 @@
                     <select id="birthDay" aria-label="出生日期"><option value="">-- 日 --</option></select>
                 </div>
                 <div class="form-group">
-                    <label>出生时辰</label>
-                    <select id="birthHour" aria-label="出生时辰">
-                        <option value="">-- 时辰 --</option>
-                        <option value="00:00">子时 (23-01)</option>
-                        <option value="01:00">丑时 (01-03)</option>
-                        <option value="03:00">寅时 (03-05)</option>
-                        <option value="05:00">卯时 (05-07)</option>
-                        <option value="07:00">辰时 (07-09)</option>
-                        <option value="09:00">巳时 (09-11)</option>
-                        <option value="11:00">午时 (11-13)</option>
-                        <option value="13:00">未时 (13-15)</option>
-                        <option value="15:00">申时 (15-17)</option>
-                        <option value="17:00">酉时 (17-19)</option>
-                        <option value="19:00">戌时 (19-21)</option>
-                        <option value="21:00">亥时 (21-23)</option>
-                    </select>
+                    <label>出生时间</label>
+                    <div style="display:flex;gap:8px">
+                        <select id="birthHour" aria-label="出生小时" style="flex:1">
+                            <option value="">-- 时 --</option>
+                        </select>
+                        <select id="birthMinute" aria-label="出生分钟" style="flex:1">
+                            <option value="">-- 分 --</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>出生地点</label>
@@ -202,6 +195,18 @@
         yearSel.addEventListener('change', updateDays);
         monthSel.addEventListener('change', updateDays);
         updateDays();
+        // 填充小时和分钟下拉框
+        var hourSel = document.getElementById('birthHour');
+        for (var h = 0; h < 24; h++) {
+            var o = document.createElement('option'); o.value = String(h).padStart(2,'0'); o.textContent = String(h).padStart(2,'0') + '时';
+            hourSel.appendChild(o);
+        }
+        var minSel = document.getElementById('birthMinute');
+        for (var mi = 0; mi < 60; mi += 5) {
+            var o = document.createElement('option'); o.value = String(mi).padStart(2,'0'); o.textContent = String(mi).padStart(2,'0') + '分';
+            minSel.appendChild(o);
+        }
+        minSel.value = '00';
         loadPreview();
     });
     function getBirth() {
@@ -209,8 +214,9 @@
         var m = document.getElementById('birthMonth').value;
         var d = document.getElementById('birthDay').value;
         var h = document.getElementById('birthHour').value;
+        var mi = document.getElementById('birthMinute').value || '00';
         if (!y || !m || !d || !h) return '';
-        return y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0') + ' ' + h;
+        return y + '-' + String(m).padStart(2,'0') + '-' + String(d).padStart(2,'0') + ' ' + h + ':' + mi;
     }
     function showLoading(v) { var el = document.getElementById('loading'); if(v) el.classList.remove('hidden'); else el.classList.add('hidden'); }
     function showError(msg) { var e = document.getElementById('error'); e.textContent = msg; e.classList.remove('hidden'); }
