@@ -492,17 +492,45 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
                    "五不遇时", "太白入荧", "荧入太白", "白虎出力", "上格",
                    "太白同宫", "白虎猖狂", "朱雀投江", "螣蛇夭矫", "值使落空"]
 
-    ji_g = sum(1 for g in ge_ju_names if any(k in str(g) for k in ji_ge_kw))
-    xiong_g = sum(1 for g in ge_ju_names if any(k in str(g) for k in xiong_ge_kw))
+    # 使用结构化数据计算吉凶格数量，同时考虑旬空影响（空亡宫格局效力减半）
+    ji_g = 0
+    xiong_g = 0
+    kong_wang_count = 0  # 落空亡的格局数
+    ge_ju_list = []
+    if isinstance(ge_ju, dict):
+        ge_ju_list = (ge_ju.get('ji_ge', []) or []) + (ge_ju.get('xiong_ge', []) or [])
+    for g in ge_ju_list:
+        name = g.get('name', '') if isinstance(g, dict) else str(g)
+        if not name:
+            continue
+        in_kong = g.get('in_kong_wang', False) if isinstance(g, dict) else False
+        is_ji = any(k in name for k in ji_ge_kw)
+        is_xiong = any(k in name for k in xiong_ge_kw)
+        if in_kong:
+            kong_wang_count += 1
+            # 空亡宫格局效力减半：吉格减半计分，凶格减半计分
+            if is_ji:
+                ji_g += 0.5
+            if is_xiong:
+                xiong_g += 0.5
+        else:
+            if is_ji:
+                ji_g += 1
+            if is_xiong:
+                xiong_g += 1
 
     if ji_g > xiong_g:
         score += 40
-        strengths.append(f"遇到{ji_g}个吉格，天时地利都站在你这边")
+        strengths.append(f"遇到{ji_g:g}个吉格，天时地利都站在你这边")
     elif xiong_g > ji_g:
         score += 15
-        weaknesses.append(f"有{xiong_g}个凶格，这个时间段做事要多留心眼")
+        weaknesses.append(f"有{xiong_g:g}个凶格，这个时间段做事要多留心眼")
     else:
         score += 25
+
+    # 旬空影响提示
+    if kong_wang_count > 0:
+        weaknesses.append(f"有{kong_wang_count:g}个格局落空亡，效力减半，需待出空后发力")
 
     # 2. 用神落宫（+30分）
     zhi_fu_gong = chart.get("zhi_fu_gong", "")
