@@ -480,6 +480,8 @@ class PerspectiveEngine:
             data["xunkong"] = udm.xunkong
             # 藏干（地支中暗藏的天干，判断十神旺衰的关键）
             data["hidden_gans"] = udm.hidden_gans
+            # 喜用神（身强身弱判定 + 喜忌五行，八字分析的核心维度）
+            data["xi_yong"] = udm.xi_yong
 
         elif method == "紫微":
             if udm.ziwei_chart:
@@ -578,6 +580,7 @@ class PerspectiveEngine:
                 "nayin": udm.nayin,
                 "xunkong": udm.xunkong,
                 "hidden_gans": udm.hidden_gans,
+                "xi_yong": udm.xi_yong,
             } if udm.bazi_year else {}
             data["ziwei"] = {
                 "ming_gong": udm.ziwei_chart.get("ming_gong", ""),

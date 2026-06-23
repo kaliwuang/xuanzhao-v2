@@ -217,6 +217,32 @@ class TestPerspectiveEngine:
         assert data["day_master_wuxing"] == "火"
         assert "pillars" in data
 
+    def test_extract_bazi_xi_yong(self):
+        """八字数据提取应包含喜用神信息"""
+        from engine.perspective_engine import PerspectiveEngine
+        from unittest.mock import MagicMock
+
+        pe = PerspectiveEngine()
+        udm = MagicMock()
+        udm.bazi_year = MagicMock(ganzhi="甲子")
+        udm.bazi_month = MagicMock(ganzhi="乙丑")
+        udm.bazi_day = MagicMock(ganzhi="丙寅")
+        udm.bazi_time = MagicMock(ganzhi="丁卯")
+        udm.day_master = "丙"
+        udm.day_master_wuxing = "火"
+        udm.shishen_gan = {}
+        udm.features = ["测试特征"]
+        udm.tiaohou = "壬"
+        udm.get_chong.return_value = []
+        udm.get_he.return_value = []
+        udm.get_wuxing_count.return_value = {}
+        udm.xi_yong = {"xi": ["木"], "ji": ["水"], "strength": "身弱", "reason": "测试"}
+
+        data = pe._extract_method_data(udm, "八字")
+        assert "xi_yong" in data, "八字数据提取应包含喜用神"
+        assert data["xi_yong"]["strength"] == "身弱"
+        assert "木" in data["xi_yong"]["xi"]
+
     def test_extract_liuyao_data_enriched(self):
         """六爻数据提取应包含世应、六神、日月建等新增字段"""
         from engine.perspective_engine import PerspectiveEngine
