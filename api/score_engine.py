@@ -615,7 +615,8 @@ def _score_taiyi(udm) -> Tuple[int, str, list, list]:
     ke_suan_val = ke_suan_raw[0] if isinstance(ke_suan_raw, list) and ke_suan_raw else ke_suan_raw
 
     # 太乙神数以主算为主
-    if zhu_suan_val:
+    # 注意：0是有效的算数值，不能用 truthiness 判断（if 0 会跳过）
+    if zhu_suan_val is not None and zhu_suan_val != '':
         zhu_num = 0
         try:
             zhu_num = int(zhu_suan_val) if not isinstance(zhu_suan_val, int) else zhu_suan_val
