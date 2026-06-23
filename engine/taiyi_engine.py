@@ -259,10 +259,19 @@ class TaiYiEngine(DivinationEngine):
             except (ValueError, TypeError):
                 analysis['ke_ji'] = f'客算：{ke_val}'
 
-        # 定算综合
+        # 定算综合（与主算/客算相同的强弱解读逻辑）
         if ding_suan:
             ding_val = ding_suan[0] if isinstance(ding_suan, list) and ding_suan else ding_suan
-            analysis['ding_ji'] = f'定算：{ding_val}'
+            try:
+                ding_num = int(ding_val) if not isinstance(ding_val, int) else ding_val
+                if ding_num >= self.SUAN_STRONG:
+                    analysis['ding_ji'] = '定算强盛（{}），局势明朗，定数有力'.format(ding_num)
+                elif ding_num >= self.SUAN_MEDIUM:
+                    analysis['ding_ji'] = '定算中平（{}），局势平稳，守中有进'.format(ding_num)
+                else:
+                    analysis['ding_ji'] = '定算较弱（{}），局势不明，宜静观其变'.format(ding_num)
+            except (ValueError, TypeError):
+                analysis['ding_ji'] = f'定算：{ding_val}'
 
         # 主客对比（安全转换，处理numpy类型和非数字值）
         try:
