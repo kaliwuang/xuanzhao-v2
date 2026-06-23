@@ -30,6 +30,60 @@ ASPECT_DEFS = [
     ('三合', 120, 6), ('冲', 180, 8),
 ]
 
+# Essential dignities (入庙/旺/陷/弱)
+# Domicile (入庙): planet rules the sign
+DOMICILE = {
+    '太阳': '狮子', '月亮': '巨蟹',
+    '水星': ['双子', '处女'], '金星': ['金牛', '天秤'],
+    '火星': ['白羊', '天蝎'], '木星': ['射手', '双鱼'],
+    '土星': ['摩羯', '水瓶'],
+    '天王星': ['水瓶'], '海王星': ['双鱼'], '冥王星': ['天蝎'],
+}
+# Exaltation (旺)
+EXALTATION = {
+    '太阳': '白羊', '月亮': '金牛', '水星': '处女', '金星': '双鱼',
+    '火星': '摩羯', '木星': '巨蟹', '土星': '天秤',
+}
+# Detriment (陷): opposite signs of domicile
+DETRIMENT = {
+    '太阳': '水瓶', '月亮': '摩羯',
+    '水星': ['射手', '双鱼'], '金星': ['白羊', '天蝎'],
+    '火星': ['天秤', '金牛'], '木星': ['双子', '处女'],
+    '土星': ['巨蟹', '狮子'],
+}
+# Fall (弱): opposite signs of exaltation
+FALL = {
+    '太阳': '天秤', '月亮': '天蝎', '水星': '双鱼', '金星': '处女',
+    '火星': '巨蟹', '木星': '摩羯', '土星': '白羊',
+}
+
+
+def _essential_dignity(planet_name: str, sign: str) -> str:
+    """Compute essential dignity for a planet in a given sign."""
+    if not planet_name or not sign:
+        return ''
+    # Check domicile
+    dom = DOMICILE.get(planet_name, [])
+    if isinstance(dom, str):
+        dom = [dom]
+    if sign in dom:
+        return 'domicile'
+    # Check exaltation
+    exalt = EXALTATION.get(planet_name, '')
+    if sign == exalt:
+        return 'exaltation'
+    # Check detriment
+    detr = DETRIMENT.get(planet_name, [])
+    if isinstance(detr, str):
+        detr = [detr]
+    if sign in detr:
+        return 'detriment'
+    # Check fall
+    fall = FALL.get(planet_name, '')
+    if sign == fall:
+        return 'fall'
+    return ''
+
 
 def _jd(dt: datetime) -> float:
     """Convert a datetime to Julian Day (UT).
@@ -146,12 +200,14 @@ class AstroEngine(DivinationEngine):
                     'house': house,
                     'speed': round(result[0][3], 4) if isinstance(result[0], (list, tuple)) and len(result[0]) > 3 else 0,
                     'retrograde': (isinstance(result[0], (list, tuple)) and len(result[0]) > 3 and result[0][3] < 0),
+                    'dignity': _essential_dignity(pname, sign),
                 }
             except Exception as e:
                 logger.warning(f"占星：{pname}位置计算异常，跳过: {e}")
                 planets[pname] = {
                     'longitude': 0, 'sign': '', 'sign_index': 0,
                     'degree': 0, 'house': 0, 'speed': 0, 'retrograde': False,
+                    'dignity': '',
                     'error': str(e),
                 }
 
@@ -252,7 +308,7 @@ class AstroEngine(DivinationEngine):
             'location': time.location_name,
             'north_node': north_node,
             'south_node': south_node,
-            'planetary_details': {name: {'retrograde': p.get('retrograde', False), 'speed': p.get('speed', 0)} for name, p in planets.items()},
+            'planetary_details': {name: {'retrograde': p.get('retrograde', False), 'speed': p.get('speed', 0), 'dignity': p.get('dignity', '')} for name, p in planets.items()},
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
