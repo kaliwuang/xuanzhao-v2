@@ -440,10 +440,18 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
     weaknesses = []
 
     # 1. 吉凶格（+40分）
+    # ge_ju_analysis 结构: {'ji_ge': [{'name':'天遁','gong':3,'desc':'...'}], 'xiong_ge': [...], ...}
     ge_ju = chart.get("ge_ju_analysis", {}) or {}
     ge_ju_names = []
     if isinstance(ge_ju, dict):
-        ge_ju_names = list(ge_ju.keys())
+        for g in (ge_ju.get('ji_ge', []) or []):
+            name = g.get('name', '') if isinstance(g, dict) else str(g)
+            if name:
+                ge_ju_names.append(name)
+        for g in (ge_ju.get('xiong_ge', []) or []):
+            name = g.get('name', '') if isinstance(g, dict) else str(g)
+            if name:
+                ge_ju_names.append(name)
     elif isinstance(ge_ju, list):
         ge_ju_names = [str(g) for g in ge_ju]
 
