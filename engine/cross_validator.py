@@ -779,6 +779,68 @@ class CrossValidator:
                         confidence=ConfidenceLevel.MEDIUM,
                     ))
 
+        # 太乙：看主客算强弱对比和太乙落宫
+        if self.udm.taiyi_chart:
+            ty = self.udm.taiyi_chart
+            suan_analysis = ty.get("suan_analysis", {})
+            pan_duan = suan_analysis.get("pan_duan", "")
+            zhu_ji = suan_analysis.get("zhu_ji", "")
+            ke_ji = suan_analysis.get("ke_ji", "")
+
+            # 主客算对比→事业策略判断
+            if pan_duan:
+                if "主强客弱" in pan_duan:
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=f"太乙{pan_duan}，事业宜主动出击、把握主导权",
+                        supporting_methods=["太乙"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                elif "客强主弱" in pan_duan:
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=f"太乙{pan_duan}，事业宜以守为攻、积蓄实力等待时机",
+                        supporting_methods=["太乙"],
+                        confidence=ConfidenceLevel.HIGH,
+                    ))
+                elif "主客均势" in pan_duan:
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=f"太乙{pan_duan}，事业局势均衡，需灵活应变随机而动",
+                        supporting_methods=["太乙"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+
+            # 主算独立判断（无论是否有对比）
+            if zhu_ji and "强盛" in zhu_ji:
+                items.append(ConsensusItem(
+                    aspect="事业方向",
+                    finding="太乙主算强盛，自身实力雄厚，事业根基扎实",
+                    supporting_methods=["太乙"],
+                    confidence=ConfidenceLevel.MEDIUM,
+                ))
+
+            # 太乙落宫→事业方向暗示
+            taiyi_gong = ty.get("taiyi_gong", "")
+            if taiyi_gong:
+                gong_career = {
+                    "坎一宫": "事业方向偏北或水利、物流、流通类行业",
+                    "坤二宫": "事业方向偏西南或地产、农业、服务业",
+                    "震三宫": "事业方向偏东或科技、创新、木业类行业",
+                    "巽四宫": "事业方向偏东南或贸易、教育、文化类行业",
+                    "乾六宫": "事业方向偏西北或金融、IT、高端制造",
+                    "兑七宫": "事业方向偏西或娱乐、口才、法律类行业",
+                    "艮八宫": "事业方向偏东北或建筑、矿业、山林类行业",
+                    "离九宫": "事业方向偏南或能源、电子、文化类行业",
+                }
+                if taiyi_gong in gong_career:
+                    items.append(ConsensusItem(
+                        aspect="事业方向",
+                        finding=f"太乙{taiyi_gong}，{gong_career[taiyi_gong]}",
+                        supporting_methods=["太乙"],
+                        confidence=ConfidenceLevel.LOW,
+                    ))
+
         return items
 
     def _validate_relationship(self) -> List[ConsensusItem]:
