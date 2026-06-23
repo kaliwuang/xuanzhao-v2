@@ -996,6 +996,42 @@ def get_xingming(
         return _error_response(e)
 
 
+@router.get("/api/score")
+def get_score(
+    birth: str = Query(..., description="出生时间，如 2005-06-09 11:50"),
+    location: str = Query("北京", description="出生地点"),
+    gender: str = Query("男", description="性别: 男/女"),
+    method: str = Query("all", description="术法名称，如 八字/紫微斗数/六爻/奇门遁甲/大六壬/太乙神数/占星，或 all 表示全部"),
+):
+    """评分接口：返回每个术法的评分(0-100)和白话解析"""
+    try:
+        cache_key = f"score:{birth}:{location}:{gender}:{method}"
+        cached = _get_cache(cache_key)
+        if cached:
+            return cached
+
+        corrected, udm = _prepare_udm(birth, location, gender)
+
+        from api.score_engine import score_all
+        result = score_all(udm, method)
+
+        response = {
+            "input": {
+                "birth": birth,
+                "location": location,
+                "gender": gender,
+                "method": method,
+            },
+            "scores": result,
+        }
+
+        _set_cache(cache_key, response)
+        return response
+
+    except Exception as e:
+        return _error_response(e)
+
+
 @router.get("/api/hehun")
 def get_hehun(
     birth1: str = Query(..., description="第一人出生时间，如 2005-06-09 11:50"),
@@ -1156,5 +1192,318 @@ def get_hehun(
                 "note": "综合评分=日干关系30%+日支关系30%+喜用互补40%。大运叠加期为双方运势共振期。"
             }
         }
+    except Exception as e:
+        return _error_response(e)
+
+
+@router.get("/api/bazi/score")
+def get_bazi_score(
+    birth: str = Query(..., description="出生时间，如 2005-06-09 11:50"),
+    location: str = Query("北京", description="出生地点"),
+    gender: str = Query("男", description="性别: 男/女"),
+):
+    """八字综合评分接口（五大维度，0-100分）"""
+    try:
+        corrected, udm = _prepare_udm(birth, location, gender)
+
+        if not udm.bazi_year:
+            return JSONResponse(status_code=400, content={"error": "无法排盘，请检查出生时间"})
+
+        # ── 提取基础数据 ──────────────────────────────────────────
+        day_master = udm.day_master or ""
+        day_master_wuxing = udm.day_master_wuxing or ""
+        xi_yong = getattr(udm, 'xi_yong', {}) or {}
+        strength = xi_yong.get('strength', '')
+        wuxing_score = udm.wuxing_score or {}
+        shishen_gan = udm.shishen_gan or {}
+        shishen_zhi = getattr(udm, 'shishen_zhi', {}) or {}
+        changsheng = getattr(udm, 'changsheng', {}) or {}
+        dayun = getattr(udm, 'dayun', []) or []
+        features = udm.features or []
+
+        pillars = {
+            'year': udm.bazi_year.ganzhi or '',
+            'month': udm.bazi_month.ganzhi if udm.bazi_month else '',
+            'day': udm.bazi_day.ganzhi if udm.bazi_day else '',
+            'time': udm.bazi_time.ganzhi if udm.bazi_time else '',
+        }
+
+        # ── 维度一：日主强弱（20分）──────────────────────────────
+        strength_score_map = {
+            '中和': 20,
+            '身强': 15,
+            '身弱': 15,
+        }
+        s1 = strength_score_map.get(strength, 10)
+
+        if strength == '中和':
+            s1_text = f"日主{day_master}（{day_master_wuxing}）力量均衡，属于中和之命。这种格局最为理想，不偏不倚，进退有据。整体先天条件不错。"
+        elif strength == '身强':
+            s1_text = f"日主{day_master}（{day_master_wuxing}）偏强，自身力量充足。好在能担财官，适合主动出击、开拓事业。但也要注意别太强势，刚过易折。"
+        elif strength == '身弱':
+            s1_text = f"日主{day_master}（{day_master_wuxing}）偏弱，先天力量不足。需要贵人扶持和好的环境来成就事业。建议多借助外力，不宜单打独斗。"
+        else:
+            s1_text = f"日主{day_master}（{day_master_wuxing}）强弱难以明确判断，格局较为特殊。建议结合具体大运流年来分析。"
+
+        # ── 维度二：五行平衡（20分）──────────────────────────────
+        # 统计得分>0的五行种类
+        present_elements = [wx for wx, sc in wuxing_score.items() if sc and sc > 0]
+        n_elements = len(present_elements)
+        element_score_map = {5: 20, 4: 16, 3: 12, 2: 8, 1: 4}
+        s2 = element_score_map.get(n_elements, 4)
+
+        # 如果五行齐全，额外检查是否有极弱的
+        zero_elements = [wx for wx in ['木', '火', '土', '金', '水'] if wuxing_score.get(wx, 0) == 0]
+        if n_elements == 5 and zero_elements:
+            s2 = 16  # 有五行得分为0，降分
+
+        # 找最旺和最弱的五行
+        if wuxing_score:
+            sorted_wx = sorted(wuxing_score.items(), key=lambda x: x[1] or 0, reverse=True)
+            strongest = sorted_wx[0][0] if sorted_wx else ''
+            weakest = sorted_wx[-1][0] if sorted_wx else ''
+        else:
+            strongest = weakest = ''
+
+        if n_elements == 5:
+            s2_text = f"五行齐全，金木水火土皆有体现，先天格局较为圆满。"
+            if strongest and weakest:
+                s2_text += f"其中{strongest}最旺，{weakest}最弱，整体较为均衡。"
+        elif n_elements == 4:
+            missing = [wx for wx in ['木', '火', '土', '金', '水'] if not wuxing_score.get(wx)]
+            s2_text = f"五行缺{''.join(missing)}，先天有某一环节偏弱。在生活中可以有意识地多接触{missing[0]}相关事物来调和，比如方位、颜色、行业等方面。"
+        else:
+            missing = [wx for wx in ['木', '火', '土', '金', '水'] if not wuxing_score.get(wx)]
+            s2_text = f"五行缺{'、'.join(missing)}较多，命局偏于某一极端。建议通过后天环境调整来弥补，多关注所缺五行对应的领域。"
+
+        # ── 维度三：十神配置（20分）──────────────────────────────
+        # 收集所有出现的十神类型（天干+地支藏干）
+        all_shishen = set()
+        for v in shishen_gan.values():
+            if v and v != '?':
+                all_shishen.add(v)
+        for v_list in shishen_zhi.values():
+            if isinstance(v_list, list):
+                for v in v_list:
+                    if v and v != '?':
+                        all_shishen.add(v)
+
+        n_shishen = len(all_shishen)
+        if n_shishen >= 6:
+            s3 = 20
+        elif n_shishen == 5:
+            s3 = 16
+        elif n_shishen == 4:
+            s3 = 12
+        else:
+            s3 = 8
+
+        shishen_list = sorted(all_shishen)
+        if n_shishen >= 6:
+            s3_text = f"十神配置丰富，出现了{n_shishen}种十神（{'、'.join(shishen_list)}）。人生面广，经历多样，能适应各种环境和角色。这是比较理想的组合。"
+        elif n_shishen >= 4:
+            s3_text = f"十神出现了{n_shishen}种（{'、'.join(shishen_list)}），命局有一定多样性。某些方面突出，某些方面相对薄弱，属于有侧重的格局。"
+        else:
+            s3_text = f"十神仅出现{n_shishen}种（{'、'.join(shishen_list)}），命局偏向单一。性格和运势比较集中，优点和缺点都会比较明显。"
+
+        # ── 维度四：格局清纯（20分）──────────────────────────────
+        # 检查日柱天干十神
+        day_shishen = shishen_gan.get('day', '')
+
+        # 高分十神（在日干位或月令位）
+        low_shishen = {'七杀', '伤官', '劫财'}
+
+        s4 = 12  # 基础分
+
+        # 日干位十神
+        if day_shishen in {'正官', '正印', '食神'}:
+            s4 = 18
+        elif day_shishen in {'偏印', '比肩'}:
+            s4 = 15
+        elif day_shishen in {'偏财', '正财'}:
+            s4 = 14
+        elif day_shishen in low_shishen:
+            s4 = 8
+
+        # 检查伤官见官（格局大忌）
+        has_shangguan = '伤官' in all_shishen
+        has_zhengguan = '正官' in all_shishen
+        if has_shangguan and has_zhengguan:
+            s4 = max(4, s4 - 6)
+
+        # 检查七杀无制
+        has_qisha = '七杀' in all_shishen
+        has_foodie = '食神' in all_shishen  # 食神制杀
+        has_zhengyin = '正印' in all_shishen  # 印化杀
+        if has_qisha and not has_foodie and not has_zhengyin:
+            s4 = max(4, s4 - 4)
+
+        s4 = min(20, max(0, s4))
+
+        if s4 >= 16:
+            s4_text = f"格局较为清纯，日柱{pillars['day']}坐{day_shishen}，"
+            if day_shishen in {'正官', '正印', '食神'}:
+                s4_text += "属于传统好格局。行事正派，有贵气，容易获得社会认可和稳定发展。"
+            else:
+                s4_text += "命局组合协调，没有明显的冲克矛盾。做事比较顺遂，不易走极端。"
+        elif s4 >= 10:
+            s4_text = f"格局尚可，日柱{pillars['day']}坐{day_shishen}。命局有一些好的组合，但也存在一些需要注意的地方。"
+            if has_shangguan and has_zhengguan:
+                s4_text += "伤官与正官并见，性格中既有叛逆也有守规矩的一面，需要注意平衡。"
+            if has_qisha and not has_foodie:
+                s4_text += "七杀出现但缺少制化，压力和挑战会多一些，需要自己去化解。"
+        else:
+            s4_text = f"格局有些复杂，日柱{pillars['day']}坐{day_shishen}。"
+            if has_shangguan and has_zhengguan:
+                s4_text += "伤官见官，容易有是非口舌，建议行事低调，以和为贵。"
+            elif has_qisha and not has_foodie and not has_zhengyin:
+                s4_text += "七杀无制，人生压力较大，但逆境也出英雄，关键在于能否转化。"
+            else:
+                s4_text += "命局有些纠结，需要在矛盾中找到出路。好在命运总留有转机。"
+
+        # ── 维度五：大运走势（20分）──────────────────────────────
+        # 分析前5步大运的长生十二宫走势
+        good_cs = {'长生', '冠带', '临官', '帝旺'}
+        bad_cs = {'死', '墓', '绝'}
+
+        s5 = 10  # 基础分
+        good_ages = 0
+        total_periods = min(5, len(dayun))
+
+        dayun_details = []
+        for dy in dayun[:5]:
+            dy_cs = dy.get('changsheng', '')
+            dy_age = dy.get('age', 0)
+            dy_gz = dy.get('ganzhi', '')
+            dayun_details.append({'ganzhi': dy_gz, 'changsheng': dy_cs, 'age': dy_age})
+            if dy_cs in good_cs:
+                good_ages += 1
+            elif dy_cs in bad_cs:
+                good_ages -= 1
+
+        if total_periods > 0:
+            ratio = good_ages / total_periods
+            if ratio >= 0.6:
+                s5 = 18
+            elif ratio >= 0.4:
+                s5 = 15
+            elif ratio >= 0.2:
+                s5 = 12
+            elif ratio >= 0:
+                s5 = 10
+            else:
+                s5 = 6
+
+        s5 = min(20, max(0, s5))
+
+        # 生成大运描述
+        if dayun_details:
+            first_dy = dayun_details[0]
+            prime_dy = None
+            for d in dayun_details:
+                if d['age'] and 25 <= d['age'] <= 45:
+                    prime_dy = d
+                    break
+            if not prime_dy:
+                prime_dy = dayun_details[1] if len(dayun_details) > 1 else first_dy
+
+            if s5 >= 16:
+                s5_text = f"大运走势不错，早年{first_dy['ganzhi']}（{first_dy['changsheng']}），"
+                if prime_dy:
+                    s5_text += f"壮年{prime_dy['ganzhi']}（{prime_dy['changsheng']}）。"
+                s5_text += "关键年龄段运势向上，利于事业突破和发展。整体走势呈上升或平稳趋势。"
+            elif s5 >= 10:
+                s5_text = f"大运走势有起有伏，早年{first_dy['ganzhi']}（{first_dy['changsheng']}），"
+                if prime_dy:
+                    s5_text += f"壮年{prime_dy['ganzhi']}（{prime_dy['changsheng']}）。"
+                s5_text += "部分时段运势较好，部分时段需要忍耐。把握好运的阶段，低谷时蓄力即可。"
+            else:
+                s5_text = f"大运前期{first_dy['ganzhi']}（{first_dy['changsheng']}），"
+                if prime_dy:
+                    s5_text += f"壮年{prime_dy['ganzhi']}（{prime_dy['changsheng']}）。"
+                s5_text += "早年运势偏弱，但命运往往先苦后甜。中年后运势有望好转，关键在于早年积累。"
+        else:
+            s5_text = "大运数据不足，无法详细分析走势。建议结合具体流年来判断运势起伏。"
+
+        # ── 综合评分 ──────────────────────────────────────────
+        total = s1 + s2 + s3 + s4 + s5
+
+        # 等级映射
+        if total >= 90:
+            grade = "上上"
+        elif total >= 80:
+            grade = "上"
+        elif total >= 70:
+            grade = "中上"
+        elif total >= 60:
+            grade = "中"
+        elif total >= 50:
+            grade = "中下"
+        else:
+            grade = "下"
+
+        # 综合评语
+        if total >= 80:
+            summary = f"此命综合评分{total}分（{grade}），先天格局优越。日主{strength}，五行{'齐全' if n_elements == 5 else '有所欠缺'}，十神配置丰富。"
+            summary += "整体属于好命，关键在于能否把握大运中的机遇，顺势而为。"
+        elif total >= 60:
+            summary = f"此命综合评分{total}分（{grade}），先天条件中等偏上。日主{strength}，命局有一定亮点也有不足。"
+            summary += "通过后天努力和环境调整，完全可以弥补先天不足，创造不错的人生。"
+        else:
+            summary = f"此命综合评分{total}分（{grade}），先天格局有一些挑战。日主{strength}，命局偏弱的环节较多。"
+            summary += "但命理讲的是趋势而非定数，通过修身养性、择善而行，同样能走出精彩人生。"
+
+        return {
+            "total_score": total,
+            "grade": grade,
+            "summary": summary,
+            "details": [
+                {
+                    "title": "日主强弱",
+                    "icon": "🔥",
+                    "score": s1,
+                    "max": 20,
+                    "text": s1_text,
+                },
+                {
+                    "title": "五行平衡",
+                    "icon": "⚖️",
+                    "score": s2,
+                    "max": 20,
+                    "text": s2_text,
+                },
+                {
+                    "title": "十神配置",
+                    "icon": "🎯",
+                    "score": s3,
+                    "max": 20,
+                    "text": s3_text,
+                },
+                {
+                    "title": "格局清纯",
+                    "icon": "💎",
+                    "score": s4,
+                    "max": 20,
+                    "text": s4_text,
+                },
+                {
+                    "title": "大运走势",
+                    "icon": "📈",
+                    "score": s5,
+                    "max": 20,
+                    "text": s5_text,
+                },
+            ],
+            "meta": {
+                "birth": birth,
+                "location": location,
+                "gender": gender,
+                "day_master": day_master,
+                "day_master_wuxing": day_master_wuxing,
+                "strength": strength,
+                "pillars": pillars,
+            },
+        }
+
     except Exception as e:
         return _error_response(e)
