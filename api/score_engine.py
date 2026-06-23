@@ -47,6 +47,7 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
         "大六壬": _score_liuren,
         "太乙神数": _score_taiyi,
         "占星": _score_astro,
+        "姓名学": _score_xingming,
     }
 
     for name, fn in scorers.items():
@@ -822,4 +823,152 @@ def _score_astro(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("星盘挑战多一些，但紧张相位往往意味着巨大的成长潜力")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "占星分析数据不足。"
+    return score, analysis, strengths, weaknesses
+
+
+# ─── 姓名学评分 ──────────────────────────────────────────────
+def _score_xingming(udm) -> Tuple[int, str, list, list]:
+    """
+    姓名学评分：基于五格数理吉凶、三才配置、人格主导运势。
+
+    评分维度：
+      1. 五格吉凶统计（+40分）—— 五格中吉数占比越高越好
+      2. 三才配置（+30分）—— 天地人三格五行相生为上
+      3. 人格主运（+15分）—— 人格数理是姓名学最核心的格
+      4. 总格后运（+15分）—— 总格影响中晚年运势
+    """
+    if not udm.xingming_chart:
+        return 0, "姓名学数据不完整。", [], ["姓名学排盘失败"]
+
+    chart = udm.xingming_chart
+    score = 0
+    strengths = []
+    weaknesses = []
+
+    wuge = chart.get("wuge", {}) or {}
+    sancai = chart.get("sancai", {}) or {}
+
+    # 1. 五格吉凶统计（+40分）
+    ge_names = ["天格", "人格", "地格", "外格", "总格"]
+    ji_count = 0
+    xiong_count = 0
+    ge_details = []
+
+    for ge_name in ge_names:
+        ge_data = wuge.get(ge_name, {})
+        if not ge_data:
+            continue
+        jixiong = ge_data.get("吉凶", "")
+        shuli_name = ge_data.get("数理名", "")
+        shuli = ge_data.get("数理", 0)
+        wx = ge_data.get("五行", "")
+
+        if jixiong == "吉":
+            ji_count += 1
+            ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})✓")
+        elif jixiong == "半吉":
+            ji_count += 0.5
+            ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})△")
+        elif jixiong == "半凶":
+            xiong_count += 0.5
+            ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})△")
+        elif jixiong == "凶":
+            xiong_count += 1
+            ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})✗")
+
+    net = ji_count - xiong_count
+    if net >= 3:
+        score += 40
+        strengths.append(f"五格中{ji_count}个吉数，姓名数理配置非常好")
+    elif net >= 1:
+        score += 30
+        strengths.append(f"五格吉多凶少，姓名基础不错")
+    elif net >= 0:
+        score += 20
+    elif net >= -2:
+        score += 12
+        weaknesses.append(f"五格凶数偏多（{xiong_count}个），姓名数理有改善空间")
+    else:
+        score += 5
+        weaknesses.append(f"五格凶数较多（{xiong_count}个），建议考虑调整姓名")
+
+    # 2. 三才配置（+30分）
+    sancai_jixiong = sancai.get("吉凶", "") if isinstance(sancai, dict) else ""
+    sancai_desc = sancai.get("解释", "") if isinstance(sancai, dict) else ""
+    sancai_wuxing = sancai.get("配置", "") if isinstance(sancai, dict) else ""
+
+    if "大吉" in sancai_jixiong:
+        score += 30
+        strengths.append(f"三才配置{sancai_wuxing}为{sancai_jixiong}，天地人和谐")
+    elif "吉" in sancai_jixiong:
+        score += 22
+        strengths.append(f"三才配置{sancai_wuxing}为{sancai_jixiong}，基础稳固")
+    elif "中吉" in sancai_jixiong:
+        score += 18
+    elif "凶" in sancai_jixiong:
+        score += 8
+        weaknesses.append(f"三才配置{sancai_wuxing}为{sancai_jixiong}，天地人不够协调")
+    else:
+        score += 15
+
+    # 3. 人格主运（+15分）—— 人格是姓名学最核心的格
+    renge = wuge.get("人格", {})
+    if renge:
+        rg_jx = renge.get("吉凶", "")
+        rg_name = renge.get("数理名", "")
+        if rg_jx == "吉":
+            score += 15
+            strengths.append(f"人格{rg_name}为主运，一生基础运好")
+        elif rg_jx == "半吉":
+            score += 10
+        elif rg_jx == "半凶":
+            score += 6
+            weaknesses.append(f"人格{rg_name}为主运，中年运势有些波折")
+        elif rg_jx == "凶":
+            score += 3
+            weaknesses.append(f"人格{rg_name}为主运，人生主运偏弱，需后天努力")
+    else:
+        score += 7
+
+    # 4. 总格后运（+15分）—— 影响中晚年
+    zongge = wuge.get("总格", {})
+    if zongge:
+        zg_jx = zongge.get("吉凶", "")
+        zg_name = zongge.get("数理名", "")
+        if zg_jx == "吉":
+            score += 15
+            strengths.append(f"总格{zg_name}，晚年运势好")
+        elif zg_jx == "半吉":
+            score += 10
+        elif zg_jx == "半凶":
+            score += 6
+        elif zg_jx == "凶":
+            score += 3
+            weaknesses.append(f"总格{zg_name}，晚年运势需多注意")
+    else:
+        score += 7
+
+    # 生成分析
+    analysis_parts = []
+    surname = chart.get("surname", "")
+    given_name = chart.get("given_name", "")
+    if surname and given_name:
+        analysis_parts.append(f"姓名「{surname}{given_name}」")
+
+    if ge_details:
+        analysis_parts.append("五格：" + "、".join(ge_details))
+
+    if sancai_desc:
+        analysis_parts.append(f"三才：{sancai_desc}")
+
+    if score >= 80:
+        analysis_parts.append("姓名配置优秀，数理吉多凶少，三才和谐，先天姓名助力大")
+    elif score >= 60:
+        analysis_parts.append("姓名配置不错，有些亮点也有需要注意的地方")
+    elif score >= 40:
+        analysis_parts.append("姓名配置一般，部分数理不太理想，但影响有限")
+    else:
+        analysis_parts.append("姓名数理偏弱，建议结合八字喜用考虑调整")
+
+    analysis = "。".join(analysis_parts) + "。" if analysis_parts else "姓名学分析数据不足。"
     return score, analysis, strengths, weaknesses
