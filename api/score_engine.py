@@ -733,12 +733,21 @@ def _score_astro(udm) -> Tuple[int, str, list, list]:
         if isinstance(pdetail, dict):
             dignity = pdetail.get("dignity", "") or pdetail.get("essential_dignity", "")
             dignity = dignity.lower() if dignity else ""
+            retrograde = pdetail.get("retrograde", False)
+            matched = False
             for dkey, (dscore, dlabel, _) in dignities.items():
                 if dkey in dignity:
-                    planet_scores.append((pname, dscore, dlabel))
+                    # 逆行行星尊贵度降一级（传统占星：逆行削弱行星力量）
+                    adj_score = max(10, dscore - 8) if retrograde else dscore
+                    adj_label = dlabel + "（逆行削弱）" if retrograde else dlabel
+                    planet_scores.append((pname, adj_score, adj_label))
+                    matched = True
                     break
-            else:
-                planet_scores.append((pname, 22, ""))
+            if not matched:
+                # 无尊贵度信息时按中性处理，逆行额外扣分
+                base = 18 if retrograde else 22
+                label = "（逆行）" if retrograde else ""
+                planet_scores.append((pname, base, label))
 
     if planet_scores:
         avg_planet = sum(s for _, s, _ in planet_scores) / len(planet_scores)
