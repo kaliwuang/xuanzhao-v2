@@ -409,12 +409,15 @@ def _score_liuyao(udm) -> Tuple[int, str, list, list]:
         weaknesses.append("动爻太多，局面比较复杂，变数大")
 
     analysis_parts = []
-    ben_gua = chart.get("ben_gua", "")
-    bian_gua = chart.get("bian_gua", "")
-    if ben_gua:
-        analysis_parts.append(f"本卦是{ben_gua}")
-    if bian_gua:
-        analysis_parts.append(f"变卦是{bian_gua}")
+    # ben_gua/bian_gua 是 dict（{'name':'乾为天','mark':'111111','shang':'乾','xia':'乾',...}），需提取 name 字段
+    ben_gua_data = chart.get("ben_gua", {})
+    bian_gua_data = chart.get("bian_gua", {})
+    ben_gua_name = ben_gua_data.get("name", "") if isinstance(ben_gua_data, dict) else str(ben_gua_data)
+    bian_gua_name = bian_gua_data.get("name", "") if isinstance(bian_gua_data, dict) else str(bian_gua_data)
+    if ben_gua_name:
+        analysis_parts.append(f"本卦是{ben_gua_name}")
+    if bian_gua_name:
+        analysis_parts.append(f"变卦是{bian_gua_name}")
 
     if score >= 80:
         analysis_parts.append("卦象显示事情发展比较有利，顺势而为就好")
