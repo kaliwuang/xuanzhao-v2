@@ -1460,13 +1460,34 @@ class BaziEngine(DivinationEngine):
         _scan_zhi('天福贵人', SHENSHA_TIANFU_MAP.get(day_gan, ''))
 
         # 40. 三奇贵人（天干组合：乙丙丁=天上三奇，甲戊庚=地上三奇，辛壬癸=人中三奇）
+        # 传统要求按年→月→日→时顺序出现（不拘相邻，但须保持先后）
         all_gan_str = ''.join(all_gans)
-        if '乙' in all_gan_str and '丙' in all_gan_str and '丁' in all_gan_str:
+        def _ordered_contains(gans: list, pattern: str) -> bool:
+            """检查天干列表中pattern的三个字符是否按顺序出现（不拘相邻）"""
+            pos = 0
+            for ch in pattern:
+                found = False
+                for i in range(pos, len(gans)):
+                    if gans[i] == ch:
+                        pos = i + 1
+                        found = True
+                        break
+                if not found:
+                    return False
+            return True
+
+        if _ordered_contains(all_gans, '乙丙丁'):
             shensha.append('天上三奇（乙丙丁）')
-        if '甲' in all_gan_str and '戊' in all_gan_str and '庚' in all_gan_str:
+        elif '乙' in all_gan_str and '丙' in all_gan_str and '丁' in all_gan_str:
+            shensha.append('天上三奇（乙丙丁，不拘序）')
+        if _ordered_contains(all_gans, '甲戊庚'):
             shensha.append('地上三奇（甲戊庚）')
-        if '辛' in all_gan_str and '壬' in all_gan_str and '癸' in all_gan_str:
+        elif '甲' in all_gan_str and '戊' in all_gan_str and '庚' in all_gan_str:
+            shensha.append('地上三奇（甲戊庚，不拘序）')
+        if _ordered_contains(all_gans, '辛壬癸'):
             shensha.append('人中三奇（辛壬癸）')
+        elif '辛' in all_gan_str and '壬' in all_gan_str and '癸' in all_gan_str:
+            shensha.append('人中三奇（辛壬癸，不拘序）')
 
         # 41. 德秀贵人（以月支查天干组合）— 使用模块级 SHENSHA_DEXIU_MAP
         dexiu = SHENSHA_DEXIU_MAP.get(month_pillar.zhi, {})
