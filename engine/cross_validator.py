@@ -2182,6 +2182,53 @@ class CrossValidator:
                         ))
                         break  # 取第一个旺相的即可
 
+        # 大六壬：看初传天将和用神六亲（学业信号——贵人/朱雀=文昌，父母=文书）
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            yong_shen = lr.get("yong_shen", {})
+            if yong_shen:
+                chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+                chu_liuqin = yong_shen.get("chu_chuan_liuqin", "")
+                ji_xiong = yong_shen.get("jiang_ji_xiong", "")
+
+                # 天将→学业含义映射（六壬传统学业解读）
+                _ACADEMIC_JIANG = {
+                    "貴人": ("初传见贵人，学业有师长贵人提携，逢考有助力", ConfidenceLevel.HIGH),
+                    "貴": ("初传见贵人，学业有师长贵人提携，逢考有助力", ConfidenceLevel.HIGH),
+                    "文昌": ("初传见文昌，天生聪颖好学，考试运佳", ConfidenceLevel.HIGH),
+                    "朱雀": ("初传见朱雀，口才文笔出众，利于面试、论文、答辩", ConfidenceLevel.MEDIUM),
+                    "雀": ("初传见朱雀，口才文笔出众，利于面试、论文、答辩", ConfidenceLevel.MEDIUM),
+                    "六合": ("初传见六合，善于合作学习，小组讨论或团队项目有成", ConfidenceLevel.MEDIUM),
+                    "合": ("初传见六合，善于合作学习，小组讨论或团队项目有成", ConfidenceLevel.MEDIUM),
+                    "天后": ("初传见天后，直觉型学习，灵感和悟性佳", ConfidenceLevel.LOW),
+                    "后": ("初传见天后，直觉型学习，灵感和悟性佳", ConfidenceLevel.LOW),
+                }
+
+                if chu_jiang in _ACADEMIC_JIANG:
+                    desc, conf = _ACADEMIC_JIANG[chu_jiang]
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding=desc,
+                        supporting_methods=["大六壬"],
+                        confidence=conf,
+                    ))
+
+                # 用神六亲→学业方向
+                if chu_liuqin in ("父母", "父"):
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding="六壬初传父母爻，文书学业运佳，利于读书考试和文书工作",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.MEDIUM,
+                    ))
+                elif chu_liuqin in ("子孙", "子"):
+                    items.append(ConsensusItem(
+                        aspect="学业",
+                        finding="六壬初传子孙爻，思维活跃有创意，但需防注意力分散",
+                        supporting_methods=["大六壬"],
+                        confidence=ConfidenceLevel.LOW,
+                    ))
+
         return items
 
     def _validate_interpersonal(self) -> List[ConsensusItem]:
