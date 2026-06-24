@@ -429,12 +429,12 @@ def _score_liuyao(udm) -> Tuple[int, str, list, list]:
     dong_yao = chart.get("dong_yao", []) or []
 
     if shi and ying:
-        if "生" in str(ge_ju_str) or "合" in str(ge_ju_str):
+        if "世应合" in ge_ju_str or "六合" in ge_ju_str:
             score += 28
-            strengths.append("世应相生相合，人际关系和合作方面有利")
-        elif "克" in str(ge_ju_str) and "世" in str(ge_ju_str):
+            strengths.append("世应相合，人际关系和合作方面有利")
+        elif "世应冲" in ge_ju_str or "六冲" in ge_ju_str:
             score += 10
-            weaknesses.append("世爻受克，可能在某些关系中处于被动")
+            weaknesses.append("世应相冲或六冲，人际关系中存在张力，需要主动化解")
         else:
             score += 20
     else:
