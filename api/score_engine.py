@@ -202,7 +202,7 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
             if gz:
                 # 检查天干和地支的五行是否在喜用列表中
                 gan = gz[0] if len(gz) >= 1 else ""
-                zhi = gz[1:] if len(gz) >= 2 else ""
+                zhi = gz[1] if len(gz) >= 2 else ""
                 gwx = GAN_WX.get(gan, "")
                 dwx = ZHI_WX.get(zhi, "")
                 if gwx in xi_list or dwx in xi_list:
