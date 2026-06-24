@@ -2,7 +2,7 @@
 """
 玄照 v2.0 - 评分引擎测试
 
-覆盖所有7个术法评分函数的主路径和边界条件。
+覆盖所有8个术法评分函数的主路径和边界条件。
 """
 import sys
 import os
@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from api.score_engine import score_all, _score_bazi, _score_ziwei, _score_liuyao, \
-    _score_qimen, _score_liuren, _score_taiyi, _score_astro
+    _score_qimen, _score_liuren, _score_taiyi, _score_astro, _score_xingming
 
 
 # ============================================================
@@ -549,6 +549,157 @@ class TestScoreAstro:
 
 
 # ============================================================
+# 姓名学评分测试
+# ============================================================
+
+class TestScoreXingming:
+
+    def test_xingming_no_data_returns_zero(self):
+        """姓名学数据缺失时应返回0分"""
+        udm = MagicMock()
+        udm.xingming_chart = None
+        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        assert score == 0
+        assert "不完整" in analysis
+
+    def test_xingming_all_ji_wuge(self):
+        """五格全吉应得高分"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "李", "given_name": "明",
+            "wuge": {
+                "天格": {"吉凶": "吉", "数理名": "福寿", "数理": 8, "五行": "金"},
+                "人格": {"吉凶": "吉", "数理名": "坚毅", "数理": 15, "五行": "土"},
+                "地格": {"吉凶": "吉", "数理名": "福寿", "数理": 16, "五行": "土"},
+                "外格": {"吉凶": "吉", "数理名": "明月", "数理": 8, "五行": "金"},
+                "总格": {"吉凶": "吉", "数理名": "铁镜重磨", "数理": 23, "五行": "火"},
+            },
+            "sancai": {"吉凶": "大吉", "配置": "土土火", "解释": "土土火配置，大吉"},
+        }
+        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        assert score >= 70, f"五格全吉应得高分，实际: {score}"
+        assert len(strengths) > 0, "应有优势提示"
+        assert "李明" in analysis, "分析应提及姓名"
+
+    def test_xingming_all_xiong_wuge(self):
+        """五格全凶应得低分"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "王", "given_name": "二",
+            "wuge": {
+                "天格": {"吉凶": "凶", "数理名": "破兆", "数理": 4, "五行": "火"},
+                "人格": {"吉凶": "凶", "数理名": "破兆", "数理": 4, "五行": "火"},
+                "地格": {"吉凶": "凶", "数理名": "凶变", "数理": 34, "五行": "火"},
+                "外格": {"吉凶": "凶", "数理名": "破兆", "数理": 4, "五行": "火"},
+                "总格": {"吉凶": "凶", "数理名": "破兆", "数理": 38, "五行": "火"},
+            },
+            "sancai": {"吉凶": "凶", "配置": "火火火", "解释": "三火相叠，过刚则折"},
+        }
+        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        assert score <= 50, f"五格全凶应得低分，实际: {score}"
+        assert len(weaknesses) > 0, "应有弱点提示"
+
+    def test_xingming_score_in_range(self):
+        """姓名学评分应在0-100之间"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "张", "given_name": "三",
+            "wuge": {
+                "天格": {"吉凶": "吉", "数理名": "福寿", "数理": 12, "五行": "木"},
+                "人格": {"吉凶": "半吉", "数理名": "掘井", "数理": 13, "五行": "火"},
+                "地格": {"吉凶": "吉", "数理名": "春阳", "数理": 4, "五行": "火"},
+            },
+            "sancai": {"吉凶": "中吉", "配置": "木火火", "解释": "中吉配置"},
+        }
+        score, _, _, _ = _score_xingming(udm)
+        assert 0 <= score <= 100, f"评分超出范围: {score}"
+
+    def test_xingming_sancai_daji(self):
+        """三才大吉应加分"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "赵", "given_name": "大",
+            "wuge": {
+                "天格": {"吉凶": "吉", "数理名": "福寿", "数理": 15, "五行": "土"},
+                "人格": {"吉凶": "吉", "数理名": "福寿", "数理": 24, "五行": "火"},
+                "地格": {"吉凶": "吉", "数理名": "福寿", "数理": 16, "五行": "土"},
+            },
+            "sancai": {"吉凶": "大吉", "配置": "土火土", "解释": "天地人和谐"},
+        }
+        score, _, strengths, _ = _score_xingming(udm)
+        assert any("大吉" in s or "和谐" in s for s in strengths), \
+            f"应提及三才大吉，strengths: {strengths}"
+
+    def test_xingming_sancai_xiong(self):
+        """三才凶应扣分"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "钱", "given_name": "小",
+            "wuge": {
+                "天格": {"吉凶": "凶", "数理名": "破兆", "数理": 4, "五行": "火"},
+                "人格": {"吉凶": "凶", "数理名": "破兆", "数理": 4, "五行": "火"},
+                "地格": {"吉凶": "凶", "数理名": "破兆", "数理": 4, "五行": "火"},
+            },
+            "sancai": {"吉凶": "凶", "配置": "火火火", "解释": "三火过刚"},
+        }
+        score, _, _, weaknesses = _score_xingming(udm)
+        assert any("三才" in w or "协调" in w or "不协" in w for w in weaknesses), \
+            f"应提及三才凶，weaknesses: {weaknesses}"
+
+    def test_xingming_half_ji_counting(self):
+        """半吉应计入0.5个吉数"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "孙", "given_name": "文",
+            "wuge": {
+                "天格": {"吉凶": "吉", "数理名": "福寿", "数理": 11, "五行": "木"},
+                "人格": {"吉凶": "吉", "数理名": "明月", "数理": 14, "五行": "火"},
+                "地格": {"吉凶": "半吉", "数理名": "掘井", "数理": 4, "五行": "火"},
+                "外格": {"吉凶": "半凶", "数理名": "破兆", "数理": 2, "五行": "木"},
+                "总格": {"吉凶": "吉", "数理名": "春阳", "数理": 15, "五行": "土"},
+            },
+            "sancai": {"吉凶": "吉", "配置": "木火火", "解释": "吉"},
+        }
+        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        # 3吉 + 0.5半吉 - 0.5半凶 = 3 net，应得40分五格分
+        assert score >= 50, f"半吉半凶混合应有合理评分，实际: {score}"
+
+    def test_xingming_renge_main运(self):
+        """人格吉凶应影响主运评分"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "周", "given_name": "杰",
+            "wuge": {
+                "天格": {"吉凶": "吉", "数理名": "福寿", "数理": 9, "五行": "水"},
+                "人格": {"吉凶": "吉", "数理名": "明月", "数理": 16, "五行": "土"},
+                "地格": {"吉凶": "凶", "数理名": "破兆", "数理": 4, "五行": "火"},
+            },
+            "sancai": {"吉凶": "半吉", "配置": "水土火", "解释": "尚可"},
+        }
+        score, _, strengths, _ = _score_xingming(udm)
+        assert any("主运" in s or "人格" in s for s in strengths), \
+            f"应提及人格为主运，strengths: {strengths}"
+
+    def test_xingming_zongge_ji(self):
+        """总格吉应有晚年加分"""
+        udm = MagicMock()
+        udm.xingming_chart = {
+            "surname": "刘", "given_name": "德华",
+            "wuge": {
+                "天格": {"吉凶": "吉", "数理名": "福寿", "数理": 16, "五行": "土"},
+                "人格": {"吉凶": "吉", "数理名": "福寿", "数理": 30, "五行": "水"},
+                "地格": {"吉凶": "半吉", "数理名": "掘井", "数理": 15, "五行": "土"},
+                "外格": {"吉凶": "半凶", "数理名": "破兆", "数理": 2, "五行": "木"},
+                "总格": {"吉凶": "吉", "数理名": "春阳", "数理": 31, "五行": "木"},
+            },
+            "sancai": {"吉凶": "吉", "配置": "土水土", "解释": "基础稳固"},
+        }
+        score, _, strengths, _ = _score_xingming(udm)
+        assert any("晚年" in s for s in strengths), \
+            f"总格吉应提及晚年，strengths: {strengths}"
+
+
+# ============================================================
 # score_all 综合测试
 # ============================================================
 
@@ -605,14 +756,26 @@ class TestScoreAll:
             "aspects": [{"planet1": "太阳", "planet2": "月亮", "aspect": "三合"}],
             "planetary_details": {},
         }
+        # 姓名学
+        udm.xingming_chart = {
+            "surname": "李", "given_name": "明",
+            "wuge": {
+                "天格": {"吉凶": "吉", "数理名": "福寿", "数理": 8, "五行": "金"},
+                "人格": {"吉凶": "吉", "数理名": "坚毅", "数理": 15, "五行": "土"},
+                "地格": {"吉凶": "吉", "数理名": "福寿", "数理": 16, "五行": "土"},
+                "外格": {"吉凶": "半吉", "数理名": "明月", "数理": 8, "五行": "金"},
+                "总格": {"吉凶": "吉", "数理名": "铁镜重磨", "数理": 23, "五行": "火"},
+            },
+            "sancai": {"吉凶": "大吉", "配置": "土土火", "解释": "大吉"},
+        }
         return udm
 
     def test_score_all_returns_all_methods(self):
-        """score_all 应返回所有7个术法的评分"""
+        """score_all 应返回所有8个术法的评分"""
         udm = self._make_full_udm()
         result = score_all(udm)
-        assert len(result) == 7
-        for method in ["八字", "紫微斗数", "六爻", "奇门遁甲", "大六壬", "太乙神数", "占星"]:
+        assert len(result) == 8
+        for method in ["八字", "紫微斗数", "六爻", "奇门遁甲", "大六壬", "太乙神数", "占星", "姓名学"]:
             assert method in result, f"缺少 {method}"
 
     def test_score_all_scores_in_range(self):
@@ -648,8 +811,9 @@ class TestScoreAll:
         udm.liuren_chart = None
         udm.taiyi_chart = None
         udm.astro_chart = None
+        udm.xingming_chart = None
         result = score_all(udm)
-        assert len(result) == 7
+        assert len(result) == 8
         for method, data in result.items():
             assert data["score"] == 0, f"{method} 空数据应返回0分"
 
@@ -675,9 +839,10 @@ class TestScoreAll:
         udm.liuren_chart = None
         udm.taiyi_chart = None
         udm.astro_chart = None
+        udm.xingming_chart = None
         # 不应抛出异常
         result = score_all(udm)
-        assert len(result) == 7
+        assert len(result) == 8
 
 
 if __name__ == "__main__":
