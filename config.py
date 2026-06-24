@@ -54,7 +54,7 @@ DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 
 # 服务配置
 HOST = os.environ.get("XUANZHAO_HOST", "0.0.0.0")
-PORT = int(os.environ.get("XUANZHAO_PORT", "8000"))
+PORT = int(os.environ.get("XUANZHAO_PORT", "8080"))
 WORKERS = int(os.environ.get("XUANZHAO_WORKERS", "1"))
 
 
