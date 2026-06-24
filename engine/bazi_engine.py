@@ -1492,12 +1492,23 @@ class BaziEngine(DivinationEngine):
         if len(_huagai_found) >= 2:
             shensha.append('双华盖')
 
-        # 37. 双桃花（以年支和日支查，复用上方第4步的桃花目标地支）
-        for taohua_zhi in taohua_targets:
-            taohua_count = sum(1 for z in all_zhis if z == taohua_zhi)
-            if taohua_count >= 2:
+        # 37. 双桃花（年支桃花+日支桃花同时出现为双桃花）
+        # 传统定义：年华盖+日华盖同时在四柱中出现为双华盖（与双华盖同规则）
+        # 目标地支不同：需两个目标都在四柱中出现
+        # 目标地支相同（年支日支同组）：需该目标在四柱中出现两次以上
+        _taohua_found = set()
+        for _th_zhi in taohua_targets:
+            for _z in all_zhis:
+                if _z == _th_zhi:
+                    _taohua_found.add(_th_zhi)
+                    break
+        if len(taohua_targets) >= 2 and len(_taohua_found) >= 2:
+            shensha.append('双桃花')
+        elif len(taohua_targets) == 1:
+            _single_th = list(taohua_targets)[0]
+            _single_count = sum(1 for z in all_zhis if z == _single_th)
+            if _single_count >= 2:
                 shensha.append('双桃花')
-                break
 
         # 38~39. 天官贵人/天福贵人（以日干查四支）
         _scan_zhi('天官贵人', SHENSHA_TIANGUAN_MAP.get(day_gan, ''))
