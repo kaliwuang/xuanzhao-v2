@@ -215,8 +215,15 @@ class CrossValidator:
                 # 实际对比八字与紫微大运的起运年龄是否接近
                 bazi_start = bazi_dy_ages[0][0] or 0
                 ziwei_start = ziwei_dy_ages[0][0] or 0
-                age_diff = abs(bazi_start - ziwei_start)
-                if age_diff <= 2:
+                # 防御：双方起运年龄均为0（未知）时不应报HIGH置信度
+                if bazi_start == 0 and ziwei_start == 0:
+                    results.append(ConsensusItem(
+                        aspect="大运周期",
+                        finding="八字与紫微大运起运年龄数据不足，无法对比",
+                        supporting_methods=["八字", "紫微斗数"],
+                        confidence=ConfidenceLevel.LOW
+                    ))
+                elif (age_diff := abs(bazi_start - ziwei_start)) <= 2:
                     results.append(ConsensusItem(
                         aspect="大运周期",
                         finding=f"八字起运{bazi_start}岁，紫微起运{ziwei_start}岁，周期接近（差{age_diff}岁）",
