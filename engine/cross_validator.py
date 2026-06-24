@@ -1684,6 +1684,44 @@ class CrossValidator:
                         ))
                         break
 
+        # 3) 八字五行过旺/缺失 vs 大六壬初传地支五行（病邪指向与先天偏颇一致）
+        if counts and self.udm.liuren_chart:
+            max_wx = max(counts, key=counts.get)
+            min_wx = min(counts, key=counts.get)
+            bazi_wx_issue = max_wx if counts[max_wx] >= 4 else (min_wx if counts[min_wx] == 0 else None)
+
+            if bazi_wx_issue:
+                bazi_organs = self.WUXING_ORGAN.get(bazi_wx_issue, "")
+                lr = self.udm.liuren_chart
+                yong_shen = lr.get("yong_shen", {})
+                if yong_shen:
+                    chu_zhi = yong_shen.get("chu_chuan_zhi", "")
+                    chu_wx = self._ZHI_WUXING.get(chu_zhi, "")
+                    chu_jiang = yong_shen.get("chu_chuan_jiang", "")
+
+                    # 六壬初传地支五行与八字偏颇五行相同
+                    if chu_wx and chu_wx == bazi_wx_issue:
+                        issue_desc = "过旺" if counts[bazi_wx_issue] >= 4 else "缺失"
+                        # 天将健康信号补充
+                        _HEALTH_SIGNALS = {
+                            "白虎": "白虎主病伤血光",
+                            "虎": "白虎主病伤血光",
+                            "螣蛇": "螣蛇主虚惊怪异",
+                            "蛇": "螣蛇主虚惊怪异",
+                            "玄武": "玄武主暗昧隐疾",
+                            "武": "玄武主暗昧隐疾",
+                        }
+                        jiang_hint = _HEALTH_SIGNALS.get(chu_jiang, "")
+                        finding = f"八字{bazi_wx_issue}{issue_desc}（{counts[bazi_wx_issue]}个），六壬初传{chu_zhi}（{chu_wx}）同属{bazi_wx_issue}行，{bazi_organs}健康风险双重印证"
+                        if jiang_hint:
+                            finding += f"，且初传{chu_jiang}（{jiang_hint}）加重信号"
+                        items.append(ConsensusItem(
+                            aspect="健康体质",
+                            finding=finding,
+                            supporting_methods=["八字", "大六壬"],
+                            confidence=ConfidenceLevel.HIGH,
+                        ))
+
         return items
 
     def _validate_wealth(self) -> List[ConsensusItem]:
