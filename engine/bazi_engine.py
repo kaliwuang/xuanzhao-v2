@@ -574,16 +574,17 @@ class BaziEngine(DivinationEngine):
                 result.append('天厨')
             if zhi == SHENSHA_LIUXIA_MAP.get(day_master, ''):
                 result.append('流霞')
-            if zhi == SHENSHA_WANGSHEN_MAP.get(_year_zhi, ''):
-                result.append('亡神')
-            if zhi == SHENSHA_JIESHA_MAP.get(_year_zhi, ''):
-                result.append('劫煞')
-            if zhi == SHENSHA_ZAISHA_MAP.get(_year_zhi, ''):
-                result.append('灾煞')
-            if zhi == SHENSHA_GOUSHA_MAP.get(_year_zhi, ''):
-                result.append('勾煞')
-            if zhi == SHENSHA_JIAOSHA_MAP.get(_year_zhi, ''):
-                result.append('绞煞')
+            # 亡神/劫煞/灾煞/勾煞/绞煞：以年支和日支双查（与原局_calc_shensha保持一致）
+            for _sha_name, _sha_map in [
+                ('亡神', SHENSHA_WANGSHEN_MAP),
+                ('劫煞', SHENSHA_JIESHA_MAP),
+                ('灾煞', SHENSHA_ZAISHA_MAP),
+                ('勾煞', SHENSHA_GOUSHA_MAP),
+                ('绞煞', SHENSHA_JIAOSHA_MAP),
+            ]:
+                _sha_targets = set(filter(None, [_sha_map.get(_year_zhi, ''), _sha_map.get(_day_zhi, '')]))
+                if zhi in _sha_targets:
+                    result.append(_sha_name)
             if zhi == SHENSHA_GUICHEN_MAP.get(_year_zhi, ''):
                 result.append('孤辰')
             if zhi == SHENSHA_GUASU_MAP.get(_year_zhi, ''):
