@@ -155,10 +155,24 @@ class TaiYiEngine(DivinationEngine):
 
         # 主算/客算/定算
         def _native_list(lst):
-            """Convert numpy types to native Python types for JSON serialization"""
+            """Convert numpy types to native Python types for JSON serialization.
+            Handles numpy scalars (.item()), numpy bools, and fallback via type coercion."""
             if not isinstance(lst, list):
                 return []
-            return [int(x) if hasattr(x, 'item') else x for x in lst]
+            result = []
+            for x in lst:
+                if hasattr(x, 'item'):
+                    # numpy scalar (int64, float64, bool_, etc.)
+                    result.append(x.item())
+                elif hasattr(x, '__int__') and hasattr(x, '__float__'):
+                    # numpy array-like or custom numeric type
+                    try:
+                        result.append(int(x))
+                    except (ValueError, TypeError):
+                        result.append(x)
+                else:
+                    result.append(x)
+            return result
 
         zhu_suan = _native_list(r.get('主算') or [])
         ke_suan = _native_list(r.get('客算') or [])
