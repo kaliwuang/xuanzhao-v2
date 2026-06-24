@@ -497,8 +497,6 @@ class XingMingEngine(DivinationEngine):
         # Use a heuristic based on the CJK Unified Ideograph range
         # This is a rough estimate — for production use, a full stroke table is needed
         try:
-            # Try to get from Unihan database if available
-            import importlib
             # Simple fallback: estimate based on character structure
             # Most common CJK characters are 4-20 strokes
             # We use the character's ordinal position as a rough seed
