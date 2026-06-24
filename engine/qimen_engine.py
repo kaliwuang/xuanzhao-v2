@@ -279,8 +279,8 @@ class QiMenEngine(DivinationEngine):
             # 晚子时(23:xx)日柱用次日，但时支仍为子时
             calc_dt = solar_dt + timedelta(days=1) if hour == 23 else solar_dt
             day_gan_idx = (calc_dt.toordinal() + 4) % 10
-            # 五鼠遁元（时干起法）：日干→时干基准 = (日干%5)*2，甲己→丙,乙庚→戊,丙辛→庚,丁壬→壬,戊癸→甲
-            gan_idx = (day_gan_idx % 5 * 2 + zhi_idx) % 10
+            # 五鼠遁元（时干起法）：日干→时干基准 = (日干%5+1)*2，甲己→丙,乙庚→戊,丙辛→庚,丁壬→壬,戊癸→甲
+            gan_idx = ((day_gan_idx % 5 + 1) * 2 + zhi_idx) % 10
             return f'{self.TIAN_GAN[gan_idx]}{self.DI_ZHI[zhi_idx]}'
 
     def _get_day_gan_zhi(self, solar_dt: datetime) -> str:
