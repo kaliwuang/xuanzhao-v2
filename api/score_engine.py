@@ -686,15 +686,18 @@ def _score_liuren(udm) -> Tuple[int, str, list, list]:
 
     # 3. 四课三传（+30分）
     # 注：si_ke/san_chuan 在引擎中是 list（非 dict），默认值类型需匹配
+    # 防御：kinliuren 失败时返回 [[],[],[],[]] 和 [[],[],[]]，虽 truthy 但实际无效
     si_ke = chart.get("si_ke", []) or []
     san_chuan = chart.get("san_chuan", []) or []
+    si_ke_has_data = si_ke and any(k for k in si_ke)
+    san_chuan_has_data = san_chuan and any(c for c in san_chuan)
 
-    if si_ke:
+    if si_ke_has_data:
         score += 15
     else:
         score += 8
 
-    if san_chuan:
+    if san_chuan_has_data:
         score += 15
     else:
         score += 8
