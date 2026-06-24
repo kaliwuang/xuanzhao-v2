@@ -855,7 +855,7 @@ def _score_astro(udm) -> Tuple[int, str, list, list]:
 
     if planet_scores:
         avg_planet = sum(s for _, s, _ in planet_scores) / len(planet_scores)
-        score += int(avg_planet * 0.4 / 35 * 40)
+        score += int(avg_planet / 35 * 40)
         # 收集优劣势
         for pn, ps, pl in planet_scores:
             if ps >= 30:
