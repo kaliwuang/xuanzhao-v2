@@ -3822,6 +3822,88 @@ class CrossValidator:
                                    "此时宜借助贵人、长辈之力（印星方向），避免独自承担过重压力。"
                     ))
 
+        # === 13. 大六壬-八字健康冲突：初传天将健康信号 vs 八字五行平衡 ===
+        # 大六壬初传天将中白虎（病伤血光）、螣蛇（虚惊焦虑）、玄武（暗病隐疾）
+        # 是六壬体系中最直接的健康预警信号。
+        # 若八字五行平衡（先天体质好）但六壬初传见凶将，说明当下有健康隐患在酝酿；
+        # 若八字五行偏颇（先天体质弱）但六壬初传见贵人/青龙等吉将，说明当下有化解之机。
+        if self.udm.liuren_chart:
+            lr = self.udm.liuren_chart
+            ys = lr.get("yong_shen", {})
+            if ys:
+                chu_jiang = ys.get("chu_chuan_jiang", "")
+                jiang_jx = ys.get("jiang_ji_xiong", "")
+                chu_zhi = ys.get("chu_chuan_zhi", "")
+                ri_relation = ys.get("ri_gan_relation", "")
+
+                # 六壬健康凶将集合
+                _LIUREN_HEALTH_XIONG = {"白虎", "虎", "螣蛇", "蛇", "玄武", "武"}
+                # 六壬健康吉将集合（贵人、天后有化解保护之力）
+                _LIUREN_HEALTH_JI = {"貴人", "貴", "天后", "后", "太常", "常"}
+
+                # 八字五行平衡状态
+                wuxing_count = self.udm.get_wuxing_count()
+                if wuxing_count:
+                    max_wx = max(wuxing_count, key=wuxing_count.get)
+                    bazi_health_issue = wuxing_count[max_wx] >= 4
+                    bazi_health_balanced = not bazi_health_issue
+                    organs = self.WUXING_ORGAN.get(max_wx, "相关脏腑")
+
+                    # 冲突1：八字五行平衡但六壬初传见健康凶将
+                    # 先天体质好但当下有健康隐患
+                    if bazi_health_balanced and chu_jiang in _LIUREN_HEALTH_XIONG:
+                        jiang_desc = {
+                            "白虎": "白虎主病伤血光，当下有急性健康隐患",
+                            "虎": "白虎主病伤血光，当下有急性健康隐患",
+                            "螣蛇": "螣蛇主虚惊焦虑，当下神经或心理压力大",
+                            "蛇": "螣蛇主虚惊焦虑，当下神经或心理压力大",
+                            "玄武": "玄武主暗病隐疾，当下有不易察觉的健康问题",
+                            "武": "玄武主暗病隐疾，当下有不易察觉的健康问题",
+                        }
+                        conflicts.append(ConflictItem(
+                            aspect="健康体质",
+                            method_a="八字",
+                            finding_a="八字五行基本平衡，先天体质尚可",
+                            method_b="大六壬",
+                            finding_b=f"初传{chu_jiang}（{jiang_jx}），{jiang_desc.get(chu_jiang, '当下有健康隐患')}",
+                            suggestion="八字五行平衡代表先天底子好，但六壬初传凶将暗示当下有健康隐患在酝酿。"
+                                       "先天底子好不代表可以忽视当下信号，宜关注六壬提示的健康方向，及时调理防范。"
+                        ))
+
+                    # 冲突2：八字五行偏颇但六壬初传见健康吉将
+                    # 先天体质弱但当下有化解保护之力
+                    if bazi_health_issue and chu_jiang in _LIUREN_HEALTH_JI:
+                        jiang_desc = {
+                            "貴人": "贵人相助，有化解保护之力",
+                            "貴": "贵人相助，有化解保护之力",
+                            "天后": "天后庇护，有恩泽化解之力",
+                            "后": "天后庇护，有恩泽化解之力",
+                            "太常": "太常守护，饮食喜庆，身心有滋养",
+                            "常": "太常守护，饮食喜庆，身心有滋养",
+                        }
+                        conflicts.append(ConflictItem(
+                            aspect="健康体质",
+                            method_a="八字",
+                            finding_a=f"{max_wx}过旺（{wuxing_count[max_wx]}个），注意{organs}功能",
+                            method_b="大六壬",
+                            finding_b=f"初传{chu_jiang}（{jiang_jx}），{jiang_desc.get(chu_jiang, '当下有保护之力')}",
+                            suggestion="八字五行偏颇暗示先天体质有薄弱环节，但六壬初传吉将暗示当下有化解保护之力。"
+                                       "体质虽有隐患但不必过度担忧，当下运势有贵人或天时助力，关键在于及时调理。"
+                        ))
+
+                    # 冲突3：六壬初传克日干且八字有五行偏颇——双重健康警示
+                    if "克我" in ri_relation and bazi_health_issue:
+                        chu_wx = self._ZHI_WUXING.get(chu_zhi, "")
+                        conflicts.append(ConflictItem(
+                            aspect="健康体质",
+                            method_a="八字",
+                            finding_a=f"{max_wx}过旺（{wuxing_count[max_wx]}个），注意{organs}功能",
+                            method_b="大六壬",
+                            finding_b=f"初传{chu_zhi}（{chu_wx}）克日干（{ri_relation}），天将{chu_jiang}（{jiang_jx}）",
+                            suggestion="八字五行偏颇与六壬初传克日干相互印证，两术共识指向当下健康需重点关注。"
+                                       "宜加强养生调理，避免过度劳累，定期体检关注六壬提示的身体方向。"
+                        ))
+
         return conflicts
 
     # 共识置信度权重：HIGH共识权重3，MEDIUM权重2，LOW权重1
