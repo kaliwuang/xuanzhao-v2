@@ -481,6 +481,13 @@ class LiuRenEngine(DivinationEngine):
             5: "夏至", 6: "大暑", 7: "处暑", 8: "秋分",
             9: "霜降", 10: "小雪", 11: "冬至", 12: "大寒",
         }
-        if day >= 15:
+        # 各月中气在农历中的近似日期（用于替代粗糙的 day>=15 截断）
+        # 大多数中气落在农历十二至二十三之间，但各月差异较大
+        ZHONGQI_LUNAR_DAY = {
+            1: 18, 2: 19, 3: 19, 4: 19, 5: 20, 6: 21,
+            7: 22, 8: 22, 9: 22, 10: 23, 11: 21, 12: 20,
+        }
+        zhongqi_day = ZHONGQI_LUNAR_DAY.get(month, 15)
+        if day >= zhongqi_day:
             return zhongqi_approx.get(month, "冬至")
         return jie_approx.get(month, "冬至")
