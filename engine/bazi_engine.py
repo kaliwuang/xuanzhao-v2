@@ -1384,7 +1384,7 @@ class BaziEngine(DivinationEngine):
             if day_gz == tianshe:
                 shensha.append('天赦')
 
-        # 19~31. 以日干/年支/月支查地支的神煞（数据驱动循环，消除逐行重复调用）
+        # 19~27. 以日干/年支/月支查地支的神煞（数据驱动循环，消除逐行重复调用）
         _SCAN_DEFS = [
             # (名称, 查表字典, 查表key)
             ('天医', SHENSHA_TIANYI_MEDICAL_MAP, month_pillar.zhi),
@@ -1394,16 +1394,23 @@ class BaziEngine(DivinationEngine):
             ('羊刃', SHENSHA_YANGREN_MAP, day_gan),
             ('飞刃', SHENSHA_FEIREN_MAP, day_gan),
             ('流霞', SHENSHA_LIUXIA_MAP, day_gan),
-            ('亡神', SHENSHA_WANGSHEN_MAP, year_zhi),
-            ('劫煞', SHENSHA_JIESHA_MAP, year_zhi),
-            ('灾煞', SHENSHA_ZAISHA_MAP, year_zhi),
-            ('勾煞', SHENSHA_GOUSHA_MAP, year_zhi),
-            ('绞煞', SHENSHA_JIAOSHA_MAP, year_zhi),
             ('孤辰', SHENSHA_GUICHEN_MAP, year_zhi),
             ('寡宿', SHENSHA_GUASU_MAP, year_zhi),
         ]
         for name, sha_map, key in _SCAN_DEFS:
             _scan_zhi(name, sha_map.get(key, ''))
+
+        # 亡神/劫煞/灾煞/勾煞/绞煞：以年支和日支双查（与华盖/驿马/桃花同规则）
+        # 传统命理（《三命通会》《渊海子平》）：这些凶煞应同时以年支和日支查四柱
+        for _name, _sha_map in [
+            ('亡神', SHENSHA_WANGSHEN_MAP),
+            ('劫煞', SHENSHA_JIESHA_MAP),
+            ('灾煞', SHENSHA_ZAISHA_MAP),
+            ('勾煞', SHENSHA_GOUSHA_MAP),
+            ('绞煞', SHENSHA_JIAOSHA_MAP),
+        ]:
+            _targets = set(filter(None, [_sha_map.get(year_zhi, ''), _sha_map.get(day_zhi, '')]))
+            _scan_zhi_set(_name, _targets)
 
         # 32. 天罗地网（以纳音五行查年柱和日柱）
         # 传统规则：火命见戌亥为天罗，水土命见辰巳为地网，金木命无天罗地网
