@@ -76,7 +76,8 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
 .wx-name{font-size:1.2rem;font-weight:700}
 .wx-state{font-size:.75rem;color:var(--text2);font-weight:600}
 .wx-count{font-size:.65rem;color:var(--text3)}
-.wx-bar-fill{height:6px;border-radius:3px;margin:4px 2px 0;background:var(--accent);transition:width .6s ease}
+.wx-bar-fill{height:10px;border-radius:5px;margin:6px 2px 0;background:var(--accent);animation:barGrow .7s ease-out both}
+@keyframes barGrow{from{width:0!important}}
 .wx-旺{background:rgba(232,64,64,.08);border-color:rgba(232,64,64,.2)}
 .wx-相{background:rgba(184,134,11,.08);border-color:rgba(184,134,11,.2)}
 .wx-休{background:rgba(46,139,87,.06);border-color:rgba(46,139,87,.15)}
@@ -357,7 +358,7 @@ function renderWuxing(bz){
   const stateEmoji={'旺':'🔥','相':'⭐','休':'😴','囚':'🔒','死':'💀'};
   const order=['火','土','金','水','木'];
   const stateCls={'旺':'wx-旺','相':'wx-相','休':'wx-休','囚':'wx-囚','死':'wx-死'};
-  $('#wuxingBar').innerHTML='<div class="wx-bar">'+order.map(el=>{
+  $('#wuxingBar').innerHTML='<div class="wx-bar">'+order.map((el,idx)=>{
     const count=ws[el]||0;
     const pct=total?Math.round(count/total*100):0;
     const state=stateMap[el]||'';
@@ -365,7 +366,7 @@ function renderWuxing(bz){
       <div class="wx-name ${WXC[el]||''}">${el}</div>
       <div class="wx-state">${state?(stateEmoji[state]||'')+state:'--'}</div>
       <div class="wx-count" style="font-size:.9rem;font-weight:700">${pct}%</div>
-      <div class="wx-bar-fill" style="width:${pct}%;background:var(${{'金':'--metal','木':'--wood','水':'--water','火':'--fire','土':'--earth'}[el]||'--accent'})"></div>
+      <div class="wx-bar-fill" style="width:${pct}%;background:var(${{'金':'--metal','木':'--wood','水':'--water','火':'--fire','土':'--earth'}[el]||'--accent'});animation-delay:${idx*0.12}s"></div>
     </div>`;
   }).join('')+'</div>';
 }
