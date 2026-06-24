@@ -203,6 +203,30 @@ class TestTimeEngine:
         assert te._parse_time("abc123") is None
         assert te._parse_time("") is None
 
+    def test_lookup_location_prefix_fallback(self):
+        """复合地名（含区/县）应通过前缀匹配回退到城市名"""
+        te = self._get_engine()
+        # "上海市浦东新区" → suffix "区" strip → "上海市浦东新" (not in DB)
+        # → prefix matching: first 2 chars "上海" → match
+        lat, lon = te._lookup_location("上海市浦东新区")
+        assert lat == pytest.approx(31.23, abs=0.5), \
+            f"上海市浦东新区 应匹配到上海 (31.23), 实际纬度 {lat}"
+        assert lon == pytest.approx(121.47, abs=0.5), \
+            f"上海市浦东新区 应匹配到上海 (121.47), 实际经度 {lon}"
+
+        # "深圳市南山区" → prefix "深圳" → match
+        lat2, lon2 = te._lookup_location("深圳市南山区")
+        assert lat2 == pytest.approx(22.54, abs=0.5), \
+            f"深圳市南山区 应匹配到深圳 (22.54), 实际纬度 {lat2}"
+        assert lon2 == pytest.approx(114.06, abs=0.5), \
+            f"深圳市南山区 应匹配到深圳 (114.06), 实际经度 {lon2}"
+
+        # "成都市武侯区" → suffix "区" strip → "成都市武侯" (not in DB)
+        # → prefix matching: first 3 chars "成都市" not in DB, first 2 chars "成都" → match
+        lat3, lon3 = te._lookup_location("成都市武侯区")
+        assert lat3 == pytest.approx(30.57, abs=0.5), \
+            f"成都市武侯区 应匹配到成都 (30.57), 实际纬度 {lat3}"
+
 
 # ============================================================
 # 交叉验证测试
