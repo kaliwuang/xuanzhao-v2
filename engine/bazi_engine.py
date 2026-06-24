@@ -1186,11 +1186,15 @@ class BaziEngine(DivinationEngine):
         shis = [v for k, v in ss.items() if k != "day" and ("食" in v or "伤" in v)]
         if len(shis) >= 2:
             features.append("食伤旺 — 表达欲强，创造力佳")
+        elif len(shis) == 0:
+            features.append("食伤不显 — 内敛含蓄，不善主动表达")
 
         # 8. 比劫
         bijian = [v for k, v in ss.items() if k != "day" and ("比" in v or "劫" in v)]
         if len(bijian) >= 2:
             features.append("比劫多 — 朋友多，竞争也多")
+        elif len(bijian) == 0:
+            features.append("比劫不显 — 独立性强，不太依赖同辈助力")
 
         # 9. 日支特殊
         day_zhi = day.zhi
