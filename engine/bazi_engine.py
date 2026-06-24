@@ -1262,7 +1262,7 @@ class BaziEngine(DivinationEngine):
                                         f"{h_gan}透干（{pos_names[pos_idx]}支{zhis[pos_idx]}藏{h_gan}→{pos_names[g_pos]}干{g}）"
                                     )
 
-        # 最多30条基础特征（身强/身弱特征由analyze()方法insert(0,...)注入，不占此名额）
+        # 最多40条基础特征（身强/身弱特征由analyze()方法insert(0,...)注入，不占此名额）
         # 原20条上限仍不足：冲/合/刑/害/三合/三会+十神组合+日支日禄已占15+条，天干连珠/地支连珠等稀有特征仍可能丢失
         return features[:self.MAX_BASE_FEATURES]
 
