@@ -518,13 +518,10 @@ class XingMingEngine(DivinationEngine):
         Stroke estimation for characters not in lookup table.
         优先尝试 Unihan kTotalStrokes 数据库，回退到统计估算。
         """
-        # 尝试从 Unihan 数据库读取精确笔画数
+        # 尝试通过 unicodedata 判断字符是否为 CJK 统一汉字
         try:
-            import importlib
-            unihan = importlib.import_module('unicodedata')
-            # Python 3.13+ 的 unicodedata 不直接暴露 kTotalStrokes
-            # 但可以尝试通过 name() 判断字符是否为 CJK 统一汉字
-            name = unihan.name(char, '')
+            import unicodedata
+            name = unicodedata.name(char, '')
             if not name or 'CJK' not in name:
                 return 8  # 非CJK字符默认8画
         except Exception as e:
