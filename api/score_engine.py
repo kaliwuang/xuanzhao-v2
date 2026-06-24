@@ -968,7 +968,10 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
         shuli = ge_data.get("数理", 0)
         wx = ge_data.get("五行", "")
 
-        if jixiong == "吉":
+        if jixiong == "大吉":
+            ji_count += 1.5
+            ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})★★")
+        elif jixiong == "吉":
             ji_count += 1
             ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})✓")
         elif jixiong == "半吉":
@@ -980,6 +983,9 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
         elif jixiong == "凶":
             xiong_count += 1
             ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})✗")
+        elif jixiong == "大凶":
+            xiong_count += 1.5
+            ge_details.append(f"{ge_name}({shuli}画·{shuli_name}·{wx})✗✗")
 
     net = ji_count - xiong_count
     if net >= 3:
