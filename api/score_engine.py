@@ -521,16 +521,19 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
 
     if ji_g > xiong_g:
         score += 40
-        strengths.append(f"遇到{ji_g:g}个吉格，天时地利都站在你这边")
+        ji_display = int(ji_g) if ji_g == int(ji_g) else ji_g
+        strengths.append(f"遇到{ji_display}个吉格，天时地利都站在你这边")
     elif xiong_g > ji_g:
         score += 15
-        weaknesses.append(f"有{xiong_g:g}个凶格，这个时间段做事要多留心眼")
+        xiong_display = int(xiong_g) if xiong_g == int(xiong_g) else xiong_g
+        weaknesses.append(f"有{xiong_display}个凶格，这个时间段做事要多留心眼")
     else:
         score += 25
 
     # 旬空影响提示
     if kong_wang_count > 0:
-        weaknesses.append(f"有{kong_wang_count:g}个格局落空亡，效力减半，需待出空后发力")
+        kong_display = int(kong_wang_count) if kong_wang_count == int(kong_wang_count) else kong_wang_count
+        weaknesses.append(f"有{kong_display}个格局落空亡，效力减半，需待出空后发力")
 
     # 2. 用神落宫（+30分）
     zhi_fu_gong = chart.get("zhi_fu_gong", "")
