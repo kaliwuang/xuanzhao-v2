@@ -636,22 +636,47 @@ def _score_liuren(udm) -> Tuple[int, str, list, list]:
     # 2. 用神（+30分）
     yong_shen = chart.get("yong_shen", {}) or {}
     if yong_shen:
-        # 六壬引擎返回的用神键: jiang_ji_xiong(天将吉凶), ri_gan_relation(与日干关系)
+        # 六壬引擎返回的用神键: jiang_ji_xiong(天将吉凶), ri_gan_relation(与日干关系),
+        #   chu_chuan_zhi(初传地支), chu_chuan_jiang(初传天将), jiang_han_yi(天将含义)
         jiang_ji_xiong = yong_shen.get("jiang_ji_xiong", "") or ""
         ri_gan_relation = yong_shen.get("ri_gan_relation", "") or ""
-        # 天将吉凶：大吉/吉 → 旺相，凶 → 休囚
-        if "大吉" in jiang_ji_xiong or "吉" in jiang_ji_xiong:
+        chu_jiang = yong_shen.get("chu_chuan_jiang", "") or ""
+        chu_zhi = yong_shen.get("chu_chuan_zhi", "") or ""
+        jiang_han_yi = yong_shen.get("jiang_han_yi", "") or ""
+        # 天将标签：用于提示文本（优先用简称，无简称则用全称）
+        jiang_label = chu_jiang or "天将"
+
+        # 天将吉凶：大吉/吉 → 旺相，凶 → 休囚（区分大吉30分 vs 吉25分）
+        if jiang_ji_xiong == "大吉":
             score += 30
-            strengths.append("初传天将吉利，所问之事有力量支撑")
+            if jiang_han_yi:
+                strengths.append(f"初传{jiang_label}（{jiang_han_yi}），大吉之将，所问之事有贵人或天时助力")
+            else:
+                strengths.append(f"初传{jiang_label}为大吉之将，所问之事有力量支撑")
+        elif "吉" in jiang_ji_xiong:
+            score += 25
+            if jiang_han_yi:
+                strengths.append(f"初传{jiang_label}（{jiang_han_yi}），吉利之将，事态向好")
+            else:
+                strengths.append(f"初传{jiang_label}为吉利之将，事态发展有利")
         elif "凶" in jiang_ji_xiong:
             score += 10
-            weaknesses.append("初传天将凶，事情推进有阻力")
+            if jiang_han_yi:
+                weaknesses.append(f"初传{jiang_label}（{jiang_han_yi}），凶将值事，事情推进有阻力")
+            else:
+                weaknesses.append(f"初传{jiang_label}为凶将，事情推进有阻力")
         elif "得助" in ri_gan_relation or "得财" in ri_gan_relation:
             score += 25
-            strengths.append("初传与日干关系有利，事态向好")
+            if chu_zhi:
+                strengths.append(f"初传{chu_zhi}与日干{ri_gan_relation}，事态向好")
+            else:
+                strengths.append("初传与日干关系有利，事态向好")
         elif "受制" in ri_gan_relation or "泄气" in ri_gan_relation:
             score += 12
-            weaknesses.append("初传与日干关系不利，需要谨慎")
+            if chu_zhi:
+                weaknesses.append(f"初传{chu_zhi}与日干{ri_gan_relation}，需要谨慎")
+            else:
+                weaknesses.append("初传与日干关系不利，需要谨慎")
         else:
             score += 20
     else:

@@ -83,7 +83,7 @@ def _make_liuyao_udm(ge_ju=None, shi=1, ying=4, dong_yao=None,
 
 
 def _make_qimen_udm(ji_ge=None, xiong_ge=None, zhi_fu_gong="坎一宫",
-                    ba_men=None, ju_name="阳遁3局"):
+                    ba_men=None, ju_name="阳遁3局", zhi_shi_door="开门"):
     """构造奇门遁甲排盘数据完整的 mock UDM"""
     udm = MagicMock()
     udm.qimen_chart = {
@@ -94,17 +94,27 @@ def _make_qimen_udm(ji_ge=None, xiong_ge=None, zhi_fu_gong="坎一宫",
             "ji_ge": ji_ge or [{"name": "天遁", "gong": 3, "desc": "吉"}],
             "xiong_ge": xiong_ge or [],
         },
+        "zhi_shi": {"door": zhi_shi_door} if zhi_shi_door else {},
         "palaces": [],
     }
     return udm
 
 
-def _make_liuren_udm(ge_ju="天心课", yong_shen_status="旺"):
-    """构造大六壬排盘数据完整的 mock UDM"""
+def _make_liuren_udm(ge_ju="天心课", jiang_ji_xiong="大吉",
+                     chu_jiang="貴人", chu_zhi="子", jiang_han_yi="贵人相助、提携",
+                     ri_gan_relation="生我（得助）"):
+    """构造大六壬排盘数据完整的 mock UDM（与 liuren_engine 实际输出结构一致）"""
     udm = MagicMock()
     udm.liuren_chart = {
         "ge_ju": ge_ju,
-        "yong_shen": {"status": yong_shen_status, "旺衰": yong_shen_status},
+        "yong_shen": {
+            "chu_chuan_zhi": chu_zhi,
+            "chu_chuan_jiang": chu_jiang,
+            "chu_chuan_liuqin": "父母",
+            "jiang_ji_xiong": jiang_ji_xiong,
+            "jiang_han_yi": jiang_han_yi,
+            "ri_gan_relation": ri_gan_relation,
+        },
         "si_ke": ([], [], [], []),
         "san_chuan": ([], [], []),
     }
@@ -468,16 +478,40 @@ class TestScoreLiuren:
         assert 0 <= score <= 100
 
     def test_liuren_yong_shen_wang(self):
-        """用神旺相应得高分"""
-        udm = _make_liuren_udm(yong_shen_status="旺")
+        """大吉天将应得高分并显示天将名称"""
+        udm = _make_liuren_udm(jiang_ji_xiong="大吉", chu_jiang="青龍",
+                               jiang_han_yi="财喜、名声、晋升")
         score, _, strengths, _ = _score_liuren(udm)
-        assert any("旺" in s for s in strengths)
+        assert score >= 60  # ge_ju 40 + 大吉 30 = 70, minus si_ke/san_chuan defaults
+        assert any("青龍" in s for s in strengths), "应显示天将名称"
+        assert any("大吉" in s for s in strengths), "应标注大吉"
 
-    def test_liuren_yong_shen_weak(self):
-        """用神休囚应得低分"""
-        udm = _make_liuren_udm(yong_shen_status="休")
+    def test_liuren_yong_shen_xiong(self):
+        """凶将应得低分并显示凶象含义"""
+        udm = _make_liuren_udm(ge_ju="", jiang_ji_xiong="凶", chu_jiang="白虎",
+                               jiang_han_yi="凶事、病伤、血光",
+                               ri_gan_relation="")
         score, _, _, weaknesses = _score_liuren(udm)
-        assert any("动力不足" in w or "休囚" in w for w in weaknesses)
+        # 无课体20 + 凶将10 + si_ke/san_chuan各15 = 60
+        assert score <= 65, f"凶将应得较低分，实际: {score}"
+        assert any("白虎" in w for w in weaknesses), "应显示天将名称"
+        assert any("凶" in w for w in weaknesses), "应标注凶将"
+
+    def test_liuren_yong_shen_ji(self):
+        """吉将（非大吉）应得中高分"""
+        udm = _make_liuren_udm(jiang_ji_xiong="吉", chu_jiang="六合",
+                               jiang_han_yi="合作、婚姻、和合")
+        score, _, strengths, _ = _score_liuren(udm)
+        assert any("六合" in s for s in strengths), "应显示天将名称"
+        assert any("吉" in s for s in strengths), "应标注吉利"
+
+    def test_liuren_ri_relation_with_zhi(self):
+        """初传地支与日干关系应显示具体地支"""
+        udm = _make_liuren_udm(jiang_ji_xiong="", chu_jiang="",
+                               chu_zhi="午", ri_gan_relation="克我（受制）")
+        score, _, _, weaknesses = _score_liuren(udm)
+        assert any("午" in w for w in weaknesses), "应显示初传地支"
+        assert any("受制" in w for w in weaknesses), "应显示关系类型"
 
     def test_liuren_analysis_mentions_geju(self):
         """分析应提及课体"""
