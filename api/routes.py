@@ -7,6 +7,7 @@ import re
 import traceback
 import hashlib
 import time
+import calendar
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional
@@ -155,7 +156,6 @@ def _validate_birth(birth: str) -> str:
     if not (1 <= month <= 12):
         raise ValueError(f"月份错误: {month}")
     # 月份天数校验（考虑闰年）
-    import calendar
     max_day = calendar.monthrange(year, month)[1]
     if not (1 <= day <= max_day):
         raise ValueError(f"日期错误: {year}年{month}月只有{max_day}天，输入{day}天")
