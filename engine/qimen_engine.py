@@ -70,6 +70,10 @@ class QiMenEngine(DivinationEngine):
     # 九宫→九星直接映射（标准洛书配九星：1蓬2芮3冲4辅5禽6心7柱8任9英）
     GONG_TO_STAR = {1: '天蓬', 2: '天芮', 3: '天冲', 4: '天辅', 5: '天禽', 6: '天心', 7: '天柱', 8: '天任', 9: '天英'}
 
+    # 八门原始宫位（后天八卦标准配门：坎休、艮生、震伤、巽杜、离景、坤死、兑惊、乾开）
+    # 值使门判定需用原始位，不可用旋转后的 ba_men
+    DOOR_ORIGINAL = {1: '休门', 8: '生门', 3: '伤门', 4: '杜门', 9: '景门', 2: '死门', 7: '惊门', 6: '开门'}
+
     # 天干五行映射（悖格判断用）
     GAN_WUXING = {'甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
                    '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水'}
@@ -161,9 +165,11 @@ class QiMenEngine(DivinationEngine):
         tian_pan, ba_men, jiu_xing = self._build_tian_pan(di_pan, hour_gan_zhi, ju, yin_yang)
 
         # 5. 值符 & 值使
+        # 值符 = 时干在地盘所临之宫的原始九星（不可用旋转后的天盘星）
+        # 值使 = 时干在地盘所临之宫的原始八门（不可用旋转后的人盘门）
         zhi_fu_gong = self._find_gong_for_gan(di_pan, hour_gan_zhi)
-        zhi_fu_star = jiu_xing.get(zhi_fu_gong, '天蓬')
-        zhi_shi_door = ba_men.get(zhi_fu_gong, '休门')
+        zhi_fu_star = self.GONG_TO_STAR.get(zhi_fu_gong, '天蓬')
+        zhi_shi_door = self.DOOR_ORIGINAL.get(zhi_fu_gong, '休门')
 
         # 6. 八神
         ba_shen = self._build_ba_shen(yin_yang, zhi_fu_gong)
