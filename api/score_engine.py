@@ -867,7 +867,6 @@ def _score_astro(udm) -> Tuple[int, str, list, list]:
 
     # 2. 相位分析（+40分）
     aspects = chart.get("aspects", []) or []
-    aspects_summary = chart.get("aspects_summary", {}) or {}
 
     # 占星引擎使用中文相位名：'合相','六合','刑','三合','冲'
     ji_aspects = ["合相", "六合", "三合"]
