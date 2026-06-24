@@ -1208,7 +1208,8 @@ class BaziEngine(DivinationEngine):
             features.append("日坐禄地 — 自身根基扎实")
 
         # 11. 天干连珠（四天干占连续四位置，如甲乙丙丁/丙丁戊己等，极罕见）
-        gan_indices = sorted(TIANGAN_CYCLE.index(g) for g in all_gans)
+        # 防御：过滤空天干，避免 TIANGAN_CYCLE.index('') 抛出 ValueError
+        gan_indices = sorted(TIANGAN_CYCLE.index(g) for g in all_gans if g)
 
         def _is_consecutive_4(indices, cycle_len):
             """检查4个索引是否在环形排列中连续"""
@@ -1229,8 +1230,9 @@ class BaziEngine(DivinationEngine):
             features.append("天干连珠 — 四天干连续排列，五行流转顺畅")
 
         # 12. 地支连珠（四地支占连续四位置，如子丑寅卯/寅卯辰巳等）
-        zhi_indices = [DI_ZHI.index(z) for z in zhis]
-        if _is_consecutive_4(zhi_indices, 12):
+        # 防御：过滤空地支，避免 DI_ZHI.index('') 抛出 ValueError
+        zhi_indices = [DI_ZHI.index(z) for z in zhis if z]
+        if len(zhi_indices) == 4 and _is_consecutive_4(zhi_indices, 12):
             features.append("地支连珠 — 四地支连续排列，气势连贯，格局特殊")
 
         # 13. 藏干透干（地支藏干中的天干在四柱天干中出现，表示该元素力量外露，影响显著）
