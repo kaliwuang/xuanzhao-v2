@@ -76,6 +76,7 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
 .wx-name{font-size:1.2rem;font-weight:700}
 .wx-state{font-size:.7rem;color:var(--text3)}
 .wx-count{font-size:.65rem;color:var(--text3)}
+.wx-bar-fill{height:4px;border-radius:2px;margin:4px 2px 0;background:var(--accent);opacity:.35;transition:width .6s ease}
 .wx-旺{background:rgba(232,64,64,.08);border-color:rgba(232,64,64,.2)}
 .wx-相{background:rgba(184,134,11,.08);border-color:rgba(184,134,11,.2)}
 .wx-休{background:rgba(46,139,87,.06);border-color:rgba(46,139,87,.15)}
@@ -363,6 +364,7 @@ function renderWuxing(bz){
       <div class="wx-name ${WXC[el]||''}">${el}</div>
       <div class="wx-state">${state||'--'}</div>
       <div class="wx-count">${pct}%</div>
+      <div class="wx-bar-fill" style="width:${pct}%;background:var(${{'金':'--metal','木':'--wood','水':'--water','火':'--fire','土':'--earth'}[el]||'--accent'})"></div>
     </div>`;
   }).join('')+'</div>';
 }
