@@ -2719,6 +2719,9 @@ class CrossValidator:
 
         # 文昌
         wen_chang = ty.get("wen_chang", [])
+        # 过滤空字符串和None值，避免生成"文昌在"这样不完整的发现
+        if isinstance(wen_chang, list):
+            wen_chang = [x for x in wen_chang if x]
         if wen_chang:
             wc_str = "、".join(str(x) for x in wen_chang) if isinstance(wen_chang, list) else str(wen_chang)
             items.append(ConsensusItem(
