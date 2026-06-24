@@ -74,7 +74,7 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
 .wx-bar{display:flex;gap:6px;flex-wrap:wrap}
 .wx-item{flex:1;min-width:55px;text-align:center;padding:8px 4px;border-radius:6px;background:#fafafa;border:1px solid var(--border)}
 .wx-name{font-size:1.2rem;font-weight:700}
-.wx-state{font-size:.7rem;color:var(--text3)}
+.wx-state{font-size:.75rem;color:var(--text2);font-weight:600}
 .wx-count{font-size:.65rem;color:var(--text3)}
 .wx-bar-fill{height:6px;border-radius:3px;margin:4px 2px 0;background:var(--accent);transition:width .6s ease}
 .wx-旺{background:rgba(232,64,64,.08);border-color:rgba(232,64,64,.2)}
@@ -347,13 +347,14 @@ function renderWuxing(bz){
   if(monthWx){
     stateMap[monthWx]='旺';
     stateMap[sheng[monthWx]]='相';
-    // 休 = 生我者, 囚 = 克我者, 死 = 我克者
+    // 休=生我者 囚=克我者 死=我克者
     const beiSheng={'木':'水','火':'木','土':'火','金':'土','水':'金'};
     const beiKe={'木':'金','火':'水','土':'木','金':'火','水':'土'};
     stateMap[beiSheng[monthWx]]='休';
     stateMap[beiKe[monthWx]]='囚';
     stateMap[ke[monthWx]]='死';
   }
+  const stateEmoji={'旺':'🔥','相':'⭐','休':'😴','囚':'🔒','死':'💀'};
   const order=['火','土','金','水','木'];
   const stateCls={'旺':'wx-旺','相':'wx-相','休':'wx-休','囚':'wx-囚','死':'wx-死'};
   $('#wuxingBar').innerHTML='<div class="wx-bar">'+order.map(el=>{
@@ -362,8 +363,8 @@ function renderWuxing(bz){
     const state=stateMap[el]||'';
     return `<div class="wx-item ${stateCls[state]||''}">
       <div class="wx-name ${WXC[el]||''}">${el}</div>
-      <div class="wx-state">${state||'--'}</div>
-      <div class="wx-count">${pct}%</div>
+      <div class="wx-state">${state?(stateEmoji[state]||'')+state:'--'}</div>
+      <div class="wx-count" style="font-size:.9rem;font-weight:700">${pct}%</div>
       <div class="wx-bar-fill" style="width:${pct}%;background:var(${{'金':'--metal','木':'--wood','水':'--water','火':'--fire','土':'--earth'}[el]||'--accent'})"></div>
     </div>`;
   }).join('')+'</div>';
