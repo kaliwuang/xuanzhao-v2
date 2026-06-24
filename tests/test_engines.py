@@ -90,6 +90,37 @@ class TestTimeEngine:
             # 抛异常也是合理的处理方式
             pass
 
+    def test_lookup_location_english_name(self):
+        """英文城市名应通过 EN_CITY_MAP 正确映射到中文名"""
+        te = self._get_engine()
+        # 英文名 "Hohhot" 应映射到 "呼和浩特"
+        lat, lon = te._lookup_location("Hohhot")
+        assert lat == pytest.approx(40.84, abs=0.5), f"纬度应接近 40.84，实际 {lat}"
+        assert lon == pytest.approx(111.75, abs=0.5), f"经度应接近 111.75，实际 {lon}"
+
+    def test_lookup_location_province_prefix(self):
+        """省级前缀+城市名+行政区划后缀应被正确剥离"""
+        te = self._get_engine()
+        # "内蒙古呼和浩特市" → 去掉"内蒙古"前缀 → "呼和浩特市" → 去掉"市" → "呼和浩特"
+        lat, lon = te._lookup_location("内蒙古呼和浩特市")
+        assert lat == pytest.approx(40.84, abs=0.5), f"内蒙古呼和浩特市 应匹配到呼和浩特"
+        assert lon == pytest.approx(111.75, abs=0.5)
+
+    def test_lookup_location_suffix_removal(self):
+        """带行政区划后缀的城市名应正确匹配"""
+        te = self._get_engine()
+        # "北京市" → 去掉"市" → "北京"
+        lat, lon = te._lookup_location("北京市")
+        assert lat == pytest.approx(39.90, abs=0.5), f"北京市 应匹配到北京"
+        assert lon == pytest.approx(116.41, abs=0.5)
+
+    def test_lookup_location_exact_chinese(self):
+        """精确中文城市名应直接匹配"""
+        te = self._get_engine()
+        lat, lon = te._lookup_location("拉萨")
+        assert lat == pytest.approx(29.65, abs=0.5), f"拉萨纬度应约 29.65"
+        assert lon == pytest.approx(91.10, abs=0.5), f"拉萨经度应约 91.10"
+
 
 # ============================================================
 # 交叉验证测试
