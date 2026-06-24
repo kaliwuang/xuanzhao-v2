@@ -227,6 +227,74 @@ class TestTimeEngine:
         assert lat3 == pytest.approx(30.57, abs=0.5), \
             f"成都市武侯区 应匹配到成都 (30.57), 实际纬度 {lat3}"
 
+    def test_bazi_day_pillar_date_late_zi(self):
+        """晚子时(23:xx)的bazi_day_pillar_date应返回次日日期"""
+        from engine.time_engine import get_time_engine
+        from datetime import timedelta
+        te = get_time_engine()
+        corrected = te.correct("2005-06-09 23:30", "北京")
+        assert corrected.is_late_zi is True
+        pillar_date = corrected.bazi_day_pillar_date
+        # 晚子时日柱用次日，所以日期应比真太阳时多1天
+        assert pillar_date.date() == (corrected.true_solar + timedelta(days=1)).date(), \
+            f"晚子时bazi_day_pillar_date应为次日，实际 {pillar_date.date()} vs 真太阳时 {corrected.true_solar.date()}"
+
+    def test_bazi_day_pillar_date_normal_hour(self):
+        """非晚子时的bazi_day_pillar_date应与真太阳时同日"""
+        from engine.time_engine import get_time_engine
+        te = get_time_engine()
+        corrected = te.correct("2005-06-09 11:00", "北京")
+        assert corrected.is_late_zi is False
+        pillar_date = corrected.bazi_day_pillar_date
+        assert pillar_date.date() == corrected.true_solar.date(), \
+            f"非晚子时bazi_day_pillar_date应与真太阳时同日，实际 {pillar_date.date()} vs {corrected.true_solar.date()}"
+
+    def test_bazi_day_pillar_date_used_by_engines(self):
+        """验证bazi_day_pillar_date被八字引擎实际使用且产生合理结果"""
+        from engine.time_engine import get_time_engine
+        from engine.bazi_engine import BaziEngine
+        te = get_time_engine()
+        corrected = te.correct("2005-06-09 23:30", "北京")
+        engine = BaziEngine()
+        result = engine.analyze(corrected, 1)
+        assert "error" not in result, f"晚子时八字排盘报错: {result.get('error')}"
+        # 晚子时日柱应与次日相关
+        day_pillar = result.get("day", "")
+        assert day_pillar, "应有日柱数据"
+
+    def test_hour_zhi_mapping(self):
+        """hour_zhi应将bazi_hour正确映射到12时支（用:30分钟避免真太阳时边界偏移）"""
+        from engine.time_engine import get_time_engine
+        te = get_time_engine()
+        # 使用:30分钟确保真太阳时修正(~-13min北京)不会跨时支边界
+        test_cases = [
+            ("2005-06-09 00:30", "北京", "子"),   # 00:30 → 00:17 → 子时
+            ("2005-06-09 01:30", "北京", "丑"),   # 01:30 → 01:17 → 丑时
+            ("2005-06-09 03:30", "北京", "寅"),   # 03:30 → 03:17 → 寅时
+            ("2005-06-09 05:30", "北京", "卯"),   # 05:30 → 05:17 → 卯时
+            ("2005-06-09 07:30", "北京", "辰"),   # 07:30 → 07:17 → 辰时
+            ("2005-06-09 09:30", "北京", "巳"),   # 09:30 → 09:16 → 巳时
+            ("2005-06-09 11:30", "北京", "午"),   # 11:30 → 11:16 → 午时
+            ("2005-06-09 13:30", "北京", "未"),   # 13:30 → 13:16 → 未时
+            ("2005-06-09 15:30", "北京", "申"),   # 15:30 → 15:16 → 申时
+            ("2005-06-09 17:30", "北京", "酉"),   # 17:30 → 17:16 → 酉时
+            ("2005-06-09 19:30", "北京", "戌"),   # 19:30 → 19:16 → 戌时
+            ("2005-06-09 21:30", "北京", "亥"),   # 21:30 → 21:16 → 亥时
+            ("2005-06-09 23:30", "北京", "子"),   # 23:30 → 23:16 → 子时(晚子时,bazi_hour=0)
+        ]
+        for birth, loc, expected_zhi in test_cases:
+            corrected = te.correct(birth, loc)
+            actual_zhi = corrected.hour_zhi
+            assert actual_zhi == expected_zhi, \
+                f"{birth} 应为{expected_zhi}时，实际 {actual_zhi}时 (bazi_hour={corrected.bazi_hour})"
+
+    def test_lookup_location_guangxi_nanning(self):
+        """广西+城市名应通过省级前缀正确匹配"""
+        te = self._get_engine()
+        lat, lon = te._lookup_location("广西南宁")
+        assert lat == pytest.approx(22.82, abs=0.5), f"广西南宁 应匹配到南宁纬度约22.82，实际 {lat}"
+        assert lon == pytest.approx(108.37, abs=0.5), f"广西南宁 应匹配到南宁经度约108.37，实际 {lon}"
+
 
 # ============================================================
 # 交叉验证测试
