@@ -221,6 +221,39 @@ class TestScoreBazi:
         score, _, strengths, _ = _score_bazi(udm)
         assert any("安稳" in s or "刑冲" in s for s in strengths)
 
+    def test_bazi_hai_penalty(self):
+        """六害应扣分并产生提示"""
+        udm = _make_bazi_udm()
+        udm.zhi_relations = ["子未害"]
+        score_with_hai, _, _, weaknesses_with_hai = _score_bazi(udm)
+
+        udm2 = _make_bazi_udm()
+        udm2.zhi_relations = []
+        score_without_hai, _, _, _ = _score_bazi(udm2)
+
+        assert score_with_hai < score_without_hai, "六害应导致分数降低"
+        assert any("六害" in w for w in weaknesses_with_hai), "应有六害相关提示"
+
+    def test_bazi_po_penalty(self):
+        """六破应扣分并产生提示"""
+        udm = _make_bazi_udm()
+        udm.zhi_relations = ["子酉破"]
+        score_with_po, _, _, weaknesses_with_po = _score_bazi(udm)
+
+        udm2 = _make_bazi_udm()
+        udm2.zhi_relations = []
+        score_without_po, _, _, _ = _score_bazi(udm2)
+
+        assert score_with_po < score_without_po, "六破应导致分数降低"
+        assert any("六破" in w for w in weaknesses_with_po), "应有六破相关提示"
+
+    def test_bazi_hai_with_chong_no_duplicate_hint(self):
+        """有冲+害时，只显示冲的提示，不重复显示害的单独提示"""
+        udm = _make_bazi_udm(zhi_relations=["子午冲", "子未害"])
+        _, _, _, weaknesses = _score_bazi(udm)
+        # 有害时只在冲/刑不存在时才单独提示
+        assert not any("六害" in w for w in weaknesses), "有冲时不应单独提示六害"
+
     def test_bazi_analysis_contains_key_info(self):
         """分析文本应包含日主信息"""
         udm = _make_bazi_udm(strength="身强")

@@ -170,23 +170,34 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
     else:
         score += 12
 
-    # 4. 刑冲合害（+15分）
+    # 4. 刑冲合害破（+15分）
     zhi_relations = getattr(udm, 'zhi_relations', []) or []
     chong_count = sum(1 for r in zhi_relations if "冲" in str(r))
     xing_count = sum(1 for r in zhi_relations if "刑" in str(r))
     he_count = sum(1 for r in zhi_relations if "合" in str(r))
+    hai_count = sum(1 for r in zhi_relations if "害" in str(r))
+    po_count = sum(1 for r in zhi_relations if "破" in str(r))
 
-    if chong_count == 0 and xing_count == 0:
+    # 害/破属于中等负面因素（比冲/刑轻），权重0.5
+    negative_weight = chong_count + xing_count + (hai_count + po_count) * 0.5
+
+    if negative_weight == 0:
         score += 15
         strengths.append("地支没什么刑冲，生活比较安稳")
-    elif chong_count + xing_count <= 1:
+    elif negative_weight <= 1:
         score += 10
-    elif chong_count + xing_count <= 2:
+    elif negative_weight <= 2:
         score += 5
         weaknesses.append("有点刑冲，生活中难免有些冲突和变化")
     else:
         score += 2
         weaknesses.append("刑冲比较多，人生起伏大，需要更多智慧应对")
+
+    # 害/破单独提示（隐蔽性摩擦，不与冲/刑重复提示）
+    if hai_count > 0 and chong_count == 0 and xing_count == 0:
+        weaknesses.append(f"地支有{hai_count}处六害，人际关系中可能存在暗中摩擦")
+    if po_count > 0 and chong_count == 0 and xing_count == 0:
+        weaknesses.append(f"地支有{po_count}处六破，合作或关系中易有意外破损")
 
     # 合多加分
     if he_count >= 2:
