@@ -588,6 +588,25 @@ class BaziEngine(DivinationEngine):
                 result.append('孤辰')
             if zhi == SHENSHA_GUASU_MAP.get(_year_zhi, ''):
                 result.append('寡宿')
+            # 德秀贵人（以月支查天干）— 补充原局_calc_shensha中有但大运/流年遗漏的神煞
+            _dexiu = SHENSHA_DEXIU_MAP.get(_month_zhi, {})
+            _dexiu_de = _dexiu.get('德', '')
+            _dexiu_xiu = _dexiu.get('秀', '')
+            if _dexiu_de and gan == _dexiu_de:
+                result.append('德秀贵人（德）')
+            if _dexiu_xiu and gan in _dexiu_xiu:
+                result.append('德秀贵人（秀）')
+            # 天罗地网（以纳音五行查地支）— 补充原局_calc_shensha中有但大运/流年遗漏的神煞
+            _nayin = NAYIN_TABLE.get(gan + zhi, '')
+            _nayin_wx = ''
+            for _wx in WUXING_ORDERED:
+                if _wx in _nayin:
+                    _nayin_wx = _wx
+                    break
+            if _nayin_wx == '火' and zhi in ('戌', '亥'):
+                result.append('天罗')
+            if _nayin_wx in ('水', '土') and zhi in ('辰', '巳'):
+                result.append('地网')
             return result
 
         # 大运（增强版：含十神、藏干、纳音、长生、神煞、流年）
