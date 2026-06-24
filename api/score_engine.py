@@ -108,15 +108,19 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
 
     if strength == "身弱":
         if xi_present:
-            score += 28
+            score += 28 if not ji_present else 24
             strengths.append("虽然身弱，但喜用神就在八字里，有人帮忙扛事儿")
+            if ji_present:
+                weaknesses.append("忌神也在八字中，喜用与忌神并存，需要取舍")
         else:
             score += 12
             weaknesses.append("身弱且喜用神不太给力，需要后天多补补")
     elif strength == "身强":
         if xi_present:
-            score += 30
+            score += 30 if not ji_present else 26
             strengths.append("身强又有喜用神制约，刚柔并济，格局不错")
+            if ji_present:
+                weaknesses.append("忌神也在八字中，制约与消耗并存，需要平衡")
         else:
             score += 18
             weaknesses.append("身强但缺少制约，容易过于刚硬")
