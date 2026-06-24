@@ -821,7 +821,7 @@ class XingMingEngine(DivinationEngine):
         score = 0
 
         # Grid scores
-        jixiong_scores = {"大吉": 100, "吉": 85, "半吉": 65, "平": 50, "半凶": 35, "凶": 15, "大凶": 5}
+        jixiong_scores = {"大吉": 100, "吉": 85, "中吉": 75, "半吉": 65, "平": 50, "半凶": 35, "凶": 15, "大凶": 5}
 
         # 人格 (30%)
         ren_jx = wuge["人格"].get("吉凶", "平")
