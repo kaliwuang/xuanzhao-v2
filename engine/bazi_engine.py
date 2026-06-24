@@ -1713,6 +1713,10 @@ class BaziEngine(DivinationEngine):
                     score[canggan_wx] += YUE_LING_ZHONG_QI if is_month else ZHONG_QI_WEIGHT
                 elif cidx == 2:
                     score[canggan_wx] += YUE_LING_YU_QI if is_month else YU_QI_WEIGHT
+                else:
+                    # 藏干超过3个（本气+中气+余气），多余项按余气权重计入
+                    logger.debug(f"柱{['年','月','日','时'][idx]}藏干第{cidx+1}项'{canggan}'({canggan_wx})超过三气上限，按余气权重计入")
+                    score[canggan_wx] += YU_QI_WEIGHT
 
         # 保留一位小数
         for k in score:
