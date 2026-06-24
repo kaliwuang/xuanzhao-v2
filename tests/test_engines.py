@@ -121,6 +121,32 @@ class TestTimeEngine:
         assert lat == pytest.approx(29.65, abs=0.5), f"拉萨纬度应约 29.65"
         assert lon == pytest.approx(91.10, abs=0.5), f"拉萨经度应约 91.10"
 
+    def test_equation_of_time_range(self):
+        """均时差应在 -15 到 +17 分钟范围内（天文常识）"""
+        from datetime import datetime
+        te = self._get_engine()
+        # 测试全年12个月的代表性日期，均时差应始终在合理范围内
+        test_dates = [
+            datetime(2025, 1, 15), datetime(2025, 2, 15), datetime(2025, 3, 15),
+            datetime(2025, 4, 15), datetime(2025, 5, 15), datetime(2025, 6, 15),
+            datetime(2025, 7, 15), datetime(2025, 8, 15), datetime(2025, 9, 15),
+            datetime(2025, 10, 15), datetime(2025, 11, 15), datetime(2025, 12, 15),
+        ]
+        for dt in test_dates:
+            eot = te._equation_of_time(dt)
+            assert -15 <= eot <= 17, f"{dt.strftime('%m-%d')} 均时差 {eot:.2f} 分钟超出天文范围 [-15, +17]"
+
+    def test_equation_of_time_extrema(self):
+        """均时差在11月初应接近最大值（+16分钟），2月中旬应接近最小值（-14分钟）"""
+        from datetime import datetime
+        te = self._get_engine()
+        # 11月3日前后是均时差最大值
+        eot_nov = te._equation_of_time(datetime(2025, 11, 3, 12, 0))
+        assert eot_nov >= 14, f"11月初均时差应接近最大值，实际 {eot_nov:.2f}"
+        # 2月11日前后是均时差最小值
+        eot_feb = te._equation_of_time(datetime(2025, 2, 11, 12, 0))
+        assert eot_feb <= -12, f"2月中旬均时差应接近最小值，实际 {eot_feb:.2f}"
+
 
 # ============================================================
 # 交叉验证测试
