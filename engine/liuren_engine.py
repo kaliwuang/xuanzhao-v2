@@ -254,7 +254,7 @@ class LiuRenEngine(DivinationEngine):
 
             # 用神分析（基于三传初传）
             yong_shen_analysis = self._analyze_yong_shen(
-                san_chuan_raw, si_ke_raw, day_gan, day_zhi, tian_jiang
+                san_chuan_raw, si_ke_raw, day_gan, tian_jiang
             )
 
             # 四课详细解读
@@ -396,7 +396,7 @@ class LiuRenEngine(DivinationEngine):
         return analysis
 
     def _analyze_yong_shen(self, san_chuan_raw: dict, si_ke_raw: dict,
-                           day_gan: str, day_zhi: str, tian_jiang: dict) -> dict:
+                           day_gan: str, tian_jiang: dict) -> dict:
         """分析用神：基于三传初传的天将和六亲关系"""
         if not san_chuan_raw or not isinstance(san_chuan_raw, dict):
             return {}
