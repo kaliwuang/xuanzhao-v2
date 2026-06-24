@@ -1009,7 +1009,7 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
     elif "半吉" in sancai_jixiong:
         score += 16
         strengths.append(f"三才配置{sancai_wuxing}为{sancai_jixiong}，基础尚可")
-    elif "吉" in sancai_jixiong:
+    elif sancai_jixiong == "吉":
         score += 22
         strengths.append(f"三才配置{sancai_wuxing}为{sancai_jixiong}，基础稳固")
     elif "半凶" in sancai_jixiong:
@@ -1018,7 +1018,7 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
     elif "大凶" in sancai_jixiong:
         score += 3
         weaknesses.append(f"三才配置{sancai_wuxing}为{sancai_jixiong}，天地人严重不协，建议调整")
-    elif "凶" in sancai_jixiong:
+    elif sancai_jixiong == "凶":
         score += 8
         weaknesses.append(f"三才配置{sancai_wuxing}为{sancai_jixiong}，天地人不够协调")
     else:
