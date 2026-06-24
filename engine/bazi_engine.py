@@ -1476,12 +1476,16 @@ class BaziEngine(DivinationEngine):
                     pos = POS_NAMES[pos_idx]
                     shensha.append(f'空亡（{pos}支{z}）')
 
-        # 36. 双华盖（以年支和日支查，复用上方第2步的华盖目标地支）
-        for huagai_zhi in huagai_targets:
-            huagai_count = sum(1 for z in all_zhis if z == huagai_zhi)
-            if huagai_count >= 2:
-                shensha.append('双华盖')
-                break
+        # 36. 双华盖（年支和日支的华盖目标都在四柱中出现）
+        # 传统定义：年华盖+日华盖同时出现为双华盖，不要求同一目标地支出现两次
+        _huagai_found = set()
+        for _hg_zhi in huagai_targets:
+            for _z in all_zhis:
+                if _z == _hg_zhi:
+                    _huagai_found.add(_hg_zhi)
+                    break
+        if len(_huagai_found) >= 2:
+            shensha.append('双华盖')
 
         # 37. 双桃花（以年支和日支查，复用上方第4步的桃花目标地支）
         for taohua_zhi in taohua_targets:
