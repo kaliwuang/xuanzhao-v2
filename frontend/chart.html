@@ -28,7 +28,8 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
 /* Panels */
 .panels{max-width:860px;margin:0 auto;padding:10px}
 .panel{display:none}.panel.on{display:block}
-.sec{background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.sec{background:var(--bg2);border:1px solid rgba(255,255,255,.04);border-radius:8px;margin-bottom:10px;overflow:hidden;transition:border-color .3s ease,box-shadow .3s ease,transform .2s ease}
+.sec:hover{border-color:rgba(201,169,110,.2);box-shadow:0 4px 20px rgba(201,169,110,.06);transform:translateY(-1px)}
 .sec-t{font-size:.75rem;font-weight:700;color:var(--gold);padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);border-left:3px solid var(--gold);background:rgba(201,169,110,.03);letter-spacing:1px}
 .sec-b{padding:10px 12px}
 
