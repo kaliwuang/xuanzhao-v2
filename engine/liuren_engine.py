@@ -365,8 +365,15 @@ class LiuRenEngine(DivinationEngine):
             val = si_ke_raw.get(key, [])
             if not val or len(val) < 2:
                 continue
-            gz = val[0] if isinstance(val[0], str) else str(val[0])
-            jiang = val[1] if len(val) > 1 else ''
+            # 防御：val[0]可能为None或非字符串类型，安全转换
+            raw_gz = val[0]
+            if raw_gz is None:
+                continue
+            gz = str(raw_gz) if not isinstance(raw_gz, str) else raw_gz
+            if not gz:
+                continue
+            jiang = val[1] if len(val) > 1 and val[1] is not None else ''
+            jiang = str(jiang) if not isinstance(jiang, str) else jiang
 
             zhi = gz[-1] if gz else ''
             wx = self.ZHI_WUXING.get(zhi, '')
