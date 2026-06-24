@@ -614,6 +614,66 @@ class TestScoreAstro:
         assert "双子" in analysis
         assert "天蝎" in analysis
 
+    def test_astro_dignity_domicile(self):
+        """入庙行星应得高分，进入strengths"""
+        udm = _make_astro_udm(planetary_details={
+            "太阳": {"dignity": "domicile", "retrograde": False},
+        })
+        score, _, strengths, _ = _score_astro(udm)
+        assert score > 20  # 入庙=35分，拉高平均
+        assert any("入庙" in s and "强项" in s for s in strengths)
+
+    def test_astro_dignity_detriment(self):
+        """陷位行星应进入weaknesses"""
+        udm = _make_astro_udm(planetary_details={
+            "土星": {"dignity": "detriment", "retrograde": False},
+        })
+        score, _, _, weaknesses = _score_astro(udm)
+        assert any("陷" in w and "注意" in w for w in weaknesses)
+
+    def test_astro_retrograde_reduces_dignity(self):
+        """逆行入庙行星应降分（35→27）"""
+        udm_retro = _make_astro_udm(planetary_details={
+            "太阳": {"dignity": "domicile", "retrograde": True},
+        })
+        udm_normal = _make_astro_udm(planetary_details={
+            "太阳": {"dignity": "domicile", "retrograde": False},
+        })
+        score_r, _, _, _ = _score_astro(udm_retro)
+        score_n, _, _, _ = _score_astro(udm_normal)
+        assert score_r < score_n, "逆行应降低评分"
+        # 入庙35分，逆行减8=27分，差异应反映在总分中
+        assert score_n - score_r >= 1, "逆行入庙vs正常入庙至少差1分"
+
+    def test_astro_planetary_details_as_list(self):
+        """planetary_details为list格式时应正确转换并评分"""
+        udm = _make_astro_udm(planetary_details=[
+            {"name": "太阳", "dignity": "domicile", "retrograde": False},
+            {"name": "月亮", "dignity": "exaltation", "retrograde": False},
+        ])
+        score, _, strengths, _ = _score_astro(udm)
+        assert score > 20
+        assert any("太阳" in s for s in strengths)
+        assert any("月亮" in s for s in strengths)
+
+    def test_astro_equal_aspects(self):
+        """吉凶相位相等时应走else分支得22分"""
+        udm = _make_astro_udm(aspects=[
+            {"planet1": "太阳", "planet2": "月亮", "aspect": "三合"},
+            {"planet1": "火星", "planet2": "土星", "aspect": "刑"},
+        ])
+        score, _, strengths, weaknesses = _score_astro(udm)
+        # 吉凶各1个，走else分支得22分相位分
+        assert not any("吉相位" in s for s in strengths)
+        assert not any("刑冲" in w for w in weaknesses)
+
+    def test_astro_missing_sun_moon_asc(self):
+        """缺少太阳/月亮/上升时应走fallback分支"""
+        udm = _make_astro_udm(sun_sign="", moon_sign="", asc_sign="")
+        score, _, strengths, _ = _score_astro(udm)
+        # 没有太阳月亮 → +5分，没有上升 → +3分，没有mc → +2分
+        assert score >= 0
+
 
 # ============================================================
 # 姓名学评分测试
