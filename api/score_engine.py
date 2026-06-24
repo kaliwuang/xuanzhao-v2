@@ -539,13 +539,20 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
         kong_display = int(kong_wang_count) if kong_wang_count == int(kong_wang_count) else kong_wang_count
         weaknesses.append(f"有{kong_display}个格局落空亡，效力减半，需待出空后发力")
 
+    # 奇门九宫名映射（值符宫位显示用）
+    _QIMEN_GONG_NAMES = {
+        1: '坎一宫', 2: '坤二宫', 3: '震三宫', 4: '巽四宫',
+        5: '中五宫', 6: '乾六宫', 7: '兑七宫', 8: '艮八宫', 9: '离九宫',
+    }
+
     # 2. 用神落宫（+30分）
     zhi_fu_gong = chart.get("zhi_fu_gong", "")
 
     # 值符落宫一般为吉
     if zhi_fu_gong:
         score += 15
-        strengths.append(f"值符在{zhi_fu_gong}宫，核心力量到位")
+        gong_name = _QIMEN_GONG_NAMES.get(zhi_fu_gong, f"{zhi_fu_gong}宫") if isinstance(zhi_fu_gong, int) else zhi_fu_gong
+        strengths.append(f"值符在{gong_name}，核心力量到位")
     else:
         score += 8
 
