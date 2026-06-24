@@ -103,6 +103,8 @@ def get_orchestrator():
 
 def _parse_gender(gender: str) -> int:
     """性别字符串→编码"""
+    if not gender:
+        return 0  # 默认女
     return 1 if gender.lower() in ("男", "male", "m") else 0
 
 
