@@ -147,6 +147,62 @@ class TestTimeEngine:
         eot_feb = te._equation_of_time(datetime(2025, 2, 11, 12, 0))
         assert eot_feb <= -12, f"2月中旬均时差应接近最小值，实际 {eot_feb:.2f}"
 
+    def test_undo_dst_in_dst_period(self):
+        """中国夏令时期间（1986-1991）应回退1小时"""
+        from datetime import datetime
+        te = self._get_engine()
+        # 1986年5月10日处于夏令时期间（5月4日~9月14日）
+        dt_in_dst = datetime(1986, 5, 10, 10, 0, 0)
+        result = te._undo_dst_local(dt_in_dst)
+        assert result.hour == 9, f"夏令时期间应回退1小时，期望9时，实际 {result.hour}时"
+
+    def test_undo_dst_outside_dst_period(self):
+        """非夏令时期间不应做任何调整"""
+        from datetime import datetime
+        te = self._get_engine()
+        # 1986年1月在夏令时范围之外
+        dt_outside = datetime(1986, 1, 15, 10, 0, 0)
+        result = te._undo_dst_local(dt_outside)
+        assert result == dt_outside, f"非夏令时期间不应改变时间"
+
+    def test_undo_dst_boundary_year(self):
+        """1992年起不再有夏令时"""
+        from datetime import datetime
+        te = self._get_engine()
+        dt_1992 = datetime(1992, 6, 15, 10, 0, 0)
+        result = te._undo_dst_local(dt_1992)
+        assert result == dt_1992, "1992年起中国已无夏令时"
+
+    def test_is_late_zi_hour(self):
+        """23点应判定为晚子时"""
+        from datetime import datetime
+        te = self._get_engine()
+        assert te._is_late_zi_hour(datetime(2005, 6, 9, 23, 0)) is True
+        assert te._is_late_zi_hour(datetime(2005, 6, 9, 22, 59)) is False
+        assert te._is_late_zi_hour(datetime(2005, 6, 10, 0, 0)) is False
+
+    def test_parse_time_formats(self):
+        """_parse_time 应支持多种时间格式"""
+        from datetime import datetime
+        te = self._get_engine()
+        # 标准格式
+        assert te._parse_time("2005-06-09 11:50") == datetime(2005, 6, 9, 11, 50)
+        # 下划线分隔
+        assert te._parse_time("2005-06-09_11:50") == datetime(2005, 6, 9, 11, 50)
+        # 加号分隔（URL编码空格）
+        assert te._parse_time("2005-06-09+11:50") == datetime(2005, 6, 9, 11, 50)
+        # ISO格式
+        assert te._parse_time("2005-06-09T11:50") == datetime(2005, 6, 9, 11, 50)
+        # 中文格式（带冒号时间）
+        assert te._parse_time("2005年06月09日 11:50") == datetime(2005, 6, 9, 11, 50)
+        # 中文格式（仅时）
+        assert te._parse_time("2005年06月09日 11时") == datetime(2005, 6, 9, 11, 0)
+        # 仅日期
+        assert te._parse_time("2005-06-09") == datetime(2005, 6, 9, 0, 0)
+        # 无效格式
+        assert te._parse_time("abc123") is None
+        assert te._parse_time("") is None
+
 
 # ============================================================
 # 交叉验证测试
