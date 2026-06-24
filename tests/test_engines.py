@@ -1006,5 +1006,75 @@ class TestEdgeCases:
         assert "error" not in result
 
 
+# ============================================================
+# 姓名学引擎测试
+# ============================================================
+
+class TestXingMingEngine:
+
+    def _get_engine(self):
+        from engine.xingming_engine import XingMingEngine
+        return XingMingEngine()
+
+    def test_to_jishu_normal(self):
+        """_to_jishu 应将笔画数转换为1-81范围内的数理"""
+        engine = self._get_engine()
+        assert engine._to_jishu(1) == 1
+        assert engine._to_jishu(40) == 40
+        assert engine._to_jishu(81) == 81
+
+    def test_to_jishu_wrap_around(self):
+        """超过81的笔画数应回绕到1-81范围"""
+        engine = self._get_engine()
+        assert engine._to_jishu(82) == 1
+        assert engine._to_jishu(162) == 81
+        assert engine._to_jishu(163) == 1
+
+    def test_to_jishu_zero_returns_one(self):
+        """笔画数为0时应回退到1并记录警告"""
+        engine = self._get_engine()
+        assert engine._to_jishu(0) == 1
+
+    def test_to_jishu_negative_returns_one(self):
+        """负笔画数应回退到1"""
+        engine = self._get_engine()
+        assert engine._to_jishu(-5) == 1
+        assert engine._to_jishu(-1) == 1
+
+    def test_analyze_empty_name(self):
+        """空姓名应返回错误信息"""
+        engine = self._get_engine()
+        result = engine.analyze_name("", "伟", "男")
+        assert "error" in result
+
+    def test_analyze_non_chinese(self):
+        """非汉字姓名应返回错误信息"""
+        engine = self._get_engine()
+        result = engine.analyze_name("ABC", "DEF", "男")
+        assert "error" in result
+
+    def test_analyze_single_char_surname(self):
+        """单姓单名应正确计算五格"""
+        engine = self._get_engine()
+        result = engine.analyze_name("张", "伟", "男")
+        assert "error" not in result
+        # 单姓天格 = 姓笔画 + 1
+        assert result["wuge"]["天格"]["画数"] == 11 + 1  # 张=11画
+        # 单名地格 = 名笔画 + 1
+        assert result["wuge"]["地格"]["画数"] == 6 + 1   # 伟=6画
+        # 总格 = 姓+名
+        assert result["wuge"]["总格"]["画数"] == 11 + 6
+
+    def test_analyze_compound_surname(self):
+        """复姓应正确识别并计算天格"""
+        engine = self._get_engine()
+        result = engine.analyze_name("欧阳", "明", "男")
+        assert "error" not in result
+        assert result["is_compound_surname"] is True
+        # 复姓天格 = 姓总笔画（不加1）
+        # 欧=15画, 阳=17画（康熙字典）
+        assert result["wuge"]["天格"]["画数"] == 15 + 17
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
