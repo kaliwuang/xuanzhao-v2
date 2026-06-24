@@ -33,9 +33,11 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
 .sec-b{padding:10px 12px}
 
 /* Loading */
-.ld{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px}
-.spinner{width:36px;height:36px;border:3px solid var(--gold-dim);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite}
+.ld{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px}
+.spinner{width:40px;height:40px;border:3px solid var(--gold-dim);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;box-shadow:0 0 16px rgba(201,169,110,.25)}
 @keyframes spin{to{transform:rotate(360deg)}}
+.ld-txt{color:var(--txt3);font-size:.85rem;animation:ld-pulse 1.8s ease-in-out infinite}
+@keyframes ld-pulse{0%,100%{opacity:.5}50%{opacity:1}}
 
 /* ===== 八字四柱大表 ===== */
 .bz-table{width:100%;border-collapse:collapse;text-align:center}
@@ -190,7 +192,7 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
   <button class="tab" data-m="xm">姓名</button>
 </nav>
 
-<div class="ld" id="loader"><div class="spinner"></div><div style="color:var(--txt3);font-size:.85rem">排盘中…</div></div>
+<div class="ld" id="loader"><div class="spinner"></div><div class="ld-txt">排盘中…</div></div>
 
 <main class="panels" id="panels" style="display:none">
 
