@@ -1672,6 +1672,8 @@ class BaziEngine(DivinationEngine):
         YUE_LING_BEN_QI = 1.5      # 月令本气加权（月令为命局提纲）
         ZHONG_QI_WEIGHT = 0.5      # 地支中气
         YU_QI_WEIGHT = 0.3         # 地支余气
+        YUE_LING_ZHONG_QI = 0.7    # 月令中气加权（月令提纲效应渗透到中气）
+        YUE_LING_YU_QI = 0.4       # 月令余气加权（月令提纲效应轻微渗透到余气）
 
         # 藏干数据来源：优先用已校正的 hidden_gans，回退到 ZHI_CANGGAN
         _HIDDEN_KEYS = ['year', 'month', 'day', 'time']
@@ -1703,9 +1705,9 @@ class BaziEngine(DivinationEngine):
                 if cidx == 0:
                     score[canggan_wx] += YUE_LING_BEN_QI if is_month else BEN_QI_WEIGHT
                 elif cidx == 1:
-                    score[canggan_wx] += ZHONG_QI_WEIGHT
+                    score[canggan_wx] += YUE_LING_ZHONG_QI if is_month else ZHONG_QI_WEIGHT
                 elif cidx == 2:
-                    score[canggan_wx] += YU_QI_WEIGHT
+                    score[canggan_wx] += YUE_LING_YU_QI if is_month else YU_QI_WEIGHT
 
         # 保留一位小数
         for k in score:
