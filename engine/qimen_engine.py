@@ -288,6 +288,9 @@ class QiMenEngine(DivinationEngine):
         # 旬空
         xun_kong = self._calc_xun_kong(day_gan_zhi)
 
+        # 7. 格局分析（提前计算，供后续使用）
+        ge_ju_analysis = self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong, day_gan_zhi, hour_gan_zhi, zhi_shi_door)
+
         result = {
             'engine': self.name,
             'engine_en': self.name_en,
@@ -312,9 +315,21 @@ class QiMenEngine(DivinationEngine):
             'xun_kong': xun_kong,
             # 天地人三盘摘要（便于前端快速展示）
             'san_pan_summary': self._build_san_pan_summary(palaces),
-            'ge_ju_analysis': self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong, day_gan_zhi, hour_gan_zhi, zhi_shi_door),
+            'ge_ju_analysis': ge_ju_analysis,
             # 流年分析
             'liunian': self._build_liunian(solar_dt, di_pan, tian_pan, palaces),
+            # 宫位详细分析
+            'palace_details': self._analyze_palace_details(palaces),
+            # 伏吟反吟
+            'fu_fan_yin': self._analyze_fuyin_fanyin(di_pan, tian_pan),
+            # 门迫分析
+            'men_po': self._analyze_men_po(palaces),
+            # 三奇六仪位置
+            'san_qi_positions': self._find_sanqi_positions(di_pan, tian_pan),
+            # 用神落宫
+            'yong_shen': self._analyze_yong_shen(palaces, hour_gan_zhi, day_gan_zhi),
+            # 格局力量统计
+            'ge_ju_strength': self._calc_ge_ju_strength(ge_ju_analysis),
         }
 
         valid, err = self.validate(result)
@@ -832,4 +847,274 @@ class QiMenEngine(DivinationEngine):
         except Exception as e:
             logger.debug(f"流年太岁分析异常: {e}")
             return {}
+
+    def _analyze_palace_details(self, palaces: list) -> list:
+        """宫位详细分析：每个宫的门星神五行、旺衰、吉凶"""
+        details = []
+        for p in palaces:
+            g = p['gong']
+            men = p.get('men', '')
+            xing = p.get('xing', '')
+            shen = p.get('shen', '')
+            di = p.get('di_pan', '')
+            tian = p.get('tian_pan', '')
+
+            men_wx = self.MEN_WUXING.get(men, '')
+            star_wx = self.STAR_WUXING.get(xing, '')
+            gong_wx = self.GONG_WUXING.get(g, '')
+
+            # 门旺衰
+            men_wang = self._calc_wang_shuai(men_wx, gong_wx)
+            # 星旺衰
+            star_wang = self._calc_wang_shuai(star_wx, gong_wx)
+
+            # 门宫关系（门五行克宫五行=门迫，宫五行克门五行=门制）
+            men_gong_relation = ''
+            if men_wx and gong_wx:
+                if self.WUXING_KE.get(men_wx) == gong_wx:
+                    men_gong_relation = '门迫'
+                elif self.WUXING_KE.get(gong_wx) == men_wx:
+                    men_gong_relation = '门制'
+
+            # 天盘地盘五行关系
+            di_wx = self.GAN_WUXING.get(di, '')
+            tian_wx = self.GAN_WUXING.get(tian, '')
+            tiandi_relation = ''
+            if tian_wx and di_wx:
+                if tian_wx == di_wx:
+                    tiandi_relation = '比和'
+                elif self.WUXING_SHENG.get(tian_wx) == di_wx:
+                    tiandi_relation = '天盘生地盘'
+                elif self.WUXING_SHENG.get(di_wx) == tian_wx:
+                    tiandi_relation = '地盘生天盘'
+                elif self.WUXING_KE.get(tian_wx) == di_wx:
+                    tiandi_relation = '天盘克地盘'
+                elif self.WUXING_KE.get(di_wx) == tian_wx:
+                    tiandi_relation = '地盘克天盘'
+
+            details.append({
+                'gong': g,
+                'men_wuxing': men_wx,
+                'star_wuxing': star_wx,
+                'gong_wuxing': gong_wx,
+                'men_wang_shuai': men_wang,
+                'star_wang_shuai': star_wang,
+                'men_gong_relation': men_gong_relation,
+                'tiandi_relation': tiandi_relation,
+                'men_jixiong': self.MEN_JIXIONG.get(men, ''),
+                'star_jixiong': self.STAR_JIXIONG.get(xing, ''),
+            })
+        return details
+
+    def _calc_wang_shuai(self, wuxing: str, gong_wuxing: str) -> str:
+        """计算五行在宫位的旺衰状态"""
+        if not wuxing or not gong_wuxing:
+            return ''
+        if wuxing == gong_wuxing:
+            return '旺'
+        if self.WUXING_SHENG.get(gong_wuxing) == wuxing:
+            return '相'  # 宫生门/星
+        if self.WUXING_SHENG.get(wuxing) == gong_wuxing:
+            return '休'  # 门/星生宫（泄气）
+        if self.WUXING_KE.get(wuxing) == gong_wuxing:
+            return '囚'  # 门/星克宫
+        if self.WUXING_KE.get(gong_wuxing) == wuxing:
+            return '死'  # 宫克门/星
+        return ''
+
+    def _analyze_fuyin_fanyin(self, di_pan: dict, tian_pan: dict) -> dict:
+        """判断伏吟/反吟
+        伏吟：天盘=地盘（不动）
+        反吟：天盘地支冲地盘地支
+        """
+        if not di_pan or not tian_pan:
+            return {'type': '', 'desc': ''}
+
+        # 统计天盘地支与地盘地支的关系
+        match_count = 0
+        chong_count = 0
+        total = 0
+        for gong in range(1, 10):
+            dp = di_pan.get(gong, '')
+            tp = tian_pan.get(gong, '')
+            if not dp or not tp:
+                continue
+            total += 1
+            if dp == tp:
+                match_count += 1
+            # 检查天干相冲
+            if dp in self.GAN_CHONG and self.GAN_CHONG[dp] == tp:
+                chong_count += 1
+
+        if match_count >= 6:
+            return {'type': '伏吟', 'desc': f'天盘地盘相同{match_count}宫，伏吟局，主静守、不动'}
+        if chong_count >= 6:
+            return {'type': '反吟', 'desc': f'天盘地盘相冲{chong_count}宫，反吟局，主动荡、变动'}
+        if match_count >= 4:
+            return {'type': '半伏吟', 'desc': f'天盘地盘相同{match_count}宫，半伏吟，主犹豫不决'}
+        if chong_count >= 4:
+            return {'type': '半反吟', 'desc': f'天盘地盘相冲{chong_count}宫，半反吟，主事有反复'}
+
+        return {'type': '', 'desc': ''}
+
+    def _analyze_men_po(self, palaces: list) -> list:
+        """门迫分析：八门五行克所落宫位五行"""
+        men_po_list = []
+        for p in palaces:
+            g = p['gong']
+            men = p.get('men', '')
+            if not men or g == 5:
+                continue
+            men_wx = self.MEN_WUXING.get(men, '')
+            gong_wx = self.GONG_WUXING.get(g, '')
+            if men_wx and gong_wx and self.WUXING_KE.get(men_wx) == gong_wx:
+                men_po_list.append({
+                    'gong': g,
+                    'men': men,
+                    'men_wuxing': men_wx,
+                    'gong_wuxing': gong_wx,
+                    'desc': f'{men}({men_wx})迫{self.PALACE_NAMES.get(g, "")}({gong_wx})，门克宫，主事受阻'
+                })
+        return men_po_list
+
+    def _find_sanqi_positions(self, di_pan: dict, tian_pan: dict) -> dict:
+        """找出三奇六仪在天地盘的位置"""
+        result = {'di_pan': {}, 'tian_pan': {}}
+        for gong, yi in di_pan.items():
+            if yi in ('乙', '丙', '丁'):
+                result['di_pan'][yi] = gong
+            elif yi in ('戊', '己', '庚', '辛', '壬', '癸'):
+                result['di_pan'][yi] = gong
+        for gong, yi in tian_pan.items():
+            if yi in ('乙', '丙', '丁'):
+                result['tian_pan'][yi] = gong
+            elif yi in ('戊', '己', '庚', '辛', '壬', '癸'):
+                result['tian_pan'][yi] = gong
+        return result
+
+    def _analyze_yong_shen(self, palaces: list, hour_gan_zhi: str, day_gan_zhi: str) -> dict:
+        """用神落宫分析：时干落宫为用神宫，分析其门星神组合"""
+        if not palaces:
+            return {}
+
+        # 时干落宫
+        hour_gan = hour_gan_zhi[0] if hour_gan_zhi else ''
+        day_gan = day_gan_zhi[0] if day_gan_zhi else ''
+
+        # 找时干落宫
+        hour_gong = None
+        for p in palaces:
+            if p.get('tian_pan') == hour_gan or p.get('di_pan') == hour_gan:
+                hour_gong = p
+                break
+
+        # 找日干落宫
+        day_gong = None
+        for p in palaces:
+            if p.get('tian_pan') == day_gan or p.get('di_pan') == day_gan:
+                day_gong = p
+                break
+
+        result = {
+            'hour_gan': hour_gan,
+            'day_gan': day_gan,
+        }
+
+        if hour_gong:
+            result['hour_gong'] = {
+                'gong': hour_gong['gong'],
+                'name': hour_gong.get('name', ''),
+                'men': hour_gong.get('men', ''),
+                'xing': hour_gong.get('xing', ''),
+                'shen': hour_gong.get('shen', ''),
+                'tian_pan': hour_gong.get('tian_pan', ''),
+                'di_pan': hour_gong.get('di_pan', ''),
+            }
+        if day_gong:
+            result['day_gong'] = {
+                'gong': day_gong['gong'],
+                'name': day_gong.get('name', ''),
+                'men': day_gong.get('men', ''),
+                'xing': day_gong.get('xing', ''),
+                'shen': day_gong.get('shen', ''),
+                'tian_pan': day_gong.get('tian_pan', ''),
+                'di_pan': day_gong.get('di_pan', ''),
+            }
+
+        return result
+
+    def _calc_ge_ju_strength(self, ge_ju_analysis: dict) -> dict:
+        """计算格局力量统计"""
+        if not ge_ju_analysis:
+            return {'ji_score': 0, 'xiong_score': 0, 'level': '中', 'summary': ''}
+
+        ji_ge = ge_ju_analysis.get('ji_ge', [])
+        xiong_ge = ge_ju_analysis.get('xiong_ge', [])
+
+        ji_score = 0
+        xiong_score = 0
+
+        for ge in ji_ge:
+            name = ge.get('name', '')
+            level = self.GE_JU_LEVEL.get(name, '中')
+            if level == '大吉':
+                ji_score += 3
+            elif level == '吉':
+                ji_score += 2
+            else:
+                ji_score += 1
+            # 空亡减半
+            if ge.get('in_kong_wang'):
+                ji_score -= 1
+
+        for ge in xiong_ge:
+            name = ge.get('name', '')
+            level = self.GE_JU_LEVEL.get(name, '中')
+            if level == '大凶':
+                xiong_score += 3
+            elif level == '凶':
+                xiong_score += 2
+            else:
+                xiong_score += 1
+            # 空亡减轻
+            if ge.get('in_kong_wang'):
+                xiong_score -= 1
+
+        net = ji_score - xiong_score
+        if net >= 6:
+            level = '大吉'
+        elif net >= 3:
+            level = '吉'
+        elif net >= 0:
+            level = '中'
+        elif net >= -3:
+            level = '凶'
+        else:
+            level = '大凶'
+
+        return {
+            'ji_score': ji_score,
+            'xiong_score': xiong_score,
+            'net_score': net,
+            'level': level,
+            'ji_count': len(ji_ge),
+            'xiong_count': len(xiong_ge),
+            'summary': f'吉{len(ji_ge)}格(+{ji_score})/凶{len(xiong_ge)}格(-{xiong_score})=净值{net}，{level}'
+        }
+
+    def _analyze_tianmen_dihu(self, di_pan: dict, tian_pan: dict, solar_dt: datetime) -> dict:
+        """天三门/地四户分析（传统奇门辅助占法）"""
+        # 天三门：月将加时后，太冲/小吉/天罡所临之宫
+        # 地四户：月建加时后，除/定/执/危 所临之地支
+        # 简化实现：返回地支→宫位映射
+        result = {'tian_sanmen': {}, 'di_sihu': {}}
+
+        # 天三门对应地支
+        # 太冲=卯, 小吉=未, 天罡=辰
+        tianmen_zhi = {'太冲': '卯', '小吉': '未', '天罡': '辰'}
+        for name, zhi in tianmen_zhi.items():
+            gong = self.ZHI_TO_GONG_NUM.get(zhi, 0)
+            result['tian_sanmen'][name] = {'zhi': zhi, 'gong': gong}
+
+        return result
 
