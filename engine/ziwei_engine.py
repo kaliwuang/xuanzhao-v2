@@ -634,6 +634,185 @@ class ZiWeiEngine(DivinationEngine):
             except Exception as e:
                 logger.debug(f"流年分析异常: {e}")
 
+        # 【改进21-30】调用新增方法生成增强分析数据
+        # 三方四正分析
+        san_fang_data = self._calc_san_fang_si_zheng(palaces)
+
+        # 命盘格局检测
+        palace_patterns = []
+        chart_patterns = []
+        for pal in palaces:
+            pats = self._detect_palace_patterns(pal)
+            if pats:
+                palace_patterns.append({'palace': pal['name'], 'patterns': pats})
+        chart_patterns = self._detect_chart_patterns(palaces, san_fang_data)
+
+        # 空宫识别
+        empty_palaces = self._identify_empty_palaces(palaces)
+
+        # 独坐识别
+        single_star_palaces = self._identify_single_star_palaces(palaces)
+
+        # 双主星同宫
+        dual_star_palaces = self._identify_dual_star_palaces(palaces)
+
+        # 命主身主
+        ming_zhu_map = self._calc_ming_shen_master('', '')
+        ming_zhu_star = ming_zhu_map['ming_zhu_map'].get(ming_gong_branch, '')
+        # 身主由生年地支决定
+        birth_year_branch_cn = ''
+        if birth_dt:
+            try:
+                from lunar_python import Solar as _Solar
+                _solar = _Solar.fromYmdHms(birth_dt.year, birth_dt.month, birth_dt.day, birth_dt.hour, birth_dt.minute, 0)
+                _lunar = _solar.getLunar()
+                birth_year_branch_cn = PINYIN_BRANCH_MAP.get(_lunar.getYearZhi().lower(), '')
+            except Exception:
+                pass
+        shen_zhu_star = ming_zhu_map['shen_zhu_map'].get(birth_year_branch_cn, '')
+
+        # 四化飞入各宫
+        sihua_to_palaces = self._calc_sihua_to_palaces(sihua, palaces)
+
+        # 宫位亮度评分
+        palace_brightness = {}
+        for pal in palaces:
+            palace_brightness[pal['name']] = self._calc_palace_brightness_score(pal)
+
+        # 命宫吉凶
+        ming_palace = next((p for p in palaces if p['name'] == '命宫'), {})
+        ming_ji_xiong = self._calc_palace_ji_xiong(
+            ming_palace, san_fang_data.get('命宫', {})
+        )
+
+        # 【改进22】自化详细解释
+        self_hua_effects = []
+        for pal in palaces:
+            for sh in pal.get('self_hua', []):
+                effect = SIHUA_EFFECTS.get(sh['hua'], {}).get(pal['name'], '')
+                self_hua_effects.append({
+                    'palace': pal['name'],
+                    'hua': sh['hua'],
+                    'star': sh['star'],
+                    'effect': effect,
+                    'type': '自化',
+                })
+
+        # 【改进23】大限四化叠加分析
+        dai_xian_sihua_overlap = []
+        for dx in dai_xian:
+            if dx.get('sihua'):
+                for hua_type, star_name in dx['sihua'].items():
+                    # 检查是否与生年四化叠加
+                    if star_name == sihua.get(hua_type):
+                        dai_xian_sihua_overlap.append({
+                            'dai_xian': dx['ganzhi'],
+                            'age_range': f"{dx['start_age']}-{dx['end_age']}",
+                            'hua': hua_type,
+                            'star': star_name,
+                            'type': '大限叠生年四化',
+                        })
+
+        # 【改进24】流年宫位详细分析
+        liunian_palace_detail = {}
+        if liunian_info.get('palace_names'):
+            for lp_name in liunian_info['palace_names']:
+                lp_pal = next((p for p in palaces if p['name'] == lp_name), {})
+                if lp_pal:
+                    liunian_palace_detail[lp_name] = {
+                        'major_stars': [s['name'] for s in lp_pal.get('major_stars', [])],
+                        'brightness': {s['name']: s.get('brightness', '') for s in lp_pal.get('major_stars', [])},
+                        'ji_xiong': self._calc_palace_ji_xiong(lp_pal),
+                    }
+
+        # 【改进25】十二长生解读
+        CHANGSHENG_INTERPRETATION = {
+            '长生': '万物萌生，充满希望',
+            '沐浴': '万物初生，如婴儿沐浴',
+            '冠带': '万物渐长，如人成年加冠',
+            '临官': '万物壮盛，如人出仕',
+            '帝旺': '万物成熟，力量最强',
+            '衰': '万物由盛转衰',
+            '病': '万物有病，力量减弱',
+            '死': '万物死寂',
+            '墓': '万物入墓，收藏潜伏',
+            '绝': '万物绝灭',
+            '胎': '万物重新孕育',
+            '养': '万物在培养中',
+        }
+        palaces_with_changsheng = []
+        for pal in palaces:
+            cs = pal.get('changsheng', '')
+            if cs and cs in CHANGSHENG_INTERPRETATION:
+                palaces_with_changsheng.append({
+                    'palace': pal['name'],
+                    'changsheng': cs,
+                    'interpretation': CHANGSHENG_INTERPRETATION[cs],
+                })
+
+        # 【改进26】命盘综合评分
+        total_auspicious = sum(
+            self._calc_palace_ji_xiong(p, san_fang_data.get(p['name'], {})).get('auspicious', 0)
+            for p in palaces
+        )
+        total_inauspicious = sum(
+            self._calc_palace_ji_xiong(p, san_fang_data.get(p['name'], {})).get('inauspicious', 0)
+            for p in palaces
+        )
+        # 四化评分：禄+2，权+2，科+1，忌-2
+        sihua_score = 0
+        for hua_type in sihua:
+            if hua_type == '禄': sihua_score += 2
+            elif hua_type == '权': sihua_score += 2
+            elif hua_type == '科': sihua_score += 1
+            elif hua_type == '忌': sihua_score -= 2
+        # 亮度评分
+        brightness_total = sum(v.get('percentage', 0) for v in palace_brightness.values())
+        brightness_avg = round(brightness_total / 12, 1) if palace_brightness else 0
+
+        chart_score = {
+            'auspicious_count': total_auspicious,
+            'inauspicious_count': total_inauspicious,
+            'sihua_score': sihua_score,
+            'brightness_avg': brightness_avg,
+            'overall': round((total_auspicious - total_inauspicious) * 2 + sihua_score * 3 + brightness_avg / 10, 1),
+            'level': '上' if (total_auspicious - total_inauspicious + sihua_score) > 5 else
+                     ('中' if (total_auspicious - total_inauspicious + sihua_score) > 0 else '下'),
+        }
+
+        # 【改进27】命盘强弱判断
+        ming_brightness = palace_brightness.get('命宫', {}).get('percentage', 0)
+        chart_strength = '强' if ming_brightness >= 60 and total_auspicious > total_inauspicious else (
+            '弱' if ming_brightness < 40 or total_inauspicious > total_auspicious + 3 else '中'
+        )
+
+        # 【改进28】各宫位三方四正吉凶汇总
+        palace_san_fang_ji_xiong = {}
+        for pal in palaces:
+            sf = san_fang_data.get(pal['name'], {})
+            jx = self._calc_palace_ji_xiong(pal, sf)
+            palace_san_fang_ji_xiong[pal['name']] = jx
+
+        # 【改进29】桃花星分布
+        peach_distribution = {}
+        for pal in palaces:
+            peach_stars = []
+            for star in pal.get('major_stars', []) + pal.get('minor_stars', []):
+                if star['name'] in PEACH_BLOSSOM_STARS:
+                    peach_stars.append(star['name'])
+            if peach_stars:
+                peach_distribution[pal['name']] = peach_stars
+
+        # 【改进30】煞星分布
+        sha_distribution = {}
+        for pal in palaces:
+            sha_stars = []
+            for star in pal.get('minor_stars', []):
+                if star['name'] in INausPICIOUS_STARS:
+                    sha_stars.append(star['name'])
+            if sha_stars:
+                sha_distribution[pal['name']] = sha_stars
+
         return {
             'engine': self.name,
             'engine_en': self.name_en,
@@ -655,6 +834,27 @@ class ZiWeiEngine(DivinationEngine):
             'nominal_age': max(0, current_year - birth_dt.year + 1) if birth_dt else 0,
             'zi_dou': zi_dou,
             'liunian': liunian_info,
+            # ─── 增强分析数据 ───
+            'san_fang_data': san_fang_data,                          # 改进11: 三方四正
+            'palace_brightness': palace_brightness,                  # 改进12: 宫位亮度评分
+            'palace_patterns': palace_patterns,                      # 改进13: 宫位格局
+            'chart_patterns': chart_patterns,                        # 改进14: 命盘格局
+            'empty_palaces': empty_palaces,                          # 改进15: 空宫
+            'single_star_palaces': single_star_palaces,              # 改进16: 独坐
+            'dual_star_palaces': dual_star_palaces,                  # 改进17: 双主星同宫
+            'ming_ji_xiong': ming_ji_xiong,                          # 改进18: 命宫吉凶
+            'ming_zhu_star': ming_zhu_star,                          # 改进19: 命主星
+            'shen_zhu_star': shen_zhu_star,                          # 改进19: 身主星
+            'sihua_to_palaces': sihua_to_palaces,                    # 改进20: 四化飞宫
+            'self_hua_effects': self_hua_effects,                    # 改进22: 自化效果
+            'dai_xian_sihua_overlap': dai_xian_sihua_overlap,        # 改进23: 大限四化叠加
+            'liunian_palace_detail': liunian_palace_detail,          # 改进24: 流年宫位详析
+            'changsheng_interpretation': palaces_with_changsheng,    # 改进25: 十二长生解读
+            'chart_score': chart_score,                              # 改进26: 命盘综合评分
+            'chart_strength': chart_strength,                        # 改进27: 命盘强弱
+            'palace_san_fang_ji_xiong': palace_san_fang_ji_xiong,    # 改进28: 各宫三方四正吉凶
+            'peach_distribution': peach_distribution,                # 改进29: 桃花星分布
+            'sha_distribution': sha_distribution,                    # 改进30: 煞星分布
         }
 
     # ─── 改进11-20: 三方四正、宫位分析、格局识别等方法 ────

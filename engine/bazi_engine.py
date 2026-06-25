@@ -671,6 +671,33 @@ class BaziEngine(DivinationEngine):
                     dy_zhi = gz[1]
                     dy_shishen_gan = SHISHEN_MAP.get((day_master, dy_gan), '?')
 
+                    # 大运天干与原局天干作用（冲合检测）
+                    dy_gan_relations = []
+                    for _pg in [year_pillar.gan, month_pillar.gan, day_pillar.gan, time_pillar.gan]:
+                        if GAN_CHONG.get(dy_gan) == _pg:
+                            dy_gan_relations.append(f'大运{dy_gan}冲原局{_pg}')
+                        if GAN_HE.get(dy_gan) == _pg:
+                            dy_gan_relations.append(f'大运{dy_gan}合原局{_pg}')
+
+                    # 大运地支与原局地支作用（冲合刑害检测）
+                    dy_zhi_relations = []
+                    for _pz in [year_pillar.zhi, month_pillar.zhi, day_pillar.zhi, time_pillar.zhi]:
+                        if ZHI_CHONG_MOD.get(dy_zhi) == _pz:
+                            dy_zhi_relations.append(f'大运{dy_zhi}冲原局{_pz}')
+                        if ZHI_HE_MOD.get(dy_zhi) == _pz:
+                            dy_zhi_relations.append(f'大运{dy_zhi}合原局{_pz}')
+                        if ZHI_HAI_MOD.get(dy_zhi) == _pz:
+                            dy_zhi_relations.append(f'大运{dy_zhi}害原局{_pz}')
+                        if ZHI_PO_MOD.get(dy_zhi) == _pz:
+                            dy_zhi_relations.append(f'大运{dy_zhi}破原局{_pz}')
+                    # 三刑检测
+                    _dayun_all_zhi = [year_pillar.zhi, month_pillar.zhi, day_pillar.zhi, time_pillar.zhi, dy_zhi]
+                    _dayun_zhi_set = set(_dayun_all_zhi)
+                    for cycle in SAN_XING_CYCLES:
+                        if cycle <= _dayun_zhi_set:
+                            cycle_sorted = sorted(cycle, key=lambda z: DI_ZHI.index(z))
+                            dy_zhi_relations.append(f'大运{dy_zhi}入{"·".join(cycle_sorted)}三刑')
+
                     # 大运地支藏干及藏干十神
                     dy_hidden = _fix_hide_gan(dy_zhi, TRADITIONAL_HIDE_GAN.get(dy_zhi, ''))
                     dy_shishen_zhi = [SHISHEN_MAP.get((day_master, h), '?') for h in dy_hidden]
@@ -680,6 +707,39 @@ class BaziEngine(DivinationEngine):
 
                     # 大运长生十二宫
                     dy_changsheng = _calc_changsheng(day_master, dy_zhi)
+
+                    # 大运纳音五行描述
+                    _dy_nayin_wx = ''
+                    for _wx in WUXING_ORDERED:
+                        if _wx in dy_nayin:
+                            _dy_nayin_wx = _wx
+                            break
+
+                    # 大运空亡检测
+                    _dy_xunkong = XUNKONG_MAP.get(gz, '')
+                    _dy_xunkong_zhis = set(_dy_xunkong) if _dy_xunkong else set()
+                    _dy_in_xunkong = dy_zhi in _dy_xunkong_zhis
+
+                    # 大运十神含义描述
+                    _dy_shishen_desc = SHISHEN_DESC.get(dy_shishen_gan, '')
+
+                    # 大运力量变化判断
+                    _dy_changsheng_desc = ''
+                    _CS_STRENGTH = {
+                        '长生': '大运逢长生 — 日主得新生之力，运势渐起',
+                        '沐浴': '大运逢沐浴 — 运势多变，感情或事业有波动',
+                        '冠带': '大运逢冠带 — 成长进步之运，适合学习发展',
+                        '临官': '大运逢临官 — 事业上升期，精力充沛可大展拳脚',
+                        '帝旺': '大运逢帝旺 — 运势极旺，但需防物极必反',
+                        '衰': '大运逢衰地 — 运势渐缓，宜守不宜攻',
+                        '病': '大运逢病地 — 需注意健康，事业有阻滞',
+                        '死': '大运逢死地 — 运势低迷，需韬光养晦',
+                        '墓': '大运逢墓库 — 收藏积蓄之运，厚积薄发',
+                        '绝': '大运逢绝地 — 运势最弱，但绝处逢生亦有可能',
+                        '胎': '大运逢胎地 — 蕴育新机之运，适合筹备规划',
+                        '养': '大运逢养地 — 滋养成长之运，渐有起色',
+                    }
+                    _dy_changsheng_desc = _CS_STRENGTH.get(dy_changsheng, '')
 
                     # 大运带来的神煞（大运地支对照原局四柱）
                     # 使用 _check_yl_shensha 统一计算大运/流年神煞
@@ -696,16 +756,64 @@ class BaziEngine(DivinationEngine):
                                 # 流年神煞（复用 _check_yl_shensha）
                                 ln_shensha = _check_yl_shensha(ln_zhi, ln_gan)
                                 ln_hidden = _fix_hide_gan(ln_zhi, TRADITIONAL_HIDE_GAN.get(ln_zhi, ''))
+
+                                # 流年与原局天干作用
+                                ln_gan_rels = []
+                                for _pg in [year_pillar.gan, month_pillar.gan, day_pillar.gan, time_pillar.gan]:
+                                    if GAN_CHONG.get(ln_gan) == _pg:
+                                        ln_gan_rels.append(f'流年{ln_gan}冲原局{_pg}')
+                                    if GAN_HE.get(ln_gan) == _pg:
+                                        ln_gan_rels.append(f'流年{ln_gan}合原局{_pg}')
+
+                                # 流年与原局地支作用
+                                ln_zhi_rels = []
+                                for _pz in [year_pillar.zhi, month_pillar.zhi, day_pillar.zhi, time_pillar.zhi]:
+                                    if ZHI_CHONG_MOD.get(ln_zhi) == _pz:
+                                        ln_zhi_rels.append(f'流年{ln_zhi}冲原局{_pz}')
+                                    if ZHI_HE_MOD.get(ln_zhi) == _pz:
+                                        ln_zhi_rels.append(f'流年{ln_zhi}合原局{_pz}')
+                                    if ZHI_HAI_MOD.get(ln_zhi) == _pz:
+                                        ln_zhi_rels.append(f'流年{ln_zhi}害原局{_pz}')
+                                    if ZHI_PO_MOD.get(ln_zhi) == _pz:
+                                        ln_zhi_rels.append(f'流年{ln_zhi}破原局{_pz}')
+
+                                # 流年与大运作用
+                                if GAN_CHONG.get(ln_gan) == dy_gan:
+                                    ln_gan_rels.append(f'流年{ln_gan}冲大运{dy_gan}')
+                                if GAN_HE.get(ln_gan) == dy_gan:
+                                    ln_gan_rels.append(f'流年{ln_gan}合大运{dy_gan}')
+                                if ZHI_CHONG_MOD.get(ln_zhi) == dy_zhi:
+                                    ln_zhi_rels.append(f'流年{ln_zhi}冲大运{dy_zhi}')
+                                if ZHI_HE_MOD.get(ln_zhi) == dy_zhi:
+                                    ln_zhi_rels.append(f'流年{ln_zhi}合大运{dy_zhi}')
+
+                                # 流年纳音五行
+                                _ln_nayin = NAYIN_TABLE.get(ln_gz, '')
+                                _ln_nayin_wx = ''
+                                for _wx in WUXING_ORDERED:
+                                    if _wx in _ln_nayin:
+                                        _ln_nayin_wx = _wx
+                                        break
+
+                                # 流年空亡
+                                _ln_xunkong = XUNKONG_MAP.get(ln_gz, '')
+                                _ln_in_xunkong = ln_zhi in set(_ln_xunkong) if _ln_xunkong else False
+
                                 ln_info = {
                                     "year": ln.getYear(),
                                     "age": ln.getAge(),
                                     "ganzhi": ln_gz,
                                     "shishen_gan": SHISHEN_MAP.get((day_master, ln_gan), '?'),
                                     "nayin": NAYIN_TABLE.get(ln_gz, ''),
+                                    "nayin_wuxing": _ln_nayin_wx,
                                     "shensha": ln_shensha,
                                     "hidden_gans": ln_hidden,
                                     "shishen_zhi": [SHISHEN_MAP.get((day_master, h), '?') for h in ln_hidden],
                                     "changsheng": _calc_changsheng(day_master, ln_zhi),
+                                    "gan_relations": ln_gan_rels,
+                                    "zhi_relations": ln_zhi_rels,
+                                    "in_xunkong": _ln_in_xunkong,
+                                    "shishen_desc": SHISHEN_DESC.get(SHISHEN_MAP.get((day_master, ln_gan), '?'), ''),
                                 }
                                 liunian_list.append(ln_info)
                                 # 找出当前年份的流年
@@ -732,11 +840,17 @@ class BaziEngine(DivinationEngine):
                         "end_year": abs_end,
                         "is_current": abs_start <= current_year <= abs_end,
                         "shishen_gan": dy_shishen_gan,
+                        "shishen_gan_desc": _dy_shishen_desc,
                         "shishen_zhi": dy_shishen_zhi,
                         "hidden_gans": dy_hidden,
                         "nayin": dy_nayin,
+                        "nayin_wuxing": _dy_nayin_wx,
                         "changsheng": dy_changsheng,
+                        "changsheng_desc": _dy_changsheng_desc,
                         "shensha": dy_shensha,
+                        "gan_relations": dy_gan_relations,
+                        "zhi_relations": dy_zhi_relations,
+                        "in_xunkong": _dy_in_xunkong,
                         "liunian": liunian_list,
                     })
             dayun_start_year = dayun_list[0]["start_year"] if dayun_list else 0

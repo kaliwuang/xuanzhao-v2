@@ -745,6 +745,75 @@ class QiMenEngine(DivinationEngine):
                 ji_ge.append({'name': '天地合德', 'gong': g,
                               'desc': f'{tp}{dp}合，天地和合，谋事易成'})
 
+            # ---- 新增格局：星门组合 ----
+            # 天辅+杜门：文书有利
+            if xing == '天辅' and men == '杜门':
+                ji_ge.append({'name': '天辅杜门', 'gong': g, 'desc': '天辅星+杜门，利学业文书'})
+            # 天心+开门：医疗大吉
+            if xing == '天心' and men == '开门':
+                ji_ge.append({'name': '天心开门', 'gong': g, 'desc': '天心星+开门，利医疗治病，百病消除'})
+            # 天冲+伤门：武事大吉
+            if xing == '天冲' and men == '伤门':
+                ji_ge.append({'name': '天冲伤门', 'gong': g, 'desc': '天冲星+伤门，利武事征伐'})
+            # 天蓬+休门：谋略大吉
+            if xing == '天蓬' and men == '休门':
+                xiong_ge.append({'name': '天蓬休门', 'gong': g, 'desc': '天蓬星+休门，主盗贼暗昧，利藏匿'})
+            # 天芮+死门：疾病大凶
+            if xing == '天芮' and men == '死门':
+                xiong_ge.append({'name': '天芮死门', 'gong': g, 'desc': '天芮星+死门，主疾病缠身，大凶'})
+            # 天柱+惊门：口舌凶
+            if xing == '天柱' and men == '惊门':
+                xiong_ge.append({'name': '天柱惊门', 'gong': g, 'desc': '天柱星+惊门，口舌官非，惊恐不安'})
+            # 天英+景门：文书虚花
+            if xing == '天英' and men == '景门':
+                xiong_ge.append({'name': '天英景门', 'gong': g, 'desc': '天英星+景门，文书虚花不实，血光之灾'})
+
+            # ---- 新增格局：八神特殊组合 ----
+            # 值符+开门：大吉
+            if shen == '值符' and men == '开门':
+                ji_ge.append({'name': '值符开门', 'gong': g, 'desc': '值符临开门，百事大吉，贵人扶持'})
+            # 九天+开门/休门：大吉
+            if shen == '九天' and men in ('开门', '休门'):
+                ji_ge.append({'name': '九天吉门', 'gong': g, 'desc': f'九天临{men}，飞黄腾达，大吉'})
+            # 九地+死门/杜门：暗中阻滞
+            if shen == '九地' and men in ('死门', '杜门'):
+                xiong_ge.append({'name': '九地凶门', 'gong': g, 'desc': f'九地临{men}，暗中阻滞，事多不顺'})
+            # 白虎+伤门/死门：血光大凶
+            if shen == '白虎' and men in ('伤门', '死门'):
+                xiong_ge.append({'name': '白虎凶门', 'gong': g, 'desc': f'白虎临{men}，主血光伤灾，大凶'})
+            # 玄武+休门：暗中得利
+            if shen == '玄武' and men == '休门':
+                ji_ge.append({'name': '玄武休门', 'gong': g, 'desc': '玄武临休门，暗中得利，投机有利'})
+            # 太阴+杜门：谋划有利
+            if shen == '太阴' and men == '杜门':
+                ji_ge.append({'name': '太阴杜门', 'gong': g, 'desc': '太阴临杜门，暗中谋划有利'})
+            # 六合+开门：合作大吉
+            if shen == '六合' and men == '开门':
+                ji_ge.append({'name': '六合开门', 'gong': g, 'desc': '六合临开门，合作谈判大吉'})
+
+            # ---- 新增格局：天盘地盘特殊组合 ----
+            # 乙+辛：日奇入墓（乙木入辛金墓）
+            if tp == '乙' and dp == '辛':
+                xiong_ge.append({'name': '日奇入墓', 'gong': g, 'desc': '乙加辛，日奇入墓，主暗昧不明'})
+            # 丙+己：丙奇入墓
+            if tp == '丙' and dp == '己':
+                xiong_ge.append({'name': '丙奇入墓', 'gong': g, 'desc': '丙加己，月奇入墓，主事受困'})
+            # 丁+庚：星奇入墓
+            if tp == '丁' and dp == '庚':
+                xiong_ge.append({'name': '星奇入墓', 'gong': g, 'desc': '丁加庚，星奇入墓，文书受阻'})
+            # 己+丙：地户埋光
+            if tp == '己' and dp == '丙':
+                xiong_ge.append({'name': '地户埋光', 'gong': g, 'desc': '己加丙，地户埋光，暗昧不明'})
+            # 辛+丁：狱神得奇
+            if tp == '辛' and dp == '丁':
+                ji_ge.append({'name': '狱神得奇', 'gong': g, 'desc': '辛加丁，狱神得奇，囚人获释，讼事有利'})
+            # 壬+丙：水蛇入火
+            if tp == '壬' and dp == '丙':
+                xiong_ge.append({'name': '水蛇入火', 'gong': g, 'desc': '壬加丙，水蛇入火，官灾刑禁'})
+            # 癸+戊：天网四张
+            if tp == '癸' and dp == '戊':
+                xiong_ge.append({'name': '天网四张', 'gong': g, 'desc': '癸加戊，天网四张，出行大凶，百事不利'})
+
         # 旬空宫
         kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
         kong_gongs = []
