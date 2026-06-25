@@ -298,9 +298,25 @@ class TaiYiEngine(DivinationEngine):
         analysis = {}
 
         # 太乙主客算强弱阈值（复用类级常量）
+        # 补充：分析所有算数元素，不仅限于第一个
 
         # 主算解读
         if zhu_suan and isinstance(zhu_suan, list) and len(zhu_suan) > 0:
+            # 分析所有主算元素
+            zhu_analysis = []
+            for i, zhu_val in enumerate(zhu_suan):
+                try:
+                    zhu_num = int(zhu_val) if not isinstance(zhu_val, int) else zhu_val
+                    if zhu_num >= self.SUAN_STRONG:
+                        zhu_analysis.append(f'第{i+1}位强({zhu_num})')
+                    elif zhu_num >= self.SUAN_MEDIUM:
+                        zhu_analysis.append(f'第{i+1}位中({zhu_num})')
+                    else:
+                        zhu_analysis.append(f'第{i+1}位弱({zhu_num})')
+                except (ValueError, TypeError):
+                    zhu_analysis.append(f'第{i+1}位({zhu_val})')
+            analysis['zhu_detail'] = zhu_analysis
+            # 保持兼容性
             zhu_val = zhu_suan[0]
             try:
                 zhu_num = int(zhu_val) if not isinstance(zhu_val, int) else zhu_val
@@ -315,6 +331,21 @@ class TaiYiEngine(DivinationEngine):
 
         # 客算解读
         if ke_suan and isinstance(ke_suan, list) and len(ke_suan) > 0:
+            # 分析所有客算元素
+            ke_analysis = []
+            for i, ke_val in enumerate(ke_suan):
+                try:
+                    ke_num = int(ke_val) if not isinstance(ke_val, int) else ke_val
+                    if ke_num >= self.SUAN_STRONG:
+                        ke_analysis.append(f'第{i+1}位强({ke_num})')
+                    elif ke_num >= self.SUAN_MEDIUM:
+                        ke_analysis.append(f'第{i+1}位中({ke_num})')
+                    else:
+                        ke_analysis.append(f'第{i+1}位弱({ke_num})')
+                except (ValueError, TypeError):
+                    ke_analysis.append(f'第{i+1}位({ke_val})')
+            analysis['ke_detail'] = ke_analysis
+            # 保持兼容性
             ke_val = ke_suan[0]
             try:
                 ke_num = int(ke_val) if not isinstance(ke_val, int) else ke_val
@@ -329,6 +360,21 @@ class TaiYiEngine(DivinationEngine):
 
         # 定算综合（与主算/客算相同的强弱解读逻辑）
         if ding_suan and isinstance(ding_suan, list) and len(ding_suan) > 0:
+            # 分析所有定算元素
+            ding_analysis = []
+            for i, ding_val in enumerate(ding_suan):
+                try:
+                    ding_num = int(ding_val) if not isinstance(ding_val, int) else ding_val
+                    if ding_num >= self.SUAN_STRONG:
+                        ding_analysis.append(f'第{i+1}位强({ding_num})')
+                    elif ding_num >= self.SUAN_MEDIUM:
+                        ding_analysis.append(f'第{i+1}位中({ding_num})')
+                    else:
+                        ding_analysis.append(f'第{i+1}位弱({ding_num})')
+                except (ValueError, TypeError):
+                    ding_analysis.append(f'第{i+1}位({ding_val})')
+            analysis['ding_detail'] = ding_analysis
+            # 保持兼容性
             ding_val = ding_suan[0]
             try:
                 ding_num = int(ding_val) if not isinstance(ding_val, int) else ding_val
