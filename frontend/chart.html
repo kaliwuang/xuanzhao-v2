@@ -28,6 +28,9 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
 .tab{flex:1;min-width:0;padding:10px 0;text-align:center;font-size:.85rem;font-weight:600;color:var(--txt3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:.2s;white-space:nowrap}
 .tab:hover{color:var(--txt2)}
 .tab.on{color:var(--gold);border-bottom-color:var(--gold);background:var(--gold-dim)}
+.tab:focus{outline:1px solid var(--gold-border);outline-offset:-1px}
+.tab:focus:not(:focus-visible){outline:none}
+.tab:focus-visible{outline:1px solid var(--gold);outline-offset:-1px}
 
 /* Panels */
 .panels{max-width:860px;margin:0 auto;padding:10px}
@@ -137,6 +140,8 @@ body{background:#fff;color:#333}
 .ly-gua-sub{text-align:center;font-size:.65rem;color:var(--txt3);margin-bottom:6px}
 .ly-row{display:grid;grid-template-columns:28px 1fr 36px 36px 36px;gap:3px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:.75rem}
 .ly-row.hdr{font-size:.6rem;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--gold-border)}
+.ly-gua-t{position:relative}
+.ly-gua-t::after{content:'';display:block;width:30px;height:2px;background:var(--gold);margin:4px auto 0;border-radius:1px}
 .ly-yao{display:flex;align-items:center;justify-content:center;height:14px}
 .ly-yao.yang{background:var(--gold);border-radius:2px}
 .ly-yao.yin{background:linear-gradient(var(--gold) 40%,transparent 40%,transparent 60%,var(--gold) 60%);border-radius:2px}
@@ -353,6 +358,15 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'&&cur>0){tabs[cur-1].click();tabs[cur-1].focus()}
 });
 
+// Back-to-top button
+const btt=document.createElement('button');
+btt.innerHTML='↑';
+btt.setAttribute('aria-label','回到顶部');
+btt.style.cssText='position:fixed;bottom:20px;right:20px;width:36px;height:36px;border-radius:50%;background:var(--bg2);color:var(--gold);border:1px solid var(--gold-border);cursor:pointer;font-size:1rem;display:none;z-index:200;transition:opacity .2s;box-shadow:0 2px 10px rgba(0,0,0,.3)';
+document.body.appendChild(btt);
+btt.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+window.addEventListener('scroll',()=>{btt.style.display=window.scrollY>300?'block':'none'},{passive:true});
+
 // Params
 const u=new URL(location.href),BIRTH=u.searchParams.get('birth')||'',LOC=u.searchParams.get('location')||'北京',GENDER=u.searchParams.get('gender')||'男',NAME=u.searchParams.get('name')||'';
 
@@ -554,7 +568,8 @@ function renderBazi(b){
     let dyH='<div class="dy-scroll"><div class="dy-row">';
     b.dayun.forEach(d=>{
       const now=d.is_current?' now':'';
-      dyH+=`<div class="dy-col${now}"><div class="dy-age">${d.start_age}-${d.end_age}岁</div><div class="dy-g" style="color:${WXC[WX[(d.ganzhi||'')[0]]]||'var(--txt)'}">${(d.ganzhi||'')[0]}</div><div class="dy-z" style="color:${WXC[WX[(d.ganzhi||'')[1]]]||'var(--txt)'}">${(d.ganzhi||'')[1]}</div><div class="dy-yr">${d.start_year}-${d.end_year}</div></div>`;
+      const currentLabel=d.is_current?'<div style="font-size:.5rem;color:var(--gold);font-weight:700">当前</div>':'';
+      dyH+=`<div class="dy-col${now}"><div class="dy-age">${d.start_age}-${d.end_age}岁</div><div class="dy-g" style="color:${WXC[WX[(d.ganzhi||'')[0]]]||'var(--txt)'}">${(d.ganzhi||'')[0]}</div><div class="dy-z" style="color:${WXC[WX[(d.ganzhi||'')[1]]]||'var(--txt)'}">${(d.ganzhi||'')[1]}</div><div class="dy-yr">${d.start_year}-${d.end_year}</div>${currentLabel}</div>`;
     });
     dyH+='</div></div>';
     $('#bzDayun').innerHTML=dyH;
@@ -617,10 +632,11 @@ function renderZiwei(z){
   if(z.sihua){
     const types=['禄','权','科','忌'];
     const colors=[WXC['木'],WXC['金'],WXC['水'],WXC['火']];
+    const huaDesc=['财禄、顺利','权势、掌控','名声、贵人','阻碍、执着'];
     let shH='<div class="zw-sihua">';
     types.forEach((t,i)=>{
       const star=z.sihua[t]||'';
-      shH+=`<div class="zw-sh-item"><div class="zw-sh-type">${t}</div><div class="zw-sh-star" style="color:${colors[i]}">${esc(star)}</div></div>`;
+      shH+=`<div class="zw-sh-item"><div class="zw-sh-type">${t}</div><div class="zw-sh-star" style="color:${colors[i]}">${esc(star)}</div><div style="font-size:.5rem;color:var(--txt3);margin-top:2px">${huaDesc[i]||''}</div></div>`;
     });
     shH+='</div>';
     $('#zwSihua').innerHTML=shH;
@@ -687,6 +703,11 @@ function renderQimen(q){
     if(p.shen)cellH+=`<div class="qm-shen">${esc(p.shen)}</div>`;
     if(p.star)cellH+=`<div class="qm-star">${esc(p.star)}</div>`;
     if(p.men)cellH+=`<div class="qm-men">${esc(p.men)}</div>`;
+    // 显示门星组合吉凶
+    if(p.men&&p.star){
+      const combo=p.men+' '+p.star;
+      cellH+=`<div style="font-size:.5rem;color:var(--gold);margin-top:2px">${esc(combo)}</div>`;
+    }
     if(p.tian_gan)cellH+=`<div class="qm-tg">${esc(p.tian_gan)}</div>`;
     if(p.di_gan)cellH+=`<div class="qm-dg">${esc(p.di_gan)}</div>`;
     if(p.ma)cellH+=`<span class="qm-mark ma">马</span>`;
@@ -711,7 +732,8 @@ function renderLiuren(lr){
   const ZHI12=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
   ZHI12.forEach((z,i)=>{
     const tp=tianPan.find(x=>x.di===z)||{};
-    panH+=`<div class="lr-cell"><div class="lr-zhi">${esc(tp.tian||z)}</div><div class="lr-jun">${esc(z)}</div></div>`;
+    const tianColor=tp.tian?`color:${WXCL[WX[tp.tian]]||'var(--gold)'}`:'';
+    panH+=`<div class="lr-cell"><div class="lr-zhi" style="${tianColor}">${esc(tp.tian||z)}</div><div class="lr-jun">${esc(z)}</div></div>`;
   });
   panH+='</div>';
   $('#lrPan').innerHTML=panH;
@@ -738,9 +760,11 @@ function renderLiuren(lr){
 function renderTaiyi(ty){
   // info table
   let infoH='<table class="ty-table">';
-  if(ty.pan_shi)infoH+=`<tr><th>盘式</th><td>${esc(ty.pan_shi)}</td></tr>`;
-  if(ty.ju_shu)infoH+=`<tr><th>局数</th><td>${esc(ty.ju_shu)}</td></tr>`;
-  if(ty.taiyi_gong)infoH+=`<tr><th>太乙宫</th><td>${esc(ty.taiyi_gong)}</td></tr>`;
+  if(ty.pan_shi)infoH+=`<tr><th>盘式</th><td style="color:var(--gold)">${esc(ty.pan_shi)}</td></tr>`;
+  if(ty.ju_shu)infoH+=`<tr><th>局数</th><td style="color:var(--gold);font-weight:700">${esc(ty.ju_shu)}</td></tr>`;
+  if(ty.taiyi_gong)infoH+=`<tr><th>太乙宫</th><td style="color:var(--gold)">${esc(ty.taiyi_gong)}</td></tr>`;
+  if(ty.ji_shen)infoH+=`<tr><th>计神</th><td>${esc(ty.ji_shen)}</td></tr>`;
+  if(ty.shi_ji)infoH+=`<tr><th>始击</th><td>${esc(ty.shi_ji)}</td></tr>`;
   infoH+='</table>';
   $('#tyInfo').innerHTML=infoH;
 
@@ -807,14 +831,15 @@ function renderAstro(a){
   // 行星落座表
   let lgH='';
   planets.forEach(p=>{
-    lgH+=`<div class="astro-p"><span class="astro-p-name">${esc(p.name)}</span><span class="astro-p-sign">${esc(p.sign)} ${p.degree?.toFixed(1)||''}°</span><span class="astro-p-house">${p.house||''}宫</span></div>`;
+    const symbol={'太阳':'☉','月亮':'☽','水星':'☿','金星':'♀','火星':'♂','木星':'♃','土星':'♄','天王':'♅','海王':'♆','冥王':'☊'}[p.name]||'';
+    lgH+=`<div class="astro-p"><span class="astro-p-name">${symbol} ${esc(p.name)}</span><span class="astro-p-sign">${esc(p.sign)} ${p.degree?.toFixed(1)||''}°</span><span class="astro-p-house">${p.house||''}宫</span></div>`;
   });
   $('#astroLg').innerHTML=lgH;
 
   // 行星详细表
   let pH='<table class="ty-table"><tr><th>行星</th><th>星座</th><th>度数</th><th>宫位</th><th>逆行</th></tr>';
   planets.forEach(p=>{
-    pH+=`<tr><td style="color:var(--gold)">${esc(p.name)}</td><td>${esc(p.sign)}</td><td>${p.degree?.toFixed(1)||''}°</td><td>${p.house||''}宫</td><td>${p.retrograde?'R':''}</td></tr>`;
+    pH+=`<tr><td style="color:var(--gold)">${esc(p.name)}</td><td>${esc(p.sign)}</td><td>${p.degree?.toFixed(1)||''}°</td><td>${p.house||''}宫</td><td>${p.retrograde?'<span style="color:var(--crimson);font-weight:700">R</span>':''}</td></tr>`;
   });
   pH+='</table>';
   $('#astroPlanets').innerHTML=pH;
@@ -824,7 +849,9 @@ function renderAstro(a){
   if(aspects.length){
     let ah='<table class="ty-table"><tr><th>行星1</th><th>相位</th><th>行星2</th><th>容许度</th></tr>';
     aspects.forEach(a=>{
-      ah+=`<tr><td style="color:var(--gold)">${esc(a.planet1||a[0]||'')}</td><td>${esc(a.aspect||a.type||a[1]||'')}</td><td style="color:var(--gold)">${esc(a.planet2||a[2]||'')}</td><td>${esc(a.orb||a[3]||'')}</td></tr>`;
+      const aspectType=a.aspect||a.type||a[1]||'';
+      const aspectSymbol={'合相':'☌','对冲':'☍','三分△':'△','四分□':'□','六分':'⚹'}[aspectType]||'';
+      ah+=`<tr><td style="color:var(--gold)">${esc(a.planet1||a[0]||'')}</td><td>${aspectSymbol} ${esc(aspectType)}</td><td style="color:var(--gold)">${esc(a.planet2||a[2]||'')}</td><td>${esc(a.orb||a[3]||'')}</td></tr>`;
     });
     ah+='</table>';
     $('#astroAspects').innerHTML=ah;
@@ -846,7 +873,8 @@ function renderXm(xm){
     const ge=wg[keys[i]]||wg[n]||{};
     const num=ge.score||ge.num||'',wx=ge.wuxing||'',ji=ge.ji_xiong||'';
     const jCls=ji.includes('吉')?'ok':'bad';
-    wh+=`<div class="xm-wg-i"><div class="xm-wg-l">${n}</div><div class="xm-wg-n" style="color:${WXC[wx]||'var(--txt)'}">${num}</div><div class="xm-wg-wx">${esc(wx)}</div><div class="xm-wg-j ${jCls}">${esc(ji)}</div></div>`;
+    const jiBorder=ji.includes('吉')?'rgba(58,175,106,.2)':'rgba(212,48,80,.2)';
+    wh+=`<div class="xm-wg-i" style="border:1px solid ${jiBorder}"><div class="xm-wg-l">${n}</div><div class="xm-wg-n" style="color:${WXC[wx]||'var(--txt)'}">${num}</div><div class="xm-wg-wx">${esc(wx)}</div><div class="xm-wg-j ${jCls}">${esc(ji)}</div></div>`;
   });
   wh+='</div>';
   $('#xmWuge').innerHTML=wh;
