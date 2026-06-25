@@ -282,6 +282,13 @@ TIAN_GAN_SIHUA = {
     '癸': {'禄': '破军', '权': '巨门', '科': '太阴', '忌': '贪狼'},
 }
 
+# 【改进91】地支五行映射（命盘五行分析用）
+ZHI_WUXING = {
+    '子': '水', '丑': '土', '寅': '木', '卯': '木',
+    '辰': '土', '巳': '火', '午': '火', '未': '土',
+    '申': '金', '酉': '金', '戌': '土', '亥': '水',
+}
+
 # 天干英文→中文映射（复用 STEM_MAP，消除重复定义）
 STEM_EN_TO_CN = STEM_MAP
 
@@ -813,6 +820,50 @@ class ZiWeiEngine(DivinationEngine):
             if sha_stars:
                 sha_distribution[pal['name']] = sha_stars
 
+        # 【改进41-50】星曜组合详细解读
+        ming_desc = self._calc_star_ming_gong_desc(
+            next((p for p in palaces if p['name'] == '命宫'), {})
+        )
+        all_palace_star_desc = self._calc_all_palace_star_desc(palaces)
+        sihua_flight_trail = self._calc_sihua_flight_trail(sihua, palaces, dai_xian)
+        star_interactions = self._calc_star_interactions(palaces)
+
+        # 【改进51-60】大限流年深入分析
+        dai_xian_ji_xiong = self._calc_dai_xian_ji_xiong(dai_xian, palaces, san_fang_data)
+        liunian_comprehensive = self._calc_liunian_comprehensive(liunian_info, palaces, san_fang_data)
+        dai_xian_sihua_to_natal = self._calc_dai_xian_sihua_to_natal(dai_xian, palaces)
+
+        # 【改进61-70】格局判定增强
+        extra_patterns = self._detect_extra_patterns(palaces, san_fang_data, sihua)
+        all_patterns = chart_patterns + extra_patterns
+
+        # 【改进71-80】四化飞星高级分析
+        sihua_detail = self._calc_sihua_detail(sihua)
+
+        # 【改进91-100】命盘综合评估增强
+        wuxing_strength = self._calc_wuxing_strength(palaces)
+        yinyang_balance = self._calc_yinyang_balance(palaces)
+        enhanced_summary = self._calc_enhanced_summary(
+            palaces, sihua, san_fang_data, all_patterns, palace_brightness, dai_xian
+        )
+        final_chart_score = self._calc_final_chart_score(
+            palaces, sihua, san_fang_data, all_patterns, palace_brightness
+        )
+
+        # 【改进101-110】各宫位详细解读
+        palace_interpretations = {}
+        for pal in palaces:
+            interp = self._calc_palace_detailed_interpretation(
+                pal, san_fang_data.get(pal['name'], {}), sihua
+            )
+            palace_interpretations[pal['name']] = interp
+
+        # 【改进111-120】大限流年综合报告
+        nominal_age_val = max(0, current_year - birth_dt.year + 1) if birth_dt else 0
+        dai_xian_liu_nian_report = self._calc_dai_xian_liu_nian_report(
+            dai_xian, liunian_info, palaces, san_fang_data, sihua, nominal_age_val
+        )
+
         return {
             'engine': self.name,
             'engine_en': self.name_en,
@@ -855,6 +906,22 @@ class ZiWeiEngine(DivinationEngine):
             'palace_san_fang_ji_xiong': palace_san_fang_ji_xiong,    # 改进28: 各宫三方四正吉凶
             'peach_distribution': peach_distribution,                # 改进29: 桃花星分布
             'sha_distribution': sha_distribution,                    # 改进30: 煞星分布
+            # ─── 改进41-120 增强分析数据 ───
+            'ming_desc': ming_desc,                                  # 改进41-42: 命宫星曜描述
+            'all_palace_star_desc': all_palace_star_desc,            # 改进43-45: 各宫星曜效果
+            'sihua_flight_trail': sihua_flight_trail,                # 改进50: 四化飞星轨迹
+            'star_interactions': star_interactions,                   # 改进81-84: 星曜互动
+            'dai_xian_ji_xiong': dai_xian_ji_xiong,                 # 改进54: 大限吉凶
+            'liunian_comprehensive': liunian_comprehensive,          # 改进55-60: 流年综合
+            'dai_xian_sihua_to_natal': dai_xian_sihua_to_natal,      # 改进75: 大限四化飞入本命
+            'all_patterns': all_patterns,                            # 改进61-70: 所有格局
+            'sihua_detail': sihua_detail,                            # 改进71-72: 四化详情
+            'wuxing_strength': wuxing_strength,                      # 改进91: 五行强弱
+            'yinyang_balance': yinyang_balance,                      # 改进92: 阴阳平衡
+            'enhanced_summary': enhanced_summary,                    # 改进93-100: 增强总结
+            'final_chart_score': final_chart_score,                  # 改进112-120: 最终评分
+            'palace_interpretations': palace_interpretations,        # 改进101-110: 宫位解读
+            'dai_xian_liu_nian_report': dai_xian_liu_nian_report,    # 改进111: 大限流年报告
         }
 
     # ─── 改进11-20: 三方四正、宫位分析、格局识别等方法 ────
@@ -1227,6 +1294,1106 @@ class ZiWeiEngine(DivinationEngine):
 
     # ─── 改进31-40: 博士十二神、将前十二神、岁前十二神解读 + 关键宫位分析 ───
 
+    # ─── 改进41-50: 星曜组合详细解读 + 四化飞星深入分析 ───
+
+    # 【改进41】十四主星入命宫性格详解
+    MAJOR_STAR_MING_GONG_DESC = {
+        '紫微': '紫微坐命，帝王之星，性格高贵大方，有领导才能，但有时过于自信。一生多贵人相助，适合从政或管理。',
+        '天机': '天机坐命，智慧之星，思维敏捷，善于策划谋略，但易多虑善变。适合技术、策划、军师类工作。',
+        '太阳': '太阳坐命，光明磊落，热情开朗，乐于助人，但易辛劳。男命事业心强，女命旺夫益子。',
+        '武曲': '武曲坐命，财星坐命，性格刚毅果断，执行力强，但性急固执。一生与财有缘，适合金融、军警。',
+        '天同': '天同坐命，福星坐命，性格温和随性，知足常乐，但易懒散缺乏进取。一生多享福，适合文艺、服务。',
+        '廉贞': '廉贞坐命，次桃花星，性格刚强好胜，有才华但易惹是非。一生多变动，适合政治、法律、艺术。',
+        '天府': '天府坐命，库星坐命，性格稳重保守，善于守成理财，但有时过于谨慎。一生衣食无忧。',
+        '太阴': '太阴坐命，母星坐命，性格温柔细腻，有艺术气质，但易情绪化。适合文化、艺术、房产。',
+        '贪狼': '贪狼坐命，桃花星坐命，性格多才多艺，交际能力强，但易贪多不专。一生多异性缘。',
+        '巨门': '巨门坐命，暗星坐命，性格直言善辩，观察力强，但易口舌是非。适合律师、教师、销售。',
+        '天相': '天相坐命，印星坐命，性格正直公平，善于协调，但易缺乏主见。适合秘书、公关、协调类。',
+        '天梁': '天梁坐命，荫星坐命，性格正直有正义感，好打抱不平，但易操心忧虑。一生多逢凶化吉。',
+        '七杀': '七杀坐命，将军星坐命，性格刚强勇猛，有冒险精神，但易冲动任性。一生多波折起伏。',
+        '破军': '破军坐命，耗星坐命，性格开创叛逆，不喜受约束，但易破坏后重建。一生多变化。',
+    }
+
+    # 【改进42】主星组合性格详解（双星同宫）
+    STAR_COMBO_DESC = {
+        ('紫微', '天府'): '紫府同宫，帝星与库星相遇，富贵双全，一生不愁衣食，有权有财。',
+        ('紫微', '贪狼'): '紫贪同宫，帝星与桃花星，多才多艺，人缘极佳，但需防沉迷享乐。',
+        ('紫微', '天相'): '紫相同宫，帝星与印星，正直有权，善于协调管理。',
+        ('紫微', '七杀'): '紫杀同宫，帝星与将星，刚强有权，但需防刚愎自用。',
+        ('紫微', '破军'): '紫破同宫，帝星与耗星，开创力强，但一生多变动。',
+        ('天机', '太阴'): '机月同宫，智慧与温柔，聪明有才学，适合文职。',
+        ('天机', '天梁'): '机梁同宫，智慧与荫星，善于谋略，一生多逢凶化吉。',
+        ('天机', '巨门'): '机巨同宫，智慧与暗星，口才佳善辩论，但易口舌是非。',
+        ('太阳', '太阴'): '日月同宫，光明与温柔，阴阳调和，但力量分散。',
+        ('太阳', '天梁'): '阳梁同宫，光明与荫星，为人正直，一生多贵人。',
+        ('太阳', '巨门'): '阳巨同宫，光明与暗星，口才佳但易招是非。',
+        ('武曲', '天府'): '武府同宫，财星与库星，理财能力极强，一生财运佳。',
+        ('武曲', '天相'): '武相同宫，财星与印星，公正有财，适合金融法律。',
+        ('武曲', '七杀'): '武杀同宫，财星与将星，果断有魄力，适合军警金融。',
+        ('武曲', '贪狼'): '武贪同宫，财星与桃花星，财运佳，交际广，一生多酒色财气。',
+        ('武曲', '破军'): '武破同宫，财星与耗星，有财但易破耗，先破后成。',
+        ('天同', '天梁'): '同梁同宫，福星与荫星，一生多享福，逢凶化吉。',
+        ('天同', '太阴'): '同阴同宫，福星与母星，温柔有福，感情丰富。',
+        ('天同', '巨门'): '同巨同宫，福星与暗星，有福但口舌多。',
+        ('廉贞', '天相'): '廉相同宫，桃花与印星，有才华但需防是非。',
+        ('廉贞', '七杀'): '廉杀同宫，桃花与将星，性格刚烈，一生多波折。',
+        ('廉贞', '破军'): '廉破同宫，桃花与耗星，一生多变化，感情波折。',
+        ('廉贞', '贪狼'): '廉贪同宫，双桃花星，异性缘极佳，但需防桃花劫。',
+        ('天府', '太阴'): '府阴同宫，库星与母星，有财有福，适合房产投资。',
+        ('贪狼', '巨门'): '贪巨同宫，桃花与暗星，口才佳异性缘好，但易招口舌。',
+        ('天相', '天梁'): '相梁同宫，印星与荫星，正直有福，一生多贵人相助。',
+        ('七杀', '天府'): '杀府同宫，将星与库星，有魄力有财，适合创业。',
+        ('天梁', '太阳'): '梁阳同宫（同太阳天梁），见太阳天梁条目。',
+    }
+
+    # 【改进43】辅星入命宫效果详解
+    MINOR_STAR_MING_EFFECT = {
+        '禄存': '禄存入命，一生有财禄，衣食无忧，但性格较保守谨慎。',
+        '天魁': '天魁入命，贵人星坐命，一生多有贵人相助，逢凶化吉。',
+        '天钺': '天钺入命，贵人星坐命，一生暗中有贵人扶助。',
+        '左辅': '左辅入命，辅佐星坐命，为人忠厚有助力，人缘好。',
+        '右弼': '右弼入命，辅佐星坐命，善解人意有助力，但有时优柔寡断。',
+        '文昌': '文昌入命，文星坐命，聪明好学，考试运佳，适合文职。',
+        '文曲': '文曲入命，文星坐命，有艺术才华，口才好，适合文艺。',
+        '天马': '天马入命，驿马星坐命，一生多奔波变动，适合流动性工作。',
+    }
+
+    # 【改进44】煞星入命宫效果详解
+    SHA_STAR_MING_EFFECT = {
+        '擎羊': '擎羊入命，性格刚强果断，有魄力但易与人冲突，一生多是非。',
+        '陀罗': '陀罗入命，性格阴沉犹豫，做事反复，易受困于人际关系。',
+        '火星': '火星入命，性格急躁冲动，有开创力但易暴躁，一生多突发变化。',
+        '铃星': '铃星入命，性格阴沉有心机，行动力强但易暗中受挫。',
+        '地空': '地空入命，思想超脱有创意，但财运不稳，易有精神追求。',
+        '地劫': '地劫入命，性格独特不群，财运多波折，易破财。',
+    }
+
+    # 【改进45】主星在不同宫位的效果表（十四主星在命宫/财帛/官禄/夫妻/迁移）
+    STAR_PALACE_EFFECTS = {
+        '紫微': {
+            '命宫': '帝王之星坐命，一生有贵气',
+            '财帛': '财运佳，善于管理财富',
+            '官禄': '事业有成，适合管理职位',
+            '夫妻': '配偶有贵气，但需防强势',
+            '迁移': '在外受尊重，贵人多',
+        },
+        '天机': {
+            '命宫': '智慧之星坐命，聪明善变',
+            '财帛': '以智取财，财运起伏',
+            '官禄': '适合策划、技术类工作',
+            '夫妻': '配偶聪明，但感情多变',
+            '迁移': '外出发展有利，多变动',
+        },
+        '太阳': {
+            '命宫': '光明之星坐命，热情开朗',
+            '财帛': '以劳取财，付出多回报大',
+            '官禄': '事业有声望，适合公职',
+            '夫妻': '男命得贤妻，女命旺夫',
+            '迁移': '在外有名声，贵人多',
+        },
+        '武曲': {
+            '命宫': '财星坐命，一生与财有缘',
+            '财帛': '正财运极佳，理财能力强',
+            '官禄': '适合金融、军警类工作',
+            '夫妻': '配偶务实，感情较平淡',
+            '迁移': '外出求财有利',
+        },
+        '天同': {
+            '命宫': '福星坐命，一生多享福',
+            '财帛': '财运平稳，不愁衣食',
+            '官禄': '适合服务、文艺类工作',
+            '夫妻': '配偶温和，感情和谐',
+            '迁移': '外出平顺，多享乐',
+        },
+        '廉贞': {
+            '命宫': '次桃花星坐命，多才多艺',
+            '财帛': '财运起伏，多偏财运',
+            '官禄': '适合政治、法律、艺术',
+            '夫妻': '感情丰富，需防桃花劫',
+            '迁移': '在外多是非，但有才华',
+        },
+        '天府': {
+            '命宫': '库星坐命，一生衣食无忧',
+            '财帛': '守财能力强，财运稳定',
+            '官禄': '适合管理、财务类工作',
+            '夫妻': '配偶稳重，婚姻稳定',
+            '迁移': '在外稳重，贵人扶助',
+        },
+        '太阴': {
+            '命宫': '母星坐命，温柔细腻',
+            '财帛': '财运好，尤其不动产',
+            '官禄': '适合文艺、房产类工作',
+            '夫妻': '配偶温柔，感情细腻',
+            '迁移': '在外有艺术气质',
+        },
+        '贪狼': {
+            '命宫': '桃花星坐命，多才多艺',
+            '财帛': '偏财运佳，但不聚财',
+            '官禄': '适合交际、艺术类工作',
+            '夫妻': '异性缘佳，需防桃花',
+            '迁移': '在外交际广，人缘好',
+        },
+        '巨门': {
+            '命宫': '暗星坐命，口才佳善辩',
+            '财帛': '以口取财，适合销售',
+            '官禄': '适合律师、教师、销售',
+            '夫妻': '易口舌是非，需包容',
+            '迁移': '在外多口舌，需谨慎',
+        },
+        '天相': {
+            '命宫': '印星坐命，正直公平',
+            '财帛': '财运平稳，以正途取财',
+            '官禄': '适合秘书、公关类工作',
+            '夫妻': '配偶正直，婚姻和谐',
+            '迁移': '在外有好名声',
+        },
+        '天梁': {
+            '命宫': '荫星坐命，逢凶化吉',
+            '财帛': '财运平稳，多有荫福',
+            '官禄': '适合监察、法律类工作',
+            '夫妻': '配偶有正义感',
+            '迁移': '在外多逢凶化吉',
+        },
+        '七杀': {
+            '命宫': '将星坐命，刚强勇猛',
+            '财帛': '财运起伏大，先苦后甜',
+            '官禄': '适合军警、开创类工作',
+            '夫妻': '感情刚烈，需磨合',
+            '迁移': '在外有魄力，但多波折',
+        },
+        '破军': {
+            '命宫': '耗星坐命，一生多变化',
+            '财帛': '财运起伏，先破后成',
+            '官禄': '适合开创、改革类工作',
+            '夫妻': '感情多变化，需包容',
+            '迁移': '在外多变动，不安定',
+        },
+    }
+
+    # 【改进46】化禄入十二宫详细解释（扩展版）
+    SIHUA_LU_DETAIL = {
+        '命宫': '化禄入命，一生财运顺遂，人缘好，贵人多，凡事多顺利。为人慷慨大方，但需防因大方而失财。',
+        '财帛': '化禄入财帛，正财运极佳，收入丰厚，理财能力强。适合从商或金融行业。',
+        '官禄': '化禄入官禄，事业顺利，升迁有望，工作环境好。适合在大公司或政府机关发展。',
+        '夫妻': '化禄入夫妻，感情甜蜜，配偶有助力，婚姻生活美满。但需防桃花过多。',
+        '迁移': '化禄入迁移，外出顺利，贵人运佳，适合在外发展。出差旅行多顺利。',
+        '福德': '化禄入福德，生活安逸，精神满足，兴趣爱好广泛。晚年有福享。',
+        '田宅': '化禄入田宅，不动产运佳，适合投资房产。家庭环境好。',
+        '子女': '化禄入子女，子女有福，亲子关系好。子女聪明有出息。',
+        '交友': '化禄入交友，朋友助力大，社交运佳。但需防交友不慎。',
+        '父母': '化禄入父母，父母有福荫，家庭环境好。与上司长辈关系好。',
+        '兄弟': '化禄入兄弟，兄弟姐妹和睦，手足有助力。合伙有利。',
+        '疾厄': '化禄入疾厄，健康良好，少病少灾。但需防因福而疏于保健。',
+    }
+
+    # 【改进47】化权入十二宫详细解释（扩展版）
+    SIHUA_QUAN_DETAIL = {
+        '命宫': '化权入命，有领导力，性格强势，做事果断。适合管理岗位，但需防独断专行。',
+        '财帛': '化权入财帛，善于理财掌控，财运稳健。适合财务管理或投资。',
+        '官禄': '化权入官禄，掌权在握，升迁有力。适合领导岗位或创业。',
+        '夫妻': '化权入夫妻，配偶有主见，婚姻中需互相尊重。易有主导权之争。',
+        '迁移': '化权入迁移，在外有权势，受人尊重。适合外派或出差。',
+        '福德': '化权入福德，意志力强，精神充实。有自己的坚持和原则。',
+        '田宅': '化权入田宅，不动产掌控力强。家庭中多有主导权。',
+        '子女': '化权入子女，子女有能力，但亲子间易有权力之争。',
+        '交友': '化权入交友，能管理团队，有领导力。但需防过于强势。',
+        '父母': '化权入父母，父母有权威，家教严格。与上司关系好。',
+        '兄弟': '化权入兄弟，兄弟之间易有争执。合伙需注意权力分配。',
+        '疾厄': '化权入疾厄，需注意压力相关疾病，如高血压、心脏病。',
+    }
+
+    # 【改进48】化科入十二宫详细解释（扩展版）
+    SIHUA_KE_DETAIL = {
+        '命宫': '化科入命，有名声文采，为人谦虚有礼。适合文教、学术类工作。',
+        '财帛': '化科入财帛，以文取财，财运平稳。适合知识型或教育类行业。',
+        '官禄': '化科入官禄，考试运佳，文职有利。适合学术、教育、文化类工作。',
+        '夫妻': '化科入夫妻，配偶有才学，婚姻和谐。感情中有默契。',
+        '迁移': '化科入迁移，在外有好名声，受人尊敬。适合学术交流。',
+        '福德': '化科入福德，精神充实，好学不倦。有高雅的兴趣爱好。',
+        '田宅': '化科入田宅，书香门第，家庭文化氛围好。适合学区房投资。',
+        '子女': '化科入子女，子女聪明好学，考试运佳。亲子关系和谐。',
+        '交友': '化科入交友，益友多，朋友中有文人学者。社交圈质量高。',
+        '父母': '化科入父母，父母重视教育，家庭文化氛围好。',
+        '兄弟': '化科入兄弟，兄弟有才华，手足关系和谐。',
+        '疾厄': '化科入疾厄，身体无大碍，有病也容易遇到好医生。',
+    }
+
+    # 【改进49】化忌入十二宫详细解释（扩展版）
+    SIHUA_JI_DETAIL = {
+        '命宫': '化忌入命，一生多阻碍，性格执着认真。凡事需付出更多努力，但也有韧性。',
+        '财帛': '化忌入财帛，财运不顺，易破财。需谨慎理财，避免投机。',
+        '官禄': '化忌入官禄，事业多阻碍，工作中易有是非。需踏实努力，不可投机取巧。',
+        '夫妻': '化忌入夫妻，感情多波折，易有口舌是非。需多包容理解。',
+        '迁移': '化忌入迁移，外出不顺，易遇阻碍。出行需特别注意安全。',
+        '福德': '化忌入福德，精神困扰多，易多虑忧愁。需学会放松心态。',
+        '田宅': '化忌入田宅，不动产有纠纷，家庭不安宁。投资房产需谨慎。',
+        '子女': '化忌入子女，子女操心，亲子关系紧张。需多沟通理解。',
+        '交友': '化忌入交友，小人多，朋友易反目。交友需谨慎。',
+        '父母': '化忌入父母，父母缘薄，与上司关系紧张。需多忍让。',
+        '兄弟': '化忌入兄弟，兄弟不和，合伙易有纠纷。需明算账。',
+        '疾厄': '化忌入疾厄，健康需注意，易有慢性疾病。需定期体检。',
+    }
+
+    # 【改进50】四化飞星轨迹追踪规则
+    SIHUA_FLIGHT_RULES = {
+        'description': '四化飞星是紫微斗数高级技法，通过天干引发四化在不同宫位间飞化',
+        'types': {
+            '生年四化': '出生年天干引发的四化，影响一生',
+            '大限四化': '大限天干引发的四化，影响该十年',
+            '流年四化': '流年天干引发的四化，影响该年',
+            '自化': '宫位自身天干引发的四化，影响该宫',
+            '飞化': '一个宫位的天干引发四化飞入另一个宫位',
+        },
+        'flight_modes': {
+            '禄随忌走': '化禄跟随化忌飞入的宫位，表示该宫有财运但也有困扰',
+            '权忌交战': '化权与化忌同宫或对冲，表示该宫有权力但也有阻碍',
+            '科忌相逢': '化科与化忌同宫，表示有名声但也有困扰',
+            '双禄交流': '两个宫位互相化禄，表示两宫之间财气流通',
+            '禄权科三奇': '禄权科三化落在三方四正，为大吉之象',
+        },
+    }
+
+    def _calc_star_ming_gong_desc(self, palace: dict) -> str:
+        """【改进41-42】获取命宫星曜组合详细描述"""
+        major_stars = [s['name'] for s in palace.get('major_stars', []) if s['name'] in ALL_MAJOR_STARS]
+        if not major_stars:
+            return '命宫无主星（空宫），借对宫主星之力'
+        if len(major_stars) == 1:
+            return self.MAJOR_STAR_MING_GONG_DESC.get(major_stars[0], f'{major_stars[0]}坐命')
+        # 双星组合
+        combo = tuple(sorted(major_stars[:2]))
+        desc = self.STAR_COMBO_DESC.get(combo, f'{major_stars[0]}、{major_stars[1]}同宫')
+        return desc
+
+    def _calc_all_palace_star_desc(self, palaces: list) -> dict:
+        """【改进43-44+45】各宫位星曜效果描述"""
+        result = {}
+        for pal in palaces:
+            pname = pal['name']
+            stars_desc = []
+            # 主星在该宫的效果
+            for s in pal.get('major_stars', []):
+                if s['name'] in ALL_MAJOR_STARS:
+                    effect = self.STAR_PALACE_EFFECTS.get(s['name'], {}).get(pname, '')
+                    if effect:
+                        stars_desc.append(effect)
+            # 辅星在命宫的效果
+            if pname == '命宫':
+                for s in pal.get('minor_stars', []):
+                    if s['name'] in self.MINOR_STAR_MING_EFFECT:
+                        stars_desc.append(self.MINOR_STAR_MING_EFFECT[s['name']])
+                    elif s['name'] in self.SHA_STAR_MING_EFFECT:
+                        stars_desc.append(self.SHA_STAR_MING_EFFECT[s['name']])
+            result[pname] = stars_desc
+        return result
+
+    def _calc_sihua_detail(self, sihua: dict) -> dict:
+        """【改进46-49】四化入宫详细解释"""
+        detail_maps = {
+            '禄': self.SIHUA_LU_DETAIL,
+            '权': self.SIHUA_QUAN_DETAIL,
+            '科': self.SIHUA_KE_DETAIL,
+            '忌': self.SIHUA_JI_DETAIL,
+        }
+        star_to_palace = {}  # 需要在analyze中构建
+        result = {}
+        for hua_type, star_name in sihua.items():
+            detail_map = detail_maps.get(hua_type, {})
+            result[hua_type] = {
+                'star': star_name,
+                'general_desc': detail_map.get('desc', f'化{hua_type}在{star_name}'),
+            }
+        return result
+
+    # ─── 改进51-60: 大限流年深入分析 ───
+
+    # 【改进51】大限宫位四化叠加解读规则
+    DAI_XIAN_OVERLAP_RULES = {
+        '双禄叠加': '大限化禄叠生年化禄，财运加倍，该十年财运极佳',
+        '双权叠加': '大限化权叠生年化权，权力加倍，该十年事业有成',
+        '双科叠加': '大限化科叠生年化科，名声加倍，该十年文名远播',
+        '双忌叠加': '大限化忌叠生年化忌，阻碍加倍，该十年需特别谨慎',
+        '禄忌叠加': '大限化禄叠生年化忌（或反之），有财但也有困扰',
+        '权忌叠加': '大限化权叠生年化忌（或反之），有权但也有阻碍',
+    }
+
+    # 【改进52】大限十二宫分析模板
+    DAI_XIAN_PALACE_ANALYSIS = {
+        '命宫': '大限命宫影响该十年的整体运势和精神面貌',
+        '财帛': '大限财帛宫影响该十年的财运',
+        '官禄': '大限官禄宫影响该十年的事业运',
+        '夫妻': '大限夫妻宫影响该十年的感情运',
+        '迁移': '大限迁移宫影响该十年的外出运',
+        '福德': '大限福德宫影响该十年的精神生活',
+        '田宅': '大限田宅宫影响该十年的不动产运',
+        '子女': '大限子女宫影响该十年的子女运',
+        '交友': '大限交友宫影响该十年的社交运',
+        '父母': '大限父母宫影响该十年的长辈缘',
+        '兄弟': '大限兄弟宫影响该十年的手足缘',
+        '疾厄': '大限疾厄宫影响该十年的健康运',
+    }
+
+    # 【改进53】流年十二宫分析模板
+    LIU_NIAN_PALACE_ANALYSIS = {
+        '命宫': '流年命宫影响该年的整体运势',
+        '财帛': '流年财帛宫影响该年的财运',
+        '官禄': '流年官禄宫影响该年的事业运',
+        '夫妻': '流年夫妻宫影响该年的感情运',
+        '迁移': '流年迁移宫影响该年的外出运',
+        '福德': '流年福德宫影响该年的精神生活',
+        '田宅': '流年田宅宫影响该年的不动产运',
+        '子女': '流年子女宫影响该年的子女运',
+        '交友': '流年交友宫影响该年的社交运',
+        '父母': '流年父母宫影响该年的长辈缘',
+        '兄弟': '流年兄弟宫影响该年的手足缘',
+        '疾厄': '流年疾厄宫影响该年的健康运',
+    }
+
+    # 【改进54】大限吉凶综合判断
+    def _calc_dai_xian_ji_xiong(self, dai_xian: list, palaces: list, san_fang_data: dict) -> list:
+        """为每个大限计算吉凶综合判断
+
+        Returns:
+            list: [{'ganzhi': str, 'age_range': str, 'ji_xiong': str, 'score': int, 'detail': str}]
+        """
+        result = []
+        for dx in dai_xian:
+            score = 0
+            details = []
+            # 大限四化
+            dx_sihua = dx.get('sihua', {})
+            if '禄' in dx_sihua:
+                score += 2
+                details.append('大限化禄，主顺遂')
+            if '权' in dx_sihua:
+                score += 2
+                details.append('大限化权，主掌权')
+            if '科' in dx_sihua:
+                score += 1
+                details.append('大限化科，主名声')
+            if '忌' in dx_sihua:
+                score -= 2
+                details.append('大限化忌，主阻碍')
+            ji_xiong = '吉' if score > 0 else ('凶' if score < 0 else '平')
+            result.append({
+                'ganzhi': dx.get('ganzhi', ''),
+                'age_range': f"{dx.get('start_age', 0)}-{dx.get('end_age', 0)}",
+                'ji_xiong': ji_xiong,
+                'score': score,
+                'detail': '；'.join(details) if details else '大限四化平稳',
+            })
+        return result
+
+    # 【改进55】流年桃花运分析
+    def _calc_liunian_peach(self, liunian_info: dict, palaces: list) -> dict:
+        """分析流年桃花运"""
+        if not liunian_info:
+            return {}
+        palace_names = liunian_info.get('palace_names', [])
+        peach_palaces = []
+        for pn in palace_names:
+            pal = next((p for p in palaces if p['name'] == pn), {})
+            peach_stars = [s['name'] for s in pal.get('major_stars', []) + pal.get('minor_stars', [])
+                         if s['name'] in PEACH_BLOSSOM_STARS]
+            if peach_stars:
+                peach_palaces.append({'palace': pn, 'peach_stars': peach_stars})
+        has_peach = len(peach_palaces) > 0
+        return {
+            'has_peach': has_peach,
+            'peach_palaces': peach_palaces,
+            'level': '旺' if len(peach_palaces) >= 2 else ('有' if has_peach else '弱'),
+        }
+
+    # 【改进56】流年事业运分析
+    def _calc_liunian_career(self, liunian_info: dict, palaces: list, san_fang_data: dict) -> dict:
+        """分析流年事业运"""
+        if not liunian_info:
+            return {}
+        palace_names = liunian_info.get('palace_names', [])
+        career_pal = next((pn for pn in palace_names if pn == '官禄'), '')
+        if not career_pal:
+            return {'note': '流年命宫不在官禄宫'}
+        pal = next((p for p in palaces if p['name'] == '官禄'), {})
+        ji_xiong = self._calc_palace_ji_xiong(pal, san_fang_data.get('官禄', {}))
+        return {
+            'career_palace': career_pal,
+            'ji_xiong': ji_xiong,
+            'level': '吉' if ji_xiong.get('balance') == '吉' else ('凶' if ji_xiong.get('balance') == '凶' else '平'),
+        }
+
+    # 【改进57】流年财运分析
+    def _calc_liunian_wealth(self, liunian_info: dict, palaces: list, san_fang_data: dict) -> dict:
+        """分析流年财运"""
+        if not liunian_info:
+            return {}
+        palace_names = liunian_info.get('palace_names', [])
+        wealth_pal = next((pn for pn in palace_names if pn == '财帛'), '')
+        if not wealth_pal:
+            return {'note': '流年命宫不在财帛宫'}
+        pal = next((p for p in palaces if p['name'] == '财帛'), {})
+        ji_xiong = self._calc_palace_ji_xiong(pal, san_fang_data.get('财帛', {}))
+        return {
+            'wealth_palace': wealth_pal,
+            'ji_xiong': ji_xiong,
+            'level': '吉' if ji_xiong.get('balance') == '吉' else ('凶' if ji_xiong.get('balance') == '凶' else '平'),
+        }
+
+    # 【改进58】流年感情运分析
+    def _calc_liunian_romance(self, liunian_info: dict, palaces: list, san_fang_data: dict) -> dict:
+        """分析流年感情运"""
+        if not liunian_info:
+            return {}
+        palace_names = liunian_info.get('palace_names', [])
+        spouse_pal = next((pn for pn in palace_names if pn == '夫妻'), '')
+        pal = next((p for p in palaces if p['name'] == '夫妻'), {})
+        ji_xiong = self._calc_palace_ji_xiong(pal, san_fang_data.get('夫妻', {}))
+        peach_stars = [s['name'] for s in pal.get('major_stars', []) + pal.get('minor_stars', [])
+                     if s['name'] in PEACH_BLOSSOM_STARS]
+        return {
+            'spouse_palace_hit': bool(spouse_pal),
+            'ji_xiong': ji_xiong,
+            'peach_stars': peach_stars,
+            'level': '吉' if ji_xiong.get('balance') == '吉' and peach_stars else (
+                '凶' if ji_xiong.get('balance') == '凶' else '平'),
+        }
+
+    # 【改进59】流年健康运分析
+    def _calc_liunian_health(self, liunian_info: dict, palaces: list, san_fang_data: dict) -> dict:
+        """分析流年健康运"""
+        if not liunian_info:
+            return {}
+        palace_names = liunian_info.get('palace_names', [])
+        health_pal = next((pn for pn in palace_names if pn == '疾厄'), '')
+        pal = next((p for p in palaces if p['name'] == '疾厄'), {})
+        ji_xiong = self._calc_palace_ji_xiong(pal, san_fang_data.get('疾厄', {}))
+        sha_stars = [s['name'] for s in pal.get('minor_stars', []) if s['name'] in INausPICIOUS_STARS]
+        return {
+            'health_palace_hit': bool(health_pal),
+            'ji_xiong': ji_xiong,
+            'sha_stars': sha_stars,
+            'level': '凶' if sha_stars else ('吉' if ji_xiong.get('balance') == '吉' else '平'),
+        }
+
+    # 【改进60】流年各维度综合运势
+    def _calc_liunian_comprehensive(self, liunian_info: dict, palaces: list, san_fang_data: dict) -> dict:
+        """流年各维度综合运势汇总"""
+        return {
+            'peach': self._calc_liunian_peach(liunian_info, palaces),
+            'career': self._calc_liunian_career(liunian_info, palaces, san_fang_data),
+            'wealth': self._calc_liunian_wealth(liunian_info, palaces, san_fang_data),
+            'romance': self._calc_liunian_romance(liunian_info, palaces, san_fang_data),
+            'health': self._calc_liunian_health(liunian_info, palaces, san_fang_data),
+        }
+
+    # ─── 改进61-70: 格局判定增强 ───
+
+    # 【改进61】格局等级评定标准
+    PATTERN_LEVEL_STANDARD = {
+        '上格': {'min_score': 5, 'desc': '上等格局，一生多顺遂，事业有成'},
+        '中格': {'min_score': 2, 'desc': '中等格局，一生平稳，小有成就'},
+        '特殊': {'min_score': 0, 'desc': '特殊格局，起伏较大，需看具体星曜'},
+        '下格': {'min_score': -5, 'desc': '下等格局，一生多波折，需努力改善'},
+    }
+
+    # 【改进62】更多格局定义（扩展）
+    EXTRA_PATTERNS = {
+        '日月并明': {
+            'desc': '太阳太阴在命宫三方四正且亮度良好',
+            'check': 'san_fang',
+            'stars': ['太阳', '太阴'],
+            'min_brightness': 4,
+            'level': '上格',
+        },
+        '禄权科三奇': {
+            'desc': '禄权科三化分别落在命宫、财帛、官禄',
+            'check': 'sihua_positions',
+            'level': '上格',
+        },
+        '禄逢冲破': {
+            'desc': '化禄被煞星冲破，有财但留不住',
+            'check': 'lu_with_sha',
+            'level': '下格',
+        },
+        '忌入命宫': {
+            'desc': '化忌入命宫，一生多阻碍',
+            'check': 'ji_in_ming',
+            'level': '下格',
+        },
+        '空劫夹命': {
+            'desc': '地空地劫夹命宫，一生多空想',
+            'check': 'kong_jie_jia',
+            'level': '下格',
+        },
+        '火贪格': {
+            'desc': '火星与贪狼同宫，爆发力强',
+            'check': 'palace',
+            'stars': ['火星', '贪狼'],
+            'level': '中格',
+        },
+        '铃贪格': {
+            'desc': '铃星与贪狼同宫，暗中得财',
+            'check': 'palace',
+            'stars': ['铃星', '贪狼'],
+            'level': '中格',
+        },
+        '阳梁昌禄': {
+            'desc': '太阳天梁文昌禄存同宫或会照，考试运极佳',
+            'check': 'san_fang',
+            'stars': ['太阳', '天梁', '文昌', '禄存'],
+            'level': '上格',
+        },
+        '月朗天门': {
+            'desc': '太阴在亥宫庙旺，一生有福',
+            'check': 'star_at_branch',
+            'star': '太阴',
+            'branch': '亥',
+            'min_brightness': 5,
+            'level': '上格',
+        },
+        '日出扶桑': {
+            'desc': '太阳在卯宫庙旺，一生光明',
+            'check': 'star_at_branch',
+            'star': '太阳',
+            'branch': '卯',
+            'min_brightness': 5,
+            'level': '上格',
+        },
+    }
+
+    # 【改进63】检测额外格局
+    def _detect_extra_patterns(self, palaces: list, san_fang_data: dict, sihua: dict) -> list:
+        """检测扩展格局"""
+        patterns = []
+        palace_map = {p['name']: p for p in palaces}
+        ming_sf = san_fang_data.get('命宫', {})
+        ming_pal = palace_map.get('命宫', {})
+
+        # 日月并明
+        for p in palaces:
+            stars = {s['name']: s.get('brightness', '') for s in p.get('major_stars', [])}
+            if '太阳' in stars and '太阴' in stars:
+                if BRIGHTNESS_SCORE.get(stars['太阳'], 0) >= 4 and BRIGHTNESS_SCORE.get(stars['太阴'], 0) >= 4:
+                    patterns.append({'name': '日月并明', 'desc': '太阳太阴同宫且庙旺，阴阳调和', 'level': '上格', 'palace': p['name']})
+
+        # 禄权科三奇
+        lu_star = sihua.get('禄', '')
+        quan_star = sihua.get('权', '')
+        ke_star = sihua.get('科', '')
+        if lu_star and quan_star and ke_star:
+            star_positions = {}
+            for p in palaces:
+                for s in p.get('major_stars', []) + p.get('minor_stars', []):
+                    star_positions[s['name']] = p['name']
+            lu_pal = star_positions.get(lu_star, '')
+            quan_pal = star_positions.get(quan_star, '')
+            ke_pal = star_positions.get(ke_star, '')
+            key_palaces = {'命宫', '财帛', '官禄'}
+            if {lu_pal, quan_pal, ke_pal} == key_palaces or {lu_pal, quan_pal, ke_pal}.issubset(key_palaces):
+                patterns.append({'name': '禄权科三奇', 'desc': '禄权科三化分入命财官，大吉', 'level': '上格'})
+
+        # 忌入命宫
+        ji_star = sihua.get('忌', '')
+        if ji_star:
+            for s in ming_pal.get('major_stars', []) + ming_pal.get('minor_stars', []):
+                if s['name'] == ji_star:
+                    patterns.append({'name': '忌入命宫', 'desc': '化忌入命宫，一生多阻碍', 'level': '下格'})
+
+        # 火贪格/铃贪格
+        for p in palaces:
+            minor_names = {s['name'] for s in p.get('minor_stars', [])}
+            major_names = {s['name'] for s in p.get('major_stars', [])}
+            if '火星' in minor_names and '贪狼' in major_names:
+                patterns.append({'name': '火贪格', 'desc': f'火星贪狼同{p["name"]}宫，爆发力强', 'level': '中格', 'palace': p['name']})
+            if '铃星' in minor_names and '贪狼' in major_names:
+                patterns.append({'name': '铃贪格', 'desc': f'铃星贪狼同{p["name"]}宫，暗中得财', 'level': '中格', 'palace': p['name']})
+
+        # 月朗天门
+        for p in palaces:
+            if p['zhi'] == '亥':
+                for s in p.get('major_stars', []):
+                    if s['name'] == '太阴' and BRIGHTNESS_SCORE.get(s.get('brightness', ''), 0) >= 5:
+                        patterns.append({'name': '月朗天门', 'desc': '太阴在亥宫庙旺，一生有福', 'level': '上格'})
+
+        # 日出扶桑
+        for p in palaces:
+            if p['zhi'] == '卯':
+                for s in p.get('major_stars', []):
+                    if s['name'] == '太阳' and BRIGHTNESS_SCORE.get(s.get('brightness', ''), 0) >= 5:
+                        patterns.append({'name': '日出扶桑', 'desc': '太阳在卯宫庙旺，一生光明', 'level': '上格'})
+
+        return patterns
+
+    # ─── 改进71-80: 四化飞星高级分析 ───
+
+    # 【改进71】四化入宫力量等级
+    SIHUA_PALACE_POWER = {
+        '禄': {'命宫': 10, '财帛': 9, '官禄': 8, '田宅': 7, '福德': 6, '夫妻': 5,
+               '迁移': 5, '子女': 4, '交友': 3, '父母': 3, '兄弟': 3, '疾厄': 2},
+        '权': {'官禄': 10, '命宫': 9, '财帛': 8, '迁移': 7, '田宅': 6, '夫妻': 5,
+               '福德': 4, '子女': 4, '交友': 3, '父母': 3, '兄弟': 3, '疾厄': 2},
+        '科': {'命宫': 10, '官禄': 8, '福德': 7, '父母': 6, '财帛': 5, '夫妻': 5,
+               '迁移': 4, '子女': 4, '田宅': 3, '交友': 3, '兄弟': 3, '疾厄': 2},
+        '忌': {'命宫': 10, '夫妻': 9, '财帛': 8, '官禄': 7, '疾厄': 6, '迁移': 5,
+               '福德': 5, '田宅': 4, '子女': 4, '交友': 3, '父母': 3, '兄弟': 3},
+    }
+
+    # 【改进72】四化互涉规则
+    SIHUA_INTERACTION = {
+        ('禄', '忌'): '禄忌互涉，有财但也有困扰，先甜后苦',
+        ('权', '忌'): '权忌互涉，有权但也有阻碍，需防小人',
+        ('科', '忌'): '科忌互涉，有名声也有困扰，是非不断',
+        ('禄', '权'): '禄权互涉，有财有权，大吉',
+        ('禄', '科'): '禄科互涉，有名有利，文财兼备',
+        ('权', '科'): '权科互涉，有权有名，事业有成',
+    }
+
+    # 【改进73-80】星曜亮度在十二宫的特殊规则
+    STAR_BRIGHTNESS_SPECIAL = {
+        '太阴': {
+            '最佳宫位': ['卯', '辰', '巳'],  # 太阴在这些地支的宫位亮度好
+            '最差宫位': ['酉', '戌', '亥'],
+            '解释': '太阴为夜星，在白天的宫位亮度差',
+        },
+        '太阳': {
+            '最佳宫位': ['卯', '辰', '巳'],
+            '最差宫位': ['酉', '戌', '亥'],
+            '解释': '太阳为日星，在白天的宫位亮度好',
+        },
+    }
+
+    # 【改进74】命盘四化飞星轨迹完整分析
+    def _calc_sihua_flight_trail(self, sihua: dict, palaces: list, dai_xian: list) -> dict:
+        """追踪四化飞星在命盘中的完整轨迹"""
+        star_positions = {}
+        for p in palaces:
+            for s in p.get('major_stars', []) + p.get('minor_stars', []):
+                star_positions[s['name']] = p['name']
+
+        trail = {}
+        for hua_type, star_name in sihua.items():
+            palace = star_positions.get(star_name, '')
+            power = self.SIHUA_PALACE_POWER.get(hua_type, {}).get(palace, 0)
+            trail[hua_type] = {
+                'star': star_name,
+                'palace': palace,
+                'power': power,
+                'level': '强' if power >= 8 else ('中' if power >= 5 else '弱'),
+            }
+        return trail
+
+    # 【改进75】大限四化飞入本命各宫分析
+    def _calc_dai_xian_sihua_to_natal(self, dai_xian: list, palaces: list) -> list:
+        """大限四化飞入本命各宫的详细分析"""
+        result = []
+        star_positions = {}
+        for p in palaces:
+            for s in p.get('major_stars', []) + p.get('minor_stars', []):
+                star_positions[s['name']] = p['name']
+
+        for dx in dai_xian:
+            dx_sihua = dx.get('sihua', {})
+            if not dx_sihua:
+                continue
+            dx_detail = {'ganzhi': dx.get('ganzhi', ''), 'age_range': f"{dx.get('start_age', 0)}-{dx.get('end_age', 0)}"}
+            for hua_type, star_name in dx_sihua.items():
+                palace = star_positions.get(star_name, '')
+                effect = SIHUA_EFFECTS.get(hua_type, {}).get(palace, '')
+                dx_detail[hua_type] = {'star': star_name, 'palace': palace, 'effect': effect}
+            result.append(dx_detail)
+        return result
+
+    # 【改进76-80】命盘十二宫详尽分析
+    def _calc_palace_comprehensive(self, palace: dict, san_fang_info: dict) -> dict:
+        """单个宫位的综合详尽分析"""
+        brightness = self._calc_palace_brightness_score(palace)
+        ji_xiong = self._calc_palace_ji_xiong(palace, san_fang_info)
+        patterns = self._detect_palace_patterns(palace)
+        major_names = [s['name'] for s in palace.get('major_stars', []) if s['name'] in ALL_MAJOR_STARS]
+        is_empty = len(major_names) == 0
+        is_single = len(major_names) == 1
+        return {
+            'name': palace['name'],
+            'zhi': palace['zhi'],
+            'stem': palace['stem'],
+            'major_stars': [s['name'] for s in palace.get('major_stars', [])],
+            'minor_stars': [s['name'] for s in palace.get('minor_stars', [])],
+            'brightness': brightness,
+            'ji_xiong': ji_xiong,
+            'patterns': patterns,
+            'is_empty': is_empty,
+            'is_single': is_single,
+            'self_hua': palace.get('self_hua', []),
+            'changsheng': palace.get('changsheng', ''),
+            'boshi': palace.get('boshi', ''),
+        }
+
+    # ─── 改进81-90: 星曜互动与特殊组合 ───
+
+    # 【改进81】星曜互动效应表
+    STAR_INTERACTION = {
+        ('紫微', '左辅'): '紫微得左辅辅佐，一生多助力',
+        ('紫微', '右弼'): '紫微得右弼辅佐，贵人运佳',
+        ('紫微', '天魁'): '紫微得天魁贵人，逢凶化吉',
+        ('紫微', '天钺'): '紫微得天钺贵人，暗中有助',
+        ('紫微', '擎羊'): '紫微遇擎羊，有权力但易冲突',
+        ('紫微', '陀罗'): '紫微遇陀罗，事业有阻碍',
+        ('紫微', '火星'): '紫微遇火星，性格急躁有魄力',
+        ('紫微', '地空'): '紫微遇地空，思想超脱但不聚财',
+        ('紫微', '地劫'): '紫微遇地劫，有创意但财运波折',
+        ('天机', '文昌'): '天机得文昌，智慧与文采兼备',
+        ('天机', '文曲'): '天机得文曲，聪明有才华',
+        ('太阳', '禄存'): '太阳得禄存，有财有声望',
+        ('太阳', '化忌'): '太阳化忌，辛劳多是非',
+        ('武曲', '化禄'): '武曲化禄，财运极佳',
+        ('武曲', '化忌'): '武曲化忌，财运受阻',
+        ('天同', '化禄'): '天同化禄，有福有财',
+        ('天同', '化忌'): '天同化忌，福气受损',
+        ('廉贞', '七杀'): '廉贞七杀同宫，性格刚烈',
+        ('天府', '禄存'): '天府得禄存，库中有财',
+        ('贪狼', '化禄'): '贪狼化禄，桃花与财运皆旺',
+        ('贪狼', '化忌'): '贪狼化忌，桃花劫',
+        ('巨门', '化忌'): '巨门化忌，口舌是非严重',
+        ('天相', '化权'): '天相化权，有权力有地位',
+        ('天梁', '化科'): '天梁化科，有名声有荫福',
+        ('七杀', '擎羊'): '七杀遇擎羊，性格刚烈，一生多波折',
+        ('破军', '化禄'): '破军化禄，先破后成',
+        ('破军', '化忌'): '破军化忌，破耗严重',
+    }
+
+    # 【改进82】桃花星组合分析
+    PEACH_COMBO_ANALYSIS = {
+        '贪狼+红鸾': '桃花极旺，异性缘极佳，但需防桃花劫',
+        '贪狼+天姚': '桃花旺盛，感情丰富，但易沉迷',
+        '贪狼+咸池': '桃花旺盛，但多为露水情缘',
+        '天姚+红鸾': '桃花旺盛，易有婚姻之喜',
+        '天喜+红鸾': '喜事连连，感情运佳',
+        '廉贞+天姚': '次桃花加桃花星，感情波折多',
+    }
+
+    # 【改进83】煞星组合分析
+    SHA_COMBO_ANALYSIS = {
+        '擎羊+陀罗': '双煞夹命，一生多波折，需特别谨慎',
+        '火星+铃星': '火铃交并，性格急躁，一生多突发变化',
+        '地空+地劫': '空劫夹命，一生多空想，财运不稳',
+        '擎羊+火星': '双煞交加，性格刚烈冲动',
+        '陀罗+铃星': '双煞交加，性格阴沉反复',
+    }
+
+    # 【改进84】吉星组合分析
+    AUSPICIOUS_COMBO_ANALYSIS = {
+        '天魁+天钺': '双贵人夹命，一生多贵人相助',
+        '左辅+右弼': '双辅星夹命，一生多助力',
+        '文昌+文曲': '双文星夹命，聪明好学，考试运佳',
+        '禄存+天马': '禄马交驰，财运与外出运皆佳',
+        '天魁+左辅': '贵人与辅星同在，助力极大',
+    }
+
+    # 【改进85-90】特殊宫位组合
+    SPECIAL_PALACE_COMBOS = {
+        '命宫紫微+官禄武曲': '命宫有权，官禄有财，事业有成',
+        '命宫紫微+财帛天府': '命宫有权，财帛有库，一生不愁衣食',
+        '命宫天机+官禄天梁': '命宫有智，官禄有荫，事业多逢凶化吉',
+        '命宫太阳+夫妻太阴': '命宫光明，夫妻温柔，阴阳调和',
+    }
+
+    def _calc_star_interactions(self, palaces: list) -> list:
+        """【改进81-84】计算星曜互动效应"""
+        interactions = []
+        for pal in palaces:
+            all_star_names = [s['name'] for s in pal.get('major_stars', []) + pal.get('minor_stars', [])]
+            for i, s1 in enumerate(all_star_names):
+                for s2 in all_star_names[i+1:]:
+                    combo = (s1, s2)
+                    rev_combo = (s2, s1)
+                    desc = self.STAR_INTERACTION.get(combo) or self.STAR_INTERACTION.get(rev_combo)
+                    if desc:
+                        interactions.append({'palace': pal['name'], 'stars': [s1, s2], 'effect': desc})
+        return interactions
+
+    # ─── 改进91-100: 命盘综合评估增强 ───
+
+    # 【改进91】命盘五行强弱分析
+    def _calc_wuxing_strength(self, palaces: list) -> dict:
+        """分析命盘五行强弱"""
+        wuxing_count = {'金': 0, '木': 0, '水': 0, '火': 0, '土': 0}
+        for pal in palaces:
+            branch_wx = ZHI_WUXING.get(pal.get('zhi', ''), '')
+            if branch_wx:
+                wuxing_count[branch_wx] = wuxing_count.get(branch_wx, 0) + 1
+        strongest = max(wuxing_count, key=wuxing_count.get)
+        weakest = min(wuxing_count, key=wuxing_count.get)
+        return {
+            'count': wuxing_count,
+            'strongest': strongest,
+            'weakest': weakest,
+            'balance': '平衡' if max(wuxing_count.values()) - min(wuxing_count.values()) <= 2 else '偏颇',
+        }
+
+    # 【改进92】命盘阴阳平衡分析
+    def _calc_yinyang_balance(self, palaces: list) -> dict:
+        """分析命盘阴阳平衡"""
+        yang_count = 0
+        yin_count = 0
+        yang_branches = {'子', '寅', '辰', '午', '申', '戌'}
+        for pal in palaces:
+            if pal.get('zhi', '') in yang_branches:
+                yang_count += 1
+            else:
+                yin_count += 1
+        return {
+            'yang': yang_count,
+            'yin': yin_count,
+            'balance': '阴阳调和' if abs(yang_count - yin_count) <= 2 else (
+                '偏阳' if yang_count > yin_count else '偏阴'),
+        }
+
+    # 【改进93-100】命盘综合评估
+    def _calc_enhanced_summary(self, palaces: list, sihua: dict, san_fang_data: dict,
+                                chart_patterns: list, palace_brightness: dict,
+                                dai_xian: list) -> dict:
+        """命盘增强综合评估"""
+        strengths = []
+        weaknesses = []
+        key_points = []
+
+        # 格局分析
+        for pat in chart_patterns:
+            if pat.get('level') == '上格':
+                key_points.append(f"上格：{pat['name']}——{pat['desc']}")
+            elif pat.get('level') == '下格':
+                weaknesses.append(f"下格：{pat['name']}——{pat['desc']}")
+
+        # 四化分析
+        if '禄' in sihua:
+            strengths.append(f"化禄在{sihua['禄']}，主财运顺遂")
+        if '权' in sihua:
+            strengths.append(f"化权在{sihua['权']}，主有领导力")
+        if '科' in sihua:
+            strengths.append(f"化科在{sihua['科']}，主有名声文采")
+        if '忌' in sihua:
+            weaknesses.append(f"化忌在{sihua['忌']}，需注意相关宫位")
+
+        # 三方四正分析
+        ming_sf = san_fang_data.get('命宫', {})
+        if ming_sf.get('auspicious_count', 0) > 3:
+            strengths.append("命宫三方四正吉星多，贵人运佳")
+        if ming_sf.get('inauspicious_count', 0) > 3:
+            weaknesses.append("命宫三方四正煞星多，需防小人")
+
+        # 亮度分析
+        ming_brightness = palace_brightness.get('命宫', {}).get('percentage', 0)
+        if ming_brightness >= 70:
+            strengths.append(f"命宫亮度评分{ming_brightness}%，力量充足")
+        elif ming_brightness < 40:
+            weaknesses.append(f"命宫亮度评分{ming_brightness}%，力量不足")
+
+        # 总评
+        score = len(strengths) - len(weaknesses)
+        if score >= 3:
+            overall = '上等命盘'
+        elif score >= 0:
+            overall = '中等命盘'
+        else:
+            overall = '需努力改善'
+
+        return {
+            'strengths': strengths,
+            'weaknesses': weaknesses,
+            'key_points': key_points,
+            'overall_rating': overall,
+            'score': score,
+        }
+
+    # ─── 改进101-110: 宫位详细解读文本 ───
+
+    # 【改进101】命宫详细解读模板
+    MING_GONG_INTERPRETATION = {
+        '有主星': '命宫有主星坐守，性格特征明显，做事有主见。',
+        '空宫': '命宫无主星（空宫），性格不够突出，易受外界影响，借对宫主星之力。',
+        '独坐': '命宫独坐一颗主星，力量集中，性格特征非常突出。',
+        '双星': '命宫双主星同宫，性格组合复杂，优势互补但也矛盾。',
+        '吉星多': '命宫三方四正吉星多，一生多贵人相助。',
+        '煞星多': '命宫三方四正煞星多，一生多波折，需特别谨慎。',
+        '化禄': '化禄入命，一生财运顺遂。',
+        '化忌': '化忌入命，一生多阻碍。',
+    }
+
+    # 【改进102】财帛宫详细解读模板
+    CAI_BO_INTERPRETATION = {
+        '有主星': '财帛宫有主星坐守，理财有方，有明确的赚钱方式。',
+        '空宫': '财帛宫无主星，财运不够稳定，借对宫主星之力。',
+        '化禄': '化禄入财帛，正财运极佳。',
+        '化忌': '化忌入财帛，财运不顺，易破财。',
+    }
+
+    # 【改进103】官禄宫详细解读模板
+    GUAN_LU_INTERPRETATION = {
+        '有主星': '官禄宫有主星坐守，事业有方向感，有明确的职业追求。',
+        '空宫': '官禄宫无主星，事业方向不够明确，借对宫主星之力。',
+        '化权': '化权入官禄，掌权在握，事业有成。',
+        '化忌': '化忌入官禄，事业多阻碍。',
+    }
+
+    # 【改进104】夫妻宫详细解读模板
+    FU_QI_INTERPRETATION = {
+        '有主星': '夫妻宫有主星坐守，配偶特征明显。',
+        '空宫': '夫妻宫无主星，配偶特征不够突出，借对宫主星之力。',
+        '化禄': '化禄入夫妻，感情甜蜜。',
+        '化忌': '化忌入夫妻，感情多波折。',
+        '桃花星': '夫妻宫有桃花星，异性缘佳，但需防桃花劫。',
+    }
+
+    # 【改进105】迁移宫详细解读模板
+    QIAN_YI_INTERPRETATION = {
+        '有主星': '迁移宫有主星坐守，外出发展有方向感。',
+        '空宫': '迁移宫无主星，外出运不够稳定。',
+        '化禄': '化禄入迁移，外出顺利，贵人多。',
+        '化忌': '化忌入迁移，外出不顺。',
+    }
+
+    # 【改进106-110】各宫位详细解读方法
+    def _calc_palace_detailed_interpretation(self, palace: dict, san_fang_info: dict,
+                                              sihua: dict) -> dict:
+        """计算单个宫位的详细解读"""
+        pname = palace['name']
+        major_stars = [s['name'] for s in palace.get('major_stars', []) if s['name'] in ALL_MAJOR_STARS]
+        interp_templates = {
+            '命宫': self.MING_GONG_INTERPRETATION,
+            '财帛': self.CAI_BO_INTERPRETATION,
+            '官禄': self.GUAN_LU_INTERPRETATION,
+            '夫妻': self.FU_QI_INTERPRETATION,
+            '迁移': self.QIAN_YI_INTERPRETATION,
+        }
+        template = interp_templates.get(pname, {})
+        interpretations = []
+
+        # 基本判断
+        if not major_stars:
+            interpretations.append(template.get('空宫', f'{pname}无主星'))
+        elif len(major_stars) == 1:
+            interpretations.append(template.get('独坐', f'{pname}独坐{major_stars[0]}'))
+        elif len(major_stars) == 2:
+            interpretations.append(template.get('双星', f'{pname}{major_stars[0]}、{major_stars[1]}同宫'))
+        else:
+            interpretations.append(template.get('有主星', f'{pname}有主星坐守'))
+
+        # 四化判断
+        for hua_type, star_name in sihua.items():
+            for s in palace.get('major_stars', []) + palace.get('minor_stars', []):
+                if s['name'] == star_name:
+                    effect = SIHUA_EFFECTS.get(hua_type, {}).get(pname, '')
+                    if effect:
+                        interpretations.append(f'化{hua_type}在{pname}：{effect}')
+
+        # 吉煞判断
+        ji_xiong = self._calc_palace_ji_xiong(palace, san_fang_info)
+        if ji_xiong.get('balance') == '吉':
+            interpretations.append(f'{pname}吉星多，运势良好')
+        elif ji_xiong.get('balance') == '凶':
+            interpretations.append(f'{pname}煞星多，需谨慎')
+
+        return {
+            'palace': pname,
+            'interpretations': interpretations,
+            'ji_xiong': ji_xiong,
+        }
+
+    # ─── 改进111-120: 大限流年综合报告 ───
+
+    # 【改进111】大限流年综合报告模板
+    def _calc_dai_xian_liu_nian_report(self, dai_xian: list, liunian_info: dict,
+                                        palaces: list, san_fang_data: dict,
+                                        sihua: dict, nominal_age: int) -> dict:
+        """生成大限流年综合报告"""
+        # 当前大限
+        current_dx = None
+        for dx in dai_xian:
+            if dx.get('start_age', 0) <= nominal_age <= dx.get('end_age', 0):
+                current_dx = dx
+                break
+
+        # 大限四化
+        dx_sihua = current_dx.get('sihua', {}) if current_dx else {}
+
+        # 流年四化
+        ln_sihua = liunian_info.get('sihua', []) if liunian_info else []
+
+        # 叠加分析
+        overlaps = []
+        for ls in ln_sihua:
+            hua = ls.get('hua', '')
+            star = ls.get('star', '')
+            if hua in dx_sihua and dx_sihua[hua] == star:
+                overlaps.append(f'流年化{hua}叠大限化{hua}在{star}')
+            if hua in sihua and sihua[hua] == star:
+                overlaps.append(f'流年化{hua}叠生年化{hua}在{star}')
+
+        return {
+            'current_dai_xian': current_dx,
+            'dai_xian_sihua': dx_sihua,
+            'liunian_sihua': ln_sihua,
+            'overlaps': overlaps,
+            'nominal_age': nominal_age,
+        }
+
+    # 【改进112-120】命盘整体评分
+    def _calc_final_chart_score(self, palaces: list, sihua: dict, san_fang_data: dict,
+                                 chart_patterns: list, palace_brightness: dict) -> dict:
+        """命盘最终综合评分"""
+        # 1. 格局评分
+        pattern_score = 0
+        for pat in chart_patterns:
+            level = pat.get('level', '')
+            if level == '上格':
+                pattern_score += 3
+            elif level == '中格':
+                pattern_score += 1
+            elif level == '下格':
+                pattern_score -= 2
+
+        # 2. 四化评分
+        sihua_score = 0
+        for hua_type in sihua:
+            if hua_type == '禄':
+                sihua_score += 2
+            elif hua_type == '权':
+                sihua_score += 2
+            elif hua_type == '科':
+                sihua_score += 1
+            elif hua_type == '忌':
+                sihua_score -= 2
+
+        # 3. 亮度评分
+        brightness_total = sum(v.get('percentage', 0) for v in palace_brightness.values())
+        brightness_avg = round(brightness_total / 12, 1) if palace_brightness else 0
+
+        # 4. 三方四正评分
+        sf_score = 0
+        for pname, sf in san_fang_data.items():
+            sf_score += sf.get('auspicious_count', 0) - sf.get('inauspicious_count', 0)
+
+        # 5. 综合评分
+        total = pattern_score * 3 + sihua_score * 2 + brightness_avg / 10 + sf_score
+
+        if total >= 10:
+            level = '上等'
+        elif total >= 5:
+            level = '中上'
+        elif total >= 0:
+            level = '中等'
+        elif total >= -5:
+            level = '中下'
+        else:
+            level = '下等'
+
+        return {
+            'pattern_score': pattern_score,
+            'sihua_score': sihua_score,
+            'brightness_avg': brightness_avg,
+            'san_fang_score': sf_score,
+            'total': round(total, 1),
+            'level': level,
+        }
     # 【改进31】博士十二神解读
     BOSHI_INTERPRETATION = {
         '博士': '文星高照，才华出众',
