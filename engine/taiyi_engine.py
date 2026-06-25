@@ -11,6 +11,9 @@ kintaiyi 是经过验证的开源太乙神数库。
 from .base import DivinationEngine
 from .time_engine import CorrectedTime
 from typing import Optional, Dict
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 模块级别预导入kintaiyi（避免在HTTP线程中延迟导入失败）
 try:
@@ -42,6 +45,36 @@ GUA_TO_ZHI = {
 
 
 class TaiYiEngine(DivinationEngine):
+    # 八门名称
+    BA_MEN_NAMES = ['休门', '生门', '伤门', '杜门', '景门', '死门', '惊门', '开门']
+
+    # 太乙神数吉凶判断表
+    TAIYI_JIXIONG = {
+        1: '吉', 2: '凶', 3: '吉', 4: '凶', 5: '吉',
+        6: '吉', 7: '吉', 8: '吉', 9: '凶', 10: '凶',
+        11: '吉', 12: '凶', 13: '吉', 14: '凶', 15: '吉',
+    }
+
+    # 三基关系表
+    SANJI_RELATIONS = {
+        '君基': '主管国运、领导运势',
+        '臣基': '主管辅佐、合作关系',
+        '民基': '主管基础、民生运势',
+    }
+
+    # 五福解释表
+    WUFU_INTERPRETATIONS = {
+        '坎一宫': '福在北方，水运旺盛',
+        '坤二宫': '福在西南，土运亨通',
+        '震三宫': '福在东方，木运发达',
+        '巽四宫': '福在东南，木运顺利',
+        '中五宫': '福在中央，统摄四方',
+        '乾六宫': '福在西北，金运强盛',
+        '兑七宫': '福在西方，金运兴旺',
+        '艮八宫': '福在东北，土运稳固',
+        '离九宫': '福在南方，火运光明',
+    }
+
     """太乙神数引擎（kintaiyi后端）"""
 
     # 八卦→九宫名映射
@@ -67,6 +100,22 @@ class TaiYiEngine(DivinationEngine):
         return 7
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
+        """太乙神数排盘分析
+
+        Args:
+            time: 校正后的时间对象
+            gender: 性别 (1=男, 0=女)
+
+        Returns:
+            dict: 包含太乙神数完整排盘结果
+        """
+        # 输入校验
+        if not time:
+            return {"error": "时间对象不能为空"}
+        if gender not in (0, 1):
+            logger.warning(f"太乙引擎：性别参数异常 gender={gender}，默认为男")
+            gender = 1
+
         # 使用真太阳时排盘，同时处理晚子时（与其他引擎保持一致）
         # 晚子时(23:xx)：日柱用次日日期，时辰用子时(hour=0)
         orig = time.true_solar
@@ -84,15 +133,20 @@ class TaiYiEngine(DivinationEngine):
                 from kintaiyi.kintaiyi import Taiyi
                 t = Taiyi(year, month, day, hour, orig.minute)
         except Exception as e:
+            logger.error(f"太乙引擎：kintaiyi初始化失败: {e}")
             return {"error": f"kintaiyi初始化失败: {str(e)}"}
 
         # 年計太乙統宗（最常用的纪法）
         try:
             result = t.pan(0, 0)
         except Exception as e:
+            logger.error(f"太乙引擎：kintaiyi排盘失败: {e}")
             return {"error": f"kintaiyi排盘失败: {str(e)}"}
 
-        return self._convert_result(result, year)
+        converted = self._convert_result(result, year)
+        # 添加详细解读
+        converted['interpretations'] = self._generate_interpretations(converted)
+        return converted
 
     def _convert_result(self, r, year: int) -> dict:
         """将kintaiyi结果转换为玄照API格式"""
@@ -335,6 +389,229 @@ class TaiYiEngine(DivinationEngine):
         if not gua:
             return ''
         return self.GUA_TO_GONG.get(gua, f'{gua}宫')
+
+    def _generate_interpretations(self, data: dict) -> dict:
+        """生成太乙神数各要素的详细解读"""
+        interpretations = {}
+
+        # 太乙落宫解读
+        taiyi_gong = data.get('taiyi_gong', '')
+        if taiyi_gong:
+            interpretations['taiyi'] = self._interpret_taiyi_position(taiyi_gong, data.get('yin_yang', ''))
+
+        # 三基解读
+        san_ji = data.get('san_ji', {})
+        if san_ji:
+            interpretations['sanji'] = self._interpret_sanji(san_ji)
+
+        # 五福解读
+        wu_fu = data.get('wu_fu', '')
+        if wu_fu:
+            interpretations['wufu'] = self._interpret_wufu(wu_fu)
+
+        # 主客算解读
+        zhu_suan = data.get('zhu_suan', [])
+        ke_suan = data.get('ke_suan', [])
+        if zhu_suan or ke_suan:
+            interpretations['suan'] = self._interpret_suan_detail(zhu_suan, ke_suan)
+
+        # 八门解读
+        ba_men = data.get('ba_men', '')
+        ba_men_dist = data.get('ba_men_dist', {})
+        if ba_men or ba_men_dist:
+            interpretations['bamen'] = self._interpret_bamen(ba_men, ba_men_dist)
+
+        # 大游小游解读
+        da_you = data.get('da_you', 0)
+        xiao_you = data.get('xiao_you', 0)
+        if da_you or xiao_you:
+            interpretations['you'] = self._interpret_you(da_you, xiao_you)
+
+        # 天乙地乙四神解读
+        tian_yi = data.get('tian_yi', '')
+        di_yi = data.get('di_yi', '')
+        si_shen = data.get('si_shen', '')
+        if tian_yi or di_yi or si_shen:
+            interpretations['sishen'] = self._interpret_sishen(tian_yi, di_yi, si_shen)
+
+        # 局式解读
+        ju_name = data.get('ju_name', '')
+        ju_num = data.get('ju_num', 0)
+        if ju_name or ju_num:
+            interpretations['jushi'] = self._interpret_jushi(ju_name, ju_num, data.get('yin_yang', ''))
+
+        # 文昌始击解读
+        wen_chang = data.get('wen_chang', [])
+        shi_ji = data.get('shi_ji', '')
+        if wen_chang or shi_ji:
+            interpretations['wenshang'] = self._interpret_wenchang_shiji(wen_chang, shi_ji)
+
+        return interpretations
+
+    def _interpret_taiyi_position(self, gong: str, yin_yang: str) -> dict:
+        """解读太乙落宫"""
+        gong_meanings = {
+            '坎一宫': {'element': '水', 'nature': '智慧、变通', 'advice': '宜深思熟虑，以智取胜'},
+            '坤二宫': {'element': '土', 'nature': '包容、厚德', 'advice': '宜厚德载物，稳扎稳打'},
+            '震三宫': {'element': '木', 'nature': '奋发、进取', 'advice': '宜积极行动，把握时机'},
+            '巽四宫': {'element': '木', 'nature': '顺达、通达', 'advice': '宜顺势而为，灵活应变'},
+            '中五宫': {'element': '土', 'nature': '统摄、中枢', 'advice': '宜居中调度，统筹全局'},
+            '乾六宫': {'element': '金', 'nature': '刚健、决断', 'advice': '宜果断决策，刚健有力'},
+            '兑七宫': {'element': '金', 'nature': '喜悦、和合', 'advice': '宜和气生财，人际和谐'},
+            '艮八宫': {'element': '土', 'nature': '稳固、止定', 'advice': '宜稳守待机，厚积薄发'},
+            '离九宫': {'element': '火', 'nature': '光明、文明', 'advice': '宜光明正大，以德服人'},
+        }
+        info = gong_meanings.get(gong, {'element': '未知', 'nature': '待查', 'advice': '宜静观其变'})
+        return {
+            '落宫': gong,
+            '五行': info['element'],
+            '性质': info['nature'],
+            '建议': info['advice'],
+            '遁式': yin_yang,
+        }
+
+    def _interpret_sanji(self, san_ji: dict) -> dict:
+        """解读三基"""
+        result = {}
+        for name, gong in san_ji.items():
+            if gong:
+                relation = self.SANJI_RELATIONS.get(name, '')
+                wufu_interp = self.WUFU_INTERPRETATIONS.get(gong, '')
+                result[name] = {
+                    '落宫': gong,
+                    '职能': relation,
+                    '宫位含义': wufu_interp,
+                }
+        return result
+
+    def _interpret_wufu(self, wu_fu: str) -> dict:
+        """解读五福"""
+        return {
+            '落宫': wu_fu,
+            '含义': self.WUFU_INTERPRETATIONS.get(wu_fu, '五福临门，吉祥如意'),
+            '建议': '五福所在之宫为吉位，宜在此方位行事',
+        }
+
+    def _interpret_suan_detail(self, zhu_suan: list, ke_suan: list) -> dict:
+        """解读主客算详细信息"""
+        result = {'主算': [], '客算': []}
+
+        for i, val in enumerate(zhu_suan):
+            try:
+                num = int(val)
+                jixiong = self.TAIYI_JIXIONG.get(num, '平')
+                result['主算'].append({
+                    '数值': num,
+                    '吉凶': jixiong,
+                    '含义': f'主算第{i+1}位：{num}，{jixiong}',
+                })
+            except (ValueError, TypeError):
+                pass
+
+        for i, val in enumerate(ke_suan):
+            try:
+                num = int(val)
+                jixiong = self.TAIYI_JIXIONG.get(num, '平')
+                result['客算'].append({
+                    '数值': num,
+                    '吉凶': jixiong,
+                    '含义': f'客算第{i+1}位：{num}，{jixiong}',
+                })
+            except (ValueError, TypeError):
+                pass
+
+        return result
+
+    def _interpret_bamen(self, ba_men: str, ba_men_dist: dict) -> dict:
+        """解读八门"""
+        bamen_meanings = {
+            '休门': {'吉凶': '吉', '含义': '休养生息，宜休息、养生'},
+            '生门': {'吉凶': '吉', '含义': '生机勃勃，宜求财、开业'},
+            '伤门': {'吉凶': '凶', '含义': '伤损之象，宜诉讼、讨债'},
+            '杜门': {'吉凶': '凶', '含义': '闭塞不通，宜隐藏、保密'},
+            '景门': {'吉凶': '吉', '含义': '光明景象，宜考试、文书'},
+            '死门': {'吉凶': '凶', '含义': '死气沉沉，宜丧葬、破土'},
+            '惊门': {'吉凶': '凶', '含义': '惊恐不安，宜诉讼、争斗'},
+            '开门': {'吉凶': '吉', '含义': '开放通达，宜开业、出行'},
+        }
+        result = {'值事门': ba_men}
+        if ba_men in bamen_meanings:
+            result['值事门含义'] = bamen_meanings[ba_men]
+
+        if ba_men_dist:
+            result['八门分布'] = {}
+            for gong, men in ba_men_dist.items():
+                if men in bamen_meanings:
+                    result['八门分布'][gong] = {
+                        '门': men,
+                        '吉凶': bamen_meanings[men]['吉凶'],
+                        '含义': bamen_meanings[men]['含义'],
+                    }
+        return result
+
+    def _interpret_you(self, da_you: int, xiao_you: int) -> dict:
+        """解读大游小游"""
+        result = {}
+        if da_you:
+            gong = NUM_TO_GONG.get(da_you, '')
+            result['大游'] = {
+                '数值': da_you,
+                '落宫': gong,
+                '含义': f'大游星落{gong}，主管大势变迁',
+            }
+        if xiao_you:
+            gong = NUM_TO_GONG.get(xiao_you, '')
+            result['小游'] = {
+                '数值': xiao_you,
+                '落宫': gong,
+                '含义': f'小游星落{gong}，主管小事变化',
+            }
+        return result
+
+    def _interpret_sishen(self, tian_yi: str, di_yi: str, si_shen: str) -> dict:
+        """解读天乙、地乙、四神"""
+        result = {}
+        if tian_yi:
+            result['天乙'] = {
+                '落宫': tian_yi,
+                '含义': f'天乙贵人落{tian_yi}，主贵人相助',
+            }
+        if di_yi:
+            result['地乙'] = {
+                '落宫': di_yi,
+                '含义': f'地乙贵人落{di_yi}，主地理优势',
+            }
+        if si_shen:
+            result['四神'] = {
+                '落宫': si_shen,
+                '含义': f'四神落{si_shen}，主四方护佑',
+            }
+        return result
+
+    def _interpret_jushi(self, ju_name: str, ju_num: int, yin_yang: str) -> dict:
+        """解读局式"""
+        return {
+            '局名': ju_name,
+            '局数': ju_num,
+            '遁式': yin_yang,
+            '含义': f'{yin_yang}{ju_name}，第{ju_num}局',
+            '建议': '阳遁宜主动出击，阴遁宜静守待机' if '阳' in yin_yang else '阴遁宜韬光养晦，静待时机',
+        }
+
+    def _interpret_wenchang_shiji(self, wen_chang: list, shi_ji: str) -> dict:
+        """解读文昌、始击"""
+        result = {}
+        if wen_chang:
+            result['文昌'] = {
+                '位置': wen_chang,
+                '含义': '文昌所在为文运亨通之处，宜读书考试',
+            }
+        if shi_ji:
+            result['始击'] = {
+                '位置': shi_ji,
+                '含义': '始击所在为行动发起之处，宜主动出击',
+            }
+        return result
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
         if data.get('error'):
