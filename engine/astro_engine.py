@@ -364,6 +364,24 @@ class AstroEngine(DivinationEngine):
             north_node = {}
             south_node = {}
 
+        # 元素分布分析
+        element_dist = self._calc_element_distribution(planets)
+        
+        # 模式分布分析
+        modality_dist = self._calc_modality_distribution(planets)
+        
+        # 行星落座解读
+        planet_sign_interps = self._interpret_planet_signs(planets)
+        
+        # 相位详细解读
+        aspect_interps = self._interpret_aspects(aspects)
+        
+        # 宫位行星分布解读
+        house_planets = self._calc_house_planets(planets, houses)
+        
+        # 相位格局检测
+        aspect_patterns = self._detect_aspect_patterns(aspects, planets)
+
         return {
             'engine': self.name,
             'engine_en': self.name_en,
@@ -389,6 +407,12 @@ class AstroEngine(DivinationEngine):
             'north_node': north_node,
             'south_node': south_node,
             'planetary_details': {name: {'retrograde': p.get('retrograde', False), 'speed': p.get('speed', 0), 'dignity': p.get('dignity', '')} for name, p in planets.items()},
+            'element_distribution': element_dist,
+            'modality_distribution': modality_dist,
+            'planet_sign_interpretations': planet_sign_interps,
+            'aspect_interpretations': aspect_interps,
+            'house_planets': house_planets,
+            'aspect_patterns': aspect_patterns,
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
@@ -420,3 +444,94 @@ class AstroEngine(DivinationEngine):
             elif name in ('刑', '冲'):
                 summary['challenging'] += 1
         return summary
+
+    def _calc_element_distribution(self, planets: dict) -> dict:
+        """计算行星元素分布"""
+        dist = {'火': 0, '土': 0, '风': 0, '水': 0}
+        for pname, pdata in planets.items():
+            sign = pdata.get('sign', '')
+            element = SIGN_ELEMENTS.get(sign, '')
+            if element:
+                dist[element] += 1
+        return dist
+
+    def _calc_modality_distribution(self, planets: dict) -> dict:
+        """计算行星模式分布"""
+        dist = {'开创': 0, '固定': 0, '变动': 0}
+        for pname, pdata in planets.items():
+            sign = pdata.get('sign', '')
+            modality = self.SIGN_MODALITY.get(sign, '')
+            if modality:
+                dist[modality] += 1
+        return dist
+
+    def _interpret_planet_signs(self, planets: dict) -> dict:
+        """解读行星落座"""
+        interps = {}
+        for pname, pdata in planets.items():
+            sign = pdata.get('sign', '')
+            if not sign:
+                continue
+            interp = PLANET_SIGN_INTERPS.get(pname, {}).get(sign, '')
+            if interp:
+                interps[pname] = {
+                    'sign': sign,
+                    'interpretation': interp,
+                    'element': SIGN_ELEMENTS.get(sign, ''),
+                    'modality': self.SIGN_MODALITY.get(sign, ''),
+                }
+        return interps
+
+    def _interpret_aspects(self, aspects: list) -> list:
+        """解读相位"""
+        interps = []
+        for asp in aspects:
+            aspect_name = asp.get('aspect', '')
+            interp_info = ASPECT_INTERPS.get(aspect_name, {})
+            interps.append({
+                'planet1': asp.get('planet1', ''),
+                'planet2': asp.get('planet2', ''),
+                'aspect': aspect_name,
+                'nature': interp_info.get('nature', ''),
+                'description': interp_info.get('desc', ''),
+                'orb': asp.get('orb', 0),
+                'strength': '强' if asp.get('orb', 0) < 3 else '中' if asp.get('orb', 0) < 6 else '弱',
+            })
+        return interps
+
+    def _calc_house_planets(self, planets: dict, houses: list) -> dict:
+        """计算每个宫位内的行星分布"""
+        house_planets = {i: [] for i in range(1, 13)}
+        for pname, pdata in planets.items():
+            house = pdata.get('house', 0)
+            if 1 <= house <= 12:
+                house_planets[house].append(pname)
+        return house_planets
+
+    def _detect_aspect_patterns(self, aspects: list, planets: dict) -> dict:
+        """检测相位格局（大三角、T型相位、大十字等）"""
+        patterns = {
+            'grand_trine': [],  # 大三角
+            't_square': [],     # T型相位
+            'grand_cross': [],  # 大十字
+            'yod': [],          # 指针
+        }
+        
+        # 简化检测：基于三合相位检测大三角
+        trine_aspects = [a for a in aspects if a.get('aspect') == '三合']
+        if len(trine_aspects) >= 3:
+            patterns['grand_trine'].append({
+                'description': '三颗行星形成大三角，天赋异禀，能量流畅',
+                'planets': list(set([a['planet1'] for a in trine_aspects] + [a['planet2'] for a in trine_aspects])),
+            })
+        
+        # 检测T型相位（两个刑相位+一个冲相位）
+        square_aspects = [a for a in aspects if a.get('aspect') == '刑']
+        opposition_aspects = [a for a in aspects if a.get('aspect') == '冲']
+        if len(square_aspects) >= 2 and len(opposition_aspects) >= 1:
+            patterns['t_square'].append({
+                'description': 'T型相位带来挑战和成长机会',
+                'planets': list(set([a['planet1'] for a in square_aspects] + [a['planet2'] for a in square_aspects])),
+            })
+        
+        return patterns
