@@ -532,7 +532,18 @@ class XingMingEngine(DivinationEngine):
                 "given": given_strokes,
                 "surname_total": total_surname,
                 "given_total": total_given,
-            }
+            },
+            # 改进11-20: 新增扩展分析字段
+            "renge_detail": self._get_renge_main_fortune(wuge["人格"]["数理"], WUXING_MAP.get(wuge["人格"]["数理"] % 10, "未知"), gender),
+            "dige_detail": self._get_dige_early_fortune(wuge["地格"]["数理"], WUXING_MAP.get(wuge["地格"]["数理"] % 10, "未知")),
+            "zongge_detail": self._get_zongge_late_fortune(wuge["总格"]["数理"], WUXING_MAP.get(wuge["总格"]["数理"] % 10, "未知")),
+            "tiange_detail": self._get_tiange_influence(wuge["天格"]["数理"], WUXING_MAP.get(wuge["天格"]["数理"] % 10, "未知")),
+            "waige_detail": self._get_waige_social(wuge["外格"]["数理"], WUXING_MAP.get(wuge["外格"]["数理"] % 10, "未知")),
+            "wuxing_balance": self._calc_wuxing_balance(wuge),
+            "luck_cycles": self._calc_name_luck_cycle(wuge),
+            "lucky_numbers": self._generate_lucky_numbers(wuge),
+            "lucky_colors": self._generate_lucky_colors(wuge),
+            "suggestions": self._generate_name_suggestions(wuge, sancai_info, gender),
         }
 
     # ─── Stroke Calculation ────────────────────────────────────────────
@@ -913,6 +924,106 @@ class XingMingEngine(DivinationEngine):
 
         return max(0, min(100, round(score)))
 
+    # ─── 改进11-20: 扩展分析方法 ─────────────────────────────────────────
+
+    def _get_renge_main_fortune(self, renge_jishu: int, renge_wuxing: str, gender: str) -> dict:
+        """改进11: 人格主运详细解读 - 基于人格数理和五行"""
+        info = self._81_table.get(renge_jishu, self._get_default_81(renge_jishu))
+        jx = info.get("jixiong", "平")
+        desc = info.get("desc", "")
+        wx_traits = {
+            "木": "仁慈正直，有进取心，但有时固执",
+            "火": "热情开朗，行动力强，但易冲动",
+            "土": "稳重踏实，诚实守信，但有时保守",
+            "金": "果断刚毅，有领导力，但有时冷酷",
+            "水": "聪明灵活，适应力强，但有时多变"
+        }
+        wx_desc = wx_traits.get(renge_wuxing, "")
+        return {"数理": renge_jishu, "五行": renge_wuxing, "吉凶": jx, "含义": desc, "性格特质": wx_desc, "影响权重": "主运（影响最大）"}
+
+    def _get_dige_early_fortune(self, dige_jishu: int, dige_wuxing: str) -> dict:
+        """改进12: 地格前运详解 - 影响36岁前运势"""
+        info = self._81_table.get(dige_jishu, self._get_default_81(dige_jishu))
+        jx = info.get("jixiong", "平")
+        desc = info.get("desc", "")
+        if jx in ("吉", "大吉"):
+            advice = "前运顺利，宜把握机会，积累基础"
+        elif "半" in jx:
+            advice = "前运起伏，需耐心积累，中年后转运"
+        else:
+            advice = "前运多阻，宜修身养性，等待时机"
+        return {"数理": dige_jishu, "五行": dige_wuxing, "吉凶": jx, "含义": desc, "影响阶段": "青年期（36岁前）", "建议": advice}
+
+    def _get_zongge_late_fortune(self, zongge_jishu: int, zongge_wuxing: str) -> dict:
+        """改进13: 总格后运详解 - 影响48岁后运势"""
+        info = self._81_table.get(zongge_jishu, self._get_default_81(zongge_jishu))
+        jx = info.get("jixiong", "平")
+        desc = info.get("desc", "")
+        if jx in ("吉", "大吉"):
+            advice = "后运亨通，晚年安乐，可享清福"
+        elif "半" in jx:
+            advice = "后运平稳，保持现状，不宜冒险"
+        else:
+            advice = "后运需防，宜提前规划，保守为上"
+        return {"数理": zongge_jishu, "五行": zongge_wuxing, "吉凶": jx, "含义": desc, "影响阶段": "中晚年（48岁后）", "建议": advice}
+
+    def _get_tiange_influence(self, tiange_jishu: int, tiange_wuxing: str) -> dict:
+        """改进14: 天格影响详解 - 代表先天运势和家族"""
+        info = self._81_table.get(tiange_jishu, self._get_default_81(tiange_jishu))
+        return {"数理": tiange_jishu, "五行": tiange_wuxing, "吉凶": info.get("jixiong", "平"), "含义": info.get("desc", ""), "代表": "先天运势、家族背景、上司关系", "影响力": "对人格有生扶或克制作用"}
+
+    def _get_waige_social(self, waige_jishu: int, waige_wuxing: str) -> dict:
+        """改进15: 外格社交运详解 - 代表社交和外界环境"""
+        info = self._81_table.get(waige_jishu, self._get_default_81(waige_jishu))
+        jx = info.get("jixiong", "平")
+        social = {"吉": "人际关系良好，贵人运旺", "大吉": "人际关系良好，贵人运旺"}.get(jx, "社交平稳，需主动经营人脉" if "半" in jx else "人际多阻，宜谨慎交友")
+        return {"数理": waige_jishu, "五行": waige_wuxing, "吉凶": jx, "含义": info.get("desc", ""), "社交运势": social, "代表": "社交能力、外界环境、副运"}
+
+    def _calc_wuxing_balance(self, wuge: dict) -> dict:
+        """改进16: 五行平衡度分析"""
+        wc = {"木": 0, "火": 0, "土": 0, "金": 0, "水": 0}
+        for key in ["天格", "人格", "地格", "外格", "总格"]:
+            wx = wuge[key].get("五行", "")
+            if wx in wc: wc[wx] += 1
+        missing = [w for w, c in wc.items() if c == 0]
+        dominant = [w for w, c in wc.items() if c >= 3]
+        bs = sum(10 if 0 < c < 3 else (-10 if c == 0 else -5) for c in wc.values())
+        return {"分布": wc, "缺失": missing, "过旺": dominant, "平衡度": max(0, min(100, 50 + bs)), "建议": f"五行缺{''.join(missing)}，宜补" if missing else "五行较均衡"}
+
+    def _calc_name_luck_cycle(self, wuge: dict) -> list:
+        """改进17: 姓名运势周期分析"""
+        return [
+            {"阶段": "0-35岁", "主导": "地格", "五行": wuge["地格"].get("五行", ""), "吉凶": wuge["地格"].get("吉凶", "平")},
+            {"阶段": "36-47岁", "主导": "人格", "五行": wuge["人格"].get("五行", ""), "吉凶": wuge["人格"].get("吉凶", "平")},
+            {"阶段": "48岁后", "主导": "总格", "五行": wuge["总格"].get("五行", ""), "吉凶": wuge["总格"].get("吉凶", "平")},
+        ]
+
+    def _generate_lucky_numbers(self, wuge: dict) -> list:
+        """改进18: 基于五行生成吉利数字"""
+        wx_n = {"木": [1, 2, 3, 8], "火": [3, 4, 9], "土": [5, 6, 10], "金": [7, 8, 9], "水": [1, 6, 11]}
+        return wx_n.get(wuge["人格"].get("五行", ""), [1, 3, 5, 7, 9])
+
+    def _generate_lucky_colors(self, wuge: dict) -> list:
+        """改进19: 基于五行生成吉利颜色"""
+        wx_c = {"木": ["绿色", "青色", "翠色"], "火": ["红色", "紫色", "橙色"], "土": ["黄色", "棕色", "咖啡色"], "金": ["白色", "银色", "金色"], "水": ["蓝色", "黑色", "灰色"]}
+        return wx_c.get(wuge["人格"].get("五行", ""), [])
+
+    def _generate_name_suggestions(self, wuge: dict, sancai: dict, gender: str) -> list:
+        """改进20: 基于五行喜忌生成起名建议"""
+        suggestions = []
+        if sancai.get("吉凶", "") in ("凶", "大凶"):
+            suggestions.append("三才配置不佳，建议调整名字笔画数")
+        wc = {"木": 0, "火": 0, "土": 0, "金": 0, "水": 0}
+        for key in ["天格", "人格", "地格"]:
+            wx = wuge[key].get("五行", "")
+            if wx in wc: wc[wx] += 1
+        missing = [w for w, c in wc.items() if c == 0]
+        if missing:
+            suggestions.append(f"五行缺{''.join(missing)}，可考虑用对应五行的字")
+        if not suggestions:
+            suggestions.append("姓名配置良好，无需特别调整")
+        return suggestions
+
     # ─── 分析文本生成 ──────────────────────────────────────────────────
 
     def _generate_analysis(self, surname: str, given_name: str, gender: str,
@@ -973,11 +1084,24 @@ class XingMingEngine(DivinationEngine):
             lines.append("  评语：此名五格配置一般，建议考虑调整。")
         else:
             lines.append("  评语：此名五格配置欠佳，建议重新起名或改名。")
+        # 改进11-20: 运势周期与建议
+        lines.append("")
+        lines.append("━━━ 运势周期 ━━━")
+        cycles = self._calc_name_luck_cycle(wuge)
+        for c in cycles:
+            lines.append(f"  {c['阶段']}（{c['主导']}·{c['五行']}）：{c['吉凶']}")
+
+        lines.append("")
+        lines.append("━━━ 开运建议 ━━━")
+        lucky_n = self._generate_lucky_numbers(wuge)
+        lucky_c = self._generate_lucky_colors(wuge)
+        lines.append(f"  吉利数字：{', '.join(map(str, lucky_n))}")
+        lines.append(f"  吉利颜色：{', '.join(lucky_c)}")
 
         return "\n".join(lines)
 
 
-# ─── Module-level singleton ──────────────────────────────────────────────
+# ─── Module-level singleton
 _instance = None
 
 
