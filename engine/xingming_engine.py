@@ -1049,6 +1049,175 @@ class XingMingEngine(DivinationEngine):
         bs = sum(10 if 0 < c < 3 else (-10 if c == 0 else -5) for c in wc.values())
         return {"分布": wc, "缺失": missing, "过旺": dominant, "平衡度": max(0, min(100, 50 + bs)), "建议": f"五行缺{''.join(missing)}，宜补" if missing else "五行较均衡"}
 
+    def _check_special_numbers(self, wuge: dict) -> dict:
+        """改进31: 特殊数理检查 - 检查是否含特殊吉凶数"""
+        specials = {"大吉数": [], "大凶数": [], "桃花数": [], "首领数": [], "财富数": [], "艺能数": []}
+        daji = {1, 3, 5, 6, 7, 8, 11, 13, 15, 16, 17, 18, 21, 23, 24, 25, 29, 31, 32, 33, 35, 37, 39, 41, 45, 47, 48, 52, 57, 61, 63, 65, 67, 68, 81}
+        daxiong = {2, 4, 9, 10, 12, 14, 19, 20, 22, 26, 27, 28, 30, 34, 36, 40, 42, 43, 44, 46, 49, 50, 51, 53, 54, 55, 56, 58, 59, 60, 62, 64, 66, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80}
+        taohua = {15, 16, 21, 23, 24, 26, 29, 32, 33, 35}
+        shouling = {3, 13, 16, 21, 23, 29, 31, 33, 37, 39, 41, 45, 47}
+        caifu = {15, 16, 24, 29, 32, 33, 41, 52}
+        yineng = {13, 14, 16, 17, 22, 23, 26, 29, 33}
+
+        for key in ["天格", "人格", "地格", "外格", "总格"]:
+            val = wuge[key].get("数理", 0)
+            if val in daji: specials["大吉数"].append(f"{key}({val})")
+            if val in daxiong: specials["大凶数"].append(f"{key}({val})")
+            if val in taohua: specials["桃花数"].append(f"{key}({val})")
+            if val in shouling: specials["首领数"].append(f"{key}({val})")
+            if val in caifu: specials["财富数"].append(f"{key}({val})")
+            if val in yineng: specials["艺能数"].append(f"{key}({val})")
+
+        return {k: v for k, v in specials.items() if v}
+
+    def _check_gender_compatibility(self, wuge: dict, gender: str) -> dict:
+        """改进32: 性别与数理适配检查"""
+        female_unlucky = {21, 23, 33, 39}
+        issues = []
+        if gender == "女":
+            for key in ["人格", "地格", "总格"]:
+                val = wuge[key].get("数理", 0)
+                if val in female_unlucky:
+                    issues.append(f"{key}({val})为女性孤寡数")
+        return {"gender": gender, "issues": issues, "ok": len(issues) == 0}
+
+    def _analyze_wuge_relationships(self, wuge: dict) -> dict:
+        """改进33: 五格之间生克关系分析"""
+        relationships = []
+        pairs = [("天格", "人格"), ("人格", "地格"), ("天格", "地格")]
+        for upper, lower in pairs:
+            u_wx = wuge[upper].get("五行", "")
+            l_wx = wuge[lower].get("五行", "")
+            if u_wx == l_wx:
+                rel = "比和"
+            elif WUXING_SHENG.get(u_wx) == l_wx:
+                rel = "相生（吉）"
+            elif WUXING_SHENG.get(l_wx) == u_wx:
+                rel = "泄气（不利）"
+            elif WUXING_KE.get(u_wx) == l_wx:
+                rel = "相克（凶）"
+            elif WUXING_KE.get(l_wx) == u_wx:
+                rel = "反克（吉）"
+            else:
+                rel = "无关"
+            relationships.append({"上": upper, "下": lower, "上五行": u_wx, "下五行": l_wx, "关系": rel})
+        return relationships
+
+    def _get_overall_fortune_level(self, score: int) -> dict:
+        """改进34: 综合运势等级评定"""
+        if score >= 90: level, desc = "上上", "此名配置极佳，运势亨通，大吉大利"
+        elif score >= 80: level, desc = "上", "此名配置优良，运势顺遂，吉利之名"
+        elif score >= 70: level, desc = "中上", "此名配置良好，运势平稳，可取之名"
+        elif score >= 60: level, desc = "中", "此名配置尚可，运势平平，中性之名"
+        elif score >= 50: level, desc = "中下", "此名配置一般，运势起伏，建议调整"
+        elif score >= 40: level, desc = "下", "此名配置欠佳，运势多阻，建议改名"
+        else: level, desc = "下下", "此名配置极差，运势多舛，强烈建议改名"
+        return {"等级": level, "分数": score, "评语": desc}
+
+    def _calc_success_fortune(self, wuge: dict, sancai: dict) -> dict:
+        """改进35: 事业成功率分析"""
+        ren_wx = wuge["人格"].get("五行", "")
+        di_wx = wuge["地格"].get("五行", "")
+        sancai_jx = sancai.get("吉凶", "")
+        ren_jx = wuge["人格"].get("吉凶", "平")
+
+        base = 50
+        if ren_jx in ("吉", "大吉"): base += 20
+        elif "半" in ren_jx: base += 10
+        elif ren_jx in ("凶", "大凶"): base -= 20
+
+        if sancai_jx in ("大吉", "吉"): base += 15
+        elif sancai_jx in ("凶", "大凶"): base -= 15
+
+        return {"成功率": max(0, min(100, base)), "主导五行": ren_wx, "说明": f"人格{ren_jx}，三才{sancai_jx}"}
+
+    def _calc_wealth_fortune(self, wuge: dict) -> dict:
+        """改进36: 财运分析"""
+        ren_wx = wuge["人格"].get("五行", "")
+        zong_wx = wuge["总格"].get("五行", "")
+        zong_jx = wuge["总格"].get("吉凶", "平")
+
+        wealth_wx = {"木": "中", "火": "旺", "土": "稳", "金": "旺", "水": "活"}
+        wealth_level = wealth_wx.get(ren_wx, "中")
+
+        if zong_jx in ("吉", "大吉"):
+            advice = "财运亨通，正财偏财皆可得"
+        elif "半" in zong_jx:
+            advice = "财运平稳，宜稳健理财"
+        else:
+            advice = "财运多阻，宜保守理财，避免投机"
+
+        return {"财运": wealth_level, "主导": ren_wx, "总格": zong_jx, "建议": advice}
+
+    def _calc_health_fortune(self, wuge: dict, sancai: dict) -> dict:
+        """改进37: 健康运分析"""
+        sancai_desc = sancai.get("解释", "")
+        health_issues = []
+        if "心" in sancai_desc: health_issues.append("心血管")
+        if "肺" in sancai_desc: health_issues.append("呼吸系统")
+        if "脑" in sancai_desc: health_issues.append("神经系统")
+        if "腹" in sancai_desc: health_issues.append("消化系统")
+
+        di_jx = wuge["地格"].get("吉凶", "平")
+        if di_jx in ("凶", "大凶"):
+            health_issues.append("青年期注意身体")
+
+        return {"健康提示": health_issues if health_issues else ["健康运良好"], "三才影响": sancai_desc[:50] if sancai_desc else ""}
+
+    def _calc_marriage_fortune(self, wuge: dict, gender: str) -> dict:
+        """改进38: 婚姻感情运分析"""
+        ren_wx = wuge["人格"].get("五行", "")
+        di_wx = wuge["地格"].get("五行", "")
+        waige_jx = wuge["外格"].get("吉凶", "平")
+
+        # 五行配对
+        if ren_wx == di_wx:
+            marriage = "人格地格比和，夫妻同心"
+        elif WUXING_SHENG.get(ren_wx) == di_wx:
+            marriage = "人格生地格，对家庭付出多"
+        elif WUXING_SHENG.get(di_wx) == ren_wx:
+            marriage = "地格生人格，得配偶助力"
+        elif WUXING_KE.get(ren_wx) == di_wx:
+            marriage = "人格克地格，家庭多争执"
+        else:
+            marriage = "地格克人格，受配偶约束"
+        social = "外运良好" if waige_jx in ("吉", "大吉") else "外运一般" if "半" in waige_jx else "外运多阻"
+
+        return {"婚姻": marriage, "外运": social, "人格": ren_wx, "地格": di_wx}
+
+    def _generate_wuxing_advice(self, wuge: dict) -> list:
+        """改进39: 基于五行生成生活建议"""
+        advice = []
+        ren_wx = wuge["人格"].get("五行", "")
+        wx_career = {
+            "木": "宜从事教育、文化、设计、医药等行业",
+            "火": "宜从事娱乐、传媒、餐饮、电子等行业",
+            "土": "宜从事房地产、建筑、农业、金融等行业",
+            "金": "宜从事法律、金融、IT、机械等行业",
+            "水": "宜从事物流、旅游、贸易、传媒等行业"
+        }
+        wx_direction = {
+            "木": "东方", "火": "南方", "土": "中央", "金": "西方", "水": "北方"
+        }
+        advice.append(wx_career.get(ren_wx, ""))
+        advice.append(f"吉利方位：{wx_direction.get(ren_wx, '中央')}")
+        return advice
+
+    def _calc_yearly_fortune(self, wuge: dict, birth_year: int = 0) -> list:
+        """改进40: 年度运势简析（基于姓名数理与流年）"""
+        ren_jishu = wuge["人格"].get("数理", 1)
+        import datetime
+        current_year = datetime.datetime.now().year
+
+        yearly = []
+        for i in range(3):
+            year = current_year + i
+            year_num = sum(int(d) for d in str(year)) % 9 or 9
+            name_num = ren_jishu % 9 or 9
+            combo = (year_num + name_num) % 81 or 81
+            info = self._81_table.get(combo, self._get_default_81(combo))
+            yearly.append({"年份": year, "流年数": year_num, "组合数": combo, "吉凶": info["jixiong"], "含义": info["desc"][:30]})
+        return yearly
     def _calc_name_luck_cycle(self, wuge: dict) -> list:
         """改进17: 姓名运势周期分析"""
         return [
