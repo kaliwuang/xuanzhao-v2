@@ -259,7 +259,7 @@ body{background:#fff;color:#333}
   <button class="tab" data-m="xm" role="tab" aria-selected="false" aria-controls="p-xm">姓名</button>
 </nav>
 
-<div class="ld" id="loader"><div class="spinner"></div><div class="ld-txt">排盘中…</div><div class="ld-tips">正在计算天干地支、五行旺衰、神煞吉凶…</div></div>
+<div class="ld" id="loader"><div class="spinner"></div><div class="ld-txt">排盘中…</div><div class="ld-tips" id="ldTips">正在计算天干地支…</div></div>
 
 <main class="panels" id="panels" style="display:none">
 
@@ -373,6 +373,8 @@ const u=new URL(location.href),BIRTH=u.searchParams.get('birth')||'',LOC=u.searc
 async function init(){
   if(!BIRTH){alert('缺少出生时间');return}
   $('#hBirth').textContent=BIRTH;$('#hLoc').textContent=LOC;
+  const tips=['正在计算天干地支…','正在排定五行旺衰…','正在推算神煞吉凶…','正在排大运流年…','正在综合分析…'];
+  let tipIdx=0;const tipTimer=setInterval(()=>{tipIdx=(tipIdx+1)%tips.length;const el=$('#ldTips');if(el)el.textContent=tips[tipIdx]},1500);
   let url=`/api/chart?birth=${encodeURIComponent(BIRTH)}&location=${encodeURIComponent(LOC)}&gender=${encodeURIComponent(GENDER)}`;
   if(NAME)url+=`&name=${encodeURIComponent(NAME)}`;
   try{
@@ -448,7 +450,7 @@ function renderOverview(d){
     const trend=(v['趋势']||'').substring(0,50);
     const advice=v['建议']||'';
     h+=`<div style="background:${jxBg[jx]||'var(--bg)'};border:1px solid ${jxColor[jx]||'transparent'};border-radius:8px;padding:8px;min-height:90px">`;
-    h+=`<div style="font-size:.7rem;font-weight:700;color:${jxColor[jx]||'var(--txt)'};margin-bottom:4px">${d.icon} ${d.key} <span style="float:right">${esc(jx)}</span></div>`;
+    h+=`<div style="font-size:.7rem;font-weight:700;color:${jxColor[jx]||'var(--txt)'};margin-bottom:4px">${d.icon} ${d.key} <span style="float:right;padding:1px 6px;border-radius:8px;background:${jxBg[jx]||'transparent'};font-size:.6rem">${esc(jx)}</span></div>`;
     h+=`<div style="font-size:.65rem;color:var(--txt2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${esc(trend)}</div>`;
     if(advice)h+=`<div style="font-size:.6rem;color:var(--txt3);margin-top:4px">💡 ${esc(advice.substring(0,30))}</div>`;
     h+='</div>';
@@ -598,6 +600,7 @@ function renderBazi(b){
 function renderZiwei(z){
   const pals=z.palaces||[];
   const PALACE_NAMES=['命宫','兄弟','夫妻','子女','财帛','疾厄','迁移','交友','事业','田宅','福德','父母'];
+  const PALACE_DIR=['北','东北','东','东南','南','西南','西','西北','中','西北','东北','西南'];
   const ZHI_NAMES=['丑','寅','卯','辰','巳','午','未','申','酉','戌','亥','子'];
   // 4x3 grid layout: [11,0,1,2],[10,center,3],[9,8,7,6,5,4]
   const layout=[
