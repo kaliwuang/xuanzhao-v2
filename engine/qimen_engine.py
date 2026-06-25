@@ -331,6 +331,14 @@ class QiMenEngine(DivinationEngine):
             'ge_ju_analysis': ge_ju_analysis,
             # 流年分析
             'liunian': self._build_liunian(solar_dt, di_pan, tian_pan, palaces),
+            # #47: 马星（驿马）分析
+            'ma_xing': self._analyze_ma_xing(day_gan_zhi, palaces),
+            # #48: 天乙贵人落宫
+            'tianyi_guiren': self._analyze_tianyi(day_gan_zhi, palaces),
+            # #49: 桃花落宫
+            'taohua': self._analyze_taohua(day_gan_zhi, palaces),
+            # #50: 空亡详细解读
+            'kong_wang_detail': self._analyze_kong_wang_detail(xun_kong, palaces),
             # 宫位详细分析
             'palace_details': self._analyze_palace_details(palaces),
             # 伏吟反吟
@@ -1382,6 +1390,132 @@ class QiMenEngine(DivinationEngine):
         '胎': {'含义': '孕育新生，暗中发展', '吉凶': '中'},
         '养': {'含义': '滋养成长，蓄势待发', '吉凶': '吉'},
     }
+
+    # ---- #47-56: 神煞分析扩展 ----
+
+    # #47: 马星（驿马）分析 - 基于日支三合
+    MA_XING_MAP = {
+        '申': '寅', '子': '寅', '辰': '寅',  # 申子辰→寅
+        '寅': '申', '午': '申', '戌': '申',  # 寅午戌→申
+        '亥': '巳', '卯': '巳', '未': '巳',  # 亥卯未→巳
+        '巳': '亥', '酉': '亥', '丑': '亥',  # 巳酉丑→亥
+    }
+
+    def _analyze_ma_xing(self, day_gan_zhi: str, palaces: list) -> dict:
+        """#47: 马星（驿马）落宫分析"""
+        if len(day_gan_zhi) < 2:
+            return {}
+        day_zhi = day_gan_zhi[1]
+        ma_zhi = self.MA_XING_MAP.get(day_zhi, '')
+        if not ma_zhi:
+            return {}
+        ma_gong = self.ZHI_TO_GONG_NUM.get(ma_zhi, 0)
+        ma_palace = None
+        for p in palaces:
+            if p['gong'] == ma_gong:
+                ma_palace = p
+                break
+        return {
+            'ma_zhi': ma_zhi,
+            'ma_gong': ma_gong,
+            'ma_palace_name': ma_palace.get('name', '') if ma_palace else '',
+            'ma_men': ma_palace.get('men', '') if ma_palace else '',
+            'ma_xing': ma_palace.get('xing', '') if ma_palace else '',
+            'ma_shen': ma_palace.get('shen', '') if ma_palace else '',
+            'desc': f'日支{day_zhi}马星在{ma_zhi}，落{ma_gong}宫',
+        }
+
+    # #48: 天乙贵人落宫分析
+    TIANYI_MAP = {
+        '甲': ['丑', '未'], '乙': ['子', '申'], '丙': ['亥', '酉'], '丁': ['亥', '酉'],
+        '戊': ['丑', '未'], '己': ['子', '申'], '庚': ['丑', '未'], '辛': ['寅', '午'],
+        '壬': ['卯', '巳'], '癸': ['卯', '巳'],
+    }
+
+    def _analyze_tianyi(self, day_gan_zhi: str, palaces: list) -> dict:
+        """#48: 天乙贵人落宫分析"""
+        if len(day_gan_zhi) < 1:
+            return {}
+        day_gan = day_gan_zhi[0]
+        guiren_zhi_list = self.TIANYI_MAP.get(day_gan, [])
+        result = {'day_gan': day_gan, 'guiren_positions': []}
+        for gz in guiren_zhi_list:
+            gong = self.ZHI_TO_GONG_NUM.get(gz, 0)
+            palace = None
+            for p in palaces:
+                if p['gong'] == gong:
+                    palace = p
+                    break
+            result['guiren_positions'].append({
+                'zhi': gz, 'gong': gong,
+                'men': palace.get('men', '') if palace else '',
+                'xing': palace.get('xing', '') if palace else '',
+                'shen': palace.get('shen', '') if palace else '',
+            })
+        return result
+
+    # #49: 桃花落宫分析
+    TAOHUA_MAP = {
+        '申': '酉', '子': '酉', '辰': '酉',
+        '寅': '卯', '午': '卯', '戌': '卯',
+        '亥': '子', '卯': '子', '未': '子',
+        '巳': '午', '酉': '午', '丑': '午',
+    }
+
+    def _analyze_taohua(self, day_gan_zhi: str, palaces: list) -> dict:
+        """#49: 桃花落宫分析"""
+        if len(day_gan_zhi) < 2:
+            return {}
+        day_zhi = day_gan_zhi[1]
+        th_zhi = self.TAOHUA_MAP.get(day_zhi, '')
+        if not th_zhi:
+            return {}
+        th_gong = self.ZHI_TO_GONG_NUM.get(th_zhi, 0)
+        th_palace = None
+        for p in palaces:
+            if p['gong'] == th_gong:
+                th_palace = p
+                break
+        return {
+            'th_zhi': th_zhi,
+            'th_gong': th_gong,
+            'th_palace_name': th_palace.get('name', '') if th_palace else '',
+            'th_men': th_palace.get('men', '') if th_palace else '',
+            'th_xing': th_palace.get('xing', '') if th_palace else '',
+            'th_shen': th_palace.get('shen', '') if th_palace else '',
+            'desc': f'日支{day_zhi}桃花在{th_zhi}，落{th_gong}宫',
+        }
+
+    # #50: 空亡详细解读
+    def _analyze_kong_wang_detail(self, xun_kong: dict, palaces: list) -> dict:
+        """#50: 空亡详细解读"""
+        if not xun_kong:
+            return {}
+        kong_wang = xun_kong.get('kong_wang', [])
+        kong_detail = []
+        for zhi in kong_wang:
+            gong = self.ZHI_TO_GONG_NUM.get(zhi, 0)
+            palace = None
+            for p in palaces:
+                if p['gong'] == gong:
+                    palace = p
+                    break
+            kong_detail.append({
+                'zhi': zhi, 'gong': gong,
+                'palace_name': palace.get('name', '') if palace else '',
+                'men': palace.get('men', '') if palace else '',
+                'xing': palace.get('xing', '') if palace else '',
+                'shen': palace.get('shen', '') if palace else '',
+                'tian_pan': palace.get('tian_pan', '') if palace else '',
+                'di_pan': palace.get('di_pan', '') if palace else '',
+            })
+        return {
+            'xun_shou': xun_kong.get('xun_shou', ''),
+            'hidden_yi': xun_kong.get('hidden_yi', ''),
+            'kong_wang_zhi': kong_wang,
+            'kong_detail': kong_detail,
+            'desc': f'旬首{xun_kong.get("xun_shou", "")}，空亡{kong_wang}，遁{xun_kong.get("hidden_yi", "")}',
+        }
 
     def _analyze_tianmen_dihu(self, di_pan: dict, tian_pan: dict, solar_dt: datetime) -> dict:
         """天三门/地四户分析（传统奇门辅助占法）"""
