@@ -327,11 +327,37 @@ SAN_XING_CYCLES = [
 ZHI_HAI_MOD = {'子':'未','未':'子','丑':'午','午':'丑','寅':'巳','巳':'寅','卯':'辰','辰':'卯','申':'亥','亥':'申','酉':'戌','戌':'酉'}
 ZHI_PO_MOD = {'子':'酉','酉':'子','丑':'辰','辰':'丑','寅':'亥','亥':'寅','卯':'午','午':'卯','巳':'申','申':'巳','未':'戌','戌':'未'}
 
-# ─── 五行生克关系（模块级常量）──────────────────────
+# 五行生克关系（模块级常量）──────────────────────
 WUXING_KE = {'木':'土', '土':'水', '水':'火', '火':'金', '金':'木'}      # 我克=财
 WUXING_SHENG = {'木':'火', '火':'土', '土':'金', '金':'水', '水':'木'}    # 我生=食伤
 WUXING_BEI_KE = {'木':'金', '金':'火', '火':'水', '水':'土', '土':'木'}   # 克我=官杀
 WUXING_BEI_SHENG = {v: k for k, v in WUXING_SHENG.items()}               # 生我=印
+
+# ─── 十神含义描述（模块级常量，供特征提取和报告生成使用）────────────
+SHISHEN_DESC = {
+    '比肩': '独立自主，竞争意识，同辈助力',
+    '劫财': '争夺之心，社交活跃，义气但也冲动',
+    '食神': '才华内敛，享受生活，温和宽厚',
+    '伤官': '才华外露，叛逆创新，口才犀利',
+    '偏财': '意外之财，人缘广泛，投机取巧',
+    '正财': '正当收入，务实勤恳，重视物质',
+    '七杀': '压力竞争，果断刚毅，权威感强',
+    '正官': '规矩自律，责任心强，正统发展',
+    '偏印': '偏门学识，思路独特，但也孤僻',
+    '正印': '贵人扶持，学习力强，传统守正',
+}
+
+# ─── 天干阴阳属性（模块级常量）────────────────────────
+GAN_YINYANG = {
+    '甲': '阳', '丙': '阳', '戊': '阳', '庚': '阳', '壬': '阳',
+    '乙': '阴', '丁': '阴', '己': '阴', '辛': '阴', '癸': '阴',
+}
+
+# ─── 地支本气五行（模块级常量）────────────────────────
+ZHI_BENQI_WUXING = {
+    '子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土', '巳': '火',
+    '午': '火', '未': '土', '申': '金', '酉': '金', '戌': '土', '亥': '水',
+}
 
 # ─── 地支三合/半合/三会（模块级常量，消除 _extract_features 内重复构建）───
 SAN_HE_GROUPS = [
@@ -732,7 +758,7 @@ class BaziEngine(DivinationEngine):
         # 特征提取
         features = self._extract_features(
             year_pillar, month_pillar, day_pillar, time_pillar,
-            shishen_gan, hidden_gans
+            shishen_gan, hidden_gans, day_master
         )
 
         # 五行得分
@@ -1001,8 +1027,11 @@ class BaziEngine(DivinationEngine):
         }
         return table.get((day_gan, month_zhi), "")
 
-    def _extract_features(self, year, month, day, time_pillar, shishen_gan, hidden_gans) -> list:
+    def _extract_features(self, year, month, day, time_pillar, shishen_gan, hidden_gans, day_master: str = '') -> list:
         """提取命盘核心特征"""
+        # 防御：day_master 未传入时从 day 柱获取
+        if not day_master:
+            day_master = day.gan
         features = []
 
         # 1. 冲
@@ -1170,6 +1199,57 @@ class BaziEngine(DivinationEngine):
             features.append("伤官配印 — 才华有底蕴，表达有深度，化叛逆为创造力")
         elif has_shangguan and has_pianyin:
             features.append("伤官逢枭 — 偏印驾驭伤官，思路独特但易受干扰，需防才华被压制")
+
+        # 4.5b 十神组合检测扩展：藏干中的十神组合（非仅天干透出）
+        # 收集所有藏干十神
+        all_hidden_shishen = []
+        if hidden_gans:
+            pos_keys_h = ['year', 'month', 'day', 'time']
+            for pk in pos_keys_h:
+                h_gans = hidden_gans.get(pk, [])
+                if isinstance(h_gans, str):
+                    h_gans = list(h_gans)
+                all_hidden_shishen.extend([SHISHEN_MAP.get((day_master, h), '') for h in h_gans])
+        has_hid_shangguan = '伤官' in all_hidden_shishen
+        has_hid_zhenguan = '正官' in all_hidden_shishen
+        has_hid_qisha = '七杀' in all_hidden_shishen
+        has_hid_food = '食神' in all_hidden_shishen
+        has_hid_zhengyin = '正印' in all_hidden_shishen
+        has_hid_pianyin = '偏印' in all_hidden_shishen
+
+        # 藏干中伤官见官（非透干，暗伤官见暗正官）
+        if has_hid_shangguan and has_hid_zhenguan and not (has_shangguan and has_zhenguan):
+            features.append("藏干伤官见官 — 暗中才华与规矩冲突，需注意隐性压力")
+        # 藏干中食神制杀
+        if has_hid_food and has_hid_qisha and not (has_food_god and has_qisha):
+            features.append("藏干食神制杀 — 暗藏化压力为动力的潜质")
+        # 藏干枭神夺食
+        if has_hid_pianyin and has_hid_food and not (has_pianyin and has_food_god):
+            features.append("藏干枭神夺食 — 暗中才艺易受干扰，需防隐性阻碍")
+
+        # 4.6 比劫争财（比劫和财星同时多现）
+        bijie_count = sum(1 for k, v in ss.items() if k != 'day' and ('比' in v or '劫' in v))
+        cai_in_ss = sum(1 for k, v in ss.items() if k != 'day' and '财' in v)
+        if bijie_count >= 2 and cai_in_ss >= 1:
+            features.append("比劫争财 — 朋友多竞争也多，财运有争夺之象")
+
+        # 4.7 天干阴阳配对特征
+        yang_count = sum(1 for g in all_gans if GAN_YINYANG.get(g) == '阳')
+        yin_count_gan = sum(1 for g in all_gans if GAN_YINYANG.get(g) == '阴')
+        if yang_count >= 3:
+            features.append(f"阳盛阴衰（{yang_count}阳{yin_count_gan}阴）— 性格刚健果断，但需防刚愎自用")
+        elif yin_count_gan >= 3:
+            features.append(f"阴盛阳衰（{yin_count_gan}阴{yang_count}阳）— 性格柔顺细腻，但需防优柔寡断")
+
+        # 4.8 地支本气五行集中度
+        benqi_wx_count = {}
+        for z in zhis:
+            wx = ZHI_BENQI_WUXING.get(z, '')
+            if wx:
+                benqi_wx_count[wx] = benqi_wx_count.get(wx, 0) + 1
+        for wx, cnt in benqi_wx_count.items():
+            if cnt >= 3:
+                features.append(f"地支{wx}气极旺（{cnt}支本气为{wx}）— {wx}势主导命局")
 
         # 5. 印星（排除日元位置，与十神组合检查保持一致）
         yin_count = sum(1 for k, v in ss.items() if k != "day" and "印" in v)
