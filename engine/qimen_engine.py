@@ -343,6 +343,8 @@ class QiMenEngine(DivinationEngine):
             'yong_shen': self._analyze_yong_shen(palaces, hour_gan_zhi, day_gan_zhi),
             # 格局力量统计
             'ge_ju_strength': self._calc_ge_ju_strength(ge_ju_analysis),
+            # #41: 门星神组合详细解读
+            'men_xing_shen_combo': self._analyze_men_xing_shen_combo(palaces),
         }
 
         valid, err = self.validate(result)
@@ -827,6 +829,54 @@ class QiMenEngine(DivinationEngine):
             if tp == '癸' and dp == '戊':
                 xiong_ge.append({'name': '天网四张', 'gong': g, 'desc': '癸加戊，天网四张，出行大凶，百事不利'})
 
+            # ---- #37-46: 天干克应扩展 ----
+            # 辛加丁：狱神得奇扩展（辛金见丁火，以柔制刚）
+            if tp == '辛' and dp == '丁':
+                if not any(ge['name'] == '狱神得奇' and ge['gong'] == g for ge in ji_ge):
+                    ji_ge.append({'name': '辛加丁', 'gong': g, 'desc': '辛加丁，狱神得奇，囚人获释'})
+            # 丁加辛：朱雀投江变格（丁火入辛金，文书有利）
+            if tp == '丁' and dp == '辛':
+                ji_ge.append({'name': '丁加辛', 'gong': g, 'desc': '丁加辛，星奇入墓变格，文书有救'})
+            # 乙加丙：奇仪顺遂（乙木生丙火，谋事顺遂）
+            if tp == '乙' and dp == '丙':
+                ji_ge.append({'name': '乙加丙', 'gong': g, 'desc': '乙加丙，奇仪顺遂，谋事有利'})
+            # 丙加乙：日月并行（丙火配乙木，光明正大）
+            if tp == '丙' and dp == '乙':
+                ji_ge.append({'name': '丙加乙', 'gong': g, 'desc': '丙加乙，日月并行，光明正大'})
+            # 壬加乙：天罡阻路（壬水克乙木，谋事受阻）
+            if tp == '壬' and dp == '乙':
+                xiong_ge.append({'name': '壬加乙', 'gong': g, 'desc': '壬加乙，天罡阻路，谋事受阻'})
+            # 癸加乙：华盖逢星变格（癸水克乙木，暗昧不明）
+            if tp == '癸' and dp == '乙':
+                xiong_ge.append({'name': '癸加乙', 'gong': g, 'desc': '癸加乙，华盖逢星，暗昧不明'})
+            # 戊加丁：青龙耀明（戊土配丁火，贵人相助）
+            if tp == '戊' and dp == '丁':
+                ji_ge.append({'name': '戊加丁', 'gong': g, 'desc': '戊加丁，青龙耀明，贵人相助'})
+            # 丁加戊：星奇临门（丁火生戊土，文书有利）
+            if tp == '丁' and dp == '戊':
+                ji_ge.append({'name': '丁加戊', 'gong': g, 'desc': '丁加戊，星奇临门，文书有利'})
+            # 己加乙：地户逢星变格（己土克乙木，暗昧阻滞）
+            if tp == '己' and dp == '乙':
+                xiong_ge.append({'name': '己加乙', 'gong': g, 'desc': '己加乙，地户逢星，暗昧阻滞'})
+            # 庚加戊：太白入戊（庚金克戊土，大格凶）
+            if tp == '庚' and dp == '戊':
+                xiong_ge.append({'name': '庚加戊', 'gong': g, 'desc': '庚加戊，太白入戊，官灾横祸'})
+            # 戊加庚：戊入庚位（戊土逢庚金，值符飞宫凶）
+            if tp == '戊' and dp == '庚':
+                xiong_ge.append({'name': '戊加庚', 'gong': g, 'desc': '戊加庚，值符飞宫，主变动凶'})
+            # 壬加丁：天罡克星奇（壬水克丁火，文书凶）
+            if tp == '壬' and dp == '丁':
+                xiong_ge.append({'name': '壬加丁', 'gong': g, 'desc': '壬加丁，天罡克星奇，文书有灾'})
+            # 癸加丙：华盖入丙（癸水克丙火，凶）
+            if tp == '癸' and dp == '丙':
+                xiong_ge.append({'name': '癸加丙', 'gong': g, 'desc': '癸加丙，华盖悖师，主凶'})
+            # 辛加壬：天牢自刑（辛金壬水，凶）
+            if tp == '辛' and dp == '壬':
+                xiong_ge.append({'name': '辛加壬', 'gong': g, 'desc': '辛加壬，天牢自刑，凶'})
+            # 壬加辛：天罡自刑（壬水辛金，凶）
+            if tp == '壬' and dp == '辛':
+                xiong_ge.append({'name': '壬加辛', 'gong': g, 'desc': '壬加辛，螣蛇相缠，凶'})
+
         # 旬空宫
         kong_wang = xun_kong.get('kong_wang', []) if xun_kong else []
         kong_gongs = []
@@ -1111,6 +1161,12 @@ class QiMenEngine(DivinationEngine):
                 'shen': hour_gong.get('shen', ''),
                 'tian_pan': hour_gong.get('tian_pan', ''),
                 'di_pan': hour_gong.get('di_pan', ''),
+                # #37: 用神宫旺衰分析
+                'men_jixiong': self.MEN_JIXIONG.get(hour_gong.get('men', ''), ''),
+                'star_jixiong': self.STAR_JIXIONG.get(hour_gong.get('xing', ''), ''),
+                'men_wuxing': self.MEN_WUXING.get(hour_gong.get('men', ''), ''),
+                'star_wuxing': self.STAR_WUXING.get(hour_gong.get('xing', ''), ''),
+                'gong_wuxing': self.GONG_WUXING.get(hour_gong['gong'], ''),
             }
         if day_gong:
             result['day_gong'] = {
@@ -1121,7 +1177,35 @@ class QiMenEngine(DivinationEngine):
                 'shen': day_gong.get('shen', ''),
                 'tian_pan': day_gong.get('tian_pan', ''),
                 'di_pan': day_gong.get('di_pan', ''),
+                # #38: 日干宫旺衰分析
+                'men_jixiong': self.MEN_JIXIONG.get(day_gong.get('men', ''), ''),
+                'star_jixiong': self.STAR_JIXIONG.get(day_gong.get('xing', ''), ''),
+                'men_wuxing': self.MEN_WUXING.get(day_gong.get('men', ''), ''),
+                'star_wuxing': self.STAR_WUXING.get(day_gong.get('xing', ''), ''),
+                'gong_wuxing': self.GONG_WUXING.get(day_gong['gong'], ''),
             }
+
+        # #39: 时干日干关系分析
+        if hour_gong and day_gong:
+            hg = hour_gong['gong']
+            dg = day_gong['gong']
+            hg_wx = self.GONG_WUXING.get(hg, '')
+            dg_wx = self.GONG_WUXING.get(dg, '')
+            relation = ''
+            if hg_wx and dg_wx:
+                if hg_wx == dg_wx:
+                    relation = '比和'
+                elif self.WUXING_SHENG.get(hg_wx) == dg_wx:
+                    relation = '时干宫生日干宫'
+                elif self.WUXING_SHENG.get(dg_wx) == hg_wx:
+                    relation = '日干宫生时干宫'
+                elif self.WUXING_KE.get(hg_wx) == dg_wx:
+                    relation = '时干宫克日干宫'
+                elif self.WUXING_KE.get(dg_wx) == hg_wx:
+                    relation = '日干宫克时干宫'
+            result['hour_day_relation'] = relation
+            # #40: 时干日干是否同宫
+            result['same_palace'] = hg == dg
 
         return result
 
@@ -1183,6 +1267,121 @@ class QiMenEngine(DivinationEngine):
             'xiong_count': len(xiong_ge),
             'summary': f'吉{len(ji_ge)}格(+{ji_score})/凶{len(xiong_ge)}格(-{xiong_score})=净值{net}，{level}'
         }
+
+    # ---- #41-46: 门星神组合详细解读 ----
+    def _analyze_men_xing_shen_combo(self, palaces: list) -> list:
+        """#41: 门星神组合详细解读：每个宫位的门/星/神三者组合含义"""
+        combos = []
+        for p in palaces:
+            g = p['gong']
+            men = p.get('men', '')
+            xing = p.get('xing', '')
+            shen = p.get('shen', '')
+            if g == 5 or not men:
+                continue
+
+            men_jx = self.MEN_JIXIONG.get(men, '')
+            star_jx = self.STAR_JIXIONG.get(xing, '')
+            # 八神吉凶
+            SHEN_JIXIONG = {
+                '值符': '吉', '螣蛇': '凶', '太阴': '吉', '六合': '吉',
+                '白虎': '凶', '玄武': '凶', '九地': '中', '九天': '吉'
+            }
+            shen_jx = SHEN_JIXIONG.get(shen, '')
+
+            # 综合评分
+            score = 0
+            if men_jx == '吉': score += 1
+            elif men_jx == '凶': score -= 1
+            if star_jx == '吉': score += 1
+            elif star_jx == '凶': score -= 1
+            if shen_jx == '吉': score += 1
+            elif shen_jx == '凶': score -= 1
+
+            if score >= 2:
+                level = '大吉'
+            elif score == 1:
+                level = '吉'
+            elif score == 0:
+                level = '中'
+            elif score == -1:
+                level = '凶'
+            else:
+                level = '大凶'
+
+            combos.append({
+                'gong': g, 'men': men, 'xing': xing, 'shen': shen,
+                'men_jixiong': men_jx, 'star_jixiong': star_jx,
+                'shen_jixiong': shen_jx, 'score': score, 'level': level,
+            })
+        return combos
+
+    # #42: 天干阴阳属性分析
+    GAN_YINYANG_DETAIL = {
+        '甲': {'阴阳': '阳', '五行': '木', '方位': '东', '类象': '栋梁、头领、贵人'},
+        '乙': {'阴阳': '阴', '五行': '木', '方位': '东', '类象': '花草、女人、柔顺'},
+        '丙': {'阴阳': '阳', '五行': '火', '方位': '南', '类象': '太阳、权威、光明'},
+        '丁': {'阴阳': '阴', '五行': '火', '方位': '南', '类象': '星火、文书、希望'},
+        '戊': {'阴阳': '阳', '五行': '土', '方位': '中', '类象': '大地、稳固、资本'},
+        '己': {'阴阳': '阴', '五行': '土', '方位': '中', '类象': '田园、私有、暗昧'},
+        '庚': {'阴阳': '阳', '五行': '金', '方位': '西', '类象': '刀剑、阻碍、敌人'},
+        '辛': {'阴阳': '阴', '五行': '金', '方位': '西', '类象': '珠宝、错误、变革'},
+        '壬': {'阴阳': '阳', '五行': '水', '方位': '北', '类象': '大海、流动、天牢'},
+        '癸': {'阴阳': '阴', '五行': '水', '方位': '北', '类象': '雨露、天网、暗昧'},
+    }
+
+    # #43: 八门详细含义
+    MEN_DETAIL = {
+        '休门': {'五行': '水', '吉凶': '吉', '类象': '休息、安逸、贵人', '求财': '利', '出行': '吉', '疾病': '可愈'},
+        '生门': {'五行': '土', '吉凶': '吉', '类象': '生长、利润、田宅', '求财': '大利', '出行': '吉', '疾病': '可愈'},
+        '伤门': {'五行': '木', '吉凶': '凶', '类象': '伤灾、争斗、索取', '求财': '凶', '出行': '不利', '疾病': '凶'},
+        '杜门': {'五行': '木', '吉凶': '凶', '类象': '闭塞、隐藏、保密', '求财': '不利', '出行': '阻滞', '疾病': '暗疾'},
+        '景门': {'五行': '火', '吉凶': '中', '类象': '文书、考试、血光', '求财': '中平', '出行': '中平', '疾病': '血光'},
+        '死门': {'五行': '土', '吉凶': '凶', '类象': '死亡、终结、坟墓', '求财': '大凶', '出行': '大凶', '疾病': '凶'},
+        '惊门': {'五行': '金', '吉凶': '凶', '类象': '惊恐、口舌、官司', '求财': '不利', '出行': '惊恐', '疾病': '惊悸'},
+        '开门': {'五行': '金', '吉凶': '吉', '类象': '开始、公开、事业', '求财': '利', '出行': '大吉', '疾病': '可愈'},
+    }
+
+    # #44: 九星详细含义
+    STAR_DETAIL = {
+        '天蓬': {'五行': '水', '吉凶': '凶', '类象': '盗贼、暗昧、大智慧', '求财': '凶', '疾病': '暗疾'},
+        '天芮': {'五行': '土', '吉凶': '凶', '类象': '疾病、阴柔、学习', '求财': '不利', '疾病': '大凶'},
+        '天冲': {'五行': '木', '吉凶': '吉', '类象': '冲击、武勇、征伐', '求财': '中平', '疾病': '可愈'},
+        '天辅': {'五行': '木', '吉凶': '吉', '类象': '文采、教育、辅佐', '求财': '利', '疾病': '可愈'},
+        '天禽': {'五行': '土', '吉凶': '吉', '类象': '中央、统领、正位', '求财': '利', '疾病': '中平'},
+        '天心': {'五行': '金', '吉凶': '吉', '类象': '医卜、领导、决策', '求财': '大利', '疾病': '可愈'},
+        '天柱': {'五行': '金', '吉凶': '凶', '类象': '口舌、惊恐、破损', '求财': '不利', '疾病': '凶'},
+        '天任': {'五行': '土', '吉凶': '吉', '类象': '田宅、厚德、承载', '求财': '利', '疾病': '中平'},
+        '天英': {'五行': '火', '吉凶': '中', '类象': '光明、文化、血光', '求财': '中平', '疾病': '血光'},
+    }
+
+    # #45: 八神详细含义
+    SHEN_DETAIL = {
+        '值符': {'五行': '土', '吉凶': '大吉', '类象': '贵人、首领、权柄', '出行': '大吉', '求财': '利'},
+        '螣蛇': {'五行': '火', '吉凶': '凶', '类象': '惊恐、怪异、缠绕', '出行': '不利', '求财': '虚花'},
+        '太阴': {'五行': '金', '吉凶': '吉', '类象': '阴私、谋划、暗助', '出行': '暗中吉', '求财': '暗财'},
+        '六合': {'五行': '木', '吉凶': '吉', '类象': '合作、婚姻、交易', '出行': '同行吉', '求财': '合作利'},
+        '白虎': {'五行': '金', '吉凶': '凶', '类象': '凶伤、血光、丧服', '出行': '大凶', '求财': '破财'},
+        '玄武': {'五行': '水', '吉凶': '凶', '类象': '盗贼、暗昧、欺骗', '出行': '失物', '求财': '被骗'},
+        '九地': {'五行': '土', '吉凶': '中', '类象': '坤地、暗中、守旧', '出行': '迟缓', '求财': '慢得'},
+        '九天': {'五行': '金', '吉凶': '大吉', '类象': '乾天、光明、远行', '出行': '大吉', '求财': '大利'},
+    }
+
+    # #46: 天干长生十二宫详细解读
+    CHANGSHENG_DETAIL = {
+        '长生': {'含义': '万物初生，欣欣向荣', '吉凶': '吉'},
+        '沐浴': {'含义': '初生洗礼，桃花之象', '吉凶': '中'},
+        '冠带': {'含义': '渐趋成熟，学业有成', '吉凶': '吉'},
+        '临官': {'含义': '事业初成，出仕为官', '吉凶': '大吉'},
+        '帝旺': {'含义': '鼎盛之极，物极必反', '吉凶': '吉'},
+        '衰': {'含义': '由盛转衰，力不从心', '吉凶': '凶'},
+        '病': {'含义': '衰弱有病，困难重重', '吉凶': '凶'},
+        '死': {'含义': '生机断绝，诸事不利', '吉凶': '大凶'},
+        '墓': {'含义': '入库收藏，暗昧不明', '吉凶': '凶'},
+        '绝': {'含义': '生机全无，但可绝处逢生', '吉凶': '凶'},
+        '胎': {'含义': '孕育新生，暗中发展', '吉凶': '中'},
+        '养': {'含义': '滋养成长，蓄势待发', '吉凶': '吉'},
+    }
 
     def _analyze_tianmen_dihu(self, di_pan: dict, tian_pan: dict, solar_dt: datetime) -> dict:
         """天三门/地四户分析（传统奇门辅助占法）"""
