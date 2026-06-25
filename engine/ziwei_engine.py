@@ -657,6 +657,374 @@ class ZiWeiEngine(DivinationEngine):
             'liunian': liunian_info,
         }
 
+    # ─── 改进11-20: 三方四正、宫位分析、格局识别等方法 ────
+
+    def _calc_san_fang_si_zheng(self, palaces: list) -> dict:
+        """【改进11】计算每个宫位的三方四正
+
+        三方四正是紫微斗数最重要的分析框架之一：
+        - 三方（三合宫）：与命宫形成三合关系的两个宫位
+        - 四正（对宫）：与命宫相对的宫位
+        - 合称"三方四正"，影响命宫的核心力量
+
+        Returns:
+            dict: {宫名: {'san_fang': [宫名], 'dui_gong': 宫名,
+                          'all_stars': [星名], 'auspicious_count': int,
+                          'inauspicious_count': int, 'brightness_avg': float}}
+        """
+        result = {}
+        palace_map = {p['name']: p for p in palaces}
+
+        for palace_name, config in THREE_DIRECTION_FOUR_POSITION.items():
+            related_pals = config['san_fang'] + [config['dui_gong']]
+            all_stars = []
+            auspicious_count = 0
+            inauspicious_count = 0
+            brightness_scores = []
+
+            for rel_name in related_pals:
+                rel_pal = palace_map.get(rel_name, {})
+                for star in rel_pal.get('major_stars', []):
+                    all_stars.append(star['name'])
+                    if star.get('brightness'):
+                        brightness_scores.append(BRIGHTNESS_SCORE.get(star['brightness'], 2))
+                for star in rel_pal.get('minor_stars', []):
+                    all_stars.append(star['name'])
+                    if star.get('brightness'):
+                        brightness_scores.append(BRIGHTNESS_SCORE.get(star['brightness'], 2))
+                    if star['name'] in AUSPICIOUS_STARS:
+                        auspicious_count += 1
+                    if star['name'] in INausPICIOUS_STARS:
+                        inauspicious_count += 1
+
+            result[palace_name] = {
+                'san_fang': config['san_fang'],
+                'dui_gong': config['dui_gong'],
+                'all_stars': all_stars,
+                'auspicious_count': auspicious_count,
+                'inauspicious_count': inauspicious_count,
+                'brightness_avg': round(sum(brightness_scores) / len(brightness_scores), 2) if brightness_scores else 0,
+            }
+
+        return result
+
+    def _calc_palace_brightness_score(self, palace: dict) -> dict:
+        """【改进12】计算单个宫位的亮度综合评分
+
+        考虑主星和辅星的亮度，计算宫位整体力量。
+        主星权重=2，辅星权重=1。
+
+        Returns:
+            dict: {'score': float, 'max_score': float, 'level': str, 'stars': list}
+        """
+        stars_detail = []
+        total_score = 0
+        max_possible = 0
+
+        for star in palace.get('major_stars', []):
+            if star.get('brightness'):
+                score = BRIGHTNESS_SCORE.get(star['brightness'], 2)
+                total_score += score * 2  # 主星权重2
+                max_possible += 12  # 庙=6*2
+                stars_detail.append({
+                    'name': star['name'], 'brightness': star['brightness'],
+                    'score': score, 'weight': 2
+                })
+
+        for star in palace.get('minor_stars', []):
+            if star.get('brightness'):
+                score = BRIGHTNESS_SCORE.get(star['brightness'], 2)
+                total_score += score  # 辅星权重1
+                max_possible += 6  # 庙=6*1
+                stars_detail.append({
+                    'name': star['name'], 'brightness': star['brightness'],
+                    'score': score, 'weight': 1
+                })
+
+        avg = round(total_score / max_possible * 100, 1) if max_possible > 0 else 0
+        level = '强' if avg >= 70 else ('中' if avg >= 40 else '弱')
+
+        return {
+            'score': total_score,
+            'max_possible': max_possible,
+            'percentage': avg,
+            'level': level,
+            'stars_detail': stars_detail,
+        }
+
+    def _detect_palace_patterns(self, palace: dict) -> list:
+        """【改进13】检测单个宫位内的星曜格局
+
+        识别常见的星曜组合格局，如：
+        - 紫府同宫、日月同宫、紫贪同宫等
+
+        Returns:
+            list: [{'name': str, 'desc': str, 'level': str}]
+        """
+        patterns = []
+        for pat_name, pat_def in PATTERN_DEFINITIONS.items():
+            if pat_def['check'](palace):
+                patterns.append({
+                    'name': pat_name,
+                    'desc': pat_def['desc'],
+                    'level': pat_def['level'],
+                })
+        return patterns
+
+    def _detect_chart_patterns(self, palaces: list, san_fang_data: dict) -> list:
+        """【改进14】检测命盘整体格局
+
+        需要三方四正数据才能判断的格局：
+        - 杀破狼：七杀、破军、贪狼分布在命宫三方
+        - 百官朝拱：紫微在命宫且六吉星在三方四正
+        - 孤君在野：紫微在命宫但无吉星会照
+
+        Returns:
+            list: [{'name': str, 'desc': str, 'level': str}]
+        """
+        patterns = []
+        palace_map = {p['name']: p for p in palaces}
+        ming_palace = palace_map.get('命宫', {})
+        ming_stars = set(s['name'] for s in ming_palace.get('major_stars', []))
+
+        # 杀破狼格局
+        sf = san_fang_data.get('命宫', {})
+        sf_stars = set(sf.get('all_stars', []))
+        if {'七杀', '破军', '贪狼'}.issubset(ming_stars | sf_stars):
+            # 检查是否分散在三方四正
+            ming_has = [s for s in ['七杀', '破军', '贪狼'] if s in ming_stars]
+            sf_has = [s for s in ['七杀', '破军', '贪狼'] if s in sf_stars]
+            if len(ming_has) + len(sf_has) >= 3:
+                patterns.append({
+                    'name': '杀破狼',
+                    'desc': '七杀、破军、贪狼会照命宫，主开创变革',
+                    'level': '中格',
+                })
+
+        # 百官朝拱 / 孤君在野
+        if '紫微' in ming_stars:
+            auspicious_in_sf = sum(1 for s in sf_stars if s in AUSPICIOUS_STARS)
+            if auspicious_in_sf >= 4:
+                patterns.append({
+                    'name': '百官朝拱',
+                    'desc': '紫微坐命，六吉星在三方四正会照，一生贵显',
+                    'level': '上格',
+                })
+            elif auspicious_in_sf <= 1:
+                patterns.append({
+                    'name': '孤君在野',
+                    'desc': '紫微坐命但无吉星辅佐，需自力更生',
+                    'level': '下格',
+                })
+
+        # 紫府朝垣
+        if '紫微' in sf_stars and '天府' in sf_stars:
+            patterns.append({
+                'name': '紫府朝垣',
+                'desc': '紫微天府在三方四正会照命宫',
+                'level': '上格',
+            })
+
+        return patterns
+
+    def _identify_empty_palaces(self, palaces: list) -> list:
+        """【改进15】识别空宫（无主星的宫位）
+
+        空宫是指没有十四正曜的宫位，需要借对宫主星来判断。
+        空宫的特点：性格不够突出，易受外界影响。
+
+        Returns:
+            list: [{'palace_name': str, 'borrow_from': str, 'borrow_stars': list}]
+        """
+        empty_palaces = []
+        palace_map = {p['name']: p for p in palaces}
+
+        for pal in palaces:
+            major_names = set(s['name'] for s in pal.get('major_stars', []))
+            if not (major_names & ALL_MAJOR_STARS):
+                # 空宫 - 借对宫主星
+                dui_config = THREE_DIRECTION_FOUR_POSITION.get(pal['name'], {})
+                dui_gong_name = dui_config.get('dui_gong', '')
+                dui_pal = palace_map.get(dui_gong_name, {})
+                borrow_stars = [s['name'] for s in dui_pal.get('major_stars', [])
+                               if s['name'] in ALL_MAJOR_STARS]
+                empty_palaces.append({
+                    'palace_name': pal['name'],
+                    'borrow_from': dui_gong_name,
+                    'borrow_stars': borrow_stars,
+                    'note': f"{pal['name']}为空宫，借{dui_gong_name}宫主星{'、'.join(borrow_stars) if borrow_stars else '（对宫亦为空宫）'}",
+                })
+
+        return empty_palaces
+
+    def _identify_single_star_palaces(self, palaces: list) -> list:
+        """【改进16】识别独坐宫位（只有一颗主星的宫位）
+
+        独坐的主星力量集中，性格特征明显。
+        需要考虑亮度和吉煞星辅佐情况。
+
+        Returns:
+            list: [{'palace_name': str, 'star': str, 'brightness': str,
+                     'brightness_score': int, 'is_strong': bool}]
+        """
+        single_star_palaces = []
+        for pal in palaces:
+            major_names = [s for s in pal.get('major_stars', []) if s['name'] in ALL_MAJOR_STARS]
+            if len(major_names) == 1:
+                star = major_names[0]
+                brightness = star.get('brightness', '')
+                bs = BRIGHTNESS_SCORE.get(brightness, 2)
+                # 独坐且庙旺为强，陷弱为弱
+                is_strong = bs >= 4
+                single_star_palaces.append({
+                    'palace_name': pal['name'],
+                    'star': star['name'],
+                    'brightness': brightness,
+                    'brightness_score': bs,
+                    'is_strong': is_strong,
+                })
+        return single_star_palaces
+
+    def _identify_dual_star_palaces(self, palaces: list) -> list:
+        """【改进17】识别双主星同宫的宫位
+
+        双主星同宫会相互影响，产生独特的性格组合。
+
+        Returns:
+            list: [{'palace_name': str, 'stars': [str], 'combination': str}]
+        """
+        dual_palaces = []
+        for pal in palaces:
+            major_names = [s['name'] for s in pal.get('major_stars', []) if s['name'] in ALL_MAJOR_STARS]
+            if len(major_names) == 2:
+                combo = tuple(sorted(major_names))
+                # 检查是否有亮度修正规则
+                correction_key = combo if combo in BRIGHTNESS_CORRECTION else (combo[1], combo[0])
+                has_correction = correction_key in BRIGHTNESS_CORRECTION
+                dual_palaces.append({
+                    'palace_name': pal['name'],
+                    'stars': list(major_names),
+                    'combination': '同宫',
+                    'has_brightness_correction': has_correction,
+                    'correction': BRIGHTNESS_CORRECTION.get(correction_key, {}),
+                })
+        return dual_palaces
+
+    def _calc_palace_ji_xiong(self, palace: dict, san_fang_info: dict = None) -> dict:
+        """【改进18】计算单个宫位的吉凶统计
+
+        统计宫位内吉星、煞星、桃花星数量，计算吉凶平衡。
+
+        Returns:
+            dict: {'auspicious': int, 'inauspicious': int, 'peach': int,
+                   'balance': str, 'major_count': int}
+        """
+        auspicious = 0
+        inauspicious = 0
+        peach = 0
+        major_count = 0
+
+        for star in palace.get('major_stars', []):
+            major_count += 1
+            if star['name'] in PEACH_BLOSSOM_STARS:
+                peach += 1
+
+        for star in palace.get('minor_stars', []):
+            if star['name'] in AUSPICIOUS_STARS:
+                auspicious += 1
+            if star['name'] in INausPICIOUS_STARS:
+                inauspicious += 1
+            if star['name'] in PEACH_BLOSSOM_STARS:
+                peach += 1
+
+        # 如果有三方四正信息，也计算入内
+        if san_fang_info:
+            auspicious += san_fang_info.get('auspicious_count', 0)
+            inauspicious += san_fang_info.get('inauspicious_count', 0)
+
+        if auspicious > inauspicious + 1:
+            balance = '吉'
+        elif inauspicious > auspicious + 1:
+            balance = '凶'
+        else:
+            balance = '平'
+
+        return {
+            'auspicious': auspicious,
+            'inauspicious': inauspicious,
+            'peach': peach,
+            'balance': balance,
+            'major_count': major_count,
+        }
+
+    def _calc_ming_shen_master(self, birth_year_stem: str, birth_year_branch: str) -> dict:
+        """【改进19】计算命主星和身主星
+
+        命主和身主是紫微斗数中的重要辅星：
+        - 命主：由命宫地支决定
+        - 身主：由生年地支决定
+
+        命主地支→命主星映射：
+        子→贪狼, 丑/亥→巨门, 寅/戌→禄存, 卯/酉→文曲,
+        辰/申→廉贞, 巳/未→武曲, 午→破军
+
+        身主地支→身主星映射：
+        子→火星, 丑→天相, 寅→天梁, 卯→天同, 辰→文昌, 巳→天机,
+        午→火星, 未→天相, 申→天梁, 酉→天同, 戌→文昌, 亥→天机
+
+        Args:
+            birth_year_stem: 生年天干
+            birth_year_branch: 生年地支
+        """
+        # 命主由命宫地支决定（需要在analyze中传入命宫地支）
+        # 这里先定义映射，在analyze中调用
+        MING_ZHU_MAP = {
+            '子': '贪狼', '丑': '巨门', '寅': '禄存', '卯': '文曲',
+            '辰': '廉贞', '巳': '武曲', '午': '破军', '未': '武曲',
+            '申': '廉贞', '酉': '文曲', '戌': '禄存', '亥': '巨门',
+        }
+
+        SHEN_ZHU_MAP = {
+            '子': '火星', '丑': '天相', '寅': '天梁', '卯': '天同',
+            '辰': '文昌', '巳': '天机', '午': '火星', '未': '天相',
+            '申': '天梁', '酉': '天同', '戌': '文昌', '亥': '天机',
+        }
+
+        return {
+            'ming_zhu_map': MING_ZHU_MAP,
+            'shen_zhu_map': SHEN_ZHU_MAP,
+        }
+
+    def _calc_sihua_to_palaces(self, sihua: dict, palaces: list) -> dict:
+        """【改进20】计算四化飞入各宫的效果
+
+        根据生年四化（化禄、化权、化科、化忌）落在哪些宫位，
+        给出相应的解释和影响。
+
+        Args:
+            sihua: {'禄': '星名', '权': '星名', '科': '星名', '忌': '星名'}
+            palaces: 宫位列表
+
+        Returns:
+            dict: {化型: {'star': str, 'palace': str, 'effect': str}}
+        """
+        star_to_palace = {}
+        for pal in palaces:
+            for star in pal.get('major_stars', []) + pal.get('minor_stars', []):
+                star_to_palace[star['name']] = pal['name']
+
+        result = {}
+        for hua_type, star_name in sihua.items():
+            palace_name = star_to_palace.get(star_name, '')
+            effect = SIHUA_EFFECTS.get(hua_type, {}).get(palace_name, f'{hua_type}入{palace_name}')
+            result[hua_type] = {
+                'star': star_name,
+                'palace': palace_name,
+                'effect': effect,
+            }
+
+        return result
+
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
         if data.get('error'):
             return False, data['error']
@@ -664,4 +1032,9 @@ class ZiWeiEngine(DivinationEngine):
             return False, "命宫为空"
         if not data.get('palaces'):
             return False, "宫位数据为空"
+        # 【改进】增加更多验证项
+        if len(data.get('palaces', [])) != 12:
+            return False, f"宫位数量不为12（实际{len(data.get('palaces', []))}）"
+        if not data.get('sihua'):
+            return False, "四化数据为空"
         return True, None
