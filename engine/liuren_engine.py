@@ -452,6 +452,10 @@ class LiuRenEngine(DivinationEngine):
             day_ma = ""
             yong_shen_analysis = {}
             si_ke_analysis = {}
+            si_ke_raw = {}
+            san_chuan_raw = {}
+            di_to_tian = tian_pan.copy()
+            di_to_jiang = tian_jiang.copy()
 
         # ── 6. 合并十二宫信息（便于前端渲染） ──
         positions = {}
@@ -512,6 +516,16 @@ class LiuRenEngine(DivinationEngine):
             "jiang_arrangement": self._analyze_jiang_arrangement(di_to_jiang, day_gan),
             "xun_kong": self._calc_xun_kong(day_gan, day_zhi),
             "zhi_relations": self._analyze_zhi_relations(tian_jiang, di_to_tian),
+            # #6: 四课六亲关系
+            "si_ke_liuqin": self._analyze_si_ke_liuqin(si_ke_raw, day_gan),
+            # #7: 三传进退茹
+            "jin_tui": self._analyze_jin_tui(san_chuan_raw),
+            # #8: 天将临课分析
+            "jiang_on_ke": self._analyze_jiang_on_ke(si_ke_raw, tian_jiang),
+            # #9: 课传五行统计
+            "wuxing_stats": self._analyze_wuxing_stats(si_ke_raw, san_chuan_raw),
+            # #10: 天地盘生克关系
+            "tiandi_relations": self._analyze_tiandi_relations(di_to_tian),
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:
@@ -683,3 +697,341 @@ class LiuRenEngine(DivinationEngine):
         if day >= zhongqi_day:
             return zhongqi_approx.get(month, "冬至")
         return jie_approx.get(month, "冬至")
+
+    # ---- 大六壬引擎改进 #1-10: 核心分析方法补全 ----
+
+    # #1: 神煞分析
+    def _analyze_shensha(self, day_gan: str, day_zhi: str, tian_jiang: dict) -> dict:
+        """#1: 神煞落宫分析 - 基于日干和日支"""
+        result = {}
+        # 基于日干的神煞
+        day_shensha = SHENSHA_DAY.get(day_gan, {})
+        for sha_name, sha_zhi in day_shensha.items():
+            # 神煞地支可能有多个字符（如"丑未"）
+            for z in sha_zhi:
+                if z in self.ZHI_ORDER:
+                    jiang = tian_jiang.get(z, '') if tian_jiang else ''
+                    result[sha_name] = {
+                        'zhi': z, 'tian_jiang': jiang,
+                        'wuxing': self.ZHI_WUXING.get(z, ''),
+                    }
+                    break  # 取第一个有效地支
+
+        # 基于日支的神煞
+        day_zhi_sha = SHENSHA_DAY_ZHI.get(day_zhi, {})
+        for sha_name, sha_zhi in day_zhi_sha.items():
+            for z in sha_zhi:
+                if z in self.ZHI_ORDER:
+                    jiang = tian_jiang.get(z, '') if tian_jiang else ''
+                    result[f'日支{sha_name}'] = {
+                        'zhi': z, 'tian_jiang': jiang,
+                        'wuxing': self.ZHI_WUXING.get(z, ''),
+                    }
+                    break
+        return result
+
+    # #2: 三传详细分析
+    def _analyze_san_chuan_detail(self, san_chuan_raw: dict, day_gan: str, tian_jiang: dict) -> dict:
+        """#2: 三传详细分析 - 初传/中传/末传的天将、五行、六亲关系"""
+        if not san_chuan_raw or not isinstance(san_chuan_raw, dict):
+            return {}
+
+        day_wx = self.GAN_WUXING.get(day_gan, '')
+        detail = {}
+
+        for chuan_name, chuan_key in [('初傳', 'chu'), ('中傳', 'zhong'), ('末傳', 'mo')]:
+            chuan = san_chuan_raw.get(chuan_name, [])
+            if not chuan or len(chuan) < 1:
+                continue
+            zhi = chuan[0] if chuan[0] else ''
+            jiang = chuan[1] if len(chuan) > 1 and chuan[1] else ''
+            liuqin = chuan[2] if len(chuan) > 2 and chuan[2] else ''
+            wx = self.ZHI_WUXING.get(zhi, '')
+
+            # 与日干的关系
+            relation = ''
+            if day_wx and wx:
+                if wx == day_wx: relation = '比和'
+                elif self.SHENG.get(day_wx) == wx: relation = '我生'
+                elif self.SHENG.get(wx) == day_wx: relation = '生我'
+                elif self.KE.get(day_wx) == wx: relation = '我克'
+                elif self.KE.get(wx) == day_wx: relation = '克我'
+
+            # 天将含义
+            jiang_info = LIUREN_JIANG_YI.get(jiang, {'吉凶': '中', '含义': ''})
+            jiang_detail = JIANG_DETAIL.get(jiang, {})
+
+            detail[chuan_key] = {
+                'zhi': zhi, 'jiang': jiang, 'liuqin': liuqin,
+                'wuxing': wx, 'relation': relation,
+                'jiang_jixiong': jiang_info.get('吉凶', ''),
+                'jiang_hanyi': jiang_info.get('含义', ''),
+                'jiang_leixiang': jiang_detail.get('类象', ''),
+            }
+        return detail
+
+    # #3: 天将排列分析
+    def _analyze_jiang_arrangement(self, di_to_jiang: dict, day_gan: str) -> dict:
+        """#3: 天将排列分析 - 十二天将分布在十二宫的吉凶统计"""
+        if not di_to_jiang:
+            return {}
+
+        ji_count = 0
+        xiong_count = 0
+        ji_jiang = []
+        xiong_jiang = []
+
+        for zhi, jiang in di_to_jiang.items():
+            if not jiang:
+                continue
+            info = LIUREN_JIANG_YI.get(jiang, {})
+            jx = info.get('吉凶', '中')
+            if jx in ('大吉', '吉'):
+                ji_count += 1
+                ji_jiang.append({'zhi': zhi, 'jiang': jiang, 'jixiong': jx})
+            elif jx == '凶':
+                xiong_count += 1
+                xiong_jiang.append({'zhi': zhi, 'jiang': jiang, 'jixiong': jx})
+
+        # 贵人位置
+        guiren_pos = ''
+        for zhi, jiang in di_to_jiang.items():
+            if jiang in ('貴人', '贵人', '貴', '贵'):
+                guiren_pos = zhi
+                break
+
+        return {
+            'ji_count': ji_count, 'xiong_count': xiong_count,
+            'ji_jiang': ji_jiang, 'xiong_jiang': xiong_jiang,
+            'guiren_pos': guiren_pos,
+            'summary': f'吉将{ji_count}个，凶将{xiong_count}个' +
+                       (f'，贵人在{guiren_pos}' if guiren_pos else ''),
+        }
+
+    # #4: 旬空计算
+    def _calc_xun_kong(self, day_gan: str, day_zhi: str) -> dict:
+        """#4: 旬空计算 - 日柱所在旬的空亡地支"""
+        TIANGAN = list('甲乙丙丁戊己庚辛壬癸')
+        DIZHI = list('子丑寅卯辰巳午未申酉戌亥')
+        if not day_gan or not day_zhi:
+            return {}
+        gan_idx = TIANGAN.index(day_gan) if day_gan in TIANGAN else 0
+        zhi_idx = DIZHI.index(day_zhi) if day_zhi in DIZHI else 0
+        xun_start = (zhi_idx - gan_idx) % 12
+        xun_shou = TIANGAN[0] + DIZHI[xun_start]
+        kong1 = DIZHI[(xun_start + 10) % 12]
+        kong2 = DIZHI[(xun_start + 11) % 12]
+        return {
+            'xun_shou': xun_shou,
+            'kong_wang': [kong1, kong2],
+            'desc': f'旬首{xun_shou}，空亡{kong1}{kong2}',
+        }
+
+    # #5: 地支关系分析（天将所在地支间的关系）
+    def _analyze_zhi_relations(self, tian_jiang: dict, di_to_tian: dict) -> dict:
+        """#5: 地支关系分析 - 天将所在地支间的六合/六冲/三合/三刑/相害"""
+        if not tian_jiang:
+            return {}
+
+        relations = []
+        zhi_list = [z for z in self.ZHI_ORDER if tian_jiang.get(z)]
+
+        for i, z1 in enumerate(zhi_list):
+            for z2 in zhi_list[i+1:]:
+                # 六合
+                if ZHI_LIUHE.get(z1) == z2:
+                    j1 = tian_jiang.get(z1, '')
+                    j2 = tian_jiang.get(z2, '')
+                    relations.append({
+                        'type': '六合', 'zhi1': z1, 'zhi2': z2,
+                        'jiang1': j1, 'jiang2': j2,
+                        'desc': f'{z1}{j1}与{z2}{j2}六合',
+                    })
+                # 六冲
+                if ZHI_LIUCHONG.get(z1) == z2:
+                    j1 = tian_jiang.get(z1, '')
+                    j2 = tian_jiang.get(z2, '')
+                    relations.append({
+                        'type': '六冲', 'zhi1': z1, 'zhi2': z2,
+                        'jiang1': j1, 'jiang2': j2,
+                        'desc': f'{z1}{j1}与{z2}{j2}六冲',
+                    })
+
+        return {
+            'total': len(relations),
+            'relations': relations,
+            'summary': f'共{len(relations)}组地支关系',
+        }
+
+    # #6: 四课与日干六亲关系
+    def _analyze_si_ke_liuqin(self, si_ke_raw: dict, day_gan: str) -> dict:
+        """#6: 四课与日干六亲关系 - 每课地支五行与日干五行的生克"""
+        if not si_ke_raw or not isinstance(si_ke_raw, dict):
+            return {}
+        day_wx = self.GAN_WUXING.get(day_gan, '')
+        result = {}
+        KE_NAMES = {'一課': '干上神', '二課': '干阳', '三課': '支上神', '四課': '支阳'}
+
+        for key in ['一課', '二課', '三課', '四課']:
+            val = si_ke_raw.get(key, [])
+            if not val or len(val) < 1:
+                continue
+            gz = str(val[0]) if val[0] else ''
+            if not gz:
+                continue
+            zhi = gz[-1]
+            wx = self.ZHI_WUXING.get(zhi, '')
+            liuqin = ''
+            if day_wx and wx:
+                if wx == day_wx: liuqin = '兄弟'
+                elif self.SHENG.get(day_wx) == wx: liuqin = '子孙'
+                elif self.SHENG.get(wx) == day_wx: liuqin = '父母'
+                elif self.KE.get(day_wx) == wx: liuqin = '妻财'
+                elif self.KE.get(wx) == day_wx: liuqin = '官鬼'
+
+            result[key] = {
+                'name': KE_NAMES.get(key, key),
+                'gan_zhi': gz, 'zhi': zhi, 'wuxing': wx,
+                'liuqin': liuqin,
+            }
+        return result
+
+    # #7: 三传进退茹判定
+    def _analyze_jin_tui(self, san_chuan_raw: dict) -> dict:
+        """#7: 三传进退茹判定 - 三传地支是否连续顺进或逆退"""
+        if not san_chuan_raw or not isinstance(san_chuan_raw, dict):
+            return {}
+
+        chu = san_chuan_raw.get('初傳', [])
+        zhong = san_chuan_raw.get('中傳', [])
+        mo = san_chuan_raw.get('末傳', [])
+
+        if not chu or not zhong or not mo:
+            return {}
+
+        z1 = str(chu[0])[-1] if chu[0] else ''
+        z2 = str(zhong[0])[-1] if zhong[0] else ''
+        z3 = str(mo[0])[-1] if mo[0] else ''
+
+        if not z1 or not z2 or not z3:
+            return {}
+
+        idx1 = self.ZHI_ORDER.index(z1) if z1 in self.ZHI_ORDER else -1
+        idx2 = self.ZHI_ORDER.index(z2) if z2 in self.ZHI_ORDER else -1
+        idx3 = self.ZHI_ORDER.index(z3) if z3 in self.ZHI_ORDER else -1
+
+        if idx1 < 0 or idx2 < 0 or idx3 < 0:
+            return {}
+
+        # 连续顺进
+        if (idx2 - idx1) % 12 == 1 and (idx3 - idx2) % 12 == 1:
+            ge = KE_GE_TYPES.get('进茹', {})
+            return {'type': '进茹', 'desc': ge.get('含义', '三传顺进'), '吉凶': ge.get('吉凶', '中')}
+        # 连续逆退
+        if (idx1 - idx2) % 12 == 1 and (idx2 - idx3) % 12 == 1:
+            ge = KE_GE_TYPES.get('退茹', {})
+            return {'type': '退茹', 'desc': ge.get('含义', '三传逆退'), '吉凶': ge.get('吉凶', '中')}
+        # 间传（隔一位）
+        if (idx2 - idx1) % 12 == 2 and (idx3 - idx2) % 12 == 2:
+            ge = KE_GE_TYPES.get('间传', {})
+            return {'type': '间传', 'desc': ge.get('含义', '三传间断'), '吉凶': ge.get('吉凶', '中')}
+
+        return {'type': '', 'desc': ''}
+
+    # #8: 天将临课分析
+    def _analyze_jiang_on_ke(self, si_ke_raw: dict, tian_jiang: dict) -> dict:
+        """#8: 天将临四课分析 - 每课上神所临天将"""
+        if not si_ke_raw or not isinstance(si_ke_raw, dict):
+            return {}
+
+        result = {}
+        for key in ['一課', '二課', '三課', '四課']:
+            val = si_ke_raw.get(key, [])
+            if not val or len(val) < 2:
+                continue
+            gz = str(val[0]) if val[0] else ''
+            jiang = str(val[1]) if len(val) > 1 and val[1] else ''
+            zhi = gz[-1] if gz else ''
+
+            jiang_info = LIUREN_JIANG_YI.get(jiang, {})
+            jiang_detail = JIANG_DETAIL.get(jiang, {})
+
+            result[key] = {
+                'gan_zhi': gz, 'zhi': zhi,
+                'jiang': jiang,
+                'jiang_jixiong': jiang_info.get('吉凶', ''),
+                'jiang_hanyi': jiang_info.get('含义', ''),
+                'jiang_leixiang': jiang_detail.get('类象', ''),
+                'jiang_wuxing': JIANG_WUXING.get(jiang, ''),
+            }
+        return result
+
+    # #9: 课传五行统计
+    def _analyze_wuxing_stats(self, si_ke_raw: dict, san_chuan_raw: dict) -> dict:
+        """#9: 课传五行统计 - 四课三传中各五行出现次数"""
+        stats = {'木': 0, '火': 0, '土': 0, '金': 0, '水': 0}
+
+        def count_zhi(val):
+            if not val:
+                return
+            gz = str(val[0]) if val[0] else ''
+            if gz:
+                zhi = gz[-1]
+                wx = self.ZHI_WUXING.get(zhi, '')
+                if wx in stats:
+                    stats[wx] += 1
+
+        # 四课
+        if si_ke_raw:
+            for key in ['一課', '二課', '三課', '四課']:
+                count_zhi(si_ke_raw.get(key, []))
+
+        # 三传
+        if san_chuan_raw:
+            for key in ['初傳', '中傳', '末傳']:
+                count_zhi(san_chuan_raw.get(key, []))
+
+        dominant = max(stats, key=stats.get) if any(stats.values()) else ''
+        return {
+            'stats': stats,
+            'dominant': dominant,
+            'summary': f'五行分布：{" ".join(f"{k}{v}" for k, v in stats.items() if v > 0)}' +
+                       (f'，以{dominant}为主' if dominant else ''),
+        }
+
+    # #10: 天地盘生克关系
+    def _analyze_tiandi_relations(self, di_to_tian: dict) -> dict:
+        """#10: 天地盘生克关系 - 地支与天盘地支的五行生克"""
+        if not di_to_tian:
+            return {}
+
+        relations = []
+        for di_zhi, tian_zhi in di_to_tian.items():
+            di_wx = self.ZHI_WUXING.get(di_zhi, '')
+            tian_wx = self.ZHI_WUXING.get(tian_zhi, '')
+            if not di_wx or not tian_wx:
+                continue
+
+            rel = ''
+            if di_wx == tian_wx:
+                rel = '比和'
+            elif self.SHENG.get(di_wx) == tian_wx:
+                rel = '地生天'
+            elif self.SHENG.get(tian_wx) == di_wx:
+                rel = '天生地'
+            elif self.KE.get(di_wx) == tian_wx:
+                rel = '地克天'
+            elif self.KE.get(tian_wx) == di_wx:
+                rel = '天克地'
+
+            if rel and rel != '比和':
+                relations.append({
+                    'di_zhi': di_zhi, 'tian_zhi': tian_zhi,
+                    'di_wuxing': di_wx, 'tian_wuxing': tian_wx,
+                    'relation': rel,
+                })
+
+        return {
+            'total': len(relations),
+            'relations': relations,
+        }
