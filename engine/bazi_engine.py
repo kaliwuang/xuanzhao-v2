@@ -871,6 +871,125 @@ class BaziEngine(DivinationEngine):
                 clean = s.split('（')[0] if '（' in s else s
                 shensha_per_pillar['general'].append(clean)
 
+        # ─── 神煞特征描述增强 ─────────────────────────────────
+        # 天乙贵人位置影响力
+        _TIANYI_POS_DESC = {
+            '年': '天乙在年柱 — 祖辈有贵人扶持，早年得助',
+            '月': '天乙在月柱 — 父母或师长提携，中年得力',
+            '日': '天乙在日柱 — 自身贵人缘强，配偶有助力',
+            '时': '天乙在时柱 — 晚年得子女或下属之助',
+        }
+        for s_item in shensha:
+            if '天乙贵人' in s_item:
+                for pos_k, desc in _TIANYI_POS_DESC.items():
+                    if f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
+        # 桃花类型区分
+        _TAOHUA_POS_DESC = {
+            '年': '桃花在年柱（墙内桃花）— 婚前异性缘佳，婚后感情稳',
+            '月': '桃花在月柱 — 人缘好，社交魅力强',
+            '日': '桃花在日柱（墙外桃花）— 婚后仍多异性关注，需自律',
+            '时': '桃花在时柱 — 晚年仍有魅力，子女有异性缘',
+        }
+        for s_item in shensha:
+            if '桃花' in s_item and '双桃花' not in s_item:
+                for pos_k, desc in _TAOHUA_POS_DESC.items():
+                    if f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
+        # 华盖智慧特征
+        _HUAGAI_POS_DESC = {
+            '年': '华盖在年柱 — 自幼好学，有艺术天赋',
+            '月': '华盖在月柱 — 学业突出，有宗教或哲学倾向',
+            '日': '华盖在日柱 — 内心世界丰富，独处时不觉寂寞',
+            '时': '华盖在时柱 — 晚年悟道，精神世界充实',
+        }
+        for s_item in shensha:
+            if '华盖' in s_item and '双华盖' not in s_item:
+                for pos_k, desc in _HUAGAI_POS_DESC.items():
+                    if f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
+        # 驿马活跃度分析
+        _YIMA_POS_DESC = {
+            '年': '驿马在年柱 — 早年奔波，祖辈有迁徙',
+            '月': '驿马在月柱 — 工作变动多，适合流动性职业',
+            '日': '驿马在日柱 — 本人好动，适合出差或旅行行业',
+            '时': '驿马在时柱 — 晚年出行多，子女远方发展',
+        }
+        for s_item in shensha:
+            if '驿马' in s_item:
+                for pos_k, desc in _YIMA_POS_DESC.items():
+                    if f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
+        # 将星领导力
+        _JIANGXING_POS_DESC = {
+            '年': '将星在年柱 — 早年有领导潜质',
+            '月': '将星在月柱 — 事业中有管理才能',
+            '日': '将星在日柱 — 自身领导力强，有号召力',
+            '时': '将星在时柱 — 晚年掌权或子女有出息',
+        }
+        for s_item in shensha:
+            if '将星' in s_item:
+                for pos_k, desc in _JIANGXING_POS_DESC.items():
+                    if f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
+        # 空亡详细分析
+        _XUNKONG_POS_DESC = {
+            '年': '年柱空亡 — 与祖辈缘分薄，早年有虚象',
+            '月': '月柱空亡 — 与父母关系有隔阂，事业根基不稳',
+            '日': '日柱空亡 — 夫妻宫有虚象，婚姻需特别经营',
+            '时': '时柱空亡 — 子女宫有虚象，与子女缘分需培养',
+        }
+        for s_item in shensha:
+            if '空亡' in s_item:
+                for pos_k, desc in _XUNKONG_POS_DESC.items():
+                    if f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
+        # 天罗地网危险等级
+        if '天罗' in [s.split('（')[0] if '（' in s else s for s in shensha]:
+            features.append("命带天罗 — 火命见戌亥，防官非口舌，行运遇之尤慎")
+        if '地网' in [s.split('（')[0] if '（' in s else s for s in shensha]:
+            features.append("命带地网 — 水土命见辰巳，防小人暗算，出行注意安全")
+
+        # 禄神力量等级
+        _LU_POS_DESC = {
+            '年': '年禄 — 祖上有产业，早年生活优渥',
+            '月': '月禄（建禄）— 自立能力强，适合白手起家',
+            '日': '日禄 — 自身根基扎实，身体素质好',
+            '时': '时禄 — 晚年有积蓄，子女有出息',
+        }
+        for s_item in shensha:
+            if '禄神' in s_item:
+                for pos_k, desc in _LU_POS_DESC.items():
+                    if f'{pos_k}干' in s_item or f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
+        # 羊刃血光提示
+        _YANGREN_POS_DESC = {
+            '年': '羊刃在年柱 — 早年有血光之灾，性格刚烈',
+            '月': '羊刃在月柱 — 事业拼搏中易受伤，需防意外',
+            '日': '羊刃在日柱 — 日坐羊刃，性格刚强，婚姻有波折',
+            '时': '羊刃在时柱 — 晚年需防手术或意外，子女性格刚强',
+        }
+        for s_item in shensha:
+            if '羊刃' in s_item:
+                for pos_k, desc in _YANGREN_POS_DESC.items():
+                    if f'{pos_k}支' in s_item:
+                        features.append(desc)
+                        break
+
         # 天干关系
         gan_relations = []
         all_gans = [year_pillar.gan, month_pillar.gan, day_pillar.gan, time_pillar.gan]
