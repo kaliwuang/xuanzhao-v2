@@ -603,6 +603,17 @@ class XingMingEngine(DivinationEngine):
             "lucky_numbers": self._generate_lucky_numbers(wuge),
             "lucky_colors": self._generate_lucky_colors(wuge),
             "suggestions": self._generate_name_suggestions(wuge, sancai_info, gender),
+            # 改进31-40: 新增深度分析字段
+            "special_numbers": self._check_special_numbers(wuge),
+            "gender_compat": self._check_gender_compatibility(wuge, gender),
+            "wuge_relationships": self._analyze_wuge_relationships(wuge),
+            "fortune_level": self._get_overall_fortune_level(score),
+            "career_fortune": self._calc_success_fortune(wuge, sancai_info),
+            "wealth_fortune": self._calc_wealth_fortune(wuge),
+            "health_fortune": self._calc_health_fortune(wuge, sancai_info),
+            "marriage_fortune": self._calc_marriage_fortune(wuge, gender),
+            "life_advice": self._generate_wuxing_advice(wuge),
+            "yearly_fortune": self._calc_yearly_fortune(wuge),
         }
 
     # ─── Stroke Calculation ────────────────────────────────────────────
@@ -1218,6 +1229,7 @@ class XingMingEngine(DivinationEngine):
             info = self._81_table.get(combo, self._get_default_81(combo))
             yearly.append({"年份": year, "流年数": year_num, "组合数": combo, "吉凶": info["jixiong"], "含义": info["desc"][:30]})
         return yearly
+
     def _calc_name_luck_cycle(self, wuge: dict) -> list:
         """改进17: 姓名运势周期分析"""
         return [
