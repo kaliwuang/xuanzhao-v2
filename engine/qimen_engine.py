@@ -353,6 +353,12 @@ class QiMenEngine(DivinationEngine):
             'ge_ju_strength': self._calc_ge_ju_strength(ge_ju_analysis),
             # #41: 门星神组合详细解读
             'men_xing_shen_combo': self._analyze_men_xing_shen_combo(palaces),
+            # #51: 时干落宫详细分析
+            'hour_palace_detail': self._analyze_hour_palace_detail(palaces, hour_gan_zhi),
+            # #52: 日干落宫详细分析
+            'day_palace_detail': self._analyze_day_palace_detail(palaces, day_gan_zhi),
+            # #56: 宫位综合评分
+            'palace_scores': self._calc_palace_score(palaces),
         }
 
         valid, err = self.validate(result)
@@ -1516,6 +1522,128 @@ class QiMenEngine(DivinationEngine):
             'kong_detail': kong_detail,
             'desc': f'旬首{xun_kong.get("xun_shou", "")}，空亡{kong_wang}，遁{xun_kong.get("hidden_yi", "")}',
         }
+
+    # ---- #51-56: 落宫分析扩展 ----
+
+    # #51: 时干落宫详细分析
+    def _analyze_hour_palace_detail(self, palaces: list, hour_gan_zhi: str) -> dict:
+        """#51: 时干落宫详细分析 - 时干天盘/地盘分别在哪"""
+        if not hour_gan_zhi or len(hour_gan_zhi) < 1:
+            return {}
+        hour_gan = hour_gan_zhi[0]
+        tian_pos = None
+        di_pos = None
+        for p in palaces:
+            if p.get('tian_pan') == hour_gan:
+                tian_pos = p
+            if p.get('di_pan') == hour_gan:
+                di_pos = p
+        result = {'hour_gan': hour_gan}
+        if tian_pos:
+            result['tian_pan_gong'] = {
+                'gong': tian_pos['gong'], 'name': tian_pos.get('name', ''),
+                'men': tian_pos.get('men', ''), 'xing': tian_pos.get('xing', ''),
+                'shen': tian_pos.get('shen', ''),
+            }
+        if di_pos:
+            result['di_pan_gong'] = {
+                'gong': di_pos['gong'], 'name': di_pos.get('name', ''),
+                'men': di_pos.get('men', ''), 'xing': di_pos.get('xing', ''),
+                'shen': di_pos.get('shen', ''),
+            }
+        return result
+
+    # #52: 日干落宫详细分析
+    def _analyze_day_palace_detail(self, palaces: list, day_gan_zhi: str) -> dict:
+        """#52: 日干落宫详细分析"""
+        if not day_gan_zhi or len(day_gan_zhi) < 1:
+            return {}
+        day_gan = day_gan_zhi[0]
+        tian_pos = None
+        di_pos = None
+        for p in palaces:
+            if p.get('tian_pan') == day_gan:
+                tian_pos = p
+            if p.get('di_pan') == day_gan:
+                di_pos = p
+        result = {'day_gan': day_gan}
+        if tian_pos:
+            result['tian_pan_gong'] = {
+                'gong': tian_pos['gong'], 'name': tian_pos.get('name', ''),
+                'men': tian_pos.get('men', ''), 'xing': tian_pos.get('xing', ''),
+                'shen': tian_pos.get('shen', ''),
+            }
+        if di_pos:
+            result['di_pan_gong'] = {
+                'gong': di_pos['gong'], 'name': di_pos.get('name', ''),
+                'men': di_pos.get('men', ''), 'xing': di_pos.get('xing', ''),
+                'shen': di_pos.get('shen', ''),
+            }
+        return result
+
+    # #53: 三奇六仪组合吉凶
+    SANQI_COMBO = {
+        ('乙', '丙'): {'name': '奇仪顺遂', '吉凶': '吉', 'desc': '乙木生丙火，谋事顺遂'},
+        ('乙', '丁'): {'name': '奇仪相合', '吉凶': '吉', 'desc': '乙丁相见，文书有利'},
+        ('丙', '丁'): {'name': '星月交辉', '吉凶': '大吉', 'desc': '丙丁同见，光明正大'},
+        ('乙', '戊'): {'name': '奇门合格', '吉凶': '吉', 'desc': '乙戊相见，合作有利'},
+        ('丙', '壬'): {'name': '奇仪相冲', '吉凶': '凶', 'desc': '丙壬相冲，水火不容'},
+        ('丁', '癸'): {'name': '奇仪相克', '吉凶': '凶', 'desc': '丁癸相克，文书有灾'},
+    }
+
+    # #54: 八门旺衰详细解读
+    MEN_WANGSHUAI_DETAIL = {
+        '旺': {'含义': '门气正旺，力量最强', '吉凶加成': '吉门更吉，凶门更凶'},
+        '相': {'含义': '门气得助，力量较强', '吉凶加成': '吉门增吉，凶门增凶'},
+        '休': {'含义': '门气休息，力量一般', '吉凶加成': '吉门减吉，凶门减凶'},
+        '囚': {'含义': '门气受制，力量较弱', '吉凶加成': '吉门无力，凶门减力'},
+        '死': {'含义': '门气死绝，力量最弱', '吉凶加成': '吉门无效，凶门无效'},
+    }
+
+    # #55: 九星旺衰详细解读
+    STAR_WANGSHUAI_DETAIL = {
+        '旺': {'含义': '星气正旺，力量最强', '吉凶加成': '吉星更吉，凶星更凶'},
+        '相': {'含义': '星气得助，力量较强', '吉凶加成': '吉星增吉，凶星增凶'},
+        '休': {'含义': '星气休息，力量一般', '吉凶加成': '吉星减吉，凶星减凶'},
+        '囚': {'含义': '星气受制，力量较弱', '吉凶加成': '吉星无力，凶星减力'},
+        '死': {'含义': '星气死绝，力量最弱', '吉凶加成': '吉星无效，凶星无效'},
+    }
+
+    # #56: 宫位综合评分
+    def _calc_palace_score(self, palaces: list) -> list:
+        """#56: 每个宫位综合评分（门+星+神+天地盘）"""
+        scores = []
+        for p in palaces:
+            g = p['gong']
+            if g == 5:
+                continue
+            men = p.get('men', '')
+            xing = p.get('xing', '')
+            shen = p.get('shen', '')
+            tp = p.get('tian_pan', '')
+            dp = p.get('di_pan', '')
+            score = 0
+            men_jx = self.MEN_JIXIONG.get(men, '')
+            if men_jx == '吉': score += 2
+            elif men_jx == '凶': score -= 2
+            star_jx = self.STAR_JIXIONG.get(xing, '')
+            if star_jx == '吉': score += 1
+            elif star_jx == '凶': score -= 1
+            SHEN_JX = {'值符': 2, '九天': 2, '太阴': 1, '六合': 1,
+                       '九地': 0, '螣蛇': -1, '白虎': -2, '玄武': -1}
+            score += SHEN_JX.get(shen, 0)
+            if (tp, dp) in self.GAN_HE:
+                score += 2
+            if score >= 4: level = '大吉'
+            elif score >= 2: level = '吉'
+            elif score >= 0: level = '中'
+            elif score >= -2: level = '凶'
+            else: level = '大凶'
+            scores.append({
+                'gong': g, 'score': score, 'level': level,
+                'men': men, 'xing': xing, 'shen': shen,
+            })
+        return scores
 
     def _analyze_tianmen_dihu(self, di_pan: dict, tian_pan: dict, solar_dt: datetime) -> dict:
         """天三门/地四户分析（传统奇门辅助占法）"""
