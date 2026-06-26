@@ -2093,4 +2093,208 @@ class QiMenEngine(DivinationEngine):
             }
         return {'is_tianxian': False}
 
+    # ---- Q26-Q30: 奇门深度分析 ----
 
+    # Q26: 天干入墓详解
+    GAN_MU_DETAIL = {
+        '戊': {'墓宫': '辰(巽四)', '含义': '资本入库，财源受阻', '化解': '见丙奇冲开'},
+        '己': {'墓宫': '戌(乾六)', '含义': '田宅入墓，暗昧不明', '化解': '见乙奇解围'},
+        '庚': {'墓宫': '丑(艮八)', '含义': '敌人入墓，暂可安枕', '化解': '不宜冲开'},
+        '辛': {'墓宫': '戌(乾六)', '含义': '错误入墓，暂时隐藏', '化解': '见丁奇化解'},
+        '壬': {'墓宫': '辰(巽四)', '含义': '天牢入墓，困顿不安', '化解': '见丙奇破局'},
+        '癸': {'墓宫': '戌(乾六)', '含义': '天网入墓，暗中有险', '化解': '见乙奇遮掩'},
+        '乙': {'墓宫': '未(坤二)', '含义': '日奇入墓，光明被掩', '化解': '见丙丁冲开'},
+        '丙': {'墓宫': '戌(乾六)', '含义': '月奇入墓，权威受损', '化解': '见乙奇相助'},
+        '丁': {'墓宫': '丑(艮八)', '含义': '星奇入墓，文书受阻', '化解': '见丙奇照亮'},
+    }
+
+    # Q27: 八门落宫详解
+    MEN_LUOGONG_DETAIL = {
+        '休门': {1: '休门本宫，安逸得所', 2: '休门入坤，休息得地',
+                 3: '休门入震，水生木吉', 4: '休门入巽，水生木吉',
+                 6: '休门入乾，金生水利', 7: '休门入兑，金生水利',
+                 8: '休门入艮，水土相克', 9: '休门入离，水火相冲'},
+        '生门': {1: '生门入坎，土克水凶', 2: '生门本宫，田宅有利',
+                 3: '生门入震，木克土凶', 4: '生门入巽，木克土凶',
+                 6: '生门入乾，土生金泄', 7: '生门入兑，土生金泄',
+                 8: '生门本宫，厚德载物', 9: '生门入离，火生土吉'},
+        '开门': {1: '开门入坎，金生水利', 2: '开门入坤，土生金吉',
+                 3: '开门入震，金克木凶', 4: '开门入巽，金克木凶',
+                 6: '开门本宫，事业大吉', 7: '开门本宫，正位得所',
+                 8: '开门入艮，土生金吉', 9: '开门入离，火克金凶'},
+        '死门': {1: '死门入坎，土克水凶', 2: '死门本宫，疾病大凶',
+                 3: '死门入震，木克土凶', 4: '死门入巽，螣蛇夭矫',
+                 6: '死门入乾，土生金泄', 7: '死门入兑，土生金泄',
+                 8: '死门本宫，坟墓之象', 9: '死门入离，火生土凶'},
+    }
+
+    # Q28: 九星落宫详解
+    STAR_LUOGONG_DETAIL = {
+        '天蓬': {1: '天蓬本宫，盗贼旺相', 6: '天蓬入乾，水受金生',
+                 9: '天蓬入离，水火相冲'},
+        '天芮': {2: '天芮本宫，疾病大凶', 8: '天芮入艮，病符加重',
+                 1: '天芮入坎，土克水病'},
+        '天冲': {3: '天冲本宫，武勇冲撞', 4: '天冲入巽，木气旺盛',
+                 2: '天冲入坤，木克土凶'},
+        '天辅': {4: '天辅本宫，文采辅佐', 3: '天辅入震，文运亨通',
+                 2: '天辅入坤，木克土不利'},
+        '天心': {6: '天心本宫，医卜决策', 7: '天心入兑，金气得助',
+                 3: '天心入震，金克木凶'},
+        '天英': {9: '天英本宫，光明文化', 2: '天英入坤，火生土泄',
+                 1: '天英入坎，水火相克'},
+    }
+
+    # Q29: 奇门用神分类（不同事类取不同用神）
+    YONGSHEN_CLASSIFY = {
+        '求财': {'主用神': '生门', '辅助': '甲子戊', '参考': '天盘时干'},
+        '求官': {'主用神': '开门', '辅助': '值符', '参考': '年干'},
+        '疾病': {'主用神': '天芮星', '辅助': '天心星', '参考': '乙奇'},
+        '婚姻': {'主用神': '六合', '辅助': '乙奇/庚', '参考': '休门'},
+        '出行': {'主用神': '时干', '辅助': '景门', '参考': '马星'},
+        '诉讼': {'主用神': '惊门', '辅助': '开门', '参考': '辛/壬'},
+        '考试': {'主用神': '景门', '辅助': '天辅星', '参考': '丁奇'},
+        '失物': {'主用神': '时干', '辅助': '玄武', '参考': '日干'},
+        '行人': {'主用神': '时干', '辅助': '年命', '参考': '马星'},
+    }
+
+    # Q30: 格局叠加分析
+    def _analyze_ge_ju_overlay(self, ge_ju_analysis: dict) -> dict:
+        """Q30: 格局叠加分析 - 多个格局同时出现时的综合判断"""
+        if not ge_ju_analysis:
+            return {}
+        ji_ge = ge_ju_analysis.get('ji_ge', [])
+        xiong_ge = ge_ju_analysis.get('xiong_ge', [])
+
+        # 吉格叠加
+        ji_names = [g['name'] for g in ji_ge]
+        xiong_names = [g['name'] for g in xiong_ge]
+
+        overlay = []
+        # 三遁同现
+        san_dun = [n for n in ji_names if n in ('天遁', '地遁', '人遁')]
+        if len(san_dun) >= 2:
+            overlay.append({'name': '三遁并现', 'desc': f'{"+".join(san_dun)}同现，大吉大利'})
+
+        # 飞鸟跌穴+青龙返首
+        if '飞鸟跌穴' in ji_names and '青龙返首' in ji_names:
+            overlay.append({'name': '龙鸟呈祥', 'desc': '飞鸟跌穴+青龙返首，至吉之象'})
+
+        # 凶格叠加
+        if '太白入荧' in xiong_names and '五不遇时' in xiong_names:
+            overlay.append({'name': '双重凶格', 'desc': '太白入荧+五不遇时，大凶，诸事不宜'})
+
+        if '击刑' in xiong_names and '入墓' in xiong_names:
+            overlay.append({'name': '刑墓并见', 'desc': '击刑+入墓同现，事有大阻'})
+
+        return {
+            'overlays': overlay,
+            'count': len(overlay),
+            'desc': f'格局叠加{len(overlay)}组' if overlay else '无特殊叠加',
+        }
+
+    # Q31: 天干长生十二宫详细落宫
+    def _analyze_changsheng_detail(self, palaces: list, day_gan_zhi: str) -> dict:
+        """Q31: 日干长生十二宫详细落宫分析"""
+        if not day_gan_zhi or len(day_gan_zhi) < 1:
+            return {}
+        day_gan = day_gan_zhi[0]
+        if day_gan not in self.CHANGSHENG_GONG:
+            return {}
+        cs_map = self.CHANGSHENG_GONG[day_gan]
+        result = {}
+        for stage, gong in cs_map.items():
+            palace = None
+            for p in palaces:
+                if p['gong'] == gong:
+                    palace = p
+                    break
+            detail = self.CHANGSHENG_DETAIL.get(stage, {})
+            result[stage] = {
+                'gong': gong,
+                'palace_name': palace.get('name', '') if palace else '',
+                'men': palace.get('men', '') if palace else '',
+                'xing': palace.get('xing', '') if palace else '',
+                '含义': detail.get('含义', ''),
+                '吉凶': detail.get('吉凶', ''),
+            }
+        return {'day_gan': day_gan, 'stages': result}
+
+    # Q32: 门星神综合断语
+    def _generate_palace_summary(self, p: dict) -> str:
+        """Q32: 单宫综合断语生成"""
+        men = p.get('men', '')
+        xing = p.get('xing', '')
+        shen = p.get('shen', '')
+        tp = p.get('tian_pan', '')
+        dp = p.get('di_pan', '')
+        parts = []
+        men_jx = self.MEN_JIXIONG.get(men, '')
+        star_jx = self.STAR_JIXIONG.get(xing, '')
+        if men_jx == '吉' and star_jx == '吉':
+            parts.append('门星皆吉')
+        elif men_jx == '凶' and star_jx == '凶':
+            parts.append('门星皆凶')
+        if tp == dp:
+            parts.append('天地同干(伏吟)')
+        if (tp, dp) in self.GAN_HE:
+            parts.append('天地合德')
+        if men:
+            men_wx = self.MEN_WUXING.get(men, '')
+            gong_wx = self.GONG_WUXING.get(p.get('gong', 0), '')
+            ws = self._calc_wang_shuai(men_wx, gong_wx)
+            if ws:
+                parts.append(f'门{ws}')
+        return '，'.join(parts) if parts else '平'
+
+    # Q33: 八门迫墓详细分析
+    def _analyze_men_po_mu(self, palaces: list) -> list:
+        """Q33: 八门迫墓详细分析 - 区分门迫和门墓"""
+        result = []
+        for p in palaces:
+            g = p['gong']
+            men = p.get('men', '')
+            if not men or g == 5:
+                continue
+            men_wx = self.MEN_WUXING.get(men, '')
+            gong_wx = self.GONG_WUXING.get(g, '')
+            if not men_wx or not gong_wx:
+                continue
+            if self.WUXING_KE.get(men_wx) == gong_wx:
+                detail = self.MEN_PO_DETAIL.get(men, {})
+                result.append({
+                    'gong': g, 'men': men, 'type': '门迫',
+                    'men_wuxing': men_wx, 'gong_wuxing': gong_wx,
+                    'detail': detail.get('desc', ''),
+                    'desc': f'{men}({men_wx})迫{self.PALACE_NAMES.get(g, "")}({gong_wx})',
+                })
+        return result
+
+    # Q34: 天地盘十干克应完整速查
+    def _get_gan_ke_full(self, tp: str, dp: str) -> dict:
+        """Q34: 天盘地盘十干克应完整速查"""
+        key = f'{tp}加{dp}'
+        level = self.GE_JU_LEVEL.get(key, '')
+        detail = self.GAN_KE_DETAIL.get((tp, dp), {})
+        return {
+            'key': key, 'level': level,
+            'name': detail.get('name', key),
+            '类象': detail.get('类象', ''),
+            '应期': detail.get('应期', ''),
+        }
+
+    # Q35: 奇门综合断语
+    def _generate_qimen_summary(self, ge_ju_analysis: dict, yong_shen: dict,
+                                 fu_fan_yin: dict, ge_ju_strength: dict) -> str:
+        """Q35: 奇门综合断语生成"""
+        parts = []
+        # 格局力量
+        if ge_ju_strength:
+            parts.append(ge_ju_strength.get('summary', ''))
+        # 伏吟反吟
+        if fu_fan_yin and fu_fan_yin.get('type'):
+            parts.append(fu_fan_yin.get('desc', ''))
+        # 用神状态
+        if yong_shen and 'hour_gong' in yong_shen:
+            hg = yong_shen['hour_gong']
+            parts.append(f'用神落{hg.get("name", "")}')
+        return '；'.join(filter(None, parts))
