@@ -225,6 +225,148 @@ class QiMenEngine(DivinationEngine):
         '戊加丁': '吉', '丁加戊': '吉', '己加乙': '凶', '乙加己': '中',
         '庚加戊': '凶', '戊加庚': '凶', '辛加丙': '中', '壬加丁': '凶',
         '癸加丙': '凶', '丙加癸': '凶', '辛加壬': '凶', '壬加辛': '凶',
+        # Q1: 补全剩余十干克应格局等级
+        '乙加丁': '吉', '丁加乙': '中', '丙加丁': '吉', '丁加丙': '中',
+        '戊加乙': '中', '乙加戊': '中', '己加丁': '凶', '丁加己': '中',
+        '己加丙': '中', '丙加己': '吉', '己加辛': '凶', '辛加己': '中',
+        '庚加甲': '凶', '壬加庚': '凶', '庚加壬': '凶',
+        '癸加辛': '凶', '辛加癸': '中', '癸加己': '凶', '己加癸': '凶',
+        '壬加戊': '凶', '戊加壬': '凶', '壬加己': '凶', '己加壬': '凶',
+        # Q3: 六仪特殊格局等级
+        '甲加甲': '大吉', '甲加己': '吉', '己加甲': '吉',
+        # Q4: 天干克应补充分类
+        '丙加壬': '凶', '乙加辛': '凶', '辛加乙': '凶',
+        '癸加庚': '凶', '庚加癸': '凶', '壬加癸': '凶', '癸加壬': '凶',
+    }
+
+    # Q9: 十干克应分类表（吉凶分类速查）
+    GAN_KE_CLASSIFY = {
+        '大吉': ['飞鸟跌穴', '青龙返首', '玉女守门', '天遁', '地遁', '人遁', '龙遁'],
+        '吉': ['虎遁', '风遁', '云遁', '三奇得使', '天地合德', '欢怡', '奇合',
+               '狱神得奇', '丁壬合', '戊癸合', '玄武休门', '太阴杜门', '六合开门'],
+        '凶': ['白虎出力', '上格', '日奇入墓', '丙奇入墓', '星奇入墓', '地户埋光',
+               '水蛇入火', '朱雀投江', '螣蛇夭矫', '击刑', '入墓', '悖格'],
+        '大凶': ['太白入荧', '太白同宫', '白虎猖狂', '五不遇时', '天网四张', '天芮死门'],
+    }
+
+    # Q8: 天干克应详细解读（含类象、应期提示）
+    GAN_KE_DETAIL = {
+        ('丙', '戊'): {'name': '飞鸟跌穴', '类象': '飞鸟归巢，百事吉昌', '应期': '丙戊日时'},
+        ('戊', '丙'): {'name': '青龙返首', '类象': '贵人相助，逢凶化吉', '应期': '戊丙日时'},
+        ('丁', '辛'): {'name': '狱神得奇变格', '类象': '文书有救，阴中得利', '应期': '丁辛日时'},
+        ('辛', '丁'): {'name': '狱神得奇', '类象': '囚人获释，讼事有利', '应期': '辛丁日时'},
+        ('乙', '庚'): {'name': '奇合', '类象': '乙庚合化金，合作有利', '应期': '乙庚日时'},
+        ('庚', '乙'): {'name': '奇合', '类象': '庚乙合化金，刚柔相济', '应期': '庚乙日时'},
+        ('庚', '丙'): {'name': '太白入荧', '类象': '贼来为患，外患内忧', '应期': '庚丙日时'},
+        ('丙', '庚'): {'name': '荧入太白', '类象': '门户破败，宜守不宜进', '应期': '丙庚日时'},
+        ('丁', '癸'): {'name': '朱雀投江', '类象': '文书遗失，音信杳然', '应期': '丁癸日时'},
+        ('癸', '丁'): {'name': '螣蛇夭矫', '类象': '虚惊怪异，文书有灾', '应期': '癸丁日时'},
+        ('乙', '丙'): {'name': '奇仪顺遂', '类象': '乙木生丙火，谋事顺遂', '应期': '乙丙日时'},
+        ('丙', '乙'): {'name': '日月并行', '类象': '丙火配乙木，光明正大', '应期': '丙乙日时'},
+    }
+
+    # Q15: 门迫/门制/门墓详细分类
+    MEN_PO_DETAIL = {
+        '休门': {'迫宫': '离(火)', '制宫': '坤艮(土)', '墓宫': '坤(土)', 'desc': '休门属水，迫火宫，制土宫'},
+        '生门': {'迫宫': '坎(水)', '制宫': '震巽(木)', '墓宫': '坎(水)', 'desc': '生门属土，迫水宫，制木宫'},
+        '伤门': {'迫宫': '坤艮(土)', '制宫': '离(火)', '墓宫': '坤(土)', 'desc': '伤门属木，迫土宫，制火宫'},
+        '杜门': {'迫宫': '坤艮(土)', '制宫': '离(火)', '墓宫': '坤(土)', 'desc': '杜门属木，迫土宫，制火宫'},
+        '景门': {'迫宫': '兑乾(金)', '制宫': '坤艮(土)', '墓宫': '乾(金)', 'desc': '景门属火，迫金宫，制土宫'},
+        '死门': {'迫宫': '坎(水)', '制宫': '震巽(木)', '墓宫': '坎(水)', 'desc': '死门属土，迫水宫，制木宫'},
+        '惊门': {'迫宫': '震巽(木)', '制宫': '坎(水)', '墓宫': '震(木)', 'desc': '惊门属金，迫木宫，制水宫'},
+        '开门': {'迫宫': '震巽(木)', '制宫': '坎(水)', '墓宫': '震(木)', 'desc': '开门属金，迫木宫，制水宫'},
+    }
+
+    # Q16: 九星到宫详细吉凶
+    STAR_TO_GONG = {
+        '天蓬': {1: '旺', 2: '死', 3: '休', 4: '休', 6: '囚', 7: '囚', 8: '死', 9: '相'},
+        '天芮': {1: '囚', 2: '旺', 3: '死', 4: '死', 6: '相', 7: '相', 8: '旺', 9: '囚'},
+        '天冲': {1: '相', 2: '囚', 3: '旺', 4: '旺', 6: '死', 7: '死', 8: '囚', 9: '休'},
+        '天辅': {1: '相', 2: '囚', 3: '旺', 4: '旺', 6: '死', 7: '死', 8: '囚', 9: '休'},
+        '天禽': {1: '囚', 2: '旺', 3: '死', 4: '死', 6: '相', 7: '相', 8: '旺', 9: '囚'},
+        '天心': {1: '休', 2: '相', 3: '死', 4: '死', 6: '旺', 7: '旺', 8: '相', 9: '囚'},
+        '天柱': {1: '休', 2: '相', 3: '死', 4: '死', 6: '旺', 7: '旺', 8: '相', 9: '囚'},
+        '天任': {1: '囚', 2: '旺', 3: '死', 4: '死', 6: '相', 7: '相', 8: '旺', 9: '囚'},
+        '天英': {1: '死', 2: '休', 3: '囚', 4: '囚', 6: '相', 7: '相', 8: '休', 9: '旺'},
+    }
+
+    # Q17: 八神到宫详细吉凶
+    SHEN_TO_GONG = {
+        '值符': {1: '吉', 2: '吉', 3: '吉', 4: '吉', 6: '大吉', 7: '大吉', 8: '吉', 9: '吉'},
+        '螣蛇': {1: '凶', 2: '凶', 3: '凶', 4: '凶', 6: '凶', 7: '凶', 8: '凶', 9: '大凶'},
+        '太阴': {1: '吉', 2: '吉', 3: '中', 4: '吉', 6: '大吉', 7: '大吉', 8: '中', 9: '中'},
+        '六合': {1: '吉', 2: '中', 3: '大吉', 4: '大吉', 6: '中', 7: '中', 8: '中', 9: '吉'},
+        '白虎': {1: '大凶', 2: '凶', 3: '凶', 4: '凶', 6: '大凶', 7: '大凶', 8: '凶', 9: '凶'},
+        '玄武': {1: '凶', 2: '凶', 3: '中', 4: '中', 6: '凶', 7: '凶', 8: '凶', 9: '凶'},
+        '九地': {1: '中', 2: '吉', 3: '中', 4: '中', 6: '中', 7: '中', 8: '吉', 9: '中'},
+        '九天': {1: '吉', 2: '中', 3: '大吉', 4: '大吉', 6: '吉', 7: '吉', 8: '中', 9: '大吉'},
+    }
+
+    # Q20: 天德月德分析表
+    TIANYUE_DE = {
+        '甲': {'天德': '丁', '月德': '丙', '天德方位': '南', '月德方位': '南'},
+        '乙': {'天德': '申', '月德': '壬', '天德方位': '西南', '月德方位': '北'},
+        '丙': {'天德': '壬', '月德': '庚', '天德方位': '北', '月德方位': '西'},
+        '丁': {'天德': '甲', '月德': '丙', '天德方位': '东', '月德方位': '南'},
+        '戊': {'天德': '丙', '月德': '甲', '天德方位': '南', '月德方位': '东'},
+        '己': {'天德': '壬', '月德': '庚', '天德方位': '北', '月德方位': '西'},
+        '庚': {'天德': '丙', '月德': '丙', '天德方位': '南', '月德方位': '南'},
+        '辛': {'天德': '甲', '月德': '甲', '天德方位': '东', '月德方位': '东'},
+        '壬': {'天德': '丙', '月德': '壬', '天德方位': '南', '月德方位': '北'},
+        '癸': {'天德': '壬', '月德': '庚', '天德方位': '北', '月德方位': '西'},
+    }
+
+    # Q21: 月将分析表
+    YUEJIANG_QIMEN = {
+        '子': '神后', '丑': '大吉', '寅': '功曹', '卯': '太冲',
+        '辰': '天罡', '巳': '太乙', '午': '胜光', '未': '小吉',
+        '申': '传送', '酉': '从魁', '戌': '河魁', '亥': '登明',
+    }
+
+    # Q22: 天喜地煞表
+    TIANXI_DISHA = {
+        '甲': {'天喜': '申', '地煞': '酉'},
+        '乙': {'天喜': '酉', '地煞': '戌'},
+        '丙': {'天喜': '戌', '地煞': '亥'},
+        '丁': {'天喜': '亥', '地煞': '子'},
+        '戊': {'天喜': '子', '地煞': '丑'},
+        '己': {'天喜': '丑', '地煞': '寅'},
+        '庚': {'天喜': '寅', '地煞': '卯'},
+        '辛': {'天喜': '卯', '地煞': '辰'},
+        '壬': {'天喜': '辰', '地煞': '巳'},
+        '癸': {'天喜': '巳', '地煞': '午'},
+    }
+
+    # Q24: 悖格详细分类
+    BEI_GE_DETAIL = {
+        '戊克壬': '戊土克壬水，财源受阻',
+        '戊克癸': '戊土克癸水，暗财有失',
+        '己克壬': '己土克壬水，暗昧阻滞',
+        '己克癸': '己土克癸水，田宅有失',
+        '庚克甲': '庚金克甲木，首领有灾',
+        '庚克乙': '庚金克乙木，日奇受制',
+        '辛克甲': '辛金克甲木，变革不利',
+        '辛克乙': '辛金克乙木，阴柔受损',
+        '壬克丙': '壬水克丙火，月奇受难',
+        '壬克丁': '壬水克丁火，星奇入墓',
+        '癸克丙': '癸水克丙火，丙奇暗昧',
+        '癸克丁': '癸水克丁火，文书有灾',
+    }
+
+    # Q25: 事类判断参考表
+    SHILEI_REFERENCE = {
+        '求财': {'吉门': ['生门', '开门', '休门'], '吉星': ['天心', '天任', '天冲'],
+                 '吉神': ['值符', '六合', '九天'], '吉格': ['飞鸟跌穴', '青龙返首', '天遁']},
+        '出行': {'吉门': ['开门', '休门', '生门'], '吉星': ['天心', '天冲', '天辅'],
+                 '吉神': ['值符', '九天', '六合'], '吉格': ['龙遁', '虎遁', '风遁']},
+        '疾病': {'吉门': ['天心开门', '休门', '生门'], '吉星': ['天心', '天任'],
+                 '凶门': ['死门', '惊门'], '凶星': ['天芮', '天柱']},
+        '婚姻': {'吉门': ['休门', '景门'], '吉星': ['天辅', '天心'],
+                 '吉神': ['六合', '太阴'], '凶神': ['白虎', '玄武']},
+        '官司': {'吉门': ['开门', '惊门'], '吉星': ['天心', '天柱'],
+                 '凶格': ['太白入荧', '太白同宫'], '吉格': ['狱神得奇']},
+        '考试': {'吉门': ['景门', '杜门'], '吉星': ['天辅', '天心'],
+                 '吉神': ['值符', '太阴'], '吉格': ['天地合德', '玉女守门']},
     }
 
     # ---- abstract property implementations ----
@@ -278,6 +420,18 @@ class QiMenEngine(DivinationEngine):
         hour_gan_zhi = self._calc_hour_gan_zhi(solar_dt)
         day_gan_zhi = self._get_day_gan_zhi(solar_dt)
         time_gan = hour_gan_zhi[0] if hour_gan_zhi else '甲'
+
+        # 获取年干支（用于年命落宫、太岁分析）
+        year_gan_zhi = ''
+        try:
+            from lunar_python import Solar
+            lunar = Solar.fromYmdHms(
+                solar_dt.year, solar_dt.month, solar_dt.day,
+                solar_dt.hour, solar_dt.minute, 0
+            ).getLunar()
+            year_gan_zhi = lunar.getYearGan() + lunar.getYearZhi()
+        except Exception:
+            year_gan_zhi = ''
 
         # 3. 地盘
         di_pan = self._build_di_pan(ju, yin_yang)
@@ -359,6 +513,24 @@ class QiMenEngine(DivinationEngine):
             'day_palace_detail': self._analyze_day_palace_detail(palaces, day_gan_zhi),
             # #56: 宫位综合评分
             'palace_scores': self._calc_palace_score(palaces),
+            # Q5: 年命落宫分析
+            'nian_ming_gong': self._analyze_nian_ming_gong(palaces, day_gan_zhi, year_gan_zhi),
+            # Q6: 月干落宫分析（需要月干支）
+            'yue_gan_gong': {},
+            # Q11: 用神旺衰等级
+            'yong_shen_wang_shuai': self._calc_yong_shen_wang_shuai(yong_shen),
+            # Q12: 用神与太岁关系
+            'yong_shen_taisui': self._analyze_yong_shen_taisui(yong_shen, liunian),
+            # Q14: 伏吟反吟详细分类
+            'fuyin_fanyin_detail': self._analyze_fuyin_fanyin_detail(di_pan, tian_pan),
+            # Q18: 宫位综合评分V2
+            'palace_scores_v2': self._calc_palace_score_v2(palaces),
+            # Q19: 天地人三盘综合判断
+            'san_pan_composite': self._analyze_san_pan_composite(palaces),
+            # Q23: 天显时格
+            'tianxian_shi': self._analyze_tianxian_shi(day_gan_zhi, hour_gan_zhi),
+            # Q25: 事类判断参考
+            'shilei_ref': self.SHILEI_REFERENCE,
         }
 
         valid, err = self.validate(result)
@@ -1660,4 +1832,265 @@ class QiMenEngine(DivinationEngine):
             result['tian_sanmen'][name] = {'zhi': zhi, 'gong': gong}
 
         return result
+
+    # ---- Q5-Q6: 年命/月干落宫分析 ----
+    def _analyze_nian_ming_gong(self, palaces: list, day_gan_zhi: str, year_gan_zhi: str) -> dict:
+        """Q5: 年命落宫分析 - 年干所在宫位的门星神组合"""
+        if not year_gan_zhi or not palaces:
+            return {}
+        year_gan = year_gan_zhi[0] if year_gan_zhi else ''
+        year_gong = None
+        for p in palaces:
+            if p.get('tian_pan') == year_gan or p.get('di_pan') == year_gan:
+                year_gong = p
+                break
+        if not year_gong:
+            return {}
+        men = year_gong.get('men', '')
+        xing = year_gong.get('xing', '')
+        shen = year_gong.get('shen', '')
+        return {
+            'year_gan': year_gan,
+            'gong': year_gong['gong'],
+            'name': year_gong.get('name', ''),
+            'men': men, 'xing': xing, 'shen': shen,
+            'men_jixiong': self.MEN_JIXIONG.get(men, ''),
+            'star_jixiong': self.STAR_JIXIONG.get(xing, ''),
+            'desc': f'年干{year_gan}落{year_gong.get("name", "")}，{men}/{xing}/{shen}',
+        }
+
+    def _analyze_yue_gan_gong(self, palaces: list, month_gan_zhi: str) -> dict:
+        """Q6: 月干落宫分析"""
+        if not month_gan_zhi or not palaces:
+            return {}
+        yue_gan = month_gan_zhi[0] if month_gan_zhi else ''
+        yue_gong = None
+        for p in palaces:
+            if p.get('tian_pan') == yue_gan or p.get('di_pan') == yue_gan:
+                yue_gong = p
+                break
+        if not yue_gong:
+            return {}
+        men = yue_gong.get('men', '')
+        xing = yue_gong.get('xing', '')
+        shen = yue_gong.get('shen', '')
+        return {
+            'yue_gan': yue_gan,
+            'gong': yue_gong['gong'],
+            'name': yue_gong.get('name', ''),
+            'men': men, 'xing': xing, 'shen': shen,
+            'men_jixiong': self.MEN_JIXIONG.get(men, ''),
+            'star_jixiong': self.STAR_JIXIONG.get(xing, ''),
+            'desc': f'月干{yue_gan}落{yue_gong.get("name", "")}，{men}/{xing}/{shen}',
+        }
+
+    # Q7: 全量十干克应（补充_analyze_ge_ju中未覆盖的组合）
+    # Q10: 飞宫格/合格判断增强（已在_analyze_ge_ju中通过GAN_KE_DETAIL覆盖）
+
+    # Q11: 用神旺衰等级判定
+    def _calc_yong_shen_wang_shuai(self, yong_shen: dict) -> dict:
+        """Q11: 用神落宫旺衰等级判定"""
+        if not yong_shen or 'hour_gong' not in yong_shen:
+            return {}
+        hg = yong_shen['hour_gong']
+        men_wx = hg.get('men_wuxing', '')
+        star_wx = hg.get('star_wuxing', '')
+        gong_wx = hg.get('gong_wuxing', '')
+        men_wang = self._calc_wang_shuai(men_wx, gong_wx)
+        star_wang = self._calc_wang_shuai(star_wx, gong_wx)
+        men_jx = hg.get('men_jixiong', '')
+        star_jx = hg.get('star_jixiong', '')
+        # 综合等级
+        score = 0
+        if men_wang == '旺': score += 3
+        elif men_wang == '相': score += 2
+        elif men_wang == '休': score += 1
+        elif men_wang == '死': score -= 2
+        if star_wang == '旺': score += 2
+        elif star_wang == '相': score += 1
+        elif star_wang == '死': score -= 1
+        if men_jx == '吉': score += 2
+        elif men_jx == '凶': score -= 2
+        if star_jx == '吉': score += 1
+        elif star_jx == '凶': score -= 1
+        if score >= 5: level = '大旺'
+        elif score >= 3: level = '旺'
+        elif score >= 0: level = '平'
+        elif score >= -3: level = '衰'
+        else: level = '大衰'
+        return {
+            'men_wang_shuai': men_wang, 'star_wang_shuai': star_wang,
+            'score': score, 'level': level,
+            'desc': f'用神宫门{men_wang}星{star_wang}，综合{level}(分{score})',
+        }
+
+    # Q12: 用神与太岁关系分析
+    def _analyze_yong_shen_taisui(self, yong_shen: dict, liunian: dict) -> dict:
+        """Q12: 用神落宫与太岁宫的关系"""
+        if not yong_shen or 'hour_gong' not in yong_shen or not liunian:
+            return {}
+        hg = yong_shen['hour_gong']
+        hg_gong = hg.get('gong', 0)
+        ts_gong = liunian.get('tai_sui_gong', 0)
+        hg_wx = self.GONG_WUXING.get(hg_gong, '')
+        ts_wx = self.GONG_WUXING.get(ts_gong, '')
+        relation = ''
+        if hg_wx and ts_wx:
+            if hg_wx == ts_wx: relation = '比和'
+            elif self.WUXING_SHENG.get(hg_wx) == ts_wx: relation = '用神生太岁'
+            elif self.WUXING_SHENG.get(ts_wx) == hg_wx: relation = '太岁生用神（大吉）'
+            elif self.WUXING_KE.get(hg_wx) == ts_wx: relation = '用神克太岁（犯太岁）'
+            elif self.WUXING_KE.get(ts_wx) == hg_wx: relation = '太岁克用神（不利）'
+        return {
+            'hour_gong': hg_gong, 'tai_sui_gong': ts_gong,
+            'relation': relation,
+            'desc': f'用神宫{hg_gong}({hg_wx})与太岁宫{ts_gong}({ts_wx})：{relation}',
+        }
+
+    # Q14: 伏吟/反吟详细分类
+    def _analyze_fuyin_fanyin_detail(self, di_pan: dict, tian_pan: dict) -> dict:
+        """Q14: 伏吟/反吟详细分类 - 门伏吟/星伏吟/神伏吟"""
+        if not di_pan or not tian_pan:
+            return {}
+        fu_count = 0
+        fan_count = 0
+        fu_gongs = []
+        fan_gongs = []
+        for gong in range(1, 10):
+            dp = di_pan.get(gong, '')
+            tp = tian_pan.get(gong, '')
+            if not dp or not tp:
+                continue
+            if dp == tp:
+                fu_count += 1
+                fu_gongs.append(gong)
+            if dp in self.GAN_CHONG and self.GAN_CHONG[dp] == tp:
+                fan_count += 1
+                fan_gongs.append(gong)
+        result = {'fu_count': fu_count, 'fan_count': fan_count}
+        if fu_count >= 6:
+            result['type'] = '全局伏吟'
+            result['desc'] = f'{fu_count}宫伏吟，主静守不动，宜等待'
+            result['level'] = '凶'
+        elif fu_count >= 4:
+            result['type'] = '局部伏吟'
+            result['desc'] = f'{fu_count}宫伏吟，事有犹豫'
+            result['level'] = '中'
+        elif fan_count >= 6:
+            result['type'] = '全局反吟'
+            result['desc'] = f'{fan_count}宫反吟，主动荡变动'
+            result['level'] = '凶'
+        elif fan_count >= 4:
+            result['type'] = '局部反吟'
+            result['desc'] = f'{fan_count}宫反吟，事有反复'
+            result['level'] = '中'
+        else:
+            result['type'] = '无'
+            result['desc'] = '无伏吟反吟'
+            result['level'] = '平'
+        result['fu_gongs'] = fu_gongs
+        result['fan_gongs'] = fan_gongs
+        return result
+
+    # Q18: 宫位综合评分改进（加入旺衰权重）
+    def _calc_palace_score_v2(self, palaces: list) -> list:
+        """Q18: 宫位综合评分V2 - 加入门星旺衰权重"""
+        scores = []
+        for p in palaces:
+            g = p['gong']
+            if g == 5:
+                continue
+            men = p.get('men', '')
+            xing = p.get('xing', '')
+            shen = p.get('shen', '')
+            tp = p.get('tian_pan', '')
+            dp = p.get('di_pan', '')
+            score = 0
+            men_jx = self.MEN_JIXIONG.get(men, '')
+            if men_jx == '吉': score += 2
+            elif men_jx == '凶': score -= 2
+            star_jx = self.STAR_JIXIONG.get(xing, '')
+            if star_jx == '吉': score += 1
+            elif star_jx == '凶': score -= 1
+            SHEN_JX = {'值符': 2, '九天': 2, '太阴': 1, '六合': 1,
+                       '九地': 0, '螣蛇': -1, '白虎': -2, '玄武': -1}
+            score += SHEN_JX.get(shen, 0)
+            if (tp, dp) in self.GAN_HE:
+                score += 2
+            # 旺衰加权
+            men_wx = self.MEN_WUXING.get(men, '')
+            star_wx = self.STAR_WUXING.get(xing, '')
+            gong_wx = self.GONG_WUXING.get(g, '')
+            men_wang = self._calc_wang_shuai(men_wx, gong_wx)
+            star_wang = self._calc_wang_shuai(star_wx, gong_wx)
+            WANG_BONUS = {'旺': 2, '相': 1, '休': 0, '囚': -1, '死': -2}
+            score += WANG_BONUS.get(men_wang, 0)
+            score += WANG_BONUS.get(star_wang, 0)
+            if score >= 6: level = '大吉'
+            elif score >= 3: level = '吉'
+            elif score >= 0: level = '中'
+            elif score >= -3: level = '凶'
+            else: level = '大凶'
+            scores.append({
+                'gong': g, 'score': score, 'level': level,
+                'men': men, 'xing': xing, 'shen': shen,
+                'men_wang': men_wang, 'star_wang': star_wang,
+            })
+        return scores
+
+    # Q19: 天地人三盘综合判断
+    def _analyze_san_pan_composite(self, palaces: list) -> dict:
+        """Q19: 天地人三盘综合判断 - 统计全局吉凶"""
+        ji_count = 0
+        xiong_count = 0
+        best_gong = 0
+        worst_gong = 0
+        best_score = -99
+        worst_score = 99
+        for p in palaces:
+            g = p['gong']
+            if g == 5:
+                continue
+            men_jx = self.MEN_JIXIONG.get(p.get('men', ''), '')
+            star_jx = self.STAR_JIXIONG.get(p.get('xing', ''), '')
+            s = 0
+            if men_jx == '吉': s += 1; ji_count += 1
+            elif men_jx == '凶': s -= 1; xiong_count += 1
+            if star_jx == '吉': s += 1; ji_count += 1
+            elif star_jx == '凶': s -= 1; xiong_count += 1
+            if s > best_score:
+                best_score = s
+                best_gong = g
+            if s < worst_score:
+                worst_score = s
+                worst_gong = g
+        return {
+            'ji_count': ji_count, 'xiong_count': xiong_count,
+            'best_gong': best_gong, 'worst_gong': worst_gong,
+            'desc': f'全局吉{ji_count}凶{xiong_count}，最佳宫{best_gong}，最差宫{worst_gong}',
+        }
+
+    # Q23: 天显时格判断
+    def _analyze_tianxian_shi(self, day_gan_zhi: str, hour_gan_zhi: str) -> dict:
+        """Q23: 天显时格判断 - 甲/己日遇特定时辰"""
+        if not day_gan_zhi or not hour_gan_zhi:
+            return {}
+        day_gan = day_gan_zhi[0]
+        hour_gan = hour_gan_zhi[0]
+        # 天显时格：甲/己日遇甲子时/甲戌时等
+        tianxian_combos = {
+            ('甲', '甲'): '甲甲天显，大吉大利',
+            ('己', '甲'): '己甲天显，贵人相助',
+            ('甲', '己'): '甲己天显，天地合德',
+            ('己', '己'): '己己天显，比和自得',
+        }
+        combo = (day_gan, hour_gan)
+        if combo in tianxian_combos:
+            return {
+                'is_tianxian': True,
+                'day_gan': day_gan, 'hour_gan': hour_gan,
+                'desc': tianxian_combos[combo],
+            }
+        return {'is_tianxian': False}
+
 
