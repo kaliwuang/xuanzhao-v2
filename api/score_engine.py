@@ -41,6 +41,18 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
     """
     result = {}
 
+    # 短名 → 全名 映射,接受 method=紫微 / method=紫微斗数 两种写法
+    NAME_ALIASES = {
+        "八字": "八字",
+        "紫微": "紫微斗数",
+        "六爻": "六爻",
+        "奇门": "奇门遁甲",
+        "大六壬": "大六壬",
+        "太乙": "太乙神数",
+        "占星": "占星",
+        "姓名学": "姓名学",
+    }
+
     scorers = {
         "八字": _score_bazi,
         "紫微斗数": _score_ziwei,
@@ -52,8 +64,10 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
         "姓名学": _score_xingming,
     }
 
+    target_name = NAME_ALIASES.get(method, method)
+
     for name, fn in scorers.items():
-        if method != "all" and method != name:
+        if target_name != "all" and target_name != name:
             continue
         try:
             score, analysis, strengths, weaknesses = fn(udm)
@@ -67,7 +81,7 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
             logger.warning(f"评分失败 [{name}]: {e}")
             result[name] = {
                 "score": 0,
-                "analysis": f"这门术法暂时没法给你打分，出了点小问题：{e}",
+                "analysis": f"这门术法暂时没法给你打分,出了点小问题:{e}",
                 "strengths": [],
                 "weaknesses": [f"评分引擎异常: {e}"],
             }

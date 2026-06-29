@@ -951,6 +951,21 @@ class TestScoreAll:
         assert len(result) == 1
         assert "八字" in result
 
+    def test_score_all_short_name_alias(self):
+        """method 支持短名(前端传的)"""
+        udm = self._make_full_udm()
+        # 紫微 是前端 data-method 的短名,应映射到 紫微斗数
+        result = score_all(udm, method="紫微")
+        assert "紫微斗数" in result
+        # 奇门/太乙 同理
+        result = score_all(udm, method="奇门")
+        assert "奇门遁甲" in result
+        result = score_all(udm, method="太乙")
+        assert "太乙神数" in result
+        # 全名仍兼容
+        result = score_all(udm, method="紫微斗数")
+        assert "紫微斗数" in result
+
     def test_score_all_engine_exception_handled(self):
         """引擎异常不应导致整体崩溃"""
         udm = MagicMock()
