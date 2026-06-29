@@ -5,7 +5,6 @@
 import logging
 import re
 import traceback
-import hashlib
 import time
 import calendar
 from fastapi import APIRouter, Query
