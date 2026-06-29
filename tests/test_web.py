@@ -130,55 +130,59 @@ class TestKnowledgeBase:
 
 
 class TestEngines:
-    """引擎单元测试"""
+    """引擎单元测试（通过TimeEngine预校时）"""
+
+    def _corrected(self):
+        from engine.time_engine import TimeEngine
+        return TimeEngine().correct("1990-01-15 08:30", "北京")
 
     def test_bazi_engine(self):
         """八字引擎正常工作"""
         from engine.bazi_engine import BaziEngine
         eng = BaziEngine()
-        result = eng.analyze("1990-01-15 08:30", "北京", 1)
+        result = eng.analyze(self._corrected(), 1)
         assert result is not None
 
     def test_ziwei_engine(self):
         """紫微引擎正常工作"""
         from engine.ziwei_engine import ZiWeiEngine
         eng = ZiWeiEngine()
-        result = eng.analyze("1990-01-15 08:30", "北京", 1)
+        result = eng.analyze(self._corrected(), 1)
         assert result is not None
 
     def test_liuyao_engine(self):
         """六爻引擎正常工作"""
         from engine.liuyao_engine import LiuYaoEngine
         eng = LiuYaoEngine()
-        result = eng.analyze("1990-01-15 08:30", "北京", 1)
+        result = eng.analyze(self._corrected(), 1)
         assert result is not None
 
     def test_qimen_engine(self):
         """奇门引擎正常工作"""
         from engine.qimen_engine import QiMenEngine
         eng = QiMenEngine()
-        result = eng.analyze("1990-01-15 08:30", "北京", 1)
+        result = eng.analyze(self._corrected(), 1)
         assert result is not None
 
     def test_liuren_engine(self):
         """大六壬引擎正常工作"""
         from engine.liuren_engine import LiuRenEngine
         eng = LiuRenEngine()
-        result = eng.analyze("1990-01-15 08:30", "北京", 1)
+        result = eng.analyze(self._corrected(), 1)
         assert result is not None
 
     def test_taiyi_engine(self):
         """太乙引擎正常工作"""
         from engine.taiyi_engine import TaiYiEngine
         eng = TaiYiEngine()
-        result = eng.analyze("1990-01-15 08:30", "北京", 1)
+        result = eng.analyze(self._corrected(), 1)
         assert result is not None
 
     def test_astro_engine(self):
         """占星引擎正常工作"""
         from engine.astro_engine import AstroEngine
         eng = AstroEngine()
-        result = eng.analyze("1990-01-15 08:30", "北京", 1)
+        result = eng.analyze(self._corrected(), 1)
         assert result is not None
 
 

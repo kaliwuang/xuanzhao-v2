@@ -815,7 +815,7 @@ class ZiWeiEngine(DivinationEngine):
         for pal in palaces:
             sha_stars = []
             for star in pal.get('minor_stars', []):
-                if star['name'] in INausPICIOUS_STARS:
+                if star['name'] in INAUSPICIOUS_STARS:
                     sha_stars.append(star['name'])
             if sha_stars:
                 sha_distribution[pal['name']] = sha_stars
@@ -961,7 +961,7 @@ class ZiWeiEngine(DivinationEngine):
                         brightness_scores.append(BRIGHTNESS_SCORE.get(star['brightness'], 2))
                     if star['name'] in AUSPICIOUS_STARS:
                         auspicious_count += 1
-                    if star['name'] in INausPICIOUS_STARS:
+                    if star['name'] in INAUSPICIOUS_STARS:
                         inauspicious_count += 1
 
             result[palace_name] = {
@@ -1199,7 +1199,7 @@ class ZiWeiEngine(DivinationEngine):
         for star in palace.get('minor_stars', []):
             if star['name'] in AUSPICIOUS_STARS:
                 auspicious += 1
-            if star['name'] in INausPICIOUS_STARS:
+            if star['name'] in INAUSPICIOUS_STARS:
                 inauspicious += 1
             if star['name'] in PEACH_BLOSSOM_STARS:
                 peach += 1
@@ -1766,7 +1766,7 @@ class ZiWeiEngine(DivinationEngine):
         health_pal = next((pn for pn in palace_names if pn == '疾厄'), '')
         pal = next((p for p in palaces if p['name'] == '疾厄'), {})
         ji_xiong = self._calc_palace_ji_xiong(pal, san_fang_data.get('疾厄', {}))
-        sha_stars = [s['name'] for s in pal.get('minor_stars', []) if s['name'] in INausPICIOUS_STARS]
+        sha_stars = [s['name'] for s in pal.get('minor_stars', []) if s['name'] in INAUSPICIOUS_STARS]
         return {
             'health_palace_hit': bool(health_pal),
             'ji_xiong': ji_xiong,

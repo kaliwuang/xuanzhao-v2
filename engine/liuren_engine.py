@@ -538,6 +538,12 @@ class LiuRenEngine(DivinationEngine):
         si_ke_list = [list(k) if isinstance(k, (tuple, list)) else k for k in si_ke]
         san_chuan_list = [list(c) if isinstance(c, (tuple, list)) else c for c in san_chuan]
 
+        xun_kong = self._calc_xun_kong(day_gan, day_zhi)
+        san_chuan_detail = self._analyze_san_chuan_detail(san_chuan_raw, day_gan, tian_jiang)
+        jiang_arrangement = self._analyze_jiang_arrangement(di_to_jiang, day_gan)
+        ke_chuan_score = self._calc_ke_chuan_score(si_ke_raw, san_chuan_raw, tian_jiang, day_gan)
+        day_gan_wangshuai = self._analyze_day_gan_wang_shuai(day_gan, day_zhi, month_zhi)
+
         return {
             # 引擎标识
             "engine": self.name,
@@ -577,9 +583,9 @@ class LiuRenEngine(DivinationEngine):
             "date": orig.strftime("%Y-%m-%d %H:%M"),
             # 新增分析
             "shensha": self._analyze_shensha(day_gan, day_zhi, tian_jiang),
-            "san_chuan_detail": self._analyze_san_chuan_detail(san_chuan_raw, day_gan, tian_jiang),
-            "jiang_arrangement": self._analyze_jiang_arrangement(di_to_jiang, day_gan),
-            "xun_kong": self._calc_xun_kong(day_gan, day_zhi),
+            "san_chuan_detail": san_chuan_detail,
+            "jiang_arrangement": jiang_arrangement,
+            "xun_kong": xun_kong,
             "zhi_relations": self._analyze_zhi_relations(tian_jiang, di_to_tian),
             # #6: 四课六亲关系
             "si_ke_liuqin": self._analyze_si_ke_liuqin(si_ke_raw, day_gan),
@@ -620,8 +626,8 @@ class LiuRenEngine(DivinationEngine):
             # L25: 综合断语
             "summary_text": self._generate_summary(
                 si_ke_analysis, san_chuan_detail, jiang_arrangement,
-                self._calc_ke_chuan_score(si_ke_raw, san_chuan_raw, tian_jiang, day_gan),
-                self._analyze_day_gan_wang_shuai(day_gan, day_zhi, month_zhi)),
+                ke_chuan_score,
+                day_gan_wangshuai),
         }
 
     def validate(self, data: dict) -> tuple[bool, Optional[str]]:

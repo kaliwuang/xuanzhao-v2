@@ -458,6 +458,9 @@ class QiMenEngine(DivinationEngine):
         # 7. 格局分析（提前计算，供后续使用）
         ge_ju_analysis = self._analyze_ge_ju(palaces, ba_men, jiu_xing, ba_shen, xun_kong, day_gan_zhi, hour_gan_zhi, zhi_shi_door)
 
+        yong_shen = self._analyze_yong_shen(palaces, hour_gan_zhi, day_gan_zhi)
+        liunian = self._build_liunian(solar_dt, di_pan, tian_pan, palaces)
+
         result = {
             'engine': self.name,
             'engine_en': self.name_en,
@@ -484,7 +487,7 @@ class QiMenEngine(DivinationEngine):
             'san_pan_summary': self._build_san_pan_summary(palaces),
             'ge_ju_analysis': ge_ju_analysis,
             # 流年分析
-            'liunian': self._build_liunian(solar_dt, di_pan, tian_pan, palaces),
+            'liunian': liunian,
             # #47: 马星（驿马）分析
             'ma_xing': self._analyze_ma_xing(day_gan_zhi, palaces),
             # #48: 天乙贵人落宫
@@ -502,7 +505,7 @@ class QiMenEngine(DivinationEngine):
             # 三奇六仪位置
             'san_qi_positions': self._find_sanqi_positions(di_pan, tian_pan),
             # 用神落宫
-            'yong_shen': self._analyze_yong_shen(palaces, hour_gan_zhi, day_gan_zhi),
+            'yong_shen': yong_shen,
             # 格局力量统计
             'ge_ju_strength': self._calc_ge_ju_strength(ge_ju_analysis),
             # #41: 门星神组合详细解读
