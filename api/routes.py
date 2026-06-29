@@ -795,19 +795,14 @@ def validate_accuracy(
     """验证排盘准确性：对比 lunar-python 直接计算结果（含真太阳时校正）"""
     try:
         from lunar_python import Solar, EightChar
-        from datetime import datetime
 
-        # 解析时间
-        for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M"]:
-            try:
-                dt = datetime.strptime(birth.strip(), fmt)
-                break
-            except ValueError:
-                continue
-        else:
-            return JSONResponse(status_code=400, content={"error": "无法解析时间"})
+        # 复用 _validate_birth 校验格式,避免重复格式列表
+        try:
+            birth = _validate_birth(birth)
+        except ValueError as e:
+            return JSONResponse(status_code=400, content={"error": str(e)})
 
-        # 通过真太阳时校正（与引擎使用相同时间）
+        # 通过真太阳时校正(与引擎使用相同时间)
         time_engine = get_time_engine()
         corrected = time_engine.correct(birth, location)
         corrected_dt = corrected.bazi_day_pillar_date
@@ -826,7 +821,7 @@ def validate_accuracy(
         orch = get_orchestrator()
         udm = orch.run_all(corrected, gender_code)
 
-        # 对比（两者都使用真太阳时校正后的时间）
+        # 对比(两者都使用真太阳时校正后的时间)
         direct = {
             "year": ec.getYearGan() + ec.getYearZhi(),
             "month": ec.getMonthGan() + ec.getMonthZhi(),
