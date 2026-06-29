@@ -857,22 +857,25 @@ def validate_accuracy(
 
 @router.get("/api/figures")
 def get_figures():
-    """获取所有可用人物"""
+    """获取所有可用人物（精简版）"""
     try:
         from engine.perspective_engine import FIGURES
         return {
-            fid: {
-                "name": f.name,
-                "title": f.title,
-                "category": f.category,
-                "faction": f.faction,
-                "expertise": f.expertise,
-                "primary_method": f.primary_method,
-                "catchphrase": f.catchphrase,
-                "bio": f.bio,
-                "soul": f.soul,
-            }
-            for fid, f in FIGURES.items()
+            "total": len(FIGURES),
+            "figures": {
+                fid: {
+                    "name": f.name,
+                    "title": f.title,
+                    "category": f.category,
+                    "faction": f.faction,
+                    "expertise": f.expertise,
+                    "primary_method": f.primary_method,
+                    "catchphrase": f.catchphrase,
+                    "bio": f.bio,
+                    "soul": f.soul,
+                }
+                for fid, f in FIGURES.items()
+            },
         }
     except Exception as e:
         return _error_response(e)
