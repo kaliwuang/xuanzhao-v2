@@ -118,6 +118,10 @@ app.include_router(router)
 from api.lottery_routes import router as lottery_router
 app.include_router(lottery_router)
 
+# 八术法共识彩票预测 (玄照八术集成)
+from api.divine_lottery_routes import router as divine_lottery_router
+app.include_router(divine_lottery_router)
+
 # 静态文件（前端）
 if os.path.exists(frontend_dir):
     app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
