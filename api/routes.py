@@ -443,6 +443,92 @@ def _summarize_shensha(udm) -> dict:
     }
 
 
+# ──────────────────────────────────────────────────────────────────
+# 合婚辅助函数（改进 #231-#240）
+# ──────────────────────────────────────────────────────────────────
+
+def _check_sanhe(z1: str, z2: str) -> str:
+    """检查三合局"""
+    sanhe_groups = [
+        ("申", "子", "辰"),  # 水局
+        ("亥", "卯", "未"),  # 木局
+        ("寅", "午", "戌"),  # 火局
+        ("巳", "酉", "丑"),  # 金局
+    ]
+    for group in sanhe_groups:
+        if z1 in group and z2 in group:
+            if z1 == z2:
+                continue
+            elements = {"申子辰": "水", "亥卯未": "木", "寅午戌": "火", "巳酉丑": "金"}
+            for key, el in elements.items():
+                if z1 in key and z2 in key:
+                    return f"{z1}{z2}半会{el}局"
+    return ""
+
+
+def _check_xing(z1: str, z2: str) -> str:
+    """检查相刑"""
+    xing_pairs = {
+        ("寅", "巳"): "寅巳刑（恃势）",
+        ("巳", "申"): "巳申刑（无恩）",
+        ("申", "寅"): "申寅刑（恃势）",
+        ("丑", "戌"): "丑戌刑（恃势）",
+        ("戌", "未"): "戌未刑（恃势）",
+        ("未", "丑"): "未丑刑（恃势）",
+        ("子", "卯"): "子卯刑（无礼）",
+        ("卯", "子"): "卯子刑（无礼）",
+        ("辰", "辰"): "辰辰自刑",
+        ("午", "午"): "午午自刑",
+        ("酉", "酉"): "酉酉自刑",
+        ("亥", "亥"): "亥亥自刑",
+    }
+    return xing_pairs.get((z1, z2), "")
+
+
+def _calc_wx_complement(wx1: str, wx2: str) -> int:
+    """五行互补度 0-100"""
+    if not wx1 or not wx2:
+        return 50
+    if wx1 == wx2:
+        return 60  # 比和
+    from engine.udm import WUXING_SHENG, WUXING_KE
+    if WUXING_SHENG.get(wx1) == wx2 or WUXING_SHENG.get(wx2) == wx1:
+        return 90  # 相生
+    if WUXING_KE.get(wx1) == wx2 or WUXING_KE.get(wx2) == wx1:
+        return 30  # 相克
+    return 50
+
+
+def _zhi_full_relation(z1: str, z2: str) -> str:
+    """地支完整关系"""
+    if not z1 or not z2:
+        return ""
+    if z1 == z2:
+        return f"{z1}{z2}比和"
+    from engine.udm import ZHI_LIUHE, ZHI_CHONG
+    if ZHI_LIUHE.get(z1) == z2:
+        return f"{z1}{z2}六合"
+    if ZHI_CHONG.get(z1) == z2:
+        return f"{z1}{z2}六冲"
+    return f"{z1}{z2}无特殊关系"
+
+
+def _calc_marriage_index(dg_score, rz_score, comp_score, sanhe, liuhe, liuchong, xing, common_ss) -> int:
+    """婚配指数综合 0-100"""
+    base = (dg_score + rz_score + comp_score) / 3
+    bonus = 0
+    if sanhe:
+        bonus += 8
+    if liuhe:
+        bonus += 5
+    if liuchong:
+        bonus -= 10
+    if xing:
+        bonus -= 8
+    bonus += min(10, len(common_ss) * 2)
+    return max(0, min(100, int(base * 0.7 + bonus + 10)))
+
+
 @router.get("/api/engines")
 def get_engines_status():
     """返回各引擎状态"""
@@ -1419,7 +1505,44 @@ def get_hehun(
         # 综合评分
         total_score = int(daygan_score * 0.3 + rizhi_score * 0.3 + complement_score * 0.4)
         grade = "天作之合" if total_score >= 80 else "良好" if total_score >= 65 else "需要磨合" if total_score >= 50 else "不太建议"
-        
+
+        # 改进 #231-#240: 合婚深度解读10个字段
+        from engine.udm import ZHI_XING as _UDM_ZHI_XING, ZHI_HAI as _UDM_ZHI_HAI
+        zhi1_full = bazi1.get("day", "")
+        zhi2_full = bazi2.get("day", "")
+        # 1. 三合局分析（年支）
+        yz1 = bazi1.get("year", "")[1:2] if len(bazi1.get("year", "")) > 1 else ""
+        yz2 = bazi2.get("year", "")[1:2] if len(bazi2.get("year", "")) > 1 else ""
+        sanhe_pair = _check_sanhe(yz1, yz2)
+        # 2. 六合分析（年支）
+        liuhe_pair = (_UDM_ZHI_LIUHE.get(yz1) == yz2) if yz1 else False
+        # 3. 六冲分析（年支）
+        liuchong_pair = (_UDM_ZHI_CHONG.get(yz1) == yz2) if yz1 else False
+        # 4. 相刑分析
+        xing_pair = _check_xing(yz1, yz2)
+        # 5. 纳音合婚
+        from engine.bazi_engine import NAYIN_TABLE
+        nayin1 = NAYIN_TABLE.get(zhi1_full, "")
+        nayin2 = NAYIN_TABLE.get(zhi2_full, "")
+        # 6. 五行互补度
+        wx1_full = GAN_WUXING_STR.get(d1, "")
+        wx2_full = GAN_WUXING_STR.get(d2, "")
+        wx_complement = _calc_wx_complement(wx1_full, wx2_full)
+        # 7. 年支关系
+        year_zhi_relation = _zhi_full_relation(yz1, yz2)
+        # 8. 时支关系
+        tz1 = bazi1.get("time", "")[1:2] if len(bazi1.get("time", "")) > 1 else ""
+        tz2 = bazi2.get("time", "")[1:2] if len(bazi2.get("time", "")) > 1 else ""
+        time_zhi_relation = _zhi_full_relation(tz1, tz2)
+        # 9. 神煞相合
+        common_shensha = set(bazi1.get("shensha", [])) & set(bazi2.get("shensha", []))
+        # 10. 婚配指数（综合0-100）
+        marriage_index = _calc_marriage_index(
+            daygan_score, rizhi_score, complement_score,
+            sanhe_pair, liuhe_pair, liuchong_pair, xing_pair,
+            common_shensha
+        )
+
         return {
             "person1": {"birth": birth1, "gender": gender1, "bazi": bazi1},
             "person2": {"birth": birth2, "gender": gender2, "bazi": bazi2},
@@ -1433,7 +1556,18 @@ def get_hehun(
                 "dayun_overlap": dayun_analysis,
                 "total_score": total_score,
                 "grade": grade,
-                "note": "综合评分=日干关系30%+日支关系30%+喜用互补40%。大运叠加期为双方运势共振期。"
+                "note": "综合评分=日干关系30%+日支关系30%+喜用互补40%。大运叠加期为双方运势共振期。",
+                # 改进 #231-#240: 10个深度字段
+                "year_zhi_relation": year_zhi_relation,  # 1. 年支关系详情
+                "time_zhi_relation": time_zhi_relation,  # 2. 时支关系详情
+                "sanhe_pair": sanhe_pair,  # 3. 年支三合局
+                "liuhe_pair": liuhe_pair,  # 4. 年支六合
+                "liuchong_pair": liuchong_pair,  # 5. 年支六冲
+                "xing_pair": xing_pair,  # 6. 年支相刑
+                "nayin_match": f"{nayin1} & {nayin2}",  # 7. 纳音配对
+                "wuxing_complement": wx_complement,  # 8. 五行互补度
+                "common_shensha": list(common_shensha),  # 9. 共同神煞
+                "marriage_index": marriage_index,  # 10. 婚配指数
             }
         }
     except Exception as e:
