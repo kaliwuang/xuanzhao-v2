@@ -529,6 +529,39 @@ def _calc_marriage_index(dg_score, rz_score, comp_score, sanhe, liuhe, liuchong,
     return max(0, min(100, int(base * 0.7 + bonus + 10)))
 
 
+def _call_bazi_analyzer(func_name: str, udm) -> dict:
+    """调用bazi_engine的高级分析函数（改进 #251-#260）"""
+    try:
+        from engine import bazi_engine as _be
+        func = getattr(_be, func_name, None)
+        if not func:
+            return {"error": f"function {func_name} not found"}
+        pillars = []
+        if udm.bazi_year:
+            pillars.append(udm.bazi_year)
+        if udm.bazi_month:
+            pillars.append(udm.bazi_month)
+        if udm.bazi_day:
+            pillars.append(udm.bazi_day)
+        if udm.bazi_time:
+            pillars.append(udm.bazi_time)
+        if func_name == "analyze_ten_gods_distribution":
+            return func(udm.shishen_gan or {})
+        if func_name == "analyze_career_tendency":
+            return func(udm.shishen_gan or {}, udm.shishen_zhi or {})
+        if func_name == "analyze_relationship_indicator":
+            return func(pillars, udm.shensha or [])
+        if func_name == "analyze_health_indicator":
+            return func(udm.day_master or "", udm.wuxing_score or {})
+        if func_name == "analyze_wealth_pattern":
+            return func(udm.shishen_gan or {}, pillars)
+        if func_name == "analyze_deities_in_pillars":
+            return func(pillars, udm.day_master or "")
+        return func(pillars)
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @router.get("/api/engines")
 def get_engines_status():
     """返回各引擎状态"""
@@ -628,6 +661,17 @@ def get_chart(
                 "huagai_table": _build_huagai_table(udm),  # 华盖表
                 "tianyi_table": _build_tianyi_table(udm),  # 天乙贵人表
                 "shensha_summary": _summarize_shensha(udm),  # 神煞汇总
+                # 改进 #251-#260: 高级分析10个新方法
+                "tiangan_xiangke": _call_bazi_analyzer("analyze_tian_gan_di_zhi_xiang_ke", udm),
+                "changsheng_distribution": _call_bazi_analyzer("analyze_deities_in_pillars", udm),
+                "jieqi_lord": _call_bazi_analyzer("analyze_jieqi_lord", udm),
+                "yueling_strength": _call_bazi_analyzer("analyze_yue_ling_strength", udm),
+                "ganzhi_combinations": _call_bazi_analyzer("analyze_gan_zhi_combinations", udm),
+                "ten_gods_distribution": _call_bazi_analyzer("analyze_ten_gods_distribution", udm),
+                "career_tendency": _call_bazi_analyzer("analyze_career_tendency", udm),
+                "relationship_indicator": _call_bazi_analyzer("analyze_relationship_indicator", udm),
+                "health_indicator": _call_bazi_analyzer("analyze_health_indicator", udm),
+                "wealth_pattern": _call_bazi_analyzer("analyze_wealth_pattern", udm),
             }
 
         # 占星
