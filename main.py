@@ -114,6 +114,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # API路由
 app.include_router(router)
 
+# 彩票预测接口 (独立模块,避免污染主routes)
+from api.lottery_routes import router as lottery_router
+app.include_router(lottery_router)
+
 # 静态文件（前端）
 if os.path.exists(frontend_dir):
     app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
