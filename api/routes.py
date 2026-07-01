@@ -217,6 +217,232 @@ def _get_figure_ids(figures: Optional[str]) -> list:
     return [f.strip() for f in figures.split(",") if f.strip()] if figures and figures.strip() else _default_figure_ids
 
 
+# ──────────────────────────────────────────────────────────────────
+# 八字高级解读辅助函数（改进 #219-#230）
+# ──────────────────────────────────────────────────────────────────
+
+def _analyze_geju(udm) -> dict:
+    """格局判定"""
+    result = {
+        "geju_type": "未知",
+        "geju_level": "普通",
+        "qingchun": False,
+        "qingzhuo": False,
+        "description": "",
+    }
+    if not udm.bazi_year or not udm.bazi_day:
+        return result
+    month_zhi = udm.bazi_month.zhi if udm.bazi_month else ""
+    month_gan = udm.bazi_month.gan if udm.bazi_month else ""
+    day_gan = udm.bazi_day.gan or ""
+    shishen_gan = udm.shishen_gan or {}
+    month_shishen = shishen_gan.get("month", "")
+
+    # 格局大类
+    if month_shishen in ("正官", "七杀"):
+        result["geju_type"] = "官格"
+    elif month_shishen in ("正印", "偏印"):
+        result["geju_type"] = "印格"
+    elif month_shishen in ("食神", "伤官"):
+        result["geju_type"] = "食伤格"
+    elif month_shishen in ("正财", "偏财"):
+        result["geju_type"] = "财格"
+    elif month_shishen in ("比肩", "劫财"):
+        result["geju_type"] = "比劫格"
+    else:
+        result["geju_type"] = "杂格"
+
+    # 清纯度判定
+    all_ss = set()
+    for v in shishen_gan.values():
+        if v and v != "?":
+            all_ss.add(v)
+    for v_list in (udm.shishen_zhi or {}).values():
+        if isinstance(v_list, list):
+            for v in v_list:
+                if v and v != "?":
+                    all_ss.add(v)
+
+    if "伤官" in all_ss and "正官" in all_ss:
+        result["qingzhuo"] = True
+        result["description"] = "伤官见官，格局混杂，需印星化解"
+    elif len(all_ss) <= 3:
+        result["qingchun"] = True
+        result["description"] = f"十神精简（{len(all_ss)}种），格局清纯，力量集中"
+    else:
+        result["description"] = f"十神{len(all_ss)}种，格局多样，可塑性强"
+
+    # 格局等级
+    if result["qingchun"] and result["geju_type"] in ("官格", "印格", "食伤格"):
+        result["geju_level"] = "上等"
+    elif result["qingzhuo"]:
+        result["geju_level"] = "次等"
+    else:
+        result["geju_level"] = "中等"
+
+    return result
+
+
+def _summarize_dayun(udm) -> dict:
+    """大运总结"""
+    dayun = getattr(udm, "dayun", []) or []
+    if not dayun:
+        return {"total": 0, "best_age": 0, "worst_age": 0, "current": ""}
+
+    good_cs = {"长生", "冠带", "临官", "帝旺"}
+    bad_cs = {"死", "墓", "绝"}
+    best_score, worst_score = -99, 99
+    best_age, worst_age = 0, 0
+    current_dy = ""
+
+    for d in dayun:
+        cs = d.get("changsheng", "")
+        age = d.get("age", 0)
+        gz = d.get("ganzhi", "")
+        if cs in good_cs:
+            if best_score < 1:
+                best_score = 1
+                best_age = age
+        elif cs in bad_cs:
+            if worst_score > -1:
+                worst_score = -1
+                worst_age = age
+        if 18 <= age <= 35:
+            current_dy = gz
+
+    return {
+        "total": len(dayun),
+        "best_age": best_age,
+        "best_ganzhi": next((d["ganzhi"] for d in dayun if d.get("age") == best_age), ""),
+        "worst_age": worst_age,
+        "worst_ganzhi": next((d["ganzhi"] for d in dayun if d.get("age") == worst_age), ""),
+        "current": current_dy,
+    }
+
+
+def _group_shensha(udm) -> dict:
+    """神煞分组"""
+    shensha = getattr(udm, "shensha", []) or []
+    groups = {
+        "吉神": [],
+        "凶煞": [],
+        "中性": [],
+    }
+    auspicious = {"天乙贵人", "太极贵人", "文昌贵人", "天德贵人", "月德贵人",
+                  "福星贵人", "德秀贵人", "国印贵人", "金舆", "天喜", "红鸾"}
+    inauspicious = {"七杀", "羊刃", "劫煞", "灾煞", "勾绞煞", "血刃", "飞刃",
+                    "披麻", "吊客", "天狗", "白虎", "天刑"}
+    for s in shensha:
+        if isinstance(s, str):
+            if s in auspicious:
+                groups["吉神"].append(s)
+            elif s in inauspicious:
+                groups["凶煞"].append(s)
+            else:
+                groups["中性"].append(s)
+    return groups
+
+
+def _build_kongwang_table(udm) -> dict:
+    """旬空查表"""
+    xunkong = getattr(udm, "xunkong", {}) or {}
+    return {
+        "year": xunkong.get("year", ""),
+        "month": xunkong.get("month", ""),
+        "day": xunkong.get("day", ""),
+        "time": xunkong.get("time", ""),
+        "note": "空亡=地支虚位，逢流年填实则应事"
+    }
+
+
+def _true_solar_diff(udm) -> dict:
+    """真太阳时差"""
+    return {
+        "has_data": hasattr(udm, "true_solar"),
+        "diff_minutes": round((udm.true_solar - udm.original).total_seconds() / 60, 1) if hasattr(udm, "true_solar") and hasattr(udm, "original") else 0,
+    }
+
+
+def _build_taiji_table(udm) -> list:
+    """太极贵人查表"""
+    if not udm.bazi_day:
+        return []
+    from engine.bazi_engine import SHENSHA_TAIJI_MAP
+    day_gan = udm.bazi_day.gan
+    year_gan = udm.bazi_year.gan if udm.bazi_year else ""
+    targets = set(SHENSHA_TAIJI_MAP.get(day_gan, []))
+    targets.update(SHENSHA_TAIJI_MAP.get(year_gan, []))
+    return [{"source": "日干" if day_gan == day_gan else "年干", "gan": day_gan, "zhi": list(targets)}]
+
+
+def _build_wenchang_table(udm) -> list:
+    """文昌贵人查表"""
+    if not udm.bazi_day:
+        return []
+    from engine.bazi_engine import SHENSHA_WENCHANG_MAP
+    return [{"day_gan": udm.bazi_day.gan, "zhi": SHENSHA_WENCHANG_MAP.get(udm.bazi_day.gan, "")}]
+
+
+def _build_taohua_table(udm) -> list:
+    """桃花表"""
+    if not udm.bazi_year or not udm.bazi_day:
+        return []
+    from engine.bazi_engine import SHENSHA_TAOHUA_MAP
+    yz = udm.bazi_year.zhi
+    dz = udm.bazi_day.zhi
+    return [
+        {"source": "年支", "zhi": yz, "taohua": SHENSHA_TAOHUA_MAP.get(yz, "")},
+        {"source": "日支", "zhi": dz, "taohua": SHENSHA_TAOHUA_MAP.get(dz, "")},
+    ]
+
+
+def _build_yima_table(udm) -> list:
+    """驿马表"""
+    if not udm.bazi_year or not udm.bazi_day:
+        return []
+    from engine.bazi_engine import SHENSHA_YIMA_MAP
+    yz = udm.bazi_year.zhi
+    dz = udm.bazi_day.zhi
+    return [
+        {"source": "年支", "zhi": yz, "yima": SHENSHA_YIMA_MAP.get(yz, "")},
+        {"source": "日支", "zhi": dz, "yima": SHENSHA_YIMA_MAP.get(dz, "")},
+    ]
+
+
+def _build_huagai_table(udm) -> list:
+    """华盖表"""
+    if not udm.bazi_year or not udm.bazi_day:
+        return []
+    from engine.bazi_engine import SHENSHA_HUAGAI_MAP
+    yz = udm.bazi_year.zhi
+    dz = udm.bazi_day.zhi
+    return [
+        {"source": "年支", "zhi": yz, "huagai": SHENSHA_HUAGAI_MAP.get(yz, "")},
+        {"source": "日支", "zhi": dz, "huagai": SHENSHA_HUAGAI_MAP.get(dz, "")},
+    ]
+
+
+def _build_tianyi_table(udm) -> list:
+    """天乙贵人表"""
+    if not udm.bazi_day:
+        return []
+    from engine.bazi_engine import SHENSHA_TIANYI_MAP
+    day_gan = udm.bazi_day.gan
+    targets = SHENSHA_TIANYI_MAP.get(day_gan, [])
+    return [{"day_gan": day_gan, "target_zhis": targets}]
+
+
+def _summarize_shensha(udm) -> dict:
+    """神煞汇总"""
+    shensha = getattr(udm, "shensha", []) or []
+    return {
+        "total": len(shensha),
+        "auspicious_count": sum(1 for s in shensha if isinstance(s, str) and s in {"天乙贵人", "太极贵人", "文昌贵人", "天德贵人", "月德贵人"}),
+        "inauspicious_count": sum(1 for s in shensha if isinstance(s, str) and s in {"七杀", "羊刃", "劫煞", "灾煞"}),
+        "all": shensha,
+    }
+
+
 @router.get("/api/engines")
 def get_engines_status():
     """返回各引擎状态"""
@@ -303,6 +529,19 @@ def get_chart(
                 "wuxing_summary": (getattr(udm, 'xi_yong', None) or {}).get("reason", ""),
                 "liunian": getattr(udm, 'liunian', None),
                 "location": getattr(udm, 'location', None),
+                # 改进 #219-#230:补全关键解读字段
+                "geju": _analyze_geju(udm),  # 格局判定
+                "dayun_summary": _summarize_dayun(udm),  # 大运总结
+                "shensha_grouped": _group_shensha(udm),  # 神煞分组
+                "kongwang_table": _build_kongwang_table(udm),  # 旬空查表
+                "true_solar_diff": _true_solar_diff(udm),  # 真太阳时差
+                "taiji_table": _build_taiji_table(udm),  # 太极贵人表
+                "wenchang_table": _build_wenchang_table(udm),  # 文昌贵人表
+                "taohua_table": _build_taohua_table(udm),  # 桃花表
+                "yima_table": _build_yima_table(udm),  # 驿马表
+                "huagai_table": _build_huagai_table(udm),  # 华盖表
+                "tianyi_table": _build_tianyi_table(udm),  # 天乙贵人表
+                "shensha_summary": _summarize_shensha(udm),  # 神煞汇总
             }
 
         # 占星
@@ -1447,6 +1686,54 @@ def get_bazi_score(
         else:
             grade = "下"
 
+        # ─── 维度维度-补救建议 (低分维度 actionable advice) ───
+        # 维度一: 日主强弱
+        if '身弱' in strength:
+            s1_advice = "身弱补救:①多结交印星旺(文化、贵人、长辈)的朋友;②从事脑力工作而非纯体力;③佩戴水晶/黑曜石等水属性饰品;④名字可加'水'旁字(如\"浩、海、涵\")补水"
+        elif '身强' in strength:
+            s1_advice = "身强疏导:①适合创业、开拓性工作;②多运动消耗过剩精力;③可佩戴金银饰品泄秀;④名字可加'木'旁字(如\"林、森、树\")疏导"
+        else:
+            s1_advice = "中和格局,顺势而为即可,无需刻意补泄"
+
+        # 维度二: 五行平衡
+        if weakest and weakest == '土':
+            s2_advice = "土弱补救:①多接触黄、棕色调事物;②居住西方/西南方有利;③佩戴黄水晶、玉石;④从事房地产、建筑、农业"
+        elif weakest and weakest in ('金',):
+            s2_advice = "金弱补救:①西方/西北方向有利;②佩戴金属饰品;③从事金融、法律、技术工作;④秋天出生更有利"
+        elif weakest and weakest in ('水',):
+            s2_advice = "水弱补救:①北方有利;②佩戴黑曜石、深色饰品;③多亲近江河湖海;④从事贸易、流通业"
+        elif weakest and weakest in ('木',):
+            s2_advice = "木弱补救:①东方/东南方有利;②多接触绿色植物;③从事文化、教育、设计;④春天是提升期"
+        elif weakest and weakest in ('火',):
+            s2_advice = "火弱补救:①南方有利;②多穿红、橙色衣物;③从事文化、娱乐、餐饮;④夏天是提升期"
+        else:
+            s2_advice = "五行较为均衡,继续保持"
+
+        # 维度三: 十神配置
+        n_shishen = len(set(all_shishen))
+        if n_shishen <= 4:
+            s3_advice = "十神偏少补救:①多尝试新领域扩展人生面;②通过学习(如MBA、技能认证)增加专业标识;③命局集中反而是优势,深耕一行胜过广撒网"
+        elif n_shishen >= 7:
+            s3_advice = "十神丰富,可塑性极强。建议选定1-2个核心方向深耕,避免贪多嚼不烂"
+        else:
+            s3_advice = "十神配置中等,继续按大运流年的指引调整重点方向"
+
+        # 维度四: 格局清纯
+        if s4 <= 10:
+            s4_advice = "格局较杂补救:①避免与人合伙做生意;②从事技术/手艺/自由职业更稳;③多读圣贤书(印星)化解伤官冲动;④远离是非之地,谨言慎行"
+        elif s4 <= 14:
+            s4_advice = "格局有些微瑕,但不致命。建议修身养性,用印星化解冲突,从事稳定行业"
+        else:
+            s4_advice = "格局清纯,难得的好基础,如有合适大运可大胆发挥"
+
+        # 维度五: 大运走势
+        if s5 <= 10:
+            s5_advice = "大运低迷补救:①蛰伏期宜静不宜动;②读书充电、积累人脉;③健康为第一要务;④若有好的流年(食神制杀、伤官见财),可以小试牛刀"
+        elif s5 <= 14:
+            s5_advice = "大运平缓,稳中求进。理财保守为主,事业避免大动作,可深耕一个领域"
+        else:
+            s5_advice = "大运上行期,有贵人扶持。可以适度扩张、投资、学习新技能,把握机遇"
+
         # 综合评语
         if total >= 80:
             summary = f"此命综合评分{total}分（{grade}），先天格局优越。日主{strength}，五行{'齐全' if n_elements == 5 else '有所欠缺'}，十神配置丰富。"
@@ -1469,6 +1756,7 @@ def get_bazi_score(
                     "score": s1,
                     "max": 20,
                     "text": s1_text,
+                    "advice": s1_advice,
                 },
                 {
                     "title": "五行平衡",
@@ -1476,6 +1764,7 @@ def get_bazi_score(
                     "score": s2,
                     "max": 20,
                     "text": s2_text,
+                    "advice": s2_advice,
                 },
                 {
                     "title": "十神配置",
@@ -1483,6 +1772,7 @@ def get_bazi_score(
                     "score": s3,
                     "max": 20,
                     "text": s3_text,
+                    "advice": s3_advice,
                 },
                 {
                     "title": "格局清纯",
@@ -1490,6 +1780,7 @@ def get_bazi_score(
                     "score": s4,
                     "max": 20,
                     "text": s4_text,
+                    "advice": s4_advice,
                 },
                 {
                     "title": "大运走势",
@@ -1497,6 +1788,7 @@ def get_bazi_score(
                     "score": s5,
                     "max": 20,
                     "text": s5_text,
+                    "advice": s5_advice,
                 },
             ],
             "meta": {
