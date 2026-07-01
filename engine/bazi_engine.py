@@ -2047,3 +2047,264 @@ class BaziEngine(DivinationEngine):
             score[k] = round(score[k], 1)
 
         return score
+
+
+# ──────────────────────────────────────────────────────────────────
+# 八字高级分析方法（改进 #241-#250）
+# ──────────────────────────────────────────────────────────────────
+
+def analyze_tian_gan_di_zhi_xiang_ke(pillars: list) -> dict:
+    """天干地支相克详细分析（改进 #241）"""
+    if len(pillars) < 4:
+        return {"pairs": [], "summary": ""}
+    gans = [p.gan for p in pillars[:4]]
+    result = []
+    for i, j in [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)]:
+        if gans[i] and gans[j]:
+            wx1 = GAN_WUXING_STR.get(gans[i], "")
+            wx2 = GAN_WUXING_STR.get(gans[j], "")
+            if wx1 and wx2:
+                if WUXING_KE.get(wx1) == wx2:
+                    result.append({
+                        "position": f"{['年','月','日','时'][i]}-{['年','月','日','时'][j]}",
+                        "type": "天干相克",
+                        "gans": f"{gans[i]}{gans[j]}",
+                        "relation": f"{wx1}克{wx2}"
+                    })
+    return {"pairs": result, "summary": f"共{len(result)}组天干相克"}
+
+
+def analyze_deities_in_pillars(pillars: list, day_master: str) -> dict:
+    """十二长生在四柱的分布（改进 #242）"""
+    if not day_master or len(pillars) < 4:
+        return {"positions": {}, "summary": ""}
+    positions = {}
+    cs_start = CHANGSHENG_START.get(day_master, "")
+    if not cs_start:
+        return {"positions": {}, "summary": ""}
+    start_idx = DI_ZHI.index(cs_start) if cs_start in DI_ZHI else 0
+    is_yang = day_master in "甲丙戊庚壬"
+    for idx, pillar in enumerate(pillars[:4]):
+        if pillar.zhi in DI_ZHI:
+            zhi_idx = DI_ZHI.index(pillar.zhi)
+            offset = (zhi_idx - start_idx) % 12 if is_yang else (start_idx - zhi_idx) % 12
+            cs_name = CHANGSHENG_ORDER[offset]
+            positions[["年支", "月支", "日支", "时支"][idx]] = {
+                "zhi": pillar.zhi,
+                "changsheng": cs_name
+            }
+    return {"positions": positions, "summary": f"日主{day_master}长生十二宫分布"}
+
+
+def analyze_jieqi_lord(pillars: list) -> dict:
+    """节气司令分析（改进 #243）"""
+    if len(pillars) < 2:
+        return {"lord": "", "note": ""}
+    month_zhi = pillars[1].zhi if len(pillars) > 1 else ""
+    # 节气司令表
+    jieqi_lord = {
+        "寅": "立春-戊土7日 丙火7日 戊土16日",
+        "卯": "惊蛰-甲木18日 乙木12日",
+        "辰": "清明-乙木9日 癸水3日 戊土18日",
+        "巳": "立夏-戊土5日 庚金9日 丙火16日",
+        "午": "芒种-丙火11日 己土9日 丁火10日",
+        "未": "小暑-己土6日 丁火24日",
+        "申": "立秋-戊土10日 壬水3日 庚金17日",
+        "酉": "白露-庚金10日 辛金20日",
+        "戌": "寒露-辛金9日 丁火3日 戊土18日",
+        "亥": "立冬-戊土7日 甲木5日 壬水18日",
+        "子": "大雪-壬水7日 癸水23日",
+        "丑": "小寒-癸水10日 辛金5日 己土15日"
+    }
+    return {
+        "month_zhi": month_zhi,
+        "lord": jieqi_lord.get(month_zhi, "未知"),
+        "note": "节气司令决定月令地支的本气"
+    }
+
+
+def analyze_yue_ling_strength(pillars: list) -> dict:
+    """月令旺衰分析（改进 #244）"""
+    if len(pillars) < 2:
+        return {"month_wx": "", "season": "", "states": {}}
+    month_zhi = pillars[1].zhi
+    from engine.udm import ZHI_WUXING as _UDM_ZW
+    month_wx_t = _UDM_ZW.get(month_zhi, (None,))
+    month_wx = month_wx_t[0].value if hasattr(month_wx_t[0], 'value') else str(month_wx_t[0]) if month_wx_t[0] else ""
+    season_map = {
+        "春": ("寅", "卯", "辰"),
+        "夏": ("巳", "午", "未"),
+        "秋": ("申", "酉", "戌"),
+        "冬": ("亥", "子", "丑")
+    }
+    season = ""
+    for s, zh in season_map.items():
+        if month_zhi in zh:
+            season = s
+            break
+    sheng = WUXING_SHENG.get(month_wx, "")
+    ke = WUXING_KE.get(month_wx, "")
+    bei_sheng = {"木": "水", "火": "木", "土": "火", "金": "土", "水": "金"}.get(month_wx, "")
+    bei_ke = {"木": "金", "火": "水", "土": "木", "金": "火", "水": "土"}.get(month_wx, "")
+    return {
+        "month_wx": month_wx,
+        "season": season,
+        "states": {
+            month_wx: "旺",
+            sheng: "相",
+            bei_sheng: "休",
+            bei_ke: "囚",
+            ke: "死"
+        }
+    }
+
+
+def analyze_gan_zhi_combinations(pillars: list) -> dict:
+    """干支组合详细分析（改进 #245）"""
+    if len(pillars) < 4:
+        return {"combinations": [], "summary": ""}
+    result = []
+    gans = [p.gan for p in pillars[:4]]
+    zhis = [p.zhi for p in pillars[:4]]
+    # 干合
+    gan_he = {"甲己": "化土", "乙庚": "化金", "丙辛": "化水", "丁壬": "化木", "戊癸": "化火"}
+    for i, j in [(0, 1), (0, 2), (1, 2), (1, 3), (2, 3)]:
+        pair = gans[i] + gans[j]
+        if pair in gan_he:
+            result.append({
+                "type": "天干合",
+                "position": f"{['年','月','日','时'][i]}-{['年','月','日','时'][j]}",
+                "pair": pair,
+                "transformation": gan_he[pair]
+            })
+    return {"combinations": result, "summary": f"共{len(result)}组合"}
+
+
+def analyze_ten_gods_distribution(shishen_gan: dict) -> dict:
+    """十神分布统计（改进 #246）"""
+    from collections import Counter
+    counter = Counter()
+    for v in (shishen_gan or {}).values():
+        if v and v != "?":
+            counter[v] += 1
+    total = sum(counter.values())
+    return {
+        "distribution": dict(counter),
+        "percentages": {k: round(v / total * 100, 1) if total else 0 for k, v in counter.items()},
+        "dominant": counter.most_common(1)[0] if counter else ("", 0),
+    }
+
+
+def analyze_career_tendency(shishen_gan: dict, shishen_zhi: dict) -> dict:
+    """职业倾向分析（改进 #247）"""
+    all_ss = set()
+    for v in (shishen_gan or {}).values():
+        if v and v != "?":
+            all_ss.add(v)
+    for v_list in (shishen_zhi or {}).values():
+        if isinstance(v_list, list):
+            for v in v_list:
+                if v and v != "?":
+                    all_ss.add(v)
+    career_map = {
+        "食神": "餐饮、艺术、教育、自由职业",
+        "伤官": "表演、艺术、发明、创意",
+        "正印": "学术、教育、研究、宗教",
+        "偏印": "技术、玄学、特种行业",
+        "正官": "公务员、企业管理、法律",
+        "七杀": "军警、企业高管、竞争性行业",
+        "正财": "金融、商业、稳健行业",
+        "偏财": "投资、贸易、投机",
+        "比肩": "独立创业、自由业",
+        "劫财": "合伙、商业竞争"
+    }
+    top = sorted([(s, career_map.get(s, "")) for s in all_ss if career_map.get(s)], key=lambda x: -1)[:3]
+    return {"top_three": top, "tendency": "、".join([s[1] for s in top if s[1]][:3])}
+
+
+def analyze_relationship_indicator(pillars: list, shensha: list) -> dict:
+    """感情桃花指标分析（改进 #248）"""
+    if len(pillars) < 4:
+        return {"score": 0, "indicators": []}
+    score = 0
+    indicators = []
+    all_zhi = [p.zhi for p in pillars[:4]]
+    # 红鸾天喜
+    if "红鸾" in (shensha or []):
+        score += 20
+        indicators.append("红鸾入命，主感情运佳")
+    if "天喜" in (shensha or []):
+        score += 15
+        indicators.append("天喜临身，主喜庆婚事")
+    if "桃花" in (shensha or []):
+        score += 20
+        indicators.append("桃花入命，感情丰富")
+    if "咸池" in (shensha or []):
+        score += 10
+        indicators.append("咸池临支，主异性缘")
+    # 日支为子午卯酉（桃花四正）
+    if len(pillars) > 2 and pillars[2].zhi in "子午卯酉":
+        score += 10
+        indicators.append("日支坐桃花地")
+    return {"score": min(100, score), "indicators": indicators}
+
+
+def analyze_health_indicator(day_master: str, wuxing_score: dict) -> dict:
+    """健康指标分析（改进 #249）"""
+    from engine.udm import WUXING
+    dm_wx = GAN_WUXING_STR.get(day_master, "")
+    organ_map = {"木": "肝胆", "火": "心小肠", "土": "脾胃", "金": "肺大肠", "水": "肾膀胱"}
+    weakest = ""
+    if wuxing_score:
+        sorted_wx = sorted(wuxing_score.items(), key=lambda x: x[1] or 0)
+        weakest = sorted_wx[0][0] if sorted_wx else ""
+    strongest = ""
+    if wuxing_score:
+        sorted_wx = sorted(wuxing_score.items(), key=lambda x: -(x[1] or 0))
+        strongest = sorted_wx[0][0] if sorted_wx else ""
+    return {
+        "day_master_wx": dm_wx,
+        "strongest_organ": organ_map.get(strongest, "无"),
+        "weakest_organ": organ_map.get(weakest, "无"),
+        "advice": f"日主{day_master}({dm_wx})，{organ_map.get(dm_wx, '')}系统需重点关注。{organ_map.get(weakest, '')}偏弱需补益。"
+    }
+
+
+def analyze_wealth_pattern(shishen_gan: dict, pillars: list) -> dict:
+    """财富格局分析（改进 #250）"""
+    if not pillars:
+        return {"pattern": "未知", "level": "普通"}
+    all_ss = set()
+    for v in (shishen_gan or {}).values():
+        if v and v != "?":
+            all_ss.add(v)
+    has_caishen = "正财" in all_ss
+    has_piancai = "偏财" in all_ss
+    has_qisha = "七杀" in all_ss
+    has_zhengguan = "正官" in all_ss
+    has_yin = "正印" in all_ss
+
+    pattern = "普通格"
+    level = "普通"
+    if has_caishen and has_zhengguan:
+        pattern = "官印相生格"
+        level = "上等"
+    elif has_piancai and has_yin:
+        pattern = "财滋弱杀格"
+        level = "上等"
+    elif has_caishen and has_piancai:
+        pattern = "财星双见格"
+        level = "中等"
+    elif has_piancai and not has_caishen:
+        pattern = "偏财格"
+        level = "中等"
+    elif has_caishen and not has_piancai:
+        pattern = "正财格"
+        level = "中等"
+    return {
+        "pattern": pattern,
+        "level": level,
+        "has_zhengcai": has_caishen,
+        "has_piancai": has_piancai,
+        "has_qisha": has_qisha
+    }
