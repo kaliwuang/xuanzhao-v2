@@ -59,12 +59,45 @@ async def no_cache_html(request, call_response):
 
 @app.middleware("http")
 async def add_process_time_header(request, call_response):
-    """添加请求处理时间头（调试用）"""
+    """添加请求处理时间头(调试用) + 一针见血判断"""
     import time as _time
     start = _time.time()
     response = await call_response(request)
     duration = _time.time() - start
     response.headers["X-Process-Time"] = f"{duration:.3f}"
+
+    # 一针见血判断(仅对 /api/chart GET)
+    if (request.method == "GET"
+        and request.url.path == "/api/chart"
+        and response.status_code == 200):
+        try:
+            import json
+            from knowledge.deep.enrich import enrich_chart_result
+            # 收集原始 body
+            chunks = []
+            async for chunk in response.body_iterator:
+                if isinstance(chunk, str):
+                    chunks.append(chunk.encode())
+                else:
+                    chunks.append(chunk)
+            body = b"".join(chunks)
+            data = json.loads(body)
+            # /api/chart 直接返回 dict 不是 {result: ...}
+            if isinstance(data, dict) and "bazi" in data:
+                data = enrich_chart_result(data)
+                new_body = json.dumps(data, ensure_ascii=False).encode()
+            else:
+                new_body = body
+            from starlette.responses import Response
+            return Response(
+                content=new_body,
+                status_code=response.status_code,
+                headers={k: v for k, v in response.headers.items() if k.lower() != "content-length"},
+                media_type="application/json",
+            )
+        except Exception as e:
+            logger.warning(f"enrich failed: {e}")
+
     return response
 
 
