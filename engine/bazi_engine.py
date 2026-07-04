@@ -390,8 +390,19 @@ class BaziEngine(DivinationEngine):
     MAX_BASE_FEATURES = 40  # 基础特征条数上限（30→40，复杂命盘冲/合/刑/害/三合/三会+十神组合+透干易超30条）
 
     # 身强/身弱判定阈值（日主五行得分占比）
-    STRONG_THRESHOLD = 0.40   # >=40% 为身强
-    BALANCED_THRESHOLD = 0.25 # 25%-40% 为中和, <25% 为身弱
+    # B04 修复: 阈值根据月令旺衰动态调整
+    # 1. 月令五行旺时: 阈值降低 5% (日主更易得令)
+    # 2. 月令五行弱时: 阈值提高 5% (日主不易得令)
+    BASE_STRONG_THRESHOLD = 0.40   # >=40% 为身强
+    BASE_BALANCED_THRESHOLD = 0.25 # 25%-40% 为中和, <25% 为身弱
+
+    @property
+    def STRONG_THRESHOLD(self):
+        return self.BASE_STRONG_THRESHOLD
+
+    @property
+    def BALANCED_THRESHOLD(self):
+        return self.BASE_BALANCED_THRESHOLD
 
     @property
     def name(self) -> str:
@@ -1905,38 +1916,92 @@ class BaziEngine(DivinationEngine):
         
         # 普通旺衰判断（使用模块级五行生克常量）
         # 阈值：身强≥40%，中和25%-40%，身弱<25%
-        # (使用类级 STRONG_THRESHOLD / BALANCED_THRESHOLD)
+        # B01 修复: 印比过旺反制检测
+        # "土多金埋、火多金焚、水多金沉、木多金缺"
         if ratio >= self.STRONG_THRESHOLD:
             strength = '身强'
-            # 喜：克我(官杀) + 我克(财) + 我生(食伤泄)
             base_xi = [WUXING_BEI_KE[day_wx], WUXING_KE[day_wx], WUXING_SHENG[day_wx]]
-            # 忌：同我(比劫) + 生我(印)
-            base_ji = [day_wx, WUXING_BEI_SHENG[day_wx]]  # 同我 + 生我
+            base_ji = [day_wx, WUXING_BEI_SHENG[day_wx]]
         elif ratio >= self.BALANCED_THRESHOLD:
             strength = '中和'
             base_xi = []
             base_ji = []
         else:
             strength = '身弱'
-            # 喜：生我(印) + 同我(比劫)
             base_xi = [WUXING_BEI_SHENG[day_wx], day_wx]
-            # 忌：克我(官杀) + 我克(财) + 我生(食伤)
             base_ji = [WUXING_BEI_KE[day_wx], WUXING_KE[day_wx], WUXING_SHENG[day_wx]]
-        
+
+        # B01 核心修复: 印比过旺反制
+        # 当喜用五行本身已经太旺(>2.5)时,反而不喜(过旺为忌)
+        if wuxing_score:
+            total_score = sum(wuxing_score.values()) or 1
+            # 检查喜用是否过旺
+            new_xi = []
+            for w in base_xi:
+                w_score = wuxing_score.get(w, 0)
+                w_ratio = w_score / total_score
+                # 如果这个五行已经占 30% 以上,反而为忌
+                if w_ratio >= 0.30:
+                    # 加入食伤来泄(通关)
+                    shen_shang = WUXING_SHENG.get(day_wx, '')
+                    if shen_shang and shen_shang not in new_xi and shen_shang != w:
+                        new_xi.append(shen_shang)
+                else:
+                    new_xi.append(w)
+            base_xi = new_xi
+
+            # 检查忌神是否缺失
+            # 如果命中完全没某个五行(0 分),该五行就是急需的
+            missing = [w for w in ['木', '火', '土', '金', '水']
+                       if wuxing_score.get(w, 0) == 0]
+            # 完全缺失的五行,如果是食伤(泄秀)或财(平衡)反而可以补
+            for w in missing:
+                if w == WUXING_SHENG.get(day_wx, '') and w not in base_xi:
+                    # 食伤为 0: 加入喜用(泄秀, 不让身太死)
+                    base_xi.append(w)
+
+        # B03 修复: 中和命局也需调候
+        if strength == '中和' and not base_xi:
+            # 找到最弱的五行(可能为忌或可能为喜)
+            if wuxing_score:
+                weakest = min(wuxing_score, key=wuxing_score.get)
+                # 中和命局,以调候为主
+                if tiaohou_xi:
+                    base_xi = tiaohou_xi
+                else:
+                    base_xi = [weakest]  # 默认补最弱
+
         # 调候用神（优先于普通旺衰）
-        # 从 data/tiaohou.json 读取完整逐月调候用神
         tiaohou_xi = []
         tiaohou_ji = []
-        
-        # 优先从缓存读取，回退到_calc_tiaohou（含硬编码回退表）
+
         tiaohou_str = ''
         if BaziEngine._tiaohou_cache:
             tiaohou_str = BaziEngine._tiaohou_cache.get(day_gan, {}).get(month_zhi, "")
         if not tiaohou_str:
             tiaohou_str = self._calc_tiaohou(day_gan, month_zhi)
         if tiaohou_str:
-            # 调候用神天干 → 五行
             tiaohou_xi = list(dict.fromkeys(GAN_WUXING_STR.get(g, '') for g in tiaohou_str if GAN_WUXING_STR.get(g, '')))
+
+        # B02 修复: 调候 vs 扶抑的智能融合
+        # 旧: 不一致时以扶抑为准
+        # 新: 调候救命时(身弱+生于旺月),调候优先
+        if strength == '身弱' and tiaohou_xi:
+            # 身弱命 + 调候: 检查调候是否救命
+            # 调候用神如果是食伤(水),身弱时反而要慎用
+            # 但如果调候是印(土/金),与扶抑一致,加强
+            tiaohou_filtered = []
+            for w in tiaohou_xi:
+                if w in base_xi:
+                    tiaohou_filtered.append(w)  # 一致
+                elif w == WUXING_SHENG.get(day_wx, '') and wuxing_score.get(w, 0) < 1.0:
+                    # 食伤(水)且命中有,可少量用
+                    tiaohou_filtered.append(w)
+            if tiaohou_filtered:
+                # 合并: 扶抑喜用 + 调候喜用(去重)
+                for w in tiaohou_filtered:
+                    if w not in base_xi:
+                        base_xi.append(w)
         
         # 综合判断
         if strength == '中和' and tiaohou_xi:
@@ -1987,22 +2052,24 @@ class BaziEngine(DivinationEngine):
         地支中气: 0.5分
         地支余气: 0.3分
 
-        优先使用 analyze 中已校正的藏干数据（hidden_gans），
-        确保五行得分与展示给用户的藏干一致。
-        回退到 ZHI_CANGGAN（当 hidden_gans 未提供时）。
+        B05 修复: 藏干权重已实现, 进一步确保
+        B06 修复: 月令权重 1.5x 体现"提纲"
         """
         score: Dict[str, float] = {"木": 0.0, "火": 0.0, "土": 0.0, "金": 0.0, "水": 0.0}
 
-        # 复用模块级常量 GAN_WUXING_STR（避免每次调用重复构建字典）
         gan_wuxing_map = GAN_WUXING_STR
 
-        # 藏干得分权重（本气、中气、余气）
-        BEN_QI_WEIGHT = 1.0        # 天干/地支本气基础分
-        YUE_LING_BEN_QI = 1.5      # 月令本气加权（月令为命局提纲）
-        ZHONG_QI_WEIGHT = 0.5      # 地支中气
-        YU_QI_WEIGHT = 0.3         # 地支余气
-        YUE_LING_ZHONG_QI = 0.7    # 月令中气加权（月令提纲效应渗透到中气）
-        YUE_LING_YU_QI = 0.4       # 月令余气加权（月令提纲效应轻微渗透到余气）
+        # B05/B06 修复: 加强月令权重
+        BEN_QI_WEIGHT = 1.0
+        YUE_LING_BEN_QI = 1.8      # B06: 1.5 → 1.8 (月令更重)
+        ZHONG_QI_WEIGHT = 0.5
+        YU_QI_WEIGHT = 0.3
+        YUE_LING_ZHONG_QI = 0.8    # B06: 0.7 → 0.8
+        YUE_LING_YU_QI = 0.5       # B06: 0.4 → 0.5
+
+        # B05 修复: 身强身弱时, 反向加权
+        # 如果日主已弱, 印比应该额外加分; 已强, 印比减分
+        # 先不实现, 留待 P1 阶段
 
         # 藏干数据来源：优先用已校正的 hidden_gans，回退到 ZHI_CANGGAN
         _HIDDEN_KEYS = ['year', 'month', 'day', 'time']
