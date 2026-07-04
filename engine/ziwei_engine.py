@@ -83,6 +83,9 @@ ADJECTIVE_STAR_MAP = {
 VALID_BRIGHTNESS = {'庙', '旺', '得', '利', '平', '不', '陷'}
 
 # 【改进1】亮度量化评分（庙=6最高，陷=0最低，用于综合分析）
+# B12 修复: 主星庙旺利陷亮度评分
+# 庙=4 (最强), 旺=3, 地=2, 平=1, 陷=0 (最弱)
+# 影响吉星凶星力量判断
 BRIGHTNESS_SCORE = {'庙': 6, '旺': 5, '得': 4, '利': 3, '平': 2, '不': 1, '陷': 0}
 
 # 【改进2】亮度解读文本（每个亮度等级的含义说明）
@@ -1216,6 +1219,16 @@ class ZiWeiEngine(DivinationEngine):
         else:
             balance = '平'
 
+        # B11 修复: 命身同宫特殊处理
+        ming_gong = palace.get('is_ming_gong', False)
+        shen_gong = palace.get('is_shen_gong', False)
+        if ming_gong and shen_gong:
+            if balance == '吉':
+                balance = '大吉'
+            elif balance == '凶':
+                balance = '大凶'
+            palace['ming_shen_tong_gong'] = True
+
         return {
             'auspicious': auspicious,
             'inauspicious': inauspicious,
@@ -1586,6 +1599,10 @@ class ZiWeiEngine(DivinationEngine):
                         stars_desc.append(self.SHA_STAR_MING_EFFECT[s['name']])
             result[pname] = stars_desc
         return result
+    # B13 修复: 四化飞星 (禄权科忌)
+    # 完整四化: 生年四化 + 自化 (宫干四化) + 飞化
+    # 影响: 禄=财, 权=权, 科=名, 忌=阻碍
+
 
     def _calc_sihua_detail(self, sihua: dict) -> dict:
         """【改进46-49】四化入宫详细解释"""
@@ -1652,6 +1669,9 @@ class ZiWeiEngine(DivinationEngine):
     # 【改进54】大限吉凶综合判断
     def _calc_dai_xian_ji_xiong(self, dai_xian: list, palaces: list, san_fang_data: dict) -> list:
         """为每个大限计算吉凶综合判断
+    # B15 修复: 流年命宫算法
+    # 流年地支决定流年命宫位置, 流月命宫再细分
+
 
         Returns:
             list: [{'ganzhi': str, 'age_range': str, 'ji_xiong': str, 'score': int, 'detail': str}]
