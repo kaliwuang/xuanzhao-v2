@@ -11,9 +11,11 @@ from typing import Optional, Dict, List
 logger = logging.getLogger("xuanzhao.wisdom")
 
 # 加载规则引擎
+sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent / "deep"))
 try:
-    from wisdom import high_impact_insight, cross_synthesis
+    # 修复: wisdom.py 在 deep/ 子目录, 之前直接 import 失败
+    from deep.wisdom import high_impact_insight, cross_synthesis
     WISDOM_OK = True
 except Exception as e:
     logger.warning(f"wisdom 加载失败: {e}")
