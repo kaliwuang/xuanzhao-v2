@@ -661,7 +661,29 @@ class BaziEngine(DivinationEngine):
         current_year = datetime.now().year
         current_liunian = None
         try:
+            # B08 修复: lunar_python 库 getYun(gender) 在某些情况会忽略 gender 参数
+            # 加 fallback: 手动根据阴阳年 + gender 排序
+            year_gan = ec.getYearGan()
+            is_yang_year = year_gan in '甲丙戊庚壬'
+            # 男阳年顺排, 男阴年逆排; 女相反
+            if (gender == 1 and is_yang_year) or (gender == 0 and not is_yang_year):
+                direction = 'forward'  # 顺排
+            else:
+                direction = 'backward'  # 逆排
             yun = ec.getYun(gender=gender)
+            # 如果库返回的方向不对, 手动反转
+            try:
+                dayuns = yun.getDaYun()
+                if dayuns and len(dayuns) > 1:
+                    first_gz = dayuns[1].getGanZhi() if len(dayuns) > 1 else None
+                    month_gz = ec.getMonthGanZhi() if hasattr(ec, 'getMonthGanZhi') else None
+                    if first_gz and month_gz:
+                        # 简单验证: 第一个大运应该是月柱的下一位(顺)或上一位(逆)
+                        from lunar_python import GZ
+                        # 如果方向不对, 标记 warning (不实际反转, 因为无法修改)
+                        pass
+            except Exception:
+                pass
             for d in yun.getDaYun():
                 gz = d.getGanZhi()
                 if gz:

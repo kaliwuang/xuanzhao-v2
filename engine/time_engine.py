@@ -74,7 +74,31 @@ class TimeEngine:
     ]
 
     def __init__(self):
+        # B66 修复: 每次初始化都重新加载,确保 JSON 修改能生效
         self._cities = self._load_cities()
+        self._cities_mtime = self._get_cities_mtime()
+
+    def _get_cities_mtime(self):
+        """获取 cities.json 的修改时间"""
+        try:
+            cities_file = Path(__file__).parent.parent / "data" / "cities.json"
+            if cities_file.exists():
+                return cities_file.stat().st_mtime
+        except Exception:
+            pass
+        return 0
+
+    def _reload_cities_if_changed(self):
+        """如果 cities.json 修改了, 重新加载"""
+        try:
+            current_mtime = self._get_cities_mtime()
+            if current_mtime > self._cities_mtime:
+                self._cities = self._load_cities()
+                self._cities_mtime = current_mtime
+                return True
+        except Exception:
+            pass
+        return False
 
     def _load_cities(self) -> dict:
         """加载城市经纬度数据库，优先从 data/cities.json 读取"""
@@ -226,6 +250,8 @@ class TimeEngine:
 
     def _lookup_location(self, loc: str) -> Tuple[float, float]:
         """查询城市经纬度"""
+        # B66 修复: 每次查询前检查文件是否修改
+        self._reload_cities_if_changed()
         loc = loc.strip()
         # 先查中文名
         if loc in self._cities:
