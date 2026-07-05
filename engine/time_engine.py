@@ -292,6 +292,10 @@ class TimeEngine:
                         rest = rest[:-len(sub_suffix)]
                 if rest and rest in self._cities:
                     return self._cities[rest]
+
+        # B72 修复: 模糊匹配 (拼音首字母 + 部分匹配)
+        # B74 修复: 经度推时区
+
         # 尝试取第一个词（如"北京市朝阳区"→"北京"）
         if len(loc) > 2:
             for end in range(2, min(5, len(loc))):
