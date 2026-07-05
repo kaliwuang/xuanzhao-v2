@@ -342,6 +342,24 @@ class TimeEngine:
 
         return beijing_time + timedelta(minutes=total_minutes)
 
+    def _fuzzy_lookup(self, loc):
+        # B72
+        for name in self._cities.keys():
+            if len(name) >= 2 and (loc in name or name in loc):
+                return self._cities[name]
+        return None
+
+    def _longitude_to_timezone(self, longitude):
+        # B74
+        return round(longitude / 15)
+
+    def _location_to_timezone(self, loc):
+        # B74 helper
+        coords = self._lookup_location(loc)
+        if coords:
+            return self._longitude_to_timezone(coords[1])
+        return 8
+
     def _equation_of_time(self, dt: datetime) -> float:
         """
         均时差：由于地球轨道椭圆和自转轴倾斜导致。
