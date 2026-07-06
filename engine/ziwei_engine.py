@@ -414,27 +414,10 @@ class ZiWeiEngine(DivinationEngine):
         palaces = []
         star_placements = {}
 
-        # 找命宫身宫
-        ming_idx = None
-        shen_idx = None
-        for i, p in enumerate(r.palaces):
-            try:
-                pname = p.name.lower() if hasattr(p, 'name') else ''
-                if 'soul' in pname or '命宫' in pname:
-                    ming_idx = i
-                if 'body' in pname or '身宫' in pname:
-                    shen_idx = i
-            except Exception:
-                pass
-
-        for i, p in enumerate(r.palaces):
+        for p in r.palaces:
             palace_name = _cn_palace_name(p.name)
             branch = _cn_branch(p.earthly_branch)
             stem = _cn_stem(p.heavenly_stem)
-
-            # B11 修复: 标记命宫身宫
-            p['_is_ming_gong'] = (i == ming_idx)
-            p['_is_shen_gong'] = (i == shen_idx)
 
             # 主星
             major_stars = []
@@ -1228,10 +1211,6 @@ class ZiWeiEngine(DivinationEngine):
         if san_fang_info:
             auspicious += san_fang_info.get('auspicious_count', 0)
             inauspicious += san_fang_info.get('inauspicious_count', 0)
-
-        # B12 修复: 亮度影响吉凶 (+/-)
-        auspicious += max(0, brightness_score - 3)  # 高亮度加分
-        inauspicious += max(0, 3 - brightness_score)  # 低亮度加分(凶)
 
         if auspicious > inauspicious + 1:
             balance = '吉'
