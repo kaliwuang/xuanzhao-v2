@@ -59,6 +59,22 @@ GUA_TO_ZHI = {
 }
 
 
+# B51 修复: 太乙积年计算
+# 太乙以日计, 公元前年数 + 101539 修正
+# 公式: 积年数 = 干支年 + 修正数
+TAIYI_EPOCH_CORRECTION = 101539  # 校正常数
+
+def calc_taiyi_ji_nian(year_gz_year: int) -> int:
+    """B51 修复: 太乙积年
+
+    Args:
+        year_gz_year: 干支纪年 (如 2026=丙午)
+    Returns:
+        积年数 (用于起卦)
+    """
+    return year_gz_year + TAIYI_EPOCH_CORRECTION
+
+
 class TaiYiEngine(DivinationEngine):
     # 八门名称
     BA_MEN_NAMES = ['休门', '生门', '伤门', '杜门', '景门', '死门', '惊门', '开门']
@@ -113,6 +129,34 @@ class TaiYiEngine(DivinationEngine):
     @property
     def priority(self) -> int:
         return 7
+
+
+    def _calc_tianyi_diyi(self, palaces: list, year_gz: str) -> dict:
+        """B58 修复: 天乙地乙定位
+
+        天乙 = 太乙所在宫 (主天时)
+        地乙 = 地乙所在宫 (主地利)
+
+        决定用神和体用的关键位置
+        """
+        tianyi_gong = None
+        diyi_gong = None
+        for p in palaces:
+            if not isinstance(p, dict):
+                continue
+            stars = p.get('major_stars', p.get('主星', []))
+            for s in stars:
+                if isinstance(s, dict):
+                    name = s.get('name', s.get('星', ''))
+                    if '太乙' in str(name) and '天' in str(name):
+                        tianyi_gong = p.get('name', p.get('宫', ''))
+                    elif '太乙' in str(name) and '地' in str(name):
+                        diyi_gong = p.get('name', p.get('宫', ''))
+        return {
+            '天乙宫': tianyi_gong,
+            '地乙宫': diyi_gong,
+            'description': f'天乙在{tianyi_gong},地乙在{diyi_gong}'
+        }
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
         """太乙神数排盘分析

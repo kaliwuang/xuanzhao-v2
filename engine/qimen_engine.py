@@ -2301,6 +2301,76 @@ class QiMenEngine(DivinationEngine):
         }
 
     # Q35: 奇门综合断语
+    def _check_xing_fa(self, palaces):
+        """B27 修复: 击刑检测"""
+        xing = {}
+        xing_pairs = [
+            ('寅', '巳'), ('巳', '申'), ('申', '寅'),
+            ('子', '卯'), ('卯', '子'),
+            ('辰', '辰'), ('午', '午'), ('酉', '酉'), ('亥', '亥'),
+        ]
+        for p in palaces:
+            if not isinstance(p, dict):
+                continue
+            tp = p.get('天盘', p.get('tian_pan', ''))
+            dp = p.get('地盘', p.get('di_pan', ''))
+            for a, b in xing_pairs:
+                if tp == a and dp == b:
+                    xing[p.get('name', p.get('宫名', ''))] = {
+                        'type': '击刑',
+                        'pair': f'{tp}-{dp}',
+                        'description': f'{tp}击{dp}刑'
+                    }
+        return xing
+
+    def _check_ru_mu(self, palaces):
+        """B27 修复: 入墓检测"""
+        mu = {}
+        mu_map = {
+            '乙': '戌', '丙': '戌', '丁': '戌',
+            '壬': '辰', '癸': '辰',
+            '庚': '丑', '辛': '丑',
+            '戊': '未', '己': '未',
+        }
+        for p in palaces:
+            if not isinstance(p, dict):
+                continue
+            tp = p.get('天盘', p.get('tian_pan', ''))
+            if isinstance(tp, str) and len(tp) > 0:
+                tg = tp[0]
+                dp = p.get('地盘', p.get('di_pan', ''))
+                if tg in mu_map and mu_map[tg] == dp:
+                    mu[p.get('name', p.get('宫名', ''))] = {
+                        'type': '入墓',
+                        '天干': tg,
+                        '地支': dp
+                    }
+        return mu
+
+    def _check_kong_wang(self, palaces):
+        """B29 修复: 旬空亡检测"""
+        xun_list = [
+            ('甲子', ['戌', '亥']),
+            ('甲戌', ['申', '酉']),
+            ('甲申', ['午', '未']),
+            ('甲午', ['辰', '巳']),
+            ('甲辰', ['寅', '卯']),
+            ('甲寅', ['子', '丑']),
+        ]
+        kw = {}
+        for xun, kong in xun_list:
+            for p in palaces:
+                if not isinstance(p, dict):
+                    continue
+                dp = p.get('地盘', p.get('di_pan', ''))
+                if dp in kong:
+                    kw[p.get('name', p.get('宫名', ''))] = {
+                        'type': '空亡',
+                        '旬': xun,
+                        '地支': dp
+                    }
+        return kw
+
     def _generate_qimen_summary(self, ge_ju_analysis: dict, yong_shen: dict,
                                  fu_fan_yin: dict, ge_ju_strength: dict) -> str:
         """Q35: 奇门综合断语生成"""
