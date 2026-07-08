@@ -1982,6 +1982,10 @@ class BaziEngine(DivinationEngine):
                     # 食伤为 0: 加入喜用(泄秀, 不让身太死)
                     base_xi.append(w)
 
+        # 调候用神（优先于普通旺衰）— 先初始化,后续逻辑才能引用
+        tiaohou_xi = []
+        tiaohou_ji = []
+
         # B03 修复: 中和命局也需调候
         if strength == '中和' and not base_xi:
             # 找到最弱的五行(可能为忌或可能为喜)
@@ -1992,10 +1996,6 @@ class BaziEngine(DivinationEngine):
                     base_xi = tiaohou_xi
                 else:
                     base_xi = [weakest]  # 默认补最弱
-
-        # 调候用神（优先于普通旺衰）
-        tiaohou_xi = []
-        tiaohou_ji = []
 
         tiaohou_str = ''
         if BaziEngine._tiaohou_cache:

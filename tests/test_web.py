@@ -2,9 +2,21 @@
 玄照 v2.0 - Playwright自动化测试
 
 测试Web界面和API接口的基本功能。
+
+依赖:playwright + 浏览器二进制(playwright install)
+- 如未安装,pytest 收集时跳过整个文件
+- 避免 CI / clone 后立刻看到 ERROR 而非真实失败
 """
 import pytest
-from playwright.sync_api import Page, expect
+
+try:
+    from playwright.sync_api import Page, expect  # noqa: F401
+    _HAS_PLAYWRIGHT = True
+except ImportError:
+    _HAS_PLAYWRIGHT = False
+
+if not _HAS_PLAYWRIGHT:
+    pytest.skip("playwright not installed", allow_module_level=True)
 
 
 BASE_URL = "http://localhost:8080"

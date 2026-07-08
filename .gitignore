@@ -6,3 +6,8 @@ __pycache__/
 .cache/
 .vscode/
 .idea/
+
+# evolution 系统曾每天产生空 commit,污染 git 历史
+# 见 D:\W\Documents\Wu\02-Projects\Claude-Memory\xuanzhao-evolution-cleanup-2026-07-09.md
+evolution.log
+evolution_log.json
