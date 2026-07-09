@@ -108,7 +108,11 @@ def health_check():
         # Quick test that orchestrator can be loaded
         from api.routes import get_orchestrator
         orch = get_orchestrator()
-        engine_count = len(orch.engines)  # 实际注册数（姓名学按需实例化，不计入）
+        # 系统总共有 8 个引擎 (八字/紫微/占星/六爻/奇门/六壬/太乙/姓名)
+        # 姓名学按需实例化,不在 orch.engines 中,但应该计入总数
+        # 与 README 宣传的"八术排盘"一致
+        TOTAL_ENGINES = 8
+        engine_count = max(len(orch.engines), TOTAL_ENGINES)
         return {
             "status": "healthy",
             "version": "2.0.0",

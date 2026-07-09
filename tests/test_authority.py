@@ -33,6 +33,17 @@ class TestMathBoundariesEndpoint:
         r = client.get("/api/math/boundaries")
         assert r.status_code == 200
 
+    def test_health_reports_8_engines(self):
+        """/api/health 必须报告 8 个引擎(与 README 八术排盘一致)
+        修复: 之前报 7,因为姓名学按需实例化不在 orch.engines 中
+        """
+        r = client.get("/api/health")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["engines_registered"] == 8, \
+            f"健康检查应报 8 个引擎, 实际: {data['engines_registered']}"
+        assert data["status"] == "healthy"
+
     def test_contains_all_8_engines(self):
         r = client.get("/api/math/boundaries")
         engines = r.json()["engines"]

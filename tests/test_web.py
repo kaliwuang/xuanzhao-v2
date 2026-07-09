@@ -3,20 +3,28 @@
 
 测试Web界面和API接口的基本功能。
 
-依赖:playwright + 浏览器二进制(playwright install)
-- 如未安装,pytest 收集时跳过整个文件
-- 避免 CI / clone 后立刻看到 ERROR 而非真实失败
+依赖:
+- playwright (pip install playwright)
+- pytest-playwright 插件 (pip install pytest-playwright)
+- 浏览器二进制 (playwright install chromium)
+
+缺失任意一个,pytest 收集时跳过整个文件。
+避免 CI / clone 后立刻看到 ERROR 而非真实失败。
 """
 import pytest
 
 try:
     from playwright.sync_api import Page, expect  # noqa: F401
+    import pytest_playwright  # noqa: F401  # 提供 page fixture
     _HAS_PLAYWRIGHT = True
 except ImportError:
     _HAS_PLAYWRIGHT = False
 
 if not _HAS_PLAYWRIGHT:
-    pytest.skip("playwright not installed", allow_module_level=True)
+    pytest.skip(
+        "playwright / pytest-playwright not installed (run: pip install playwright pytest-playwright && playwright install chromium)",
+        allow_module_level=True,
+    )
 
 
 BASE_URL = "http://localhost:8080"
