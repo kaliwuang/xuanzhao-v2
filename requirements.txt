@@ -17,6 +17,7 @@ kinliuren>=0.1.0
 numpy>=1.24.0
 cn2an>=0.5.0
 taiyidict>=0.1.0
+sxtwl>=1.0.0
 
 # LLM 客户端（可选，离线时自动回退规则引擎）
 openai>=1.0.0

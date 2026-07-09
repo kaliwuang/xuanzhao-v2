@@ -33,15 +33,48 @@ from .base import DivinationEngine
 from .time_engine import CorrectedTime
 from typing import Optional, Dict
 import logging
+import sys
+import os
 
 logger = logging.getLogger(__name__)
 
-# 模块级别预导入kintaiyi（避免在HTTP线程中延迟导入失败）
+# kintaiyi 内部既用 `from taiyidict import ...`(需要 kintaiyi 目录在 sys.path)
+# 又用 `from config import num, su, gong...`(需要 kintaiyi/config.py 优先于项目 config.py)
+# 两个诉求冲突,但有一个时机能同时满足: 在 importlib.import_module 期间临时
+# 把 kintaiyi 目录放 sys.path 第 0 位,加载完立刻弹出。
+# 测试已验证: 这一瞬间 kintaiyi 内部 import 全部解析,主进程 sys.path 不被污染。
+import importlib
+import os as _os
+_TaiyiClass = None
 try:
-    from kintaiyi.kintaiyi import Taiyi as _TaiyiClass
-    _TAIYI_AVAILABLE = True
-except Exception:
+    _kintaiyi_pkg = importlib.import_module("kintaiyi")
+    _kintaiyi_dir = _os.path.dirname(_kintaiyi_pkg.__file__)
+    # 临时把 kintaiyi 目录放 sys.path 第 0 位
+    _sys_path_backup = sys.path[:]
+    sys.path.insert(0, _kintaiyi_dir)
+    # 备份可能被污染的 sys.modules
+    _config_backup = sys.modules.get("config", None)
+    _taiyidict_backup = sys.modules.get("taiyidict", None)
+    try:
+        _kintaiyi_mod = importlib.import_module("kintaiyi.kintaiyi")
+        _TaiyiClass = _kintaiyi_mod.Taiyi
+        _TAIYI_AVAILABLE = True
+    finally:
+        # 完全恢复:sys.path + sys.modules 都要还原
+        sys.path[:] = _sys_path_backup
+        # kintaiyi 加载时把 kintaiyi/config.py 注入到了 sys.modules['config'],
+        # 必须清除,否则 main.py 的 `from config import HOST` 会拿到错误的 config
+        if _config_backup is not None:
+            sys.modules["config"] = _config_backup
+        elif "config" in sys.modules:
+            del sys.modules["config"]
+        if _taiyidict_backup is not None:
+            sys.modules["taiyidict"] = _taiyidict_backup
+        elif "taiyidict" in sys.modules:
+            del sys.modules["taiyidict"]  # kintaiyi.taiyidict 已注册,删除根级别名
+except Exception as _e:
     _TAIYI_AVAILABLE = False
+    logger.warning(f"太乙引擎: kintaiyi 预导入失败: {_e}")
 
 
 # 地支→九宫映射
