@@ -414,7 +414,8 @@ class PerspectiveEngine:
 
     def __init__(self, llm_client=None):
         self.figures = FIGURES
-        self.llm = llm_client
+        # 与参数名一致: self.llm_client 而不是 self.llm
+        self.llm_client = llm_client
 
     def analyze(self, udm, question: str, figure_ids: Optional[List[str]] = None) -> List[PerspectiveOpinion]:
         """对给定命盘，从指定视角生成观点"""
