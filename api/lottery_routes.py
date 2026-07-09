@@ -143,7 +143,8 @@ def _analyze_lottery(data, lottery_type):
     for d in data:
         try:
             wd = datetime.strptime(d['date'], '%Y-%m-%d').weekday()
-        except:
+        except (ValueError, TypeError):
+            # 日期格式错误或缺失字段,跳过这条记录
             continue
         for n in _get_main_numbers(d, lottery_type):
             weekday_freq[wd][n] += 1

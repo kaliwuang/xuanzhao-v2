@@ -8,7 +8,7 @@
 
 ## 严重程度分布
 
-- 🔴 真问题(ast 扫描): 15
+- 🔴 真问题(ast 扫描): 14
 - 🟡 ruff 问题(风格+重复键): 0
 
 旧版'108 个潜在 bug'无真实依据,**本清单只列真实问题**。
@@ -106,14 +106,7 @@
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
-### B014: api\lottery_routes.py:146 — bare `except:`
-- 扫描器: ast
-- 类型: BARE_EXCEPT
-- 严重程度: 🟡 P1
-- 状态: 待人工 review
-- 描述: bare `except:` — 不指定异常类型,可能捕获 KeyboardInterrupt
-
-### B015: api\score_engine.py:776 — except ((ValueError, TypeError)): pass
+### B014: api\score_engine.py:776 — except ((ValueError, TypeError)): pass
 - 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
