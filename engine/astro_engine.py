@@ -1,5 +1,12 @@
-"""占星引擎 - Astrology Engine using pyswisseph."""
+"""占星引擎 - Astrology Engine using pyswisseph.
 
+数学边界（2026-07-09 梧指令补充）:
+- 公式 11: 占星样本空间 |Ω| = 12星座 × 10行星 × 12宫位 = 1440(粗略)
+  实际更高（相位、度数、宫主星多层组合）— 但任何"基于星盘的预测"都受公式 13 限制
+- pyswisseph 是天文级精度库(J2000.0 历元,精度 ±1 角秒)
+- 但天文精度**不**等于预测精度 — 公式 13 证明:出生星盘对未来事件无预测优势
+- 行星逆行、南北交点、相位都是对**当前天象**的描述,不是未来事件的因
+"""
 import swisseph as swe
 from datetime import datetime, timedelta, timezone
 from typing import Optional

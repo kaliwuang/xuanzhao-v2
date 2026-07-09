@@ -766,7 +766,10 @@ def _select_final_recommendations(
     candidates = sorted(score_map.keys(), key=lambda n: (-score_map.get(n, 0), n))
     if len(candidates) < 10:
         # 候选不足时随机补全（在合法范围内）
-        all_n = list(range(cfg["front"][0], cfg["front"][1] + 1))
+        if cfg["type"] == "3d":
+            all_n = list(range(cfg["main"][0], cfg["main"][1] + 1))
+        else:
+            all_n = list(range(cfg["front"][0], cfg["front"][1] + 1))
         rng.shuffle(all_n)
         for n in all_n:
             if n not in candidates:
@@ -791,6 +794,9 @@ def _select_final_recommendations(
     # 乐透
     front_n = cfg["front_n"]
     back_n = cfg["back_n"]
+    if cfg["type"] == "3d":
+        # 3D 类型已在前面早返回,这里再防御一次
+        return []
     front_pool = [n for n in candidates if cfg["front"][0] <= n <= cfg["front"][1]]
     back_pool = [n for n in candidates if cfg["back"][0] <= n <= cfg["back"][1]]
 

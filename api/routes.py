@@ -1997,3 +1997,114 @@ def get_bazi_score(
 
     except Exception as e:
         return _error_response(e)
+
+
+# ============================================================
+# 数学边界端点 — 8 术法的概率论边界白纸黑字
+# 基于大乐透 14 公式 (2026-07-09 梧指令补充)
+# ============================================================
+
+@router.get("/api/math/boundaries")
+def math_boundaries():
+    """8 术法的数学边界 — 公开接口,任何调用可查
+
+    设计目标:
+    - 每个术法的样本空间 |Ω|
+    - 公式 13 限制 (历史无预测优势)
+    - 已知缺陷
+    - 公式 11 信息熵
+    """
+    return {
+        "formula_basis": {
+            "F11_entropy": "H = -Σ p(ω) log₂ p(ω) = log₂|Ω| (等概率分布)",
+            "F13_no_advantage": "P(ω_t | H_{t-1}) = P(ω_t) — 历史条件概率等于无条件概率",
+            "F7_8_prize": "奖级概率 = C(35,k)·C(30,5-k)·C(12,m)·C(10,2-m) / [C(35,5)·C(12,2)]",
+            "F10_return": "返奖率 = E[R] / 2 ≈ 51% — 长期盈亏由发行方决定,玩家层面无法突破",
+            "F12_independence": "P(A_{t+1} | A_t) = P(A_{t+1}) — 每期开奖独立,无'复仇号'或'跟单号'",
+        },
+        "engines": {
+            "bazi": {
+                "name": "八字",
+                "sample_space": "年柱约 60 × 月柱 12 × 日柱 60 × 时柱 12 = 518,400 种组合",
+                "entropy_bits": 19.0,
+                "F13_implication": "命盘静态结构,不对未来事件提供预测优势",
+                "known_defects": [],
+            },
+            "ziwei": {
+                "name": "紫微斗数",
+                "sample_space": "12宫 × 14主星组合(约 4096) × 大限流转(每 10 年一变)",
+                "entropy_bits": 12.0,
+                "F13_implication": "四化飞星/自化是命盘结构描述,不构成预测",
+                "known_defects": ["解释层主观性:同一命盘不同派别解释冲突"],
+            },
+            "astro": {
+                "name": "西洋占星",
+                "sample_space": "12星座 × 10行星 × 12宫位 × 相位(主要 5 种) = 复杂组合",
+                "entropy_bits": 14.0,
+                "F13_implication": "天文精度(pyswisseph ±1 角秒)不等于预测精度",
+                "known_defects": [],
+            },
+            "liuyao": {
+                "name": "六爻",
+                "sample_space": "64卦 × 6爻 × 动爻约 3 个 × 变卦 = 约 4,096 组合",
+                "entropy_bits": 12.0,
+                "F13_implication": "用神选取/世应分析含主观性,不构成预测",
+                "known_defects": [],
+            },
+            "qimen": {
+                "name": "奇门遁甲",
+                "sample_space": "阳遁9局 + 阴遁9局 = 18局 × 9宫 = 162 种盘式",
+                "entropy_bits": 7.3,
+                "F13_implication": "格局判断含主观性,不构成预测",
+                "known_defects": [],
+            },
+            "liuren": {
+                "name": "大六壬",
+                "sample_space": "12天盘 × 三传取法(~6) × 12天将 = 复杂组合",
+                "entropy_bits": 10.0,
+                "F13_implication": "三传取法/天将解读含主观性,不构成预测",
+                "known_defects": ["四课为空:某些时辰边界条件下三传取法未覆盖"],
+            },
+            "taiyi": {
+                "name": "太乙神数",
+                "sample_space": "阳遁9局 × 阴遁9局 × 16宫 = 144 种盘式",
+                "entropy_bits": 7.2,
+                "F13_implication": "本用于军国大事,样本空间小,个人解读主观性强",
+                "known_defects": [
+                    "kintaiyi 传递依赖未装齐(numpy/cn2an/taiyidict),tests 4 个失败",
+                    "requirements.txt 已记录,需 pip install -r requirements.txt",
+                ],
+            },
+            "xingming": {
+                "name": "姓名学",
+                "sample_space": "3500常用汉字 × 100常用姓氏 ≈ 350,000",
+                "entropy_bits": 18.4,
+                "F13_implication": "康熙笔画是历史选择,非 Unicode 标准;三才配置是后天解读",
+                "known_defects": ["同一字不同字典笔画可能不同"],
+            },
+        },
+        "lottery_module": {
+            "F11_sample_space": {
+                "fc3d": 120,         # C(10,3)
+                "pl3": 120,
+                "dlt": 21425712,    # C(35,5) × C(12,2)
+                "ssq": 17721088,    # C(33,6) × C(16,1)
+            },
+            "F11_entropy_bits": {
+                "fc3d": 6.91,
+                "pl3": 6.91,
+                "dlt": 24.35,
+                "ssq": 24.08,
+            },
+            "F8_total_win_probability": 0.0667,
+            "F10_return_rate": 0.51,
+            "F10_expected_return_per_2yuan": 1.02,
+            "data_quality_note": "dlt-history.csv 2026-07-09 发现 791/1000 行是重复,已去重为 210 真实期",
+        },
+        "白皮书": [
+            "docs/lottery_math_disclosure.md",
+            "每个 engine 顶部 docstring 的'数学边界'段",
+        ],
+        "source": "梧 2026-07-09 提供大乐透 14 公式,玄照 v2 各引擎顶部 docstring 引用本端点",
+    }
+
