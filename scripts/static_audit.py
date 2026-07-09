@@ -78,12 +78,40 @@ def main():
                 if f.endswith(".py"):
                     full = os.path.join(root, f)
                     for line, rule, desc in scan_file(full):
-                        all_issues.append((full, line, rule, desc))
+                        all_issues.append((full, line, rule, desc, "ast"))
 
     for f in target_files:
         if os.path.isfile(f):
             for line, rule, desc in scan_file(f):
-                all_issues.append((f, line, rule, desc))
+                all_issues.append((f, line, rule, desc, "ast"))
+
+    # ruff 真实问题 (E/F/W + 重复键 F601)
+    # ruff 默认输出 install 可能在,试一下;失败则跳过
+    import shutil
+    import subprocess
+    ruff_bin = shutil.which("ruff")
+    if not ruff_bin:
+        venv_ruff = os.path.join(os.path.dirname(sys.executable), "ruff.exe" if os.name == "nt" else "ruff")
+        if os.path.isfile(venv_ruff):
+            ruff_bin = venv_ruff
+    if ruff_bin:
+        try:
+            cmd = [ruff_bin, "check", "--select=E,F,W", "--output-format=concise",
+                   "engine", "api", "main.py", "config.py"]
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+            for line in r.stdout.splitlines():
+                # 格式: path:line:col: code message
+                parts = line.split(":", 4)
+                if len(parts) < 5:
+                    continue
+                path, lineno, col, code, message = parts[0], parts[1], parts[2], parts[3].strip(), parts[4].strip()
+                try:
+                    lineno_int = int(lineno)
+                except ValueError:
+                    continue
+                all_issues.append((path, lineno_int, code, message[:120], "ruff"))
+        except Exception as e:
+            print(f"ruff 调用失败: {e}", file=sys.stderr)
 
     # 输出 markdown
     print(f"# 玄照 静态扫描结果")
@@ -95,7 +123,7 @@ def main():
     print(f"")
     print(f"- 总问题数: **{len(all_issues)}**")
     by_rule = {}
-    for _, _, rule, _ in all_issues:
+    for _, _, rule, _, _ in all_issues:
         by_rule[rule] = by_rule.get(rule, 0) + 1
     for rule, count in sorted(by_rule.items()):
         print(f"  - {rule}: {count}")
@@ -104,7 +132,7 @@ def main():
     print(f"")
     print(f"| # | 文件 | 行号 | 规则 | 描述 |")
     print(f"|---|---|---|---|---|")
-    for i, (path, line, rule, desc) in enumerate(all_issues, 1):
+    for i, (path, line, rule, desc, _) in enumerate(all_issues, 1):
         rel = path.replace(os.getcwd() + os.sep, "") if path.startswith(os.getcwd()) else path
         print(f"| {i:03d} | `{rel}` | {line} | {rule} | {desc} |")
 
@@ -114,19 +142,37 @@ def main():
         with open(out_path, "w", encoding="utf-8") as f:
             f.write("# 玄照 Bug 清单 — 真实静态扫描版\n\n")
             f.write("**生成方式**: `python scripts/static_audit.py --write`\n\n")
+            f.write("扫描器: `ast`(逻辑问题) + `ruff -E,F,W`(PEP8 风格 + 重复键 F601)\n\n")
             f.write("**对比旧版**: 原 `BUG_LIST.md` 已归档为 `.deprecated`,因为 108 个 bug 里 5 个行号为负数占位符。\n\n")
             f.write("## 严重程度分布\n\n")
-            f.write(f"- 🔴 真问题: {len(all_issues)}\n")
-            f.write(f"- 🟡 灰带: 0\n")
-            f.write(f"- 🟢 已废弃: 0\n\n")
+            f.write(f"- 🔴 真问题(ast 扫描): {sum(1 for x in all_issues if x[4]=='ast')}\n")
+            f.write(f"- 🟡 ruff 问题(风格+重复键): {sum(1 for x in all_issues if x[4]=='ruff')}\n\n")
             f.write("旧版'108 个潜在 bug'无真实依据,**本清单只列真实问题**。\n\n")
-            f.write("## 全部 Bug 列表\n\n")
-            for i, (path, line, rule, desc) in enumerate(all_issues, 1):
+            f.write("## 全部 Bug 列表(ast)\n\n")
+            n = 0
+            for i, (path, line, rule, desc, source) in enumerate(all_issues, 1):
+                if source != "ast":
+                    continue
+                n += 1
                 rel = path.replace(os.getcwd() + os.sep, "") if path.startswith(os.getcwd()) else path
-                f.write(f"### B{i:03d}: {rel}:{line} — {desc.split(' — ')[0]}\n")
+                f.write(f"### B{n:03d}: {rel}:{line} — {desc.split(' — ')[0]}\n")
+                f.write(f"- 扫描器: ast\n")
                 f.write(f"- 类型: {rule}\n")
                 f.write(f"- 严重程度: 🟡 P1\n")
                 f.write(f"- 状态: 待人工 review\n")
+                f.write(f"- 描述: {desc}\n\n")
+            f.write("\n## Ruff 风格问题(前 30 条,完整版跑 ruff check)\n\n")
+            n = 0
+            for i, (path, line, rule, desc, source) in enumerate(all_issues, 1):
+                if source != "ruff":
+                    continue
+                n += 1
+                if n > 30:
+                    break
+                rel = path.replace(os.getcwd() + os.sep, "") if path.startswith(os.getcwd()) else path
+                f.write(f"### R{n:03d}: {rel}:{line} — {rule}\n")
+                f.write(f"- 扫描器: ruff\n")
+                f.write(f"- 类型: {rule}\n")
                 f.write(f"- 描述: {desc}\n\n")
             f.write("\n## 旧版归档\n\n")
             f.write("- `BUG_LIST.md.deprecated`\n")

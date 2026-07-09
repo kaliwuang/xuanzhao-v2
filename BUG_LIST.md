@@ -2,107 +2,126 @@
 
 **生成方式**: `python scripts/static_audit.py --write`
 
+扫描器: `ast`(逻辑问题) + `ruff -E,F,W`(PEP8 风格 + 重复键 F601)
+
 **对比旧版**: 原 `BUG_LIST.md` 已归档为 `.deprecated`,因为 108 个 bug 里 5 个行号为负数占位符。
 
 ## 严重程度分布
 
-- 🔴 真问题: 15
-- 🟡 灰带: 0
-- 🟢 已废弃: 0
+- 🔴 真问题(ast 扫描): 15
+- 🟡 ruff 问题(风格+重复键): 0
 
 旧版'108 个潜在 bug'无真实依据,**本清单只列真实问题**。
 
-## 全部 Bug 列表
+## 全部 Bug 列表(ast)
 
 ### B001: engine\bazi_engine.py:434 — except ImportError: pass
+- 扫描器: ast
 - 类型: MAYBE_OK
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ImportError: pass — 静默吞具体类型,需确认
 
 ### B002: engine\bazi_engine.py:693 — except Exception: pass
+- 扫描器: ast
 - 类型: MAYBE_OK
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except Exception: pass — 静默吞具体类型,需确认
 
 ### B003: engine\llm_client.py:160 — except json.JSONDecodeError: pass
+- 扫描器: ast
 - 类型: MAYBE_OK
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except json.JSONDecodeError: pass — 静默吞具体类型,需确认
 
 ### B004: engine\taiyi_engine.py:652 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
 ### B005: engine\taiyi_engine.py:664 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
 ### B006: engine\time_engine.py:102 — except Exception: pass
+- 扫描器: ast
 - 类型: MAYBE_OK
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except Exception: pass — 静默吞具体类型,需确认
 
 ### B007: engine\time_engine.py:114 — except Exception: pass
+- 扫描器: ast
 - 类型: MAYBE_OK
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except Exception: pass — 静默吞具体类型,需确认
 
 ### B008: engine\ziwei_engine.py:686 — except Exception: pass
+- 扫描器: ast
 - 类型: MAYBE_OK
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except Exception: pass — 静默吞具体类型,需确认
 
-### B009: api\divine_lottery_routes.py:464 — except ((ValueError, TypeError)): pass
+### B009: api\divine_lottery_routes.py:465 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
-### B010: api\divine_lottery_routes.py:475 — except ((ValueError, TypeError)): pass
+### B010: api\divine_lottery_routes.py:476 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
-### B011: api\divine_lottery_routes.py:486 — except ((ValueError, TypeError)): pass
+### B011: api\divine_lottery_routes.py:487 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
-### B012: api\divine_lottery_routes.py:501 — except ((ValueError, TypeError)): pass
+### B012: api\divine_lottery_routes.py:502 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
-### B013: api\divine_lottery_routes.py:518 — except ((ValueError, TypeError)): pass
+### B013: api\divine_lottery_routes.py:519 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
 
 ### B014: api\lottery_routes.py:146 — bare `except:`
+- 扫描器: ast
 - 类型: BARE_EXCEPT
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: bare `except:` — 不指定异常类型,可能捕获 KeyboardInterrupt
 
 ### B015: api\score_engine.py:776 — except ((ValueError, TypeError)): pass
+- 扫描器: ast
 - 类型: INPUT_GUARD
 - 严重程度: 🟡 P1
 - 状态: 待人工 review
 - 描述: except ((ValueError, TypeError)): pass — 输入校验白名单,通常合理
+
+
+## Ruff 风格问题(前 30 条,完整版跑 ruff check)
 
 
 ## 旧版归档
