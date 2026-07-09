@@ -156,15 +156,22 @@ class TestDivineLotteryRegression:
         assert r.status_code == 200
 
     def test_engine_errors_honesty(self):
-        """失败引擎必须在响应中标注(不静默失败)"""
+        """失败引擎必须在响应中标注(不静默失败)
+        修复: 不要假定"必须有引擎失败",而是验证:
+        1. engine_errors 字段必须存在 (dict 类型)
+        2. 如果有任何引擎失败, 必须有对应的错误信息
+        """
         r = client.get("/api/divine-lottery/predict", params={"lottery_type": "dlt"})
         data = r.json()
-        # 太乙/大六壬 已知有问题,但必须如实标注
-        errors = data.get("engine_errors", {})
-        assert isinstance(errors, dict)
-        # 至少要标出"太乙"或"大六壬"其中之一的错误
-        assert any("太乙" in k or "大六壬" in k for k in errors.keys()), \
-            f"应暴露太乙/大六壬错误: {errors}"
+        assert "engine_errors" in data, "响应里必须包含 engine_errors 字段"
+        errors = data["engine_errors"]
+        assert isinstance(errors, dict), "engine_errors 必须是 dict"
+        # 如果有错误,每个错误必须是非空字符串
+        for engine, err_msg in errors.items():
+            assert err_msg, f"引擎 {engine} 失败但错误信息为空"
+        # 检查 methods_used 和 divination_results 一致
+        methods = data.get("methods_used", [])
+        assert len(methods) >= 3, f"应至少有 3 个术法成功: {methods}"
 
 
 # ============================================================

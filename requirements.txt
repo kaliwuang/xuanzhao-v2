@@ -14,16 +14,15 @@ kintaiyi>=0.2.0
 kinliuren>=0.1.0
 
 # kintaiyi 的传递依赖
+# 注意: taiyidict 是 kintaiyi 内部子模块,不通过 pip 单独安装,
+# 而是 kintaiyi 包内自带 (lib/taiyidict.py),由 engine/taiyi_engine.py 用
+# importlib 手动注册后加载. 见 commit 61c7202 的修复.
 numpy>=1.24.0
 cn2an>=0.5.0
-taiyidict>=0.1.0
 sxtwl>=1.0.0
 
 # LLM 客户端（可选，离线时自动回退规则引擎）
 openai>=1.0.0
-
-# 科学计算（kintaiyi 等引擎的传递依赖）
-numpy>=1.24.0
 
 # Dev / Test
 pytest>=7.0
