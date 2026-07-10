@@ -12,6 +12,7 @@
 - 可选：用户提供八字时，按喜用神加权
 """
 
+import json
 import logging
 import os
 import sys
@@ -983,6 +984,168 @@ def divine_lottery_predict(
         }
     except Exception as e:
         logger.exception("divine_lottery_predict failed")
+        return _err(f"操作失败: {e}", 500)
+
+
+# ═══════════════════════════════════════════════════════════
+# 公式版 + 八术法版 — 并行出号接口
+# ═══════════════════════════════════════════════════════════
+# 2026-07-10 新增: 把 predict_v2 (公式版) 和 divine_lottery_predict (八术法版)
+# 并行调用,并排输出两套号。不"合并"成第三套号 — 因为合并在数学上无意义
+# (公式 13: P(ω_t | H_{t-1}) = P(ω_t)),任何"叠加"都不产生新优势。
+# 这个接口存在的意义:让用户能同时看到两条独立路径的结果,自己选哪套
+# (数学上等价,选择是仪式偏好,不是预测能力)。
+# ═══════════════════════════════════════════════════════════
+@router.get("/api/divine-lottery/predict_hybrid")
+def predict_hybrid(
+    lottery_type: str = Query("dlt", description="彩票类型: dlt/ssq/fc3d/pl3"),
+    target_date: Optional[str] = Query(None, description="目标日期 YYYY-MM-DD, 默认今天"),
+    target_hour: int = Query(21, ge=0, le=23, description="目标时辰(0-23)"),
+    birth: Optional[str] = Query(None, description="用户八字 YYYY-MM-DD HH:MM"),
+    location: str = Query("北京", description="排盘地点"),
+    gender: str = Query("男", description="性别"),
+):
+    """公式版 + 八术法版 — 并行出号 + 强 disclaimer.
+
+    设计目的(基于 [[xuanzhao-lottery-ethics-2026-07-09]] 红线):
+    - 同时跑两条独立路径,并排输出,不合并
+    - 强 disclaimer: 合并不是为了叠加优势,只是为了仪式偏好集中
+    - 接口名带 _hybrid 避免跟主接口混淆
+    - mode=hybrid_celebration 明确语义:庆祝/仪式用,非预测用
+    """
+    try:
+        lottery_type = lottery_type.lower().strip()
+        if lottery_type not in _LOTTERY_RANGES:
+            return _err(f"不支持的彩票类型: {lottery_type}", 400)
+
+        # 1. 调公式版 (/api/lottery/predict_v2)
+        # 通过直接复用 lottery_routes 的内部函数,避免 HTTP 嵌套调用
+        try:
+            from api.lottery_routes import (
+                predict_lottery_v2,  # 直接调函数,不走 HTTP
+            )
+            # 但 predict_lottery_v2 是 async def? 看一眼,实际是 def。
+            # 它的内部用 random.Random(seed) 决定号,seed 默认是今天日期。
+            # 我们直接调用它,传相同参数。
+            v2_response = predict_lottery_v2(
+                lottery_type=lottery_type,
+                mode="balanced",
+                seed=None,
+            )
+            # 提取 body(JSONResponse.content 才有 content 属性;否则直接是 dict)
+            if hasattr(v2_response, "body"):
+                v2_data = json.loads(v2_response.body)
+            else:
+                v2_data = v2_response
+        except Exception as e:
+            logger.warning(f"公式版调用失败: {e}")
+            v2_data = {"error": str(e)}
+
+        # 2. 调八术法版(直接调函数,不走 HTTP)
+        try:
+            divine_response = divine_lottery_predict(
+                lottery_type=lottery_type,
+                target_date=target_date,
+                target_hour=target_hour,
+                birth=birth,
+                location=location,
+                gender=gender,
+            )
+            if hasattr(divine_response, "body"):
+                divine_data = json.loads(divine_response.body)
+            else:
+                divine_data = divine_response
+        except Exception as e:
+            logger.warning(f"八术法版调用失败: {e}")
+            divine_data = {"error": str(e)}
+
+        # 3. 提取两边的"主推荐号"做对照
+        v2_main = {}
+        if "recommendation" in v2_data:
+            rec = v2_data["recommendation"]
+            v2_main = {
+                "numbers": rec.get("numbers"),
+                "front": rec.get("front"),
+                "back": rec.get("back"),
+                "method": rec.get("method"),
+            }
+
+        divine_main = {}
+        if "consensus" in divine_data:
+            cons = divine_data["consensus"]
+            divine_main = {
+                "strong": cons.get("strong", []),
+                "moderate": cons.get("moderate", []),
+                "weak": cons.get("weak", []),
+                "recommendations": cons.get("recommendations", []),
+            }
+
+        # 4. 找两版"共同提到的号"(只是统计巧合,不是数学意义)
+        def _number_set(d):
+            s = set()
+            if d.get("numbers"):
+                s.update(d["numbers"])
+            if d.get("front"):
+                s.update(d["front"])
+            if d.get("back"):
+                s.update(d["back"])
+            return s
+
+        v2_set = _number_set(v2_main)
+        # 八术法没有"主推荐号",从 moderate 共识里取
+        divine_set = set(divine_main.get("moderate", []))
+        overlap = sorted(v2_set & divine_set) if (v2_set and divine_set) else []
+
+        return {
+            "date": target_date or datetime.now().strftime("%Y-%m-%d"),
+            "lottery_type": lottery_type,
+            "target_hour": target_hour,
+            "mode": "hybrid_celebration",
+            # 公式版独立结果
+            "formula_path": {
+                "endpoint": "/api/lottery/predict_v2",
+                "recommendation": v2_main,
+                "math_facts": v2_data.get("math_facts", {}),
+                "disclaimer": v2_data.get("disclaimer", ""),
+            },
+            # 八术法版独立结果
+            "divine_path": {
+                "endpoint": "/api/divine-lottery/predict",
+                "draw_time_gz": divine_data.get("draw_time_gz", {}),
+                "methods_used": divine_data.get("methods_used", []),
+                "engine_errors": divine_data.get("engine_errors", {}),
+                "consensus": divine_main,
+                "disclaimer": divine_data.get("disclaimer", ""),
+            },
+            # 巧合统计(非数学意义,仅供观察)
+            "overlap_observation": {
+                "v2_numbers": sorted(v2_set),
+                "divine_moderate_numbers": sorted(divine_set),
+                "common_numbers": overlap,
+                "interpretation": (
+                    f"两版独立路径下,有 {len(overlap)} 个号同时被提到。"
+                    "但这只是两个独立随机过程偶有相同权重的结果,不是数学意义。"
+                    "公式 13:P(ω_t | H) = P(ω_t),任何重叠都不构成预测优势。"
+                ),
+            },
+            # 强 disclaimer(本接口专有)
+            "hybrid_disclaimer": (
+                "【predict_hybrid 接口的明确说明】\n\n"
+                "本接口把公式版(/api/lottery/predict_v2)和八术法版(/api/divine-lottery/predict)\n"
+                "并排输出,但不合并成第三套号。\n\n"
+                "原因(数学事实,基于公式 13):\n"
+                "  P(ω_t | H_{t-1}) = P(ω_t)\n"
+                "  即'下期号在历史条件下'的概率 = '下期号无条件'概率。\n"
+                "  历史数据无法提供预测优势,任何'叠加'都不改变这个事实。\n\n"
+                "所以这个接口的目的不是'叠加预测优势'(数学上不存在),\n"
+                "而是:让用户同时看到两条独立路径,选仪式上更偏好哪套。\n\n"
+                "如果两条路径碰巧有重叠号,这是巧合,不是协同优势。\n"
+                "如果两条路径给出不同号,这也是正常 — 两者都是独立随机过程。\n\n"
+                "本接口输出长期 ROI = 51%(返奖率),期望回报 = 1.02 元 / 2 元。"
+            ),
+        }
+    except Exception as e:
+        logger.exception("predict_hybrid failed")
         return _err(f"操作失败: {e}", 500)
 
 
