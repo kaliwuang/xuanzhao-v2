@@ -1,7 +1,7 @@
 {
   "version": "2.0",
   "stats": {
-    "total_docs": 251,
+    "total_docs": 252,
     "total_categories": 10,
     "keyword_coverage": {
       "wuxing": 5,
@@ -4301,6 +4301,15 @@
       "filename": "zipingzhenquan_pl_skeleton.md",
       "title": "子平真诠评注(骨架)",
       "size": 2074,
+      "keywords": {}
+    },
+    {
+      "path": "C:\\Users\\W\\xuanzhao-v2\\knowledge\\data\\qimen\\qimen_奇门遁甲统宗.md",
+      "category": "qimen",
+      "subcategory": "古籍",
+      "filename": "qimen_奇门遁甲统宗.md",
+      "title": "奇门遁甲统宗",
+      "size": 14174,
       "keywords": {}
     }
   ],
