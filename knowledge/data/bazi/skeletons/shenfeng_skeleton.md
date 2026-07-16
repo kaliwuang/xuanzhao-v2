@@ -1,6 +1,7 @@
 ---
 title: 神峰通考(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 明·张楠(神峰)
 source:
   - 《神峰通考》原典(明·张楠(神峰))

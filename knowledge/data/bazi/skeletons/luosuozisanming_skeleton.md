@@ -1,6 +1,7 @@
 ---
 title: 珞琭子三命消息赋注(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 宋·徐子平注
 source:
   - 《珞琭子三命消息赋注》原典(宋·徐子平注)

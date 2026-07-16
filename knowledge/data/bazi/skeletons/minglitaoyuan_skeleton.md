@@ -1,6 +1,7 @@
 ---
 title: 命理探源(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 民国·袁树珊
 source:
   - 《命理探源》原典(民国·袁树珊)

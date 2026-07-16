@@ -1,6 +1,7 @@
 ---
 title: 月谈赋(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 明·佚名
 source:
   - 《月谈赋》原典(明·佚名)

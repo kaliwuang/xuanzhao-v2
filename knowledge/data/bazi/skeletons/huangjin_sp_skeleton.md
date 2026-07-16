@@ -1,6 +1,7 @@
 ---
 title: 黄金策(骨架)
 category: 古籍骨架本
+category_tag: 六爻
 author: 明·刘基(简体)
 source:
   - 《黄金策》原典(明·刘基(简体))

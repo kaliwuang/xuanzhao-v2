@@ -1,6 +1,7 @@
 ---
 title: 张果星宗(骨架)
 category: 古籍骨架本
+category_tag: 星命学
 author: 明·佚名
 source:
   - 《张果星宗》原典(明·佚名)

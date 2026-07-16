@@ -1,6 +1,7 @@
 ---
 title: 三命通会(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 明·万民英
 source:
   - 《三命通会》原典(明·万民英)

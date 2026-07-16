@@ -1,6 +1,7 @@
 ---
 title: 乾元秘旨(骨架)
 category: 古籍骨架本
+category_tag: 星命学
 author: 清·舒继英
 source:
   - 《乾元秘旨》原典(清·舒继英)

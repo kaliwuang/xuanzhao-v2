@@ -1,6 +1,7 @@
 ---
 title: 星命总括(骨架)
 category: 古籍骨架本
+category_tag: 星命学
 author: 辽·耶律纯
 source:
   - 《星命总括》原典(辽·耶律纯)

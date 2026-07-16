@@ -1,6 +1,7 @@
 ---
 title: 兰台妙选(骨架)
 category: 古籍骨架本
+category_tag: 星命学
 author: 明·西窗老人
 source:
   - 《兰台妙选》原典(明·西窗老人)

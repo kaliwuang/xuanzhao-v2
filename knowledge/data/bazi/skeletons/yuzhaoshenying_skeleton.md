@@ -1,6 +1,7 @@
 ---
 title: 玉照神应真经(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 晋(传)·郭璞
 source:
   - 《玉照神应真经》原典(晋(传)·郭璞)

@@ -1,6 +1,7 @@
 ---
 title: 命理正宗(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 明·张神峰
 source:
   - 《命理正宗》原典(明·张神峰)

@@ -1,6 +1,7 @@
 ---
 title: 星学大成(骨架)
 category: 古籍骨架本
+category_tag: 星命学
 author: 明·万民英
 source:
   - 《星学大成》原典(明·万民英)

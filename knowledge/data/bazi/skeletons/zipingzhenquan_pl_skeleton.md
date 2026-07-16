@@ -1,6 +1,7 @@
 ---
 title: 子平真诠评注(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 清·沈孝瞻
 source:
   - 《子平真诠评注》原典(清·沈孝瞻)

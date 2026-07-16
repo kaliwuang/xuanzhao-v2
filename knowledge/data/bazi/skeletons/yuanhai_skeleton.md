@@ -1,6 +1,7 @@
 ---
 title: 渊海子平(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 宋·徐子平
 source:
   - 《渊海子平》原典(宋·徐子平)

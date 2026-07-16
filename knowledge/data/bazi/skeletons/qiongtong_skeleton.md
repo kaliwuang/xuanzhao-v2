@@ -1,6 +1,7 @@
 ---
 title: 穷通宝鉴(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 明·余春台辑
 source:
   - 《穷通宝鉴》原典(明·余春台辑)

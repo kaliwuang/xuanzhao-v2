@@ -1,6 +1,7 @@
 ---
 title: 李虚中命书(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 唐·李虚中(传鬼谷子)
 source:
   - 《李虚中命书》原典(唐·李虚中(传鬼谷子))

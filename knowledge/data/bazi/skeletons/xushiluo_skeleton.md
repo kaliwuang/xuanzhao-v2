@@ -1,6 +1,7 @@
 ---
 title: 徐氏珞琭子赋注(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 宋·徐子平
 source:
   - 《徐氏珞琭子赋注》原典(宋·徐子平)

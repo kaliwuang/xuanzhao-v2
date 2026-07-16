@@ -1,6 +1,7 @@
 ---
 title: 三命指迷赋(骨架)
 category: 古籍骨架本
+category_tag: 八字
 author: 宋·岳珂
 source:
   - 《三命指迷赋》原典(宋·岳珂)
