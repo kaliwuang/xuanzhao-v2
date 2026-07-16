@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄照 v2.0 · 客户报告(行为验证版)</title>
+    <link rel="stylesheet" href="/static/css/report.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 1. 标题 + 身份 -->
+        <header class="header">
+            <h1>玄照 · 客户报告</h1>
+            <div class="identity" id="identity"></div>
+            <div class="meta">
+                <span class="badge" id="overall-badge"></span>
+                <span class="question" id="question"></span>
+            </div>
+            <div id="verify-status-banner"></div>
+        </header>
+
+        <!-- 1.5 时辰边界警告(真太阳时落在时辰切换点 ±5 分钟内 → 命盘可能错一个时辰) -->
+        <div id="boundary-warning-banner" style="display:none"></div>
+
+        <!-- 2. 诚实声明 -->
+        <section class="disclosures" id="disclosures">
+            <h2>⚠️ 先读这段</h2>
+            <ul></ul>
+        </section>
+
+        <!-- 3. 八术覆盖 -->
+        <section class="coverage" id="coverage"></section>
+
+        <!-- 4. 大运时间轴 (SVG 可视化) -->
+        <section class="timeline" id="timeline-section">
+            <h2>⏳ 大运时间轴</h2>
+            <p class="timeline-intro">每段 10 年一运。当前大运高亮,流年用红线标记。</p>
+            <div class="timeline-svg-wrap">
+                <svg id="dayun-timeline" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+            <div class="timeline-legend">
+                <span class="lg lg-help">印比(帮身)</span>
+                <span class="lg lg-drain">财官(克身)</span>
+                <span class="lg lg-neutral">中性</span>
+                <span class="lg lg-now">当前</span>
+            </div>
+        </section>
+
+        <!-- 5. 6 维度判断(可反馈) -->
+        <section class="sections" id="sections"></section>
+
+        <!-- 6. 行为验证追问(verify_pending=true 时显示) -->
+        <section class="verify-panel" id="verify-panel" style="display:none">
+            <h2>🔍 行为验证追问</h2>
+            <p class="verify-intro">命理符号只是推断。玄照不会假装 100% 准确 — 请花 1 分钟回答下面真实行为问题,我们会重新校准信心。</p>
+            <form id="verify-form"></form>
+            <button type="button" id="verify-submit" class="btn-primary">提交验证 → 校准信心</button>
+        </section>
+
+        <!-- 6. 下一步追问 -->
+        <section class="next-questions">
+            <h2>下一步</h2>
+            <ul id="next-questions"></ul>
+        </section>
+
+        <!-- 7. 详细数据(可折叠) -->
+        <section class="raw-data">
+            <details>
+                <summary>查看原始数据(1600+ 字段,工程师用)</summary>
+                <pre id="raw-data"></pre>
+            </details>
+        </section>
+
+        <footer>
+            <p>本报告基于玄照 v2 八术法 + 108 视角推演 + 行为验证 · 2026-07-10 起新版</p>
+        </footer>
+    </div>
+
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    const baseUrl = window.location.origin;
+    let currentReport = null;
+    let verifyAnswers = {};
+
+    async function loadReport() {
+        try {
+            const resp = await fetch(`${baseUrl}/api/report?${params.toString()}`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            currentReport = await resp.json();
+            render(currentReport);
+        } catch (e) {
+            document.body.innerHTML = `<div class="error">报告生成失败:${e.message}<br><br>参数:${params.toString()}</div>`;
+        }
+    }
+
+    async function submitVerify() {
+        try {
+            const btn = document.getElementById('verify-submit');
+            btn.disabled = true;
+            btn.textContent = '校准中...';
+
+            const resp = await fetch(`${baseUrl}/api/report/verify`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    ...Object.fromEntries(params),
+                    answers: verifyAnswers,
+                }),
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            currentReport = await resp.json();
+            render(currentReport);
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        } catch (e) {
+            alert(`验证失败:${e.message}`);
+            document.getElementById('verify-submit').disabled = false;
+            document.getElementById('verify-submit').textContent = '提交验证 → 校准信心';
+        }
+    }
+
+    async function submitFeedback(topic, rating, btn) {
+        const allBtns = btn.parentElement.querySelectorAll('button');
+        allBtns.forEach(b => b.disabled = true);
+        btn.classList.add('clicked');
+        try {
+            const resp = await fetch(`${baseUrl}/api/feedback`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    ...Object.fromEntries(params),
+                    topic,
+                    rating,
+                    comment: '',
+                }),
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            btn.textContent = '✓ 已记录';
+        } catch (e) {
+            alert(`反馈失败:${e.message}`);
+            allBtns.forEach(b => b.disabled = false);
+            btn.classList.remove('clicked');
+        }
+    }
+
+    function render(d) {
+        // 身份
+        const id = d.identity || {};
+        document.getElementById('identity').innerHTML = `
+            <strong>${id.name || '匿名'}</strong> ·
+            ${id.birth || ''} ·
+            ${id.location || ''} ·
+            ${id.gender || ''} ·
+            日主 ${id.day_master || '?'}(${id.strength || '?'}) ·
+            真太阳时差 ${id.true_solar_diff_min ?? '?'} 分
+            ${id.current_dayun_focus ? '<div class="dayun-focus">⏳ ' + id.current_dayun_focus + '</div>' : ''}
+        `;
+
+        document.getElementById('question').textContent = `问:"${d.question || ''}"`;
+
+        const badge = document.getElementById('overall-badge');
+        const conf = d.confidence_overall || 0;
+        badge.textContent = `总体信心 ${conf}/100`;
+        badge.className = `badge ${conf >= 75 ? 'high' : conf >= 55 ? 'mid' : 'low'}`;
+
+        // verify status banner
+        const banner = document.getElementById('verify-status-banner');
+        if (d.verify_pending) {
+            banner.innerHTML = '<div class="banner pending">⏳ 等待行为验证 — 信心未校准</div>';
+        } else {
+            const confirmed = d.sections.filter(s => s.verify_status === 'confirmed').length;
+            const mismatched = d.sections.filter(s => s.verify_status === 'mismatch').length;
+            banner.innerHTML = `<div class="banner done">✅ 行为验证已完成 — ${confirmed} 个维度已确认,${mismatched} 个有冲突</div>`;
+        }
+
+        // 时辰边界警告(真太阳时落在时辰切换点 ±5 分钟)
+        const boundaryBanner = document.getElementById('boundary-warning-banner');
+        if (d.time_boundary_warning) {
+            const w = d.time_boundary_warning;
+            boundaryBanner.innerHTML = `
+                <div class="banner boundary">
+                    <strong>⚠️ 时辰边界警告</strong>
+                    <div class="boundary-detail">
+                        ${w.message}
+                        <br><br>
+                        <strong>影响范围:</strong>整个命盘的时柱 → 日主强弱、用神、大运起算、流年触发
+                        都可能错一个时辰。错误来源不是算法,是出生时间精度本身。
+                    </div>
+                </div>
+            `;
+            boundaryBanner.style.display = 'block';
+        } else {
+            boundaryBanner.style.display = 'none';
+            boundaryBanner.innerHTML = '';
+        }
+
+        // 诚实声明
+        const discUl = document.querySelector('#disclosures ul');
+        discUl.innerHTML = '';
+        (d.disclosures || []).forEach(x => {
+            const li = document.createElement('li');
+            li.textContent = x;
+            discUl.appendChild(li);
+        });
+
+        // 8 术覆盖
+        const cov = d.method_coverage || {};
+        const methods = ['bazi','ziwei','astro','liuyao','qimen','liuren','taiyi','xingming'];
+        const labels = {bazi:'八字', ziwei:'紫微', astro:'占星', liuyao:'六爻', qimen:'奇门', liuren:'六壬', taiyi:'太乙', xingming:'姓名'};
+        document.getElementById('coverage').innerHTML = '<strong>八术运行情况:</strong>' + methods.map(m =>
+            `<span class="m ${cov[m] ? 'on' : 'off'}">${labels[m]}</span>`
+        ).join(' · ');
+
+        // 6 维度判断 + 反馈按钮(2026-07-10 梧指令:学会说不知道)
+        // hidden: True 的 section 完全不渲染(后端做,前端无字段就拿不到)
+        // collapsed: True 的 section 用 <details> 包裹,默认折叠,客户主动展开
+        const secEl = document.getElementById('sections');
+        secEl.innerHTML = '';
+        const visibleSections = (d.sections || []).filter(s => !s.hidden);
+        // 折叠的 section 放在最后,且顶部加 banner
+        const collapsedSections = visibleSections.filter(s => s.collapsed);
+        const normalSections = visibleSections.filter(s => !s.collapsed);
+        const orderedSections = [...normalSections, ...collapsedSections];
+
+        // 折叠状态 section 上方加 banner
+        if (collapsedSections.length > 0) {
+            const banner = document.createElement('div');
+            banner.className = 'collapsed-banner';
+            banner.innerHTML = `<strong>⚠️ 以下 ${collapsedSections.length} 个维度判断信心低,仅供参考</strong> — 点击展开查看,无需当真`;
+            secEl.appendChild(banner);
+        }
+
+        orderedSections.forEach(s => {
+            const div = document.createElement('div');
+            const confClass = s.confidence >= 75 ? 'high' : s.confidence >= 55 ? 'mid' : 'low';
+            div.className = `section conf-${confClass}${s.collapsed ? ' collapsed-section' : ''}`;
+
+            const verClass = s.confidence >= 75 ? 'verdict-high' : s.confidence >= 55 ? 'verdict-mid' : 'verdict-low';
+            const delta = s.confidence_delta || 0;
+            const deltaStr = delta > 0 ? `+${delta}` : `${delta}`;
+            const verifyTag = s.verify_status === 'confirmed' ? '<span class="vt confirmed">✓ 已验证</span>' :
+                              s.verify_status === 'mismatch' ? '<span class="vt mismatch">⚠️ 冲突</span>' :
+                              s.verify_status === 'info_conflict' ? '<span class="vt mismatch">⚠️ 真实信号缺失</span>' :
+                              '<span class="vt pending">待验证</span>';
+
+            // 折叠 section 的 body
+            let bodyHtml = '';
+            if (s.collapsed) {
+                // <details><summary>...</summary>...</details> 默认折叠
+                bodyHtml += `
+                    <details class="collapsed-details">
+                        <summary>
+                            <span class="collapsed-topic">${s.topic}</span>
+                            <span class="collapsed-conf">${s.confidence}/100 ⚠️ 信心低,点击展开</span>
+                        </summary>
+                        <div class="collapsed-content">
+                `;
+            }
+
+            bodyHtml += `
+                <div class="section-head">
+                    <h3>${s.topic}</h3>
+                    <span class="conf">${s.confidence}/100 ${delta !== 0 ? `<small>(Δ${deltaStr})</small>` : ''} ${verifyTag}</span>
+                </div>
+                <p class="verdict ${verClass}">${s.verdict}</p>
+            `;
+
+            if (s.method_sources && s.method_sources.length) {
+                bodyHtml += `<div class="src">基于: ${s.method_sources.join(' · ')}</div>`;
+            }
+
+            if (s.evidence && s.evidence.length) {
+                bodyHtml += '<div class="evid"><strong>证据</strong><ul>';
+                s.evidence.forEach(e => bodyHtml += `<li>${e}</li>`);
+                bodyHtml += '</ul></div>';
+            }
+
+            if (s.actions && s.actions.length) {
+                bodyHtml += '<div class="acts"><strong>建议</strong><ul>';
+                s.actions.forEach(a => bodyHtml += `<li>${a}</li>`);
+                bodyHtml += '</ul></div>';
+            }
+
+            if (s.counter_cases && s.counter_cases.length) {
+                bodyHtml += `<div class="counter"><strong>反向案例(${s.counter_cases.length})</strong><ul>`;
+                s.counter_cases.forEach(c => bodyHtml += `<li>${c}</li>`);
+                bodyHtml += '</ul></div>';
+            }
+
+            if (s.disclosure) {
+                bodyHtml += `<div class="disc">${s.disclosure}</div>`;
+            }
+
+            // 反馈按钮(每个维度)
+            bodyHtml += `
+                <div class="feedback-row">
+                    <span class="fb-label">这条判断对你:</span>
+                    <button onclick="submitFeedback('${s.topic}', 'accurate', this)" class="fb-btn">✓ 准</button>
+                    <button onclick="submitFeedback('${s.topic}', 'partial', this)" class="fb-btn">~ 部分准</button>
+                    <button onclick="submitFeedback('${s.topic}', 'inaccurate', this)" class="fb-btn">✗ 不准</button>
+                </div>
+            `;
+
+            if (s.collapsed) {
+                bodyHtml += `</div></details>`;
+            }
+
+            div.innerHTML = bodyHtml;
+            secEl.appendChild(div);
+        });
+
+        // 行为验证追问
+        const vp = document.getElementById('verify-panel');
+        if (d.verify_pending && d.verify_questions && Object.keys(d.verify_questions).length) {
+            vp.style.display = 'block';
+            const form = document.getElementById('verify-form');
+            form.innerHTML = '';
+            for (const [topic, qs] of Object.entries(d.verify_questions)) {
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'verify-topic';
+                topicDiv.innerHTML = `<h3>${topic}</h3>`;
+                qs.forEach((q, idx) => {
+                    const qDiv = document.createElement('div');
+                    qDiv.className = 'verify-q';
+                    qDiv.innerHTML = `
+                        <p class="verify-q-text">${idx + 1}. ${q.question}</p>
+                        <p class="verify-q-hint">命理依据:${q.evidence_match} · 期望:${q.expected_signal}</p>
+                        <div class="verify-options">
+                            ${q.options.map((opt, i) => `
+                                <label class="verify-opt">
+                                    <input type="radio" name="${q.qid}" value="${opt.value}" onchange="verifyAnswers['${q.qid}']='${opt.value}'">
+                                    <span>${opt.label}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                    topicDiv.appendChild(qDiv);
+                });
+                form.appendChild(topicDiv);
+            }
+        } else {
+            vp.style.display = 'none';
+        }
+
+        // 下一步
+        const nqUl = document.getElementById('next-questions');
+        nqUl.innerHTML = '';
+        (d.next_questions || []).forEach(q => {
+            const li = document.createElement('li');
+            li.textContent = q;
+            nqUl.appendChild(li);
+        });
+
+        // 原始数据
+        document.getElementById('raw-data').textContent = JSON.stringify(d.raw_signal_summary || {}, null, 2);
+
+        // 大运时间轴 SVG
+        renderDayunTimeline(d);
+    }
+
+    // ============ 大运时间轴渲染 ============
+    // 十神主题分类:帮身=绿(印+比劫),克身=红(财+官+食伤),中性=灰
+    const SHISHEN_CATEGORY = {
+        // 帮身(印比)
+        '比肩': 'help', '劫财': 'help',
+        '正印': 'help', '偏印': 'help',
+        // 克泄耗(财官食伤)
+        '食神': 'drain', '伤官': 'drain',
+        '正财': 'drain', '偏财': 'drain',
+        '正官': 'drain', '七杀': 'drain', '偏官': 'drain',
+    };
+    const COLOR_MAP = {
+        help:   { fill: '#d4edda', stroke: '#28a745', text: '#155724' },
+        drain:  { fill: '#f8d7da', stroke: '#dc3545', text: '#721c24' },
+        neutral:{ fill: '#e2e3e5', stroke: '#6c757d', text: '#383d41' },
+    };
+
+    function renderDayunTimeline(d) {
+        const svg = document.getElementById('dayun-timeline');
+        if (!svg) return;
+
+        const bazi = (d.raw_signal_summary && d.raw_signal_summary.bazi) || {};
+        // 兼容 dayun_full(主) / dayun(老路径)
+        const dayun = bazi.dayun_full || bazi.dayun || [];
+        if (!dayun.length) {
+            svg.outerHTML = '<div class="timeline-empty">无大运数据</div>';
+            return;
+        }
+
+        // 1. 计算视图:年龄范围,找当前大运索引
+        const minAge = Math.min(...dayun.map(x => x.start_age ?? 0));
+        const maxAge = Math.max(...dayun.map(x => x.end_age ?? 100));
+        const ageSpan = Math.max(maxAge - minAge, 1);
+        const currentIdx = dayun.findIndex(x => x.is_current);
+
+        // 2. 当前流年(2026) - 从 dayun[i].liunian 找
+        let currentYear = 2026;
+        let currentYearInfo = null;
+        for (const dy of dayun) {
+            const found = (dy.liunian || []).find(ln => ln.year === currentYear);
+            if (found) { currentYearInfo = found; break; }
+        }
+        if (!currentYearInfo) {
+            // 退化:用当前大运起始年龄 + 出生年份推
+            const cur = dayun.find(x => x.is_current);
+            if (cur) currentYearInfo = { year: currentYear, age: currentYear - (cur.start_year - cur.start_age) };
+        }
+
+        // 3. SVG 几何
+        const W = 1000;
+        const H = 220;
+        const padX = 30;
+        const padTop = 50;
+        const blockH = 90;
+        const blockGap = 6;
+        const ageToX = (age) => padX + ((age - minAge) / ageSpan) * (W - padX * 2);
+
+        svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', H);
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', '大运时间轴');
+
+        // 4. 渲染每段大运
+        let inner = '';
+
+        // 4.1 当前大运背景高亮带(整行)
+        if (currentIdx >= 0) {
+            const cur = dayun[currentIdx];
+            const x1 = ageToX(cur.start_age);
+            const x2 = ageToX(cur.end_age);
+            inner += `<rect x="${x1}" y="${padTop - 8}" width="${x2 - x1}" height="${blockH + 16}" fill="#fff3cd" opacity="0.5" rx="4"/>`;
+        }
+
+        // 4.2 每个大运段
+        dayun.forEach((dy, i) => {
+            const x1 = ageToX(dy.start_age);
+            const x2 = ageToX(dy.end_age);
+            const yMid = padTop + blockH / 2;
+            const cat = SHISHEN_CATEGORY[dy.shishen_gan] || 'neutral';
+            const c = COLOR_MAP[cat];
+            const isCur = dy.is_current;
+            // 当前段:放大 1.2 + 黄边框
+            const scale = isCur ? 1.15 : 1;
+            const w = (x2 - x1) * scale;
+            const h = blockH * scale;
+            const cx = (x1 + x2) / 2;
+            const cy = yMid;
+            const x = cx - w / 2;
+            const y = cy - h / 2;
+
+            // tooltip 数据
+            const tipDesc = `${dy.ganzhi} 大运 · ${dy.start_age}-${dy.end_age} 岁 · ${dy.shishen_gan}${dy.shishen_gan_desc ? ' · ' + dy.shishen_gan_desc : ''}`;
+
+            inner += `
+                <g class="dayun-block ${isCur ? 'is-current' : ''}" data-tip="${escapeAttr(tipDesc)}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})">
+                    <rect width="${w.toFixed(1)}" height="${h.toFixed(1)}"
+                          fill="${c.fill}" stroke="${isCur ? '#d4a017' : c.stroke}"
+                          stroke-width="${isCur ? 3 : 1.5}" rx="3"
+                          style="cursor:pointer;transition:filter .15s"/>
+                    <text x="${(w / 2).toFixed(1)}" y="${(h / 2 - 8).toFixed(1)}"
+                          text-anchor="middle" font-size="14" font-weight="700"
+                          fill="${c.text}">${dy.ganzhi}</text>
+                    <text x="${(w / 2).toFixed(1)}" y="${(h / 2 + 9).toFixed(1)}"
+                          text-anchor="middle" font-size="11" fill="${c.text}">${dy.shishen_gan}</text>
+                    <text x="${(w / 2).toFixed(1)}" y="${(h / 2 + 24).toFixed(1)}"
+                          text-anchor="middle" font-size="10" fill="#666">${dy.start_age}-${dy.end_age}岁</text>
+                </g>
+            `;
+        });
+
+        // 4.3 流年红线 + 当前年龄标记
+        if (currentYearInfo) {
+            const age = currentYearInfo.age;
+            const x = ageToX(age);
+            const y1 = padTop - 12;
+            const y2 = padTop + blockH + 18;
+            inner += `
+                <line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"
+                      stroke="#dc3545" stroke-width="2" stroke-dasharray="4 3"/>
+                <circle cx="${x}" cy="${y1 - 4}" r="6" fill="#dc3545"/>
+                <text x="${x}" y="${y1 - 12}" text-anchor="middle"
+                      font-size="12" font-weight="700" fill="#dc3545">${currentYearInfo.year}</text>
+                <text x="${x}" y="${y2 + 16}" text-anchor="middle"
+                      font-size="11" fill="#dc3545">${age} 岁</text>
+            `;
+        }
+
+        // 4.4 年龄刻度(底)
+        inner += `<line x1="${padX}" y1="${padTop + blockH + 28}" x2="${W - padX}" y2="${padTop + blockH + 28}" stroke="#999" stroke-width="1"/>`;
+        // 每 10 岁一刻度
+        const tickStart = Math.floor(minAge / 10) * 10;
+        const tickEnd = Math.ceil(maxAge / 10) * 10;
+        for (let a = tickStart; a <= tickEnd; a += 10) {
+            const x = ageToX(a);
+            inner += `
+                <line x1="${x}" y1="${padTop + blockH + 26}" x2="${x}" y2="${padTop + blockH + 30}" stroke="#999"/>
+                <text x="${x}" y="${padTop + blockH + 44}" text-anchor="middle" font-size="10" fill="#777">${a}</text>
+            `;
+        }
+
+        svg.innerHTML = inner;
+
+        // 5. hover tooltip(全局 div)
+        attachHoverTooltip(svg);
+    }
+
+    function attachHoverTooltip(svg) {
+        let tip = document.getElementById('dayun-tip');
+        if (!tip) {
+            tip = document.createElement('div');
+            tip.id = 'dayun-tip';
+            tip.className = 'dayun-tip';
+            document.body.appendChild(tip);
+        }
+        svg.querySelectorAll('.dayun-block').forEach(g => {
+            g.addEventListener('mouseenter', (e) => {
+                const desc = g.getAttribute('data-tip') || '';
+                tip.textContent = desc;
+                tip.style.display = 'block';
+            });
+            g.addEventListener('mousemove', (e) => {
+                tip.style.left = (e.pageX + 12) + 'px';
+                tip.style.top = (e.pageY + 12) + 'px';
+            });
+            g.addEventListener('mouseleave', () => {
+                tip.style.display = 'none';
+            });
+            g.addEventListener('mouseover', () => g.querySelector('rect').setAttribute('filter', 'brightness(0.95)'));
+            g.addEventListener('mouseout', () => g.querySelector('rect').removeAttribute('filter'));
+        });
+    }
+
+    function escapeAttr(s) {
+        return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    }
+
+    document.getElementById('verify-submit').addEventListener('click', submitVerify);
+    loadReport();
+    </script>
+</body>
+</html>

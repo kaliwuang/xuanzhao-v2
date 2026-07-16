@@ -48,8 +48,71 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def no_cache_html(request, call_response):
-    response = await call_response(request)
+async def fix_query_encoding(request: Request, call_next):
+    """
+    修复 query string 的编码兼容性问题。
+
+    背景: uvicorn 在解析 URL 时,query_string 原始字节会按 latin-1 解码成 str,
+    而 str 已经在 HTTP 协议栈里丢失了原始编码信息。下游业务代码收到 str 后无从分辨
+    客户端用了什么编码。
+    - 客户端按 UTF-8 编码汉字 (urllib/requests/浏览器) → query 字节是 %E4%BE%AF (UTF-8 编码"侯"),
+      latin-1 解码后得到 str "侯惠斌"。这条路业务逻辑是通的。
+    - 客户端按 GBK 编码汉字 (Windows curl / Git Bash 的 --data-urlencode 默认行为)
+      → query 字节是 %BA%EE%BB%DD%B1%F3 (GBK 编码"侯惠斌"),latin-1 解码后得到 6 个 U+00xx 字符,
+      这些码点不在汉字区,业务逻辑的'姓名必须包含汉字'判断失败。
+
+    修法: 在路由处理前,从 scope 拿 raw query_string 字节,先按 UTF-8 解码 value;
+    失败时按 GBK 试,这样两种客户端都能拿到正确的汉字。修正后用 urlencoded 重新放回 scope。
+    """
+    from urllib.parse import parse_qsl, urlencode
+
+    raw_qs = request.scope.get("query_string", b"")
+    if raw_qs:
+        try:
+            # parse_qsl 接收 bytes, 直接处理 url-encoded 字节, 不会丢任何字节
+            pairs = parse_qsl(raw_qs, keep_blank_values=True)
+        except Exception:
+            pairs = []
+
+        fixed_pairs = []
+        changed = False
+        for k_bytes, v_bytes in pairs:
+            # k_bytes / v_bytes 都是 raw bytes (尚未被任何编码解释)
+            # 1. 先尝试 UTF-8 (Python urllib / requests / 浏览器)
+            try:
+                v = v_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                # 2. UTF-8 失败, 尝试 GBK (Windows curl / Git Bash 默认)
+                try:
+                    v = v_bytes.decode("gbk")
+                    changed = True
+                except UnicodeDecodeError:
+                    # 都失败, 保持原 latin-1 解码结果 (让下游返回正常 422)
+                    v = v_bytes.decode("latin-1", errors="replace")
+            # k 同样处理
+            try:
+                k = k_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    k = k_bytes.decode("gbk")
+                    changed = True
+                except UnicodeDecodeError:
+                    k = k_bytes.decode("latin-1", errors="replace")
+            fixed_pairs.append((k, v))
+
+        if changed:
+            # 重新编码回 query_string bytes (UTF-8)
+            new_qs = urlencode(fixed_pairs, doseq=False).encode("utf-8")
+            request.scope["query_string"] = new_qs
+            # 清掉缓存, 让下游重新 parse
+            request._query_params = None  # noqa: SLF001
+
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def no_cache_html(request, call_next):
+    response = await call_next(request)
     if response.headers.get("content-type", "").startswith("text/html"):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
@@ -58,11 +121,11 @@ async def no_cache_html(request, call_response):
 
 
 @app.middleware("http")
-async def add_process_time_header(request, call_response):
+async def add_process_time_header(request, call_next):
     """添加请求处理时间头(调试用) + 一针见血判断"""
     import time as _time
     start = _time.time()
-    response = await call_response(request)
+    response = await call_next(request)
     duration = _time.time() - start
     response.headers["X-Process-Time"] = f"{duration:.3f}"
 

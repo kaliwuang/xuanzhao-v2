@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄照 v2.0 · AI 提问</title>
+    <link rel="stylesheet" href="/css/report.css">
+    <style>
+        /* AI 提问专用样式 */
+        .ask-panel {
+            background: #fff;
+            border: 2px solid #1a1a1a;
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .ask-panel h2 { font-size: 20px; margin-bottom: 8px; }
+        .ask-mode-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .mode-tab {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: #fafaf8;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+        }
+        .mode-tab.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+        .ask-form { display: flex; flex-direction: column; gap: 12px; }
+        .ask-form input, .ask-form textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .ask-form textarea { min-height: 80px; resize: vertical; }
+        .ask-form .optional { font-size: 12px; color: #888; }
+        .viewpoint-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+        .vp-chip {
+            padding: 5px 12px;
+            border: 1px solid #ddd;
+            border-radius: 16px;
+            background: #fafaf8;
+            cursor: pointer;
+            font-size: 13px;
+            user-select: none;
+        }
+        .vp-chip.selected { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+        .vp-chip:hover { background: #f0f0eb; }
+        .vp-chip.selected:hover { background: #333; }
+
+        .answer-blocks {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .answer-block {
+            padding: 12px 16px;
+            border-left: 4px solid #ddd;
+            background: #fafaf8;
+            border-radius: 4px;
+        }
+        .answer-block.definition { border-left-color: #1a1a1a; }
+        .answer-block.strategy   { border-left-color: #28a745; }
+        .answer-block.warning    { border-left-color: #d4a017; background: #fffbe6; }
+        .answer-block.evidence   { border-left-color: #6c757d; }
+        .answer-block.viewpoint  { border-left-color: #6f42c1; }
+        .answer-block.wisdom     { border-left-color: #17a2b8; font-style: italic; }
+        .answer-block.counter    { border-left-color: #c84a3a; }
+        .block-label {
+            display: inline-block;
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            margin-right: 8px;
+            letter-spacing: 0.5px;
+        }
+        .block-concept {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #fff;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-right: 8px;
+            color: #555;
+        }
+        .block-figure {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #6f42c1;
+            color: #fff;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-right: 8px;
+        }
+        .answer-block p { font-size: 14px; line-height: 1.7; margin-top: 4px; }
+        .answer-block ul { margin-top: 6px; padding-left: 20px; }
+        .answer-block li { font-size: 13px; color: #444; margin: 3px 0; }
+        .answer-meta {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+        }
+        .disclosure-list {
+            background: #fffbe6;
+            border-left: 4px solid #d4a017;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-top: 16px;
+        }
+        .disclosure-list li { font-size: 13px; margin: 4px 0; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>玄照 · AI 提问</h1>
+            <div class="meta">
+                <span class="question" id="mode-display">知识问答模式</span>
+            </div>
+            <p class="answer-meta" style="margin-top:12px">
+                基于玄照 8 术法 + 108 视角知识库 + 反向案例库,<br>
+                规则拼接(无 LLM),支持换视角,可叠加客户命盘。
+            </p>
+        </header>
+
+        <section class="ask-panel">
+            <div class="ask-mode-tabs">
+                <div class="mode-tab active" data-mode="knowledge">知识问答</div>
+                <div class="mode-tab" data-mode="client">客户提问</div>
+            </div>
+
+            <div id="client-fields" style="display:none">
+                <p class="optional">客户提问模式:叠加命盘背景</p>
+                <div class="ask-form">
+                    <input type="text" id="birth" placeholder="出生时间,如 2005-06-09 11:50">
+                    <input type="text" id="location" placeholder="出生地点,如 内蒙古呼和浩特" value="北京">
+                    <select id="gender">
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+            </div>
+
+            <p style="margin:12px 0 4px">问题</p>
+            <div class="ask-form">
+                <textarea id="question" placeholder="如:什么是身弱? / 我身弱该怎么创业? / 2026 流年对我有什么影响?"></textarea>
+
+                <p class="optional" style="margin-top:8px">视角(留空 = 综合 108 视角)</p>
+                <div class="viewpoint-chips" id="vp-chips"></div>
+
+                <button type="button" id="ask-btn" class="btn-primary">提问 →</button>
+            </div>
+        </section>
+
+        <section class="answer-panel" id="answer-panel" style="display:none">
+            <h2>回答</h2>
+            <div class="answer-meta" id="answer-meta"></div>
+            <div class="answer-blocks" id="answer-blocks"></div>
+            <div class="disclosure-list" id="disclosure-list"></div>
+        </section>
+
+        <footer>
+            <p>本接口基于玄照规则引擎 · 2026-07-11 起</p>
+        </footer>
+    </div>
+
+    <script>
+    const params = new URLSearchParams(window.location.search);
+    const baseUrl = window.location.origin;
+
+    // 视角列表(玄照已有 108 人里的常用现代思想家 + 古代大师)
+    const VIEWPOINTS = [
+        { id: 'munger', title: '芒格', domain: '投资' },
+        { id: 'naval', title: 'Naval', domain: '硅谷' },
+        { id: 'taleb', title: '塔勒布', domain: '反脆弱' },
+        { id: 'feynman', title: '费曼', domain: '物理' },
+        { id: 'kahneman', title: '卡尼曼', domain: '心理' },
+        { id: 'sunzi', title: '孙子', domain: '兵法' },
+        { id: 'laozi', title: '老子', domain: '道家' },
+        { id: 'zhuangzi', title: '庄子', domain: '道家' },
+        { id: 'kongzi', title: '孔子', domain: '儒家' },
+        { id: 'hanfeizi', title: '韩非子', domain: '法家' },
+        { id: 'nietzsche', title: '尼采', domain: '哲学' },
+        { id: 'jung', title: '荣格', domain: '心理' },
+        { id: 'socrates', title: '苏格拉底', domain: '哲学' },
+        { id: 'einstein', title: '爱因斯坦', domain: '物理' },
+        { id: 'i_ching', title: '周易', domain: '易经' },
+    ];
+
+    let selectedMode = 'knowledge';
+    let selectedViewpoints = [];
+
+    // 模式切换
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            selectedMode = tab.dataset.mode;
+            document.getElementById('mode-display').textContent =
+                selectedMode === 'knowledge' ? '知识问答模式' : '客户提问模式';
+            document.getElementById('client-fields').style.display =
+                selectedMode === 'client' ? 'block' : 'none';
+        });
+    });
+
+    // 视角 chip
+    const vpChips = document.getElementById('vp-chips');
+    VIEWPOINTS.forEach(vp => {
+        const chip = document.createElement('div');
+        chip.className = 'vp-chip';
+        chip.dataset.id = vp.id;
+        chip.innerHTML = `${vp.title} <small style="opacity:0.6">${vp.domain}</small>`;
+        chip.addEventListener('click', () => {
+            chip.classList.toggle('selected');
+            if (chip.classList.contains('selected')) {
+                selectedViewpoints.push(vp.id);
+            } else {
+                selectedViewpoints = selectedViewpoints.filter(x => x !== vp.id);
+            }
+        });
+        vpChips.appendChild(chip);
+    });
+
+    // 预填问题(URL 参数)
+    if (params.get('q')) {
+        document.getElementById('question').value = params.get('q');
+    }
+
+    // 提交
+    document.getElementById('ask-btn').addEventListener('click', async () => {
+        const question = document.getElementById('question').value.trim();
+        if (!question) {
+            alert('请输入问题');
+            return;
+        }
+
+        const qs = { question };
+        if (selectedMode === 'client') {
+            qs.birth = document.getElementById('birth').value.trim();
+            qs.location = document.getElementById('location').value.trim() || '北京';
+            qs.gender = document.getElementById('gender').value;
+            if (!qs.birth) {
+                alert('客户模式需要出生时间');
+                return;
+            }
+        }
+        if (selectedViewpoints.length > 0) {
+            qs.figures = selectedViewpoints.join(',');
+        }
+
+        const btn = document.getElementById('ask-btn');
+        btn.disabled = true;
+        btn.textContent = '思考中...';
+
+        try {
+            const url = `${baseUrl}/api/ask?${new URLSearchParams(qs).toString()}`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            renderAnswer(data);
+        } catch (e) {
+            alert(`提问失败:${e.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '提问 →';
+        }
+    });
+
+    function renderAnswer(d) {
+        const panel = document.getElementById('answer-panel');
+        panel.style.display = 'block';
+
+        const meta = document.getElementById('answer-meta');
+        meta.innerHTML = `
+            <strong>问题:</strong> ${escapeHtml(d.question)}<br>
+            <strong>模式:</strong> ${d.answer_mode === 'client' ? '客户提问(叠加命盘)' : '知识问答'}<br>
+            <strong>命中概念:</strong> ${d.concepts_matched.length ? d.concepts_matched.join('、') : '(无)'}<br>
+            <strong>使用视角:</strong> ${d.viewpoints_used.join('、')}<br>
+            <strong>信心:</strong> <span class="badge ${d.confidence >= 75 ? 'high' : d.confidence >= 55 ? 'mid' : 'low'}">${d.confidence}/100</span>
+        `;
+
+        const blocks = document.getElementById('answer-blocks');
+        blocks.innerHTML = '';
+        d.answer_blocks.forEach(b => {
+            const div = document.createElement('div');
+            div.className = `answer-block ${b.type}`;
+            let header = '';
+            if (b.concept) {
+                header += `<span class="block-concept">${escapeHtml(b.concept)}</span>`;
+            }
+            if (b.figure) {
+                const figureTitle = b.figure_title || b.figure;
+                header += `<span class="block-figure">${escapeHtml(figureTitle)}</span>`;
+            }
+            header += `<span class="block-label">${escapeHtml(b.type)}</span>`;
+            let body = `<p>${escapeHtml(b.text)}</p>`;
+            if (b.cases && b.cases.length) {
+                body += '<ul>';
+                b.cases.forEach(c => body += `<li>${escapeHtml(c)}</li>`);
+                body += '</ul>';
+            }
+            if (b.topic) {
+                body = `<p><strong>${escapeHtml(b.topic)}</strong> — ${escapeHtml(b.text)}</p>` + body;
+            }
+            div.innerHTML = header + body;
+            blocks.appendChild(div);
+        });
+
+        const disc = document.getElementById('disclosure-list');
+        disc.innerHTML = '<strong>⚠️ 玄学诚实声明</strong><ul>';
+        d.disclosure.forEach(x => disc.innerHTML += `<li>${escapeHtml(x)}</li>`);
+        disc.innerHTML += '</ul>';
+
+        panel.scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+
+    function escapeHtml(s) {
+        if (s === null || s === undefined) return '';
+        return String(s).replace(/[&<>"']/g, c => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+    </script>
+</body>
+</html>

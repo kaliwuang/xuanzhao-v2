@@ -1,0 +1,1604 @@
+{
+  "version": "1.0",
+  "source": "康熙字典笔画 + 五行属性 + 现代起名常用度",
+  "description": "起名字库。字段:char(字)/wuxing(五行)/strokes(康熙笔画)/meaning(字义)/style(风格:古典/现代/中性)/gender(性别倾向:男/女/中)/popularity(常用度1-5)",
+  "rules": {
+    "classical": "古文诗词常见,寓意深远,如'知衡''书远'",
+    "modern": "当代好听好写,如'沐辰''一诺'",
+    "neutral": "男女皆可,如'知行''安然'"
+  },
+  "characters": [
+    {
+      "char": "衡",
+      "wuxing": "土",
+      "strokes": 16,
+      "meaning": "平衡,权衡,公正",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "辰",
+      "wuxing": "土",
+      "strokes": 7,
+      "meaning": "星辰,时光",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "一",
+      "wuxing": "木",
+      "strokes": 1,
+      "meaning": "最初,唯一",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "行",
+      "wuxing": "水",
+      "strokes": 6,
+      "meaning": "行动,德行",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "安",
+      "wuxing": "土",
+      "strokes": 6,
+      "meaning": "平安,安定",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "然",
+      "wuxing": "金",
+      "strokes": 12,
+      "meaning": "自然,坦荡",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "子",
+      "wuxing": "水",
+      "strokes": 3,
+      "meaning": "子嗣,君子",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "轩",
+      "wuxing": "土",
+      "strokes": 10,
+      "meaning": "高大,气度",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "宇",
+      "wuxing": "土",
+      "strokes": 6,
+      "meaning": "宇宙,胸怀",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "浩",
+      "wuxing": "水",
+      "strokes": 11,
+      "meaning": "浩瀚,广大",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "博",
+      "wuxing": "水",
+      "strokes": 12,
+      "meaning": "博学,广博",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "瑞",
+      "wuxing": "金",
+      "strokes": 14,
+      "meaning": "祥瑞,珍贵",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "嘉",
+      "wuxing": "木",
+      "strokes": 14,
+      "meaning": "美好,赞许",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "梓",
+      "wuxing": "木",
+      "strokes": 11,
+      "meaning": "梓树,故里",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "明",
+      "wuxing": "火",
+      "strokes": 8,
+      "meaning": "光明,聪慧",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "俊",
+      "wuxing": "火",
+      "strokes": 9,
+      "meaning": "俊秀,才智",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "哲",
+      "wuxing": "火",
+      "strokes": 10,
+      "meaning": "智慧,贤明",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "睿",
+      "wuxing": "金",
+      "strokes": 14,
+      "meaning": "睿智,通达",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "卓",
+      "wuxing": "火",
+      "strokes": 8,
+      "meaning": "卓越,高超",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "逸",
+      "wuxing": "水",
+      "strokes": 15,
+      "meaning": "飘逸,闲适",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "豪",
+      "wuxing": "水",
+      "strokes": 14,
+      "meaning": "豪迈,气魄",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "翰",
+      "wuxing": "水",
+      "strokes": 16,
+      "meaning": "翰林,文辞",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "晨",
+      "wuxing": "火",
+      "strokes": 11,
+      "meaning": "清晨,朝气",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "阳",
+      "wuxing": "土",
+      "strokes": 17,
+      "meaning": "阳光,正气",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "航",
+      "wuxing": "水",
+      "strokes": 10,
+      "meaning": "航行,远航",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "志",
+      "wuxing": "火",
+      "strokes": 7,
+      "meaning": "志向,意志",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "恒",
+      "wuxing": "水",
+      "strokes": 10,
+      "meaning": "恒久,坚持",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "辉",
+      "wuxing": "水",
+      "strokes": 15,
+      "meaning": "光辉,荣耀",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "军",
+      "wuxing": "木",
+      "strokes": 9,
+      "meaning": "军伍,正气",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "建",
+      "wuxing": "木",
+      "strokes": 9,
+      "meaning": "建立,功业",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "亮",
+      "wuxing": "火",
+      "strokes": 9,
+      "meaning": "明亮,正大",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "正",
+      "wuxing": "金",
+      "strokes": 5,
+      "meaning": "正大,端正",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "永",
+      "wuxing": "水",
+      "strokes": 5,
+      "meaning": "永远,长久",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "健",
+      "wuxing": "木",
+      "strokes": 11,
+      "meaning": "健强,康健",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "世",
+      "wuxing": "金",
+      "strokes": 5,
+      "meaning": "世代,世界",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "兴",
+      "wuxing": "水",
+      "strokes": 16,
+      "meaning": "兴盛,振作",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "海",
+      "wuxing": "水",
+      "strokes": 11,
+      "meaning": "海纳,广大",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "仁",
+      "wuxing": "金",
+      "strokes": 4,
+      "meaning": "仁义,博爱",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "波",
+      "wuxing": "水",
+      "strokes": 9,
+      "meaning": "波澜,起伏",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "贵",
+      "wuxing": "木",
+      "strokes": 12,
+      "meaning": "尊贵,宝贵",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "福",
+      "wuxing": "水",
+      "strokes": 15,
+      "meaning": "福气,吉祥",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "胜",
+      "wuxing": "金",
+      "strokes": 12,
+      "meaning": "胜利,卓越",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "学",
+      "wuxing": "水",
+      "strokes": 16,
+      "meaning": "学问,求学",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "祥",
+      "wuxing": "金",
+      "strokes": 11,
+      "meaning": "吉祥,祥瑞",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "才",
+      "wuxing": "金",
+      "strokes": 3,
+      "meaning": "才能,才智",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "发",
+      "wuxing": "水",
+      "strokes": 12,
+      "meaning": "发达,兴旺",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "新",
+      "wuxing": "金",
+      "strokes": 13,
+      "meaning": "崭新,创新",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "清",
+      "wuxing": "水",
+      "strokes": 12,
+      "meaning": "清雅,澄澈",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "彬",
+      "wuxing": "木",
+      "strokes": 11,
+      "meaning": "文质彬彬",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "顺",
+      "wuxing": "金",
+      "strokes": 12,
+      "meaning": "顺利,和顺",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "信",
+      "wuxing": "金",
+      "strokes": 9,
+      "meaning": "信用,诚实",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "星",
+      "wuxing": "金",
+      "strokes": 9,
+      "meaning": "星辰,明亮",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "光",
+      "wuxing": "火",
+      "strokes": 6,
+      "meaning": "光明,荣耀",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "岩",
+      "wuxing": "土",
+      "strokes": 8,
+      "meaning": "岩石,坚定",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "中",
+      "wuxing": "火",
+      "strokes": 4,
+      "meaning": "中正,核心",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "茂",
+      "wuxing": "木",
+      "strokes": 11,
+      "meaning": "茂盛,繁茂",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "进",
+      "wuxing": "火",
+      "strokes": 15,
+      "meaning": "进取,前进",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "坚",
+      "wuxing": "土",
+      "strokes": 11,
+      "meaning": "坚强,坚定",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "和",
+      "wuxing": "水",
+      "strokes": 8,
+      "meaning": "和谐,平和",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "先",
+      "wuxing": "金",
+      "strokes": 6,
+      "meaning": "领先,先锋",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "善",
+      "wuxing": "金",
+      "strokes": 12,
+      "meaning": "善良,和善",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "厚",
+      "wuxing": "水",
+      "strokes": 9,
+      "meaning": "厚德,敦厚",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "庆",
+      "wuxing": "木",
+      "strokes": 15,
+      "meaning": "庆贺,吉庆",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "友",
+      "wuxing": "土",
+      "strokes": 4,
+      "meaning": "朋友,友善",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "裕",
+      "wuxing": "金",
+      "strokes": 13,
+      "meaning": "富裕,宽裕",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "河",
+      "wuxing": "水",
+      "strokes": 9,
+      "meaning": "大河,源远",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "江",
+      "wuxing": "水",
+      "strokes": 7,
+      "meaning": "大江,浩荡",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "政",
+      "wuxing": "火",
+      "strokes": 8,
+      "meaning": "政事,正大",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "谦",
+      "wuxing": "木",
+      "strokes": 17,
+      "meaning": "谦逊,虚怀",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "奇",
+      "wuxing": "木",
+      "strokes": 8,
+      "meaning": "奇特,非凡",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "宏",
+      "wuxing": "水",
+      "strokes": 7,
+      "meaning": "宏大,远大",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "言",
+      "wuxing": "木",
+      "strokes": 7,
+      "meaning": "言谈,言论",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "鸣",
+      "wuxing": "水",
+      "strokes": 14,
+      "meaning": "鸣叫,声名",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "鹏",
+      "wuxing": "水",
+      "strokes": 19,
+      "meaning": "鹏程,远大",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "翔",
+      "wuxing": "土",
+      "strokes": 12,
+      "meaning": "飞翔,翱翔",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "旭",
+      "wuxing": "火",
+      "strokes": 6,
+      "meaning": "旭日,朝气",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "士",
+      "wuxing": "金",
+      "strokes": 3,
+      "meaning": "士人,志士",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "德",
+      "wuxing": "火",
+      "strokes": 15,
+      "meaning": "品德,恩德",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "泰",
+      "wuxing": "水",
+      "strokes": 10,
+      "meaning": "安泰,康泰",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "振",
+      "wuxing": "火",
+      "strokes": 11,
+      "meaning": "振作,振兴",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "壮",
+      "wuxing": "金",
+      "strokes": 7,
+      "meaning": "强壮,豪壮",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "承",
+      "wuxing": "金",
+      "strokes": 8,
+      "meaning": "承担,继承",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "乐",
+      "wuxing": "火",
+      "strokes": 15,
+      "meaning": "快乐,喜乐",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "峰",
+      "wuxing": "水",
+      "strokes": 10,
+      "meaning": "山峰,卓越",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "源",
+      "wuxing": "水",
+      "strokes": 14,
+      "meaning": "源头,本原",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "昊",
+      "wuxing": "木",
+      "strokes": 8,
+      "meaning": "苍天,广大",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "天",
+      "wuxing": "火",
+      "strokes": 4,
+      "meaning": "天地,天赐",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "达",
+      "wuxing": "火",
+      "strokes": 16,
+      "meaning": "通达,达观",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "寅",
+      "wuxing": "木",
+      "strokes": 11,
+      "meaning": "寅虎,胆识",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 3
+    },
+    {
+      "char": "俞",
+      "wuxing": "金",
+      "strokes": 9,
+      "meaning": "俞允,安然",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 3
+    },
+    {
+      "char": "柏",
+      "wuxing": "木",
+      "strokes": 9,
+      "meaning": "柏树,坚贞",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "松",
+      "wuxing": "木",
+      "strokes": 8,
+      "meaning": "松柏,坚贞",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "婷",
+      "wuxing": "火",
+      "strokes": 12,
+      "meaning": "娉婷,优美",
+      "style": "现代",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "静",
+      "wuxing": "金",
+      "strokes": 16,
+      "meaning": "文静,安宁",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "敏",
+      "wuxing": "水",
+      "strokes": 11,
+      "meaning": "敏捷,聪敏",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "丽",
+      "wuxing": "火",
+      "strokes": 19,
+      "meaning": "美丽,华丽",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "芳",
+      "wuxing": "木",
+      "strokes": 10,
+      "meaning": "芬芳,美好",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "娜",
+      "wuxing": "火",
+      "strokes": 10,
+      "meaning": "婀娜,优雅",
+      "style": "现代",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "秀",
+      "wuxing": "金",
+      "strokes": 7,
+      "meaning": "秀丽,出众",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "娟",
+      "wuxing": "木",
+      "strokes": 10,
+      "meaning": "娟秀,柔美",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "玲",
+      "wuxing": "火",
+      "strokes": 10,
+      "meaning": "玲珑,精巧",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "芬",
+      "wuxing": "木",
+      "strokes": 10,
+      "meaning": "芬芳,馨香",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "彩",
+      "wuxing": "金",
+      "strokes": 11,
+      "meaning": "多彩,绚丽",
+      "style": "现代",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "春",
+      "wuxing": "木",
+      "strokes": 9,
+      "meaning": "春天,生机",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "菊",
+      "wuxing": "木",
+      "strokes": 14,
+      "meaning": "菊花,高洁",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "兰",
+      "wuxing": "木",
+      "strokes": 23,
+      "meaning": "兰花,雅致",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "洁",
+      "wuxing": "水",
+      "strokes": 16,
+      "meaning": "纯洁,清白",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "琳",
+      "wuxing": "木",
+      "strokes": 13,
+      "meaning": "琳琅,美玉",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "素",
+      "wuxing": "金",
+      "strokes": 10,
+      "meaning": "素雅,朴素",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "莲",
+      "wuxing": "木",
+      "strokes": 17,
+      "meaning": "莲花,出尘",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "雪",
+      "wuxing": "水",
+      "strokes": 11,
+      "meaning": "白雪,纯洁",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "瑶",
+      "wuxing": "火",
+      "strokes": 15,
+      "meaning": "美玉,珍贵",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "佳",
+      "wuxing": "木",
+      "strokes": 8,
+      "meaning": "佳人,美好",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "怡",
+      "wuxing": "土",
+      "strokes": 9,
+      "meaning": "怡然,安乐",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "琪",
+      "wuxing": "木",
+      "strokes": 13,
+      "meaning": "琪花,美玉",
+      "style": "现代",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "倩",
+      "wuxing": "金",
+      "strokes": 10,
+      "meaning": "倩影,美好",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "涵",
+      "wuxing": "水",
+      "strokes": 12,
+      "meaning": "涵养,包容",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "薇",
+      "wuxing": "木",
+      "strokes": 19,
+      "meaning": "蔷薇,柔美",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "欣",
+      "wuxing": "木",
+      "strokes": 8,
+      "meaning": "欣喜,欢悦",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "灵",
+      "wuxing": "火",
+      "strokes": 24,
+      "meaning": "灵秀,聪慧",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "慧",
+      "wuxing": "水",
+      "strokes": 15,
+      "meaning": "智慧,聪慧",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "美",
+      "wuxing": "水",
+      "strokes": 9,
+      "meaning": "美好,美丽",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "雅",
+      "wuxing": "木",
+      "strokes": 12,
+      "meaning": "雅致,文雅",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "芝",
+      "wuxing": "木",
+      "strokes": 10,
+      "meaning": "灵芝,瑞草",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "玉",
+      "wuxing": "木",
+      "strokes": 5,
+      "meaning": "美玉,温润",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "萍",
+      "wuxing": "木",
+      "strokes": 14,
+      "meaning": "浮萍,柔美",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "霞",
+      "wuxing": "水",
+      "strokes": 17,
+      "meaning": "彩霞,绚丽",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "月",
+      "wuxing": "木",
+      "strokes": 4,
+      "meaning": "明月,皎洁",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "思",
+      "wuxing": "金",
+      "strokes": 9,
+      "meaning": "思考,思念",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "梦",
+      "wuxing": "木",
+      "strokes": 14,
+      "meaning": "梦想,梦幻",
+      "style": "现代",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "心",
+      "wuxing": "金",
+      "strokes": 4,
+      "meaning": "心灵,诚意",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "若",
+      "wuxing": "木",
+      "strokes": 11,
+      "meaning": "若兰,似",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "白",
+      "wuxing": "水",
+      "strokes": 5,
+      "meaning": "洁白,纯真",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "秋",
+      "wuxing": "金",
+      "strokes": 9,
+      "meaning": "金秋,收获",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "柳",
+      "wuxing": "木",
+      "strokes": 9,
+      "meaning": "柳絮,柔美",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "叶",
+      "wuxing": "土",
+      "strokes": 15,
+      "meaning": "绿叶,自然",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "馨",
+      "wuxing": "金",
+      "strokes": 20,
+      "meaning": "温馨,馨香",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "燕",
+      "wuxing": "土",
+      "strokes": 16,
+      "meaning": "燕子,轻盈",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "宁",
+      "wuxing": "火",
+      "strokes": 14,
+      "meaning": "安宁,宁静",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "悦",
+      "wuxing": "木",
+      "strokes": 11,
+      "meaning": "喜悦,愉快",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "舒",
+      "wuxing": "金",
+      "strokes": 12,
+      "meaning": "舒展,从容",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "南",
+      "wuxing": "火",
+      "strokes": 9,
+      "meaning": "南方,温暖",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "夏",
+      "wuxing": "火",
+      "strokes": 10,
+      "meaning": "夏天,繁盛",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "风",
+      "wuxing": "水",
+      "strokes": 9,
+      "meaning": "风雅,自由",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "雨",
+      "wuxing": "水",
+      "strokes": 8,
+      "meaning": "春雨,润泽",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "云",
+      "wuxing": "水",
+      "strokes": 12,
+      "meaning": "云朵,自在",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "雷",
+      "wuxing": "水",
+      "strokes": 13,
+      "meaning": "雷霆,威猛",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "冰",
+      "wuxing": "水",
+      "strokes": 6,
+      "meaning": "冰清,纯净",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "青",
+      "wuxing": "金",
+      "strokes": 8,
+      "meaning": "青葱,年少",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "绿",
+      "wuxing": "木",
+      "strokes": 14,
+      "meaning": "翠绿,生机",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 3
+    },
+    {
+      "char": "蓝",
+      "wuxing": "木",
+      "strokes": 20,
+      "meaning": "蓝颜,雅致",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "紫",
+      "wuxing": "金",
+      "strokes": 12,
+      "meaning": "紫气,祥瑞",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "红",
+      "wuxing": "水",
+      "strokes": 9,
+      "meaning": "红色,热烈",
+      "style": "中性",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "黄",
+      "wuxing": "土",
+      "strokes": 12,
+      "meaning": "黄色,尊贵",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 3
+    },
+    {
+      "char": "谷",
+      "wuxing": "木",
+      "strokes": 7,
+      "meaning": "山谷,虚怀",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "山",
+      "wuxing": "土",
+      "strokes": 3,
+      "meaning": "山岳,稳重",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "岳",
+      "wuxing": "土",
+      "strokes": 8,
+      "meaning": "山岳,尊崇",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "龙",
+      "wuxing": "土",
+      "strokes": 16,
+      "meaning": "龙腾,尊荣",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "凤",
+      "wuxing": "水",
+      "strokes": 14,
+      "meaning": "凤凰,高洁",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "鹤",
+      "wuxing": "金",
+      "strokes": 15,
+      "meaning": "白鹤,长寿",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "鹰",
+      "wuxing": "木",
+      "strokes": 18,
+      "meaning": "雄鹰,勇猛",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "虎",
+      "wuxing": "水",
+      "strokes": 8,
+      "meaning": "虎威,勇猛",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "铭",
+      "wuxing": "金",
+      "strokes": 14,
+      "meaning": "铭记,铭刻",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "鑫",
+      "wuxing": "金",
+      "strokes": 24,
+      "meaning": "财富,兴盛",
+      "style": "现代",
+      "gender": "男",
+      "popularity": 5
+    },
+    {
+      "char": "冉",
+      "wuxing": "火",
+      "strokes": 5,
+      "meaning": "冉冉,渐进",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 4
+    },
+    {
+      "char": "千",
+      "wuxing": "金",
+      "strokes": 3,
+      "meaning": "千成,广阔",
+      "style": "现代",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "之",
+      "wuxing": "火",
+      "strokes": 4,
+      "meaning": "之乎,助词",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "以",
+      "wuxing": "土",
+      "strokes": 5,
+      "meaning": "以,使用",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "橙",
+      "wuxing": "木",
+      "strokes": 16,
+      "meaning": "橙子,甜美",
+      "style": "现代",
+      "gender": "女",
+      "popularity": 3
+    },
+    {
+      "char": "李",
+      "wuxing": "木",
+      "strokes": 7,
+      "meaning": "李树,嘉果",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 5
+    },
+    {
+      "char": "凡",
+      "wuxing": "金",
+      "strokes": 3,
+      "meaning": "不凡,平凡",
+      "style": "中性",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "凌",
+      "wuxing": "水",
+      "strokes": 10,
+      "meaning": "凌厉,凌霄",
+      "style": "古典",
+      "gender": "男",
+      "popularity": 4
+    },
+    {
+      "char": "慕",
+      "wuxing": "水",
+      "strokes": 15,
+      "meaning": "羡慕,思慕",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "苏",
+      "wuxing": "木",
+      "strokes": 22,
+      "meaning": "苏醒,复苏",
+      "style": "古典",
+      "gender": "女",
+      "popularity": 5
+    },
+    {
+      "char": "慎",
+      "wuxing": "金",
+      "strokes": 14,
+      "meaning": "谨慎,稳重",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    },
+    {
+      "char": "宣",
+      "wuxing": "金",
+      "strokes": 9,
+      "meaning": "宣扬,光大",
+      "style": "古典",
+      "gender": "中",
+      "popularity": 4
+    }
+  ],
+  "_meta": {
+    "original_count": 380,
+    "after_dedup": 176,
+    "after_engine_align": 176,
+    "skipped_not_in_engine": [],
+    "note": "所有字符的 strokes 与 xingming_engine.COMMON_STROKES 严格对齐;未覆盖字符剔除以保证笔画计算一致",
+    "cleaned_at": "2026-07-10"
+  }
+}
