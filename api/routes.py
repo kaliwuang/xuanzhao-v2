@@ -1852,6 +1852,41 @@ def ask_question(
                 },
             }
 
+        # 分流: figures 数量 >= 3 → 触发 108 视角辩论模式; 否则简单拼接模式
+        figure_list = [f.strip() for f in figures.split(",") if f.strip()] if figures else []
+        if len(figure_list) >= 3 and chart_result:
+            # 辩论模式: 调用 DebateEngine 真正辩论
+            try:
+                from engine.perspective_engine import PerspectiveEngine
+                from engine.debate_engine import DebateEngine
+                pe = PerspectiveEngine()
+                opinions = pe.analyze(udm, question, figure_list)
+                de = DebateEngine()
+                debate_result = de.debate(opinions, question)
+                # 包裹 ask 格式以保持前端兼容
+                return {
+                    "question": question,
+                    "answer_mode": "debate",
+                    "concepts_matched": [],
+                    "answer_blocks": [
+                        {"type": "debate_summary", "text": f"108 视角辩论 ({len(figure_list)} 人物) 已完成,见 exchanges."}
+                    ] + [
+                        {"type": "exchange", "round": getattr(ex, "round_num", 0), "speaker": getattr(ex, "speaker", ""), "target": getattr(ex, "target", ""), "text": getattr(ex, "argument", ""), "rebuttal_type": getattr(ex, "rebuttal_type", "")}
+                        for ex in debate_result.get("exchanges", [])[:30]
+                    ],
+                    "viewpoints_used": figure_list,
+                    "disclosure": [
+                        "辩论模式: N 人物观点真正辩论,非 LLM 拼接",
+                        "每个 exchange 含 figure/stance/text",
+                        "原始结构: opinion / rebut / final (见 DebateEngine)",
+                    ],
+                    "confidence": 75,
+                    "debate_raw": debate_result,
+                }
+            except Exception as debate_err:
+                # 辩论失败回退到简单模式
+                pass
+
         result = ask_impl(question, chart_result, figures)
         return result
 
