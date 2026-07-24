@@ -301,6 +301,15 @@ def serve_test():
         return FileResponse(p, headers=NO_CACHE_HEADERS)
     return {"error": "not found"}
 
+
+@app.get("/ask")
+def serve_ask():
+    p = os.path.join(frontend_dir, "ask.html")
+    if os.path.exists(p):
+        return FileResponse(p, headers=NO_CACHE_HEADERS)
+    return {"error": "ask.html not found"}
+
+
 if __name__ == "__main__":
     # 启动前校验配置
     warnings = validate_config()
