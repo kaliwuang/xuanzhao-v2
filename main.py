@@ -235,6 +235,23 @@ def serve_index():
     return {"message": "玄照 v2.0 API 服务运行中", "docs": "/docs"}
 
 
+# PWA 静态资源
+@app.get("/manifest.json")
+def serve_manifest():
+    p = os.path.join(frontend_dir, "manifest.json")
+    if os.path.exists(p):
+        return FileResponse(p, media_type="application/manifest+json")
+    return {"error": "manifest.json not found"}
+
+
+@app.get("/sw.js")
+def serve_sw():
+    p = os.path.join(frontend_dir, "sw.js")
+    if os.path.exists(p):
+        return FileResponse(p, media_type="application/javascript")
+    return {"error": "sw.js not found"}
+
+
 @app.get("/chart")
 def serve_chart():
     chart_path = os.path.join(frontend_dir, "chart.html")

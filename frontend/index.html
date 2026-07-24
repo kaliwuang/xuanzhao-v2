@@ -8,6 +8,13 @@
     <meta name="keywords" content="玄照,八字排盘,紫微斗数,占星,六爻,奇门遁甲,大六壬,太乙神数,姓名学,命理,排盘">
     <link rel="preload" href="/static/css/style.css" as="style">
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#c9a96e">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="玄照">
 </head>
 <body>
     <a href="#main-content" class="skip-link">跳过导航</a>
@@ -1067,6 +1074,35 @@ var mn = {'八字':'bazi','紫微':'ziwei','占星':'astro','六爻':'liuyao','�
             shuffled.forEach(function(fid) { var f = data[fid]; var card = document.createElement('div'); card.className = 'figure-card'; card.innerHTML = '<div class="figure-header"><div class="figure-avatar ' + f.faction + '">' + f.name[0] + '</div><div class="figure-info"><h4>' + f.name + '</h4><div class="figure-title-text">' + f.title + '</div></div></div><div class="figure-method-badge">' + f.primary_method + '</div>' + (f.soul && f.soul.essence ? '<div class="figure-soul-essence">' + f.soul.essence + '</div>' : ''); gallery.appendChild(card); });
         }).catch(function(e) { console.error('Preview failed:', e); });
     }
+    </script>
+    <script>
+    // PWA Service Worker 注册
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('[PWA] SW registered:', reg.scope))
+          .catch(err => console.warn('[PWA] SW registration failed:', err));
+      });
+    }
+
+    // PWA 安装提示
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;bottom:20px;left:20px;right:20px;max-width:400px;margin:auto;padding:12px 16px;background:var(--bg1);border:1px solid var(--gold-border);border-radius:8px;font-size:.85rem;z-index:9999;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+      banner.innerHTML = '<span>📱 安装玄照到桌面 (PWA)</span><span><button id="pwaInstall" style="background:var(--gold);color:var(--bg);border:none;padding:6px 12px;border-radius:4px;cursor:pointer;margin-right:6px">安装</button><button id="pwaDismiss" style="background:transparent;color:var(--txt);border:1px solid var(--border);padding:6px 12px;border-radius:4px;cursor:pointer">×</button></span>';
+      document.body.appendChild(banner);
+      document.getElementById('pwaInstall').onclick = async () => {
+        banner.remove();
+        deferredPrompt.prompt();
+        const {outcome} = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+      };
+      document.getElementById('pwaDismiss').onclick = () => banner.remove();
+      setTimeout(() => { if(banner.parentNode) banner.remove(); }, 15000);
+    });
     </script>
     <footer class="footer">
         <div class="footer-divider"></div>

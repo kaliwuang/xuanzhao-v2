@@ -1,0 +1,28 @@
+{
+  "name": "玄照 — 八术排盘 108视角",
+  "short_name": "玄照",
+  "description": "融合八字、紫微、占星、六爻、奇门遁甲、大六壬、太乙、姓名学的八术排盘系统，配合108视角交叉验证与群体智能推理。",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1015",
+  "theme_color": "#c9a96e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "education"],
+  "lang": "zh-CN",
+  "dir": "ltr"
+}
