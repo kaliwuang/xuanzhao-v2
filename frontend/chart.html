@@ -590,6 +590,62 @@ function renderBazi(b){
     $('#bzDayun').innerHTML=dyH;
   }
 
+  // 命局格局 (geju) + 五行综合 + 命局特征
+  let insightH='';
+  if(b.geju && b.geju.geju_type){
+    const g=b.geju;
+    const qingchun=g.qingchun?'清纯':'混杂';
+    insightH+=`<div style="margin-bottom:10px;padding:10px;background:var(--bg);border-radius:6px;border-left:3px solid var(--gold)">
+      <div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:4px">命局格局</div>
+      <div style="font-size:.85rem;font-weight:600;color:var(--txt);margin-bottom:4px">${esc(g.geju_type)} <span style="font-size:.65rem;color:var(--txt3);font-weight:normal">(${esc(g.geju_level||'')})</span></div>
+      <div style="font-size:.7rem;color:var(--txt2)">${esc(g.description||'')}</div>
+    </div>`;
+  }
+  if(b.wuxing_summary){
+    insightH+=`<div style="margin-bottom:10px;padding:8px 10px;background:var(--bg);border-radius:6px;font-size:.75rem;color:var(--txt2);line-height:1.6">
+      <span style="color:var(--gold);font-weight:600">五行总论：</span>${esc(b.wuxing_summary)}
+    </div>`;
+  }
+  if(b.features && b.features.length){
+    insightH+=`<div style="margin-bottom:10px"><div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:4px">命局特征 (${b.features.length})</div><div style="font-size:.7rem;color:var(--txt2);line-height:1.7">`;
+    b.features.forEach(f=>{insightH+=`<div style="padding:2px 0">· ${esc(f)}</div>`});
+    insightH+='</div></div>';
+  }
+  // 事业 + 财富 + 健康 + 感情 三指标
+  if(b.career_tendency && b.career_tendency.top_three){
+    insightH+=`<div style="margin-bottom:10px;padding:10px;background:var(--bg);border-radius:6px">
+      <div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:6px">事业倾向 (推荐行业)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+    b.career_tendency.top_three.forEach(t=>{
+      const wuxing=t[0]||'', desc=t[1]||'';
+      const wxc=WXC[WX[wuxing[0]]]||'var(--gold)';
+      insightH+=`<div style="padding:4px 8px;background:var(--gold-dim);border-radius:4px;font-size:.7rem"><span style="color:${wxc};font-weight:600">${esc(wuxing)}</span> · ${esc(desc)}</div>`;
+    });
+    insightH+='</div></div>';
+  }
+  if(b.wealth_pattern && b.wealth_pattern.pattern){
+    insightH+=`<div style="margin-bottom:10px;padding:8px 10px;background:var(--bg);border-radius:6px;font-size:.75rem;color:var(--txt2)">
+      <span style="color:var(--gold);font-weight:600">财富格局：</span>${esc(b.wealth_pattern.pattern||'')} <span style="color:var(--txt3)">(等级 ${esc(b.wealth_pattern.level||'')})</span>
+    </div>`;
+  }
+  if(b.health_indicator && !b.health_indicator.error && b.health_indicator.indicators && b.health_indicator.indicators.length){
+    insightH+=`<div style="margin-bottom:10px;padding:8px 10px;background:var(--bg);border-radius:6px;font-size:.75rem;color:var(--txt2)">
+      <span style="color:var(--gold);font-weight:600">健康指标：</span>`;
+    b.health_indicator.indicators.forEach(h=>{insightH+=`<div>· ${esc(JSON.stringify(h))}</div>`});
+    insightH+='</div>';
+  }
+  if(insightH){
+    let insBox=$('#bzInsight');
+    if(!insBox){
+      insBox=document.createElement('div');
+      insBox.id='bzInsight';
+      insBox.className='sec';
+      insBox.innerHTML='<div class="sec-t">命局洞察</div><div class="sec-b"></div>';
+      $('#p-bazi').appendChild(insBox);
+    }
+    insBox.querySelector('.sec-b').innerHTML=insightH;
+  }
+
   // 喜用神
   if(b.xi_yong){
     const xy=b.xi_yong;

@@ -2332,7 +2332,7 @@ def analyze_relationship_indicator(pillars: list, shensha: list) -> dict:
 
 def analyze_health_indicator(day_master: str, wuxing_score: dict) -> dict:
     """健康指标分析（改进 #249）"""
-    from engine.udm import WUXING
+    # udm 中没有 WUXING 常量, 直接使用 GAN_WUXING_STR 派生
     dm_wx = GAN_WUXING_STR.get(day_master, "")
     organ_map = {"木": "肝胆", "火": "心小肠", "土": "脾胃", "金": "肺大肠", "水": "肾膀胱"}
     weakest = ""
