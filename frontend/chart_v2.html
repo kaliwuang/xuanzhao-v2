@@ -466,14 +466,21 @@ function renderDayun(bz){
   let html='<thead><tr><th>年龄</th><th>天干</th><th>地支</th><th>十神</th><th>星运</th><th>年份</th></tr></thead><tbody>';
   list.forEach(d=>{
     const age=d.start_age||d.age||'';
-    const isNow=currentAge&&age&&Math.abs(currentAge-age)<10;
+    const isNow=d.is_current || (currentAge&&age&&Math.abs(currentAge-age)<10);
     const cls=isNow?' class="now"':'';
-    const tg=d.tg||d.tiangan||'';
-    const dz=d.dz||d.dizhi||'';
-    const ss=d.shishen||'';
+    // 兼容字段: ganzhi 完整干支, 或 tg/dz 分开
+    let tg='',dz='';
+    if(d.ganzhi && d.ganzhi.length>=2){
+      tg=d.ganzhi[0];
+      dz=d.ganzhi[1];
+    } else {
+      tg=d.tg||d.tiangan||'';
+      dz=d.dz||d.dizhi||'';
+    }
+    const ss=d.shishen_gan||d.shishen||'';
     const cs=d.changsheng||'';
     const yr=d.start_year||d.year||'';
-    html+=`<tr${cls}><td>${age}岁</td><td>${colorSpan(tg)}</td><td>${colorSpan(dz)}</td><td>${esc(ss)}</td><td>${esc(cs)}</td><td>${yr}</td></tr>`;
+    html+=`<tr${cls}><td>${age}-${d.end_age||''}岁</td><td>${colorSpan(tg)}</td><td>${colorSpan(dz)}</td><td>${esc(ss)}</td><td>${esc(cs)}</td><td>${yr}-${d.end_year||''}</td></tr>`;
   });
   html+='</tbody>';
   table.innerHTML=html;
@@ -501,9 +508,10 @@ function renderGong(bz){
   const ty=bz.tai_yuan||'';
   const sg=bz.shen_gong||'';
   let html='';
-  if(mg)html+=`<div style="margin-bottom:6px"><strong>命宫：</strong><span class="${wxClass(mg.charAt(0))}">${mg}</span>${bz.ming_gong_shishen?' ('+esc(bz.ming_gong_shishen.shishen||'')+')':''}</div>`;
-  if(ty)html+=`<div style="margin-bottom:6px"><strong>胎元：</strong><span class="${wxClass(ty.charAt(0))}">${ty}</span>${bz.tai_yuan_shishen?' ('+esc(bz.tai_yuan_shishen.shishen||'')+')':''}</div>`;
-  if(sg)html+=`<div><strong>身宫：</strong><span class="${wxClass(sg.charAt(0))}">${sg}</span>${bz.shen_gong_shishen?' ('+esc(bz.shen_gong_shishen.shishen||'')+')':''}</div>`;
+  // 命宫/胎元/身宫 下的十神/藏干已在八字表中"藏干"行显示,这里只显示干支本体
+  if(mg)html+=`<div style="margin-bottom:6px"><strong>命宫：</strong><span class="${wxClass(mg.charAt(0))}">${mg}</span></div>`;
+  if(ty)html+=`<div style="margin-bottom:6px"><strong>胎元：</strong><span class="${wxClass(ty.charAt(0))}">${ty}</span></div>`;
+  if(sg)html+=`<div><strong>身宫：</strong><span class="${wxClass(sg.charAt(0))}">${sg}</span></div>`;
   $('#gongInfo').innerHTML=html||'暂无命宫数据';
 }
 

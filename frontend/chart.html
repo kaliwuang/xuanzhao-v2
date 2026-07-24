@@ -117,7 +117,7 @@ body{background:#fff;color:#333}
 
 /* ===== 紫微宫格 ===== */
 .zw-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);gap:1px;min-height:500px;background:rgba(255,255,255,.03);border-radius:6px;overflow:hidden}
-.zw-c{background:var(--bg);padding:6px;display:flex;flex-direction:column;min-height:150px;position:relative}
+.zw-c{background:var(--bg);padding:6px;display:flex;flex-direction:column;min-height:130px;position:relative;overflow:hidden}
 .zw-c.center{background:var(--bg3);align-items:center;justify-content:center;text-align:center}
 .zw-name{font-size:.78rem;font-weight:700;color:var(--gold)}
 .zw-gz{font-size:.6rem;color:var(--txt3);margin:1px 0}
@@ -507,9 +507,22 @@ function renderBazi(b){
   h+='<tr><td class="bz-small">支十神</td>';
   cols.forEach(c=>{h+=`<td class="bz-sub">${esc(c.ssz||'')}</td>`});
   h+='</tr>';
-  // 藏干
+  // 藏干 (藏干天干 + 各自十神)
   h+='<tr><td class="bz-small">藏干</td>';
-  cols.forEach((c,i)=>{const hv=hg[hkeys[i]];const t=hv?(Array.isArray(hv)?hv.join(' '):hv):'';h+=`<td class="bz-sub">${esc(t)}</td>`});
+  cols.forEach((c,i)=>{
+    const hv=hg[hkeys[i]];
+    const sv=c.ssz||[];
+    let cell='';
+    if(hv){
+      const arr=Array.isArray(hv)?hv:[hv];
+      const ssArr=Array.isArray(sv)?sv:(sv?[sv]:[]);
+      cell=arr.map((g,j)=>{
+        const ss=ssArr[j]||'';
+        return ss ? `<span style="white-space:nowrap"><span class="${WXK[WX[g]]||''}" style="color:${WXC[WX[g]]||'var(--txt)'};font-weight:600">${esc(g)}</span><span style="font-size:0.7rem;color:var(--text3)">(${esc(ss)})</span></span>` : `<span class="${WXK[WX[g]]||''}" style="color:${WXC[WX[g]]||'var(--txt)'}">${esc(g)}</span>`;
+      }).join(' ');
+    }
+    h+=`<td class="bz-sub">${cell}</td>`;
+  });
   h+='</tr>';
   // 纳音
   h+='<tr><td class="bz-small">纳音</td>';
@@ -684,6 +697,30 @@ function renderLiuyao(ly){
     shH+='</div>';
     $('#lyShen').innerHTML=shH;
   }
+
+  // 格局 + 五行分析 + 用神 (从 API 数据补上)
+  let extra='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">';
+  if(ly.ge_ju && ly.ge_ju.length){
+    extra+=`<div><div style="font-size:.65rem;font-weight:700;color:var(--gold);margin-bottom:4px">格局</div><div style="font-size:.7rem;color:var(--txt2)">${ly.ge_ju.map(g=>`<span style="display:inline-block;padding:2px 8px;margin:2px;background:var(--gold-dim);border-radius:4px">${esc(g)}</span>`).join('')}</div></div>`;
+  }
+  if(ly.wuxing_analysis){
+    const wa=ly.wuxing_analysis;
+    extra+=`<div><div style="font-size:.65rem;font-weight:700;color:var(--gold);margin-bottom:4px">五行分析</div><div style="font-size:.7rem;color:var(--txt2)"><div>世爻五行:${esc(wa.shi_wuxing||'')}</div><div>用神:${esc(wa.yong_shen||'')}</div><div>忌神:${esc(wa.ji_shen||'')}</div></div></div>`;
+  }
+  if(ly.fu_shen){
+    extra+=`<div><div style="font-size:.65rem;font-weight:700;color:var(--gold);margin-bottom:4px">伏神</div><div style="font-size:.7rem;color:var(--txt2)">${esc(JSON.stringify(ly.fu_shen))}</div></div>`;
+  }
+  extra+='</div>';
+  // 找到或新建一个区块
+  let lyExtra=$('#lyExtra');
+  if(!lyExtra){
+    lyExtra=document.createElement('div');
+    lyExtra.id='lyExtra';
+    lyExtra.className='sec';
+    lyExtra.innerHTML='<div class="sec-t">格局与用神</div><div class="sec-b"></div>';
+    $('#p-liuyao').appendChild(lyExtra);
+  }
+  lyExtra.querySelector('.sec-b').innerHTML=extra;
 }
 
 /* ===== 奇门 ===== */
@@ -718,6 +755,32 @@ function renderQimen(q){
     gH+=`<div class="qm-cell">${cellH}</div>`;
   });
   $('#qmGrid').innerHTML=gH;
+
+  // 格局分析 (从 ge_ju_analysis 字段)
+  if(q.ge_ju_analysis){
+    const ga=q.ge_ju_analysis;
+    let extra='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">';
+    if(ga.ji_ge && ga.ji_ge.length){
+      extra+=`<div><div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:6px">吉格 (${ga.ji_ge.length})</div>`;
+      ga.ji_ge.forEach(g=>{extra+=`<div style="font-size:.7rem;color:var(--txt2);padding:4px;margin-bottom:4px;background:var(--gold-dim);border-radius:4px"><strong>${esc(g.name)}</strong> (${esc(g.gong)}宫): ${esc(g.desc||'')}</div>`});
+      extra+='</div>';
+    }
+    if(ga.xiong_ge && ga.xiong_ge.length){
+      extra+=`<div><div style="font-size:.7rem;font-weight:700;color:var(--crimson);margin-bottom:6px">凶格 (${ga.xiong_ge.length})</div>`;
+      ga.xiong_ge.forEach(g=>{extra+=`<div style="font-size:.7rem;color:var(--txt2);padding:4px;margin-bottom:4px;background:rgba(180,40,40,.1);border-radius:4px"><strong>${esc(g.name)}</strong>: ${esc(g.desc||'')}</div>`});
+      extra+='</div>';
+    }
+    extra+='</div>';
+    let qmExtra=$('#qmExtra');
+    if(!qmExtra){
+      qmExtra=document.createElement('div');
+      qmExtra.id='qmExtra';
+      qmExtra.className='sec';
+      qmExtra.innerHTML='<div class="sec-t">格局分析</div><div class="sec-b"></div>';
+      $('#p-qimen').appendChild(qmExtra);
+    }
+    qmExtra.querySelector('.sec-b').innerHTML=extra;
+  }
 }
 
 /* ===== 大六壬 ===== */
@@ -727,6 +790,7 @@ function renderLiuren(lr){
   if(lr.ke_ti)infoH+=`课体: ${esc(lr.ke_ti)} `;
   if(lr.yue_jiang)infoH+=`月将: ${esc(lr.yue_jiang)} `;
   if(lr.xun_shou)infoH+=`旬首: ${esc(lr.xun_shou)}`;
+  if(lr.ge_ju) infoH+=` 格局: ${esc(lr.ge_ju)}`;
   $('#lrInfo').innerHTML=infoH;
 
   // 天盘 12宫
@@ -757,6 +821,42 @@ function renderLiuren(lr){
   }
   skH+='</div>';
   $('#lrSk').innerHTML=skH;
+
+  // 课体分析 + 用神
+  if(lr.si_ke_analysis || lr.yong_shen){
+    let extra='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">';
+    if(lr.si_ke_analysis){
+      const sa=lr.si_ke_analysis;
+      extra+=`<div><div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:6px">四课详析</div><div style="font-size:.7rem;color:var(--txt2)">`;
+      Object.entries(sa).forEach(([k,v])=>{
+        if(v && typeof v === 'object'){
+          extra+=`<div style="padding:4px;margin-bottom:4px;background:var(--gold-dim);border-radius:4px"><strong>${esc(k)}</strong>: ${esc(v.gan_zhi||'')} ${esc(v.tian_jiang||'')} ${esc(v.wuxing||'')} ${esc(v.relation||'')}</div>`;
+        } else {
+          extra+=`<div><strong>${esc(k)}</strong>: ${esc(v)}</div>`;
+        }
+      });
+      extra+='</div></div>';
+    }
+    if(lr.yong_shen){
+      const ys=lr.yong_shen;
+      extra+=`<div><div style="font-size:.7rem;font-weight:700;color:var(--gold);margin-bottom:6px">用神</div><div style="font-size:.7rem;color:var(--txt2)">`;
+      extra+=`<div>初传支: ${esc(ys.chu_chuan_zhi||'')}</div>`;
+      extra+=`<div>初传将: ${esc(ys.chu_chuan_jiang||'')}</div>`;
+      extra+=`<div>初传六亲: ${esc(ys.chu_chuan_liuqin||'')}</div>`;
+      extra+=`<div>将吉凶: ${esc(ys.jiang_jixiong||'')}</div>`;
+      extra+=`</div></div>`;
+    }
+    extra+='</div>';
+    let lrExtra=$('#lrExtra');
+    if(!lrExtra){
+      lrExtra=document.createElement('div');
+      lrExtra.id='lrExtra';
+      lrExtra.className='sec';
+      lrExtra.innerHTML='<div class="sec-t">课体与用神分析</div><div class="sec-b"></div>';
+      $('#p-liuren').appendChild(lrExtra);
+    }
+    lrExtra.querySelector('.sec-b').innerHTML=extra;
+  }
 }
 
 /* ===== 太乙 ===== */
@@ -768,20 +868,24 @@ function renderTaiyi(ty){
   if(ty.taiyi_gong)infoH+=`<tr><th>太乙宫</th><td style="color:var(--gold)">${esc(ty.taiyi_gong)}</td></tr>`;
   if(ty.ji_shen)infoH+=`<tr><th>计神</th><td>${esc(ty.ji_shen)}</td></tr>`;
   if(ty.shi_ji)infoH+=`<tr><th>始击</th><td>${esc(ty.shi_ji)}</td></tr>`;
+  if(ty.si_shen)infoH+=`<tr><th>四神</th><td>${esc(ty.si_shen)}</td></tr>`;
+  if(ty.zhi_fu)infoH+=`<tr><th>值符</th><td>${esc(ty.zhi_fu)}</td></tr>`;
   infoH+='</table>';
   $('#tyInfo').innerHTML=infoH;
 
-  // 三基五福
-  const sj=ty.sanji_wufu||{};
-  if(Object.keys(sj).length){
+  // 三基五福 (字段名兼容: sanji_wufu 或 san_ji + wu_fu)
+  const sanji=ty.sanji_wufu || (ty.san_ji && ty.wu_fu ? {...ty.san_ji, '五福':ty.wu_fu} : null);
+  if(sanji && Object.keys(sanji).length){
     let sjH='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">';
-    Object.entries(sj).forEach(([k,v])=>{sjH+=`<div style="text-align:center;padding:6px;background:var(--bg);border-radius:4px"><div style="font-size:.6rem;color:var(--txt3)">${esc(k)}</div><div style="font-size:.85rem;font-weight:600;color:var(--gold)">${esc(v)}</div></div>`});
+    Object.entries(sanji).forEach(([k,v])=>{sjH+=`<div style="text-align:center;padding:6px;background:var(--bg);border-radius:4px"><div style="font-size:.6rem;color:var(--txt3)">${esc(k)}</div><div style="font-size:.85rem;font-weight:600;color:var(--gold)">${esc(v)}</div></div>`});
     sjH+='</div>';
     $('#tySanji').innerHTML=sjH;
+  } else {
+    $('#tySanji').innerHTML='<div style="font-size:.7rem;color:var(--txt3)">暂无三基五福数据</div>';
   }
 
-  // 主客算
-  const suan=ty.suan_analysis||{};
+  // 主客算 (字段名兼容)
+  const suan=ty.suan_analysis || {};
   if(Object.keys(suan).length){
     let suanH='<div class="ty-suan">';
     if(suan.zhu_suan)suanH+=`<div class="ty-suan-item"><div class="ty-suan-label">主算</div><div class="ty-suan-val">${esc(suan.zhu_suan)}</div></div>`;
@@ -818,46 +922,53 @@ function renderAstro(a){
     const x2=cx+r*0.6*Math.cos(rad),y2=cy+r*0.6*Math.sin(rad);
     svgH+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
   }
-  // 行星
-  const planets=a.planets||[];
-  const PLANET_SYMBOLS={'☉','☽','☿','♀','♂','♃','♄','♅','♆','☊'};
-  planets.forEach((p,i)=>{
-    const signIdx=['白羊','金牛','双子','巨蟹','狮子','处女','天秤','天蝎','射手','摩羯','水瓶','双鱼'].indexOf(p.sign)||0;
-    const angle=signIdx*30+p.degree-90;
+  // 行星 (兼容 array 和 dict 两种 API 格式)
+  const PLANET_NAMES=['太阳','月亮','水星','金星','火星','木星','土星','天王','海王','冥王'];
+  const PLANET_SYMBOLS={'太阳':'☉','月亮':'☽','水星':'☿','金星':'♀','火星':'♂','木星':'♃','土星':'♄','天王':'♅','海王':'♆','冥王':'☊'};
+  const planetsArr = Array.isArray(a.planets) ? a.planets :
+                      (a.planets && typeof a.planets === 'object') ? PLANET_NAMES.filter(n=>a.planets[n]).map(n=>({name:n,...a.planets[n]})) : [];
+  planetsArr.forEach((p,i)=>{
+    const signIdx=SIGNS.indexOf(p.sign||'')>=0?SIGNS.indexOf(p.sign):(p.sign_index||0);
+    const degree=p.degree||0;
+    const angle=signIdx*30+degree-90;
     const rad=angle*Math.PI/180;
     const pr=r*0.75-i*8;
     const px=cx+pr*Math.cos(rad),py=cy+pr*Math.sin(rad);
-    svgH+=`<text x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle" fill="var(--gold)" font-size="10" font-weight="700">${esc(p.name?.substring(0,1)||'?')}</text>`;
+    const symbol=PLANET_SYMBOLS[p.name]||'';
+    svgH+=`<text x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle" fill="var(--gold)" font-size="10" font-weight="700">${esc(symbol||p.name?.substring(0,1)||'?')}</text>`;
   });
   svg.innerHTML=svgH;
 
   // 行星落座表
   let lgH='';
-  planets.forEach(p=>{
-    const symbol={'太阳':'☉','月亮':'☽','水星':'☿','金星':'♀','火星':'♂','木星':'♃','土星':'♄','天王':'♅','海王':'♆','冥王':'☊'}[p.name]||'';
+  planetsArr.forEach(p=>{
+    const symbol=PLANET_SYMBOLS[p.name]||'';
     lgH+=`<div class="astro-p"><span class="astro-p-name">${symbol} ${esc(p.name)}</span><span class="astro-p-sign">${esc(p.sign)} ${p.degree?.toFixed(1)||''}°</span><span class="astro-p-house">${p.house||''}宫</span></div>`;
   });
-  $('#astroLg').innerHTML=lgH;
+  $('#astroLg').innerHTML=lgH||'<div style="font-size:.7rem;color:var(--txt3)">暂无行星数据</div>';
 
   // 行星详细表
   let pH='<table class="ty-table"><tr><th>行星</th><th>星座</th><th>度数</th><th>宫位</th><th>逆行</th></tr>';
-  planets.forEach(p=>{
+  planetsArr.forEach(p=>{
     pH+=`<tr><td style="color:var(--gold)">${esc(p.name)}</td><td>${esc(p.sign)}</td><td>${p.degree?.toFixed(1)||''}°</td><td>${p.house||''}宫</td><td>${p.retrograde?'<span style="color:var(--crimson);font-weight:700">R</span>':''}</td></tr>`;
   });
   pH+='</table>';
   $('#astroPlanets').innerHTML=pH;
 
-  // 相位
-  const aspects=a.aspects||[];
-  if(aspects.length){
+  // 相位 (兼容数组和 dict)
+  const aspectsArr = Array.isArray(a.aspects) ? a.aspects :
+                      (a.aspects && typeof a.aspects === 'object') ? Object.entries(a.aspects).map(([k,v])=>({key:k, ...v})) : [];
+  if(aspectsArr.length){
     let ah='<table class="ty-table"><tr><th>行星1</th><th>相位</th><th>行星2</th><th>容许度</th></tr>';
-    aspects.forEach(a=>{
-      const aspectType=a.aspect||a.type||a[1]||'';
-      const aspectSymbol={'合相':'☌','对冲':'☍','三分△':'△','四分□':'□','六分':'⚹'}[aspectType]||'';
-      ah+=`<tr><td style="color:var(--gold)">${esc(a.planet1||a[0]||'')}</td><td>${aspectSymbol} ${esc(aspectType)}</td><td style="color:var(--gold)">${esc(a.planet2||a[2]||'')}</td><td>${esc(a.orb||a[3]||'')}</td></tr>`;
+    aspectsArr.forEach(a=>{
+      const aspectType=a.aspect||a.type||'';
+      const aspectSymbol={'合相':'☌','对冲':'☍','三分':'△','四分':'□','六分':'⚹','合':'☌','冲':'☍'}[aspectType]||'';
+      ah+=`<tr><td style="color:var(--gold)">${esc(a.planet1||a.p1||'')}</td><td>${aspectSymbol} ${esc(aspectType)}</td><td style="color:var(--gold)">${esc(a.planet2||a.p2||'')}</td><td>${esc(a.orb||'')}</td></tr>`;
     });
     ah+='</table>';
     $('#astroAspects').innerHTML=ah;
+  } else {
+    $('#astroAspects').innerHTML='<div style="font-size:.7rem;color:var(--txt3)">暂无相位数据</div>';
   }
 }
 
