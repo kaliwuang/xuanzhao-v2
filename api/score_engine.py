@@ -268,7 +268,151 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
         except Exception as e:
             logger.debug(f"跨术法交叉校验异常(不影响评分): {e}")
 
+    # ── P2: 溟玄终审 ──────────────────────────────────────
+    if target_name == "all" and len(result) >= 2:
+        try:
+            result["_mingxuan"] = _generate_mingxuan_verdict(result, udm)
+        except Exception as e:
+            logger.debug(f"溟玄终审异常(不影响评分): {e}")
+
     return result
+
+
+# ─── 溟玄终审 ──────────────────────────────────────────────
+
+# 禁用词（溟玄风格硬性规则）
+_BANNED = {"首先", "其次", "最后", "综上所述", "值得注意的是", "因此", "从而",
+           "由此可见", "本质上", "深入", "总的来说", "换言之", "与此同时",
+           "毋庸置疑", "显而易见", "不言而喻", "建议", "可以考虑", "或许",
+           "也许", "可能", "综合来看", "总结一下"}
+
+def _clean(text: str) -> str:
+    """去掉禁用词"""
+    for w in _BANNED:
+        text = text.replace(w, "")
+    return text.strip()
+
+
+def _generate_mingxuan_verdict(scores: dict, udm) -> dict:
+    """溟玄风格终审：把8术法分数汇总成一段断言式总判"""
+
+    # 收集五维分数
+    dim_totals = {d: [] for d in DIMENSIONS}
+    for name, data in scores.items():
+        if name.startswith("_"):
+            continue
+        dims = data.get("dimensions", {})
+        for d in DIMENSIONS:
+            v = dims.get(d, 0)
+            if v > 0:
+                dim_totals[d].append(v)
+
+    dim_avg = {}
+    for d in DIMENSIONS:
+        vals = dim_totals[d]
+        dim_avg[d] = round(sum(vals) / len(vals)) if vals else 0
+
+    # 找最强/最弱维度
+    sorted_dims = sorted(dim_avg.items(), key=lambda x: x[1], reverse=True)
+    best_dim = sorted_dims[0] if sorted_dims else ("未知", 0)
+    worst_dim = sorted_dims[-1] if sorted_dims else ("未知", 0)
+
+    # 收集所有术法的总分
+    method_scores = {n: d["score"] for n, d in scores.items() if not n.startswith("_")}
+    avg_score = round(sum(method_scores.values()) / len(method_scores)) if method_scores else 0
+
+    # 收集所有 strengths/weaknesses/advice
+    all_strengths = []
+    all_weaknesses = []
+    all_advice = []
+    for name, data in scores.items():
+        if name.startswith("_"):
+            continue
+        all_strengths.extend(data.get("strengths", []))
+        all_weaknesses.extend(data.get("weaknesses", []))
+        all_advice.extend(data.get("advice", []))
+
+    # 去重 advice
+    seen = set()
+    unique_advice = []
+    for a in all_advice:
+        key = a[:15]
+        if key not in seen:
+            seen.add(key)
+            unique_advice.append(a)
+
+    # ── 观：一句话断言 ──
+    guan_parts = []
+    # 日主
+    day_master = getattr(udm, 'day_master', '')
+    strength = ""
+    xi_yong = getattr(udm, 'xi_yong', None) or {}
+    if xi_yong:
+        strength = xi_yong.get("strength", "")
+    if day_master and strength:
+        guan_parts.append(f"{day_master}日{strength}")
+    # 总分判断
+    if avg_score >= 80:
+        guan_parts.append("底子扎实 先天条件好")
+    elif avg_score >= 65:
+        guan_parts.append("格局中上 有亮点也有短板")
+    elif avg_score >= 50:
+        guan_parts.append("格局中平 知道短板就能补")
+    else:
+        guan_parts.append("先天挑战多 但逆境出人才")
+    # 最强维度
+    if best_dim[1] >= 70:
+        guan_parts.append(f"{best_dim[0]}最亮")
+
+    guan = _clean("，".join(guan_parts)) + "。"
+
+    # ── 析：核心分析 ──
+    xi_parts = []
+    # 喜用神
+    if xi_yong:
+        xi_list = xi_yong.get("xi", [])
+        if xi_list:
+            xi_parts.append(f"喜{'/'.join(xi_list)}")
+    # 最弱维度
+    if worst_dim[1] < 60:
+        xi_parts.append(f"{worst_dim[0]}是短板 得留心")
+    # 冲突检测
+    cv = scores.get("_cross_validation", {})
+    conflicts = cv.get("conflict_count", 0)
+    if conflicts > 5:
+        xi_parts.append(f"{conflicts}处跨术法信号打架 不能只看一个术法")
+    # 挑2个最突出的 strength
+    for s in all_strengths[:2]:
+        cleaned = _clean(s)
+        if cleaned and len(cleaned) < 30:
+            xi_parts.append(cleaned)
+
+    xi = _clean("。".join(xi_parts)) + "。" if xi_parts else "数据不太够 给不了太细的判断。"
+
+    # ── 判：行动指引 ──
+    pan_parts = []
+    # 取前3条 advice（去重后）
+    for a in unique_advice[:3]:
+        cleaned = _clean(a)
+        if cleaned:
+            pan_parts.append(cleaned)
+    # 五维中低于60的给一句
+    for d, v in sorted_dims:
+        if v < 55 and len(pan_parts) < 5:
+            pan_parts.append(f"{d}偏弱 先补这个")
+
+    pan = _clean("。".join(pan_parts)) + "。" if pan_parts else "稳扎稳打就好。"
+
+    # 组装
+    verdict = f"【观】{guan}\n\n【析】{xi}\n\n【判】{pan}"
+
+    return {
+        "verdict": verdict,
+        "overall_score": avg_score,
+        "best_dimension": {"name": best_dim[0], "score": best_dim[1]},
+        "worst_dimension": {"name": worst_dim[0], "score": worst_dim[1]},
+        "advice_count": len(unique_advice),
+    }
 
 
 # ─── 八字评分 ──────────────────────────────────────────────

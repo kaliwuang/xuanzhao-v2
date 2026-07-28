@@ -909,7 +909,7 @@ class TestScoreAll:
         """score_all 应返回所有8个术法的评分"""
         udm = self._make_full_udm()
         result = score_all(udm)
-        assert len(result) == 8
+        assert len(result) >= 8
         for method in ["八字", "紫微斗数", "六爻", "奇门遁甲", "大六壬", "太乙神数", "占星", "姓名学"]:
             assert method in result, f"缺少 {method}"
 
@@ -918,6 +918,8 @@ class TestScoreAll:
         udm = self._make_full_udm()
         result = score_all(udm)
         for method, data in result.items():
+            if method.startswith("_"):
+                continue
             assert 0 <= data["score"] <= 100, f"{method} 评分超出范围: {data['score']}"
 
     def test_score_all_has_analysis(self):
@@ -925,6 +927,8 @@ class TestScoreAll:
         udm = self._make_full_udm()
         result = score_all(udm)
         for method, data in result.items():
+            if method.startswith("_"):
+                continue
             assert isinstance(data["analysis"], str), f"{method} analysis 不是字符串"
             assert len(data["analysis"]) > 0, f"{method} analysis 为空"
 
@@ -933,6 +937,8 @@ class TestScoreAll:
         udm = self._make_full_udm()
         result = score_all(udm)
         for method, data in result.items():
+            if method.startswith("_"):
+                continue
             assert isinstance(data["strengths"], list), f"{method} strengths 不是列表"
             assert isinstance(data["weaknesses"], list), f"{method} weaknesses 不是列表"
 
@@ -948,8 +954,10 @@ class TestScoreAll:
         udm.astro_chart = None
         udm.xingming_chart = None
         result = score_all(udm)
-        assert len(result) == 8
+        assert len(result) >= 8
         for method, data in result.items():
+            if method.startswith("_"):
+                continue
             assert data["score"] == 0, f"{method} 空数据应返回0分"
 
     def test_score_all_single_method(self):
@@ -992,7 +1000,7 @@ class TestScoreAll:
         udm.xingming_chart = None
         # 不应抛出异常
         result = score_all(udm)
-        assert len(result) == 8
+        assert len(result) >= 8
 
 
 if __name__ == "__main__":
