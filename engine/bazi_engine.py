@@ -432,7 +432,7 @@ class BaziEngine(DivinationEngine):
             self.EightChar = EightChar
             self._available = True
         except ImportError:
-            pass
+            logger.debug("lunar_python 未安装，八字引擎不可用")
 
     def analyze(self, time: CorrectedTime, gender: int) -> dict:
         if not self._available:

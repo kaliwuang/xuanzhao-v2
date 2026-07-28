@@ -683,8 +683,8 @@ class ZiWeiEngine(DivinationEngine):
                 _solar = _Solar.fromYmdHms(birth_dt.year, birth_dt.month, birth_dt.day, birth_dt.hour, birth_dt.minute, 0)
                 _lunar = _solar.getLunar()
                 birth_year_branch_cn = PINYIN_BRANCH_MAP.get(_lunar.getYearZhi().lower(), '')
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("获取生年地支失败，身主回退为空: %s", e)
         shen_zhu_star = ming_zhu_map['shen_zhu_map'].get(birth_year_branch_cn, '')
 
         # 四化飞入各宫

@@ -99,8 +99,8 @@ class TimeEngine:
             cities_file = Path(__file__).parent.parent / "data" / "cities.json"
             if cities_file.exists():
                 return cities_file.stat().st_mtime
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("获取 cities.json 修改时间失败: %s", e)
         return 0
 
     def _reload_cities_if_changed(self):
@@ -111,8 +111,8 @@ class TimeEngine:
                 self._cities = self._load_cities()
                 self._cities_mtime = current_mtime
                 return True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("热重载 cities.json 失败: %s", e)
         return False
 
     def _load_cities(self) -> dict:

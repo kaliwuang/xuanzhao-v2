@@ -158,7 +158,7 @@ class LLMClient:
                 try:
                     return json.loads(text[start:end + 1])
                 except json.JSONDecodeError:
-                    pass
+                    logger.debug("二次 JSON 解析失败，返回 raw_response")
 
             return {"raw_response": raw, "parse_error": True}
 

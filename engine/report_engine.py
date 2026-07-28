@@ -1508,8 +1508,8 @@ def _parse_llm_response(response: dict) -> dict:
                     "verdict_natural": json.loads(raw[start:end + 1]).get("verdict_natural", ""),
                     "actions_natural": json.loads(raw[start:end + 1]).get("actions_natural", []),
                 }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("二次 JSON 提取 verdict_natural/actions_natural 失败: %s", e)
 
     return {}
 
@@ -1581,8 +1581,9 @@ async def _enhance_report_with_llm(report: dict) -> None:
     for t in pending:
         try:
             await t
-        except (asyncio.CancelledError, Exception):
-            pass
+        except (asyncio.CancelledError, Exception) as e:
+            if not isinstance(e, asyncio.CancelledError):
+                logger.debug("等待已取消任务完成时异常: %s", e)
 
 
 # ============== Section 切片辅助(给 PDF / verify 共用)==============

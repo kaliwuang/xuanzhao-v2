@@ -649,8 +649,8 @@ class TaiYiEngine(DivinationEngine):
                     '吉凶': jixiong,
                     '含义': f'主算第{i+1}位：{num}，{jixiong}',
                 })
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug("主算第%d位转换失败: %s", i + 1, e)
 
         for i, val in enumerate(ke_suan):
             try:
@@ -661,8 +661,8 @@ class TaiYiEngine(DivinationEngine):
                     '吉凶': jixiong,
                     '含义': f'客算第{i+1}位：{num}，{jixiong}',
                 })
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug("客算第%d位转换失败: %s", i + 1, e)
 
         return result
 
