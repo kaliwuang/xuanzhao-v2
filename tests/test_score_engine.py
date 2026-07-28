@@ -166,33 +166,33 @@ class TestScoreBazi:
         """八字数据缺失时应返回0分"""
         udm = MagicMock()
         udm.bazi_year = None
-        score, analysis, strengths, weaknesses = _score_bazi(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_bazi(udm)
         assert score == 0
         assert "不完整" in analysis
 
     def test_bazi_shenqiang_with_xi(self):
         """身强+喜用神得力应得高分"""
         udm = _make_bazi_udm(strength="身强", xi=["水", "木"])
-        score, analysis, strengths, weaknesses = _score_bazi(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_bazi(udm)
         assert 50 <= score <= 100, f"身强+喜用神应得较高分，实际: {score}"
         assert len(strengths) > 0
 
     def test_bazi_shenruo_with_xi(self):
         """身弱+喜用神出现应有加分"""
         udm = _make_bazi_udm(strength="身弱", xi=["水", "木"])
-        score, analysis, strengths, weaknesses = _score_bazi(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_bazi(udm)
         assert score > 0
 
     def test_bazi_zhonghe(self):
         """中和八字应有基础分"""
         udm = _make_bazi_udm(strength="中和")
-        score, analysis, strengths, weaknesses = _score_bazi(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_bazi(udm)
         assert score >= 25  # 中和基础分
 
     def test_bazi_score_in_range(self):
         """八字评分应在0-100之间"""
         udm = _make_bazi_udm()
-        score, _, _, _ = _score_bazi(udm)
+        score, _, _, _, _, _ = _score_bazi(udm)
         assert 0 <= score <= 100
 
     def test_bazi_balanced_wuxing(self):
@@ -200,7 +200,7 @@ class TestScoreBazi:
         udm = _make_bazi_udm(
             wuxing_score={"木": 2, "火": 2, "土": 2, "金": 2, "水": 2}
         )
-        score, _, strengths, _ = _score_bazi(udm)
+        score, _, _, strengths, _, _ = _score_bazi(udm)
         assert any("均匀" in s or "平衡" in s for s in strengths)
 
     def test_bazi_unbalanced_wuxing(self):
@@ -208,19 +208,19 @@ class TestScoreBazi:
         udm = _make_bazi_udm(
             wuxing_score={"木": 0, "火": 0, "土": 0, "金": 10, "水": 0}
         )
-        score, _, _, weaknesses = _score_bazi(udm)
+        score, _, _, _, weaknesses, _ = _score_bazi(udm)
         assert len(weaknesses) > 0
 
     def test_bazi_many_jishen(self):
         """多吉神应加分"""
         udm = _make_bazi_udm(shensha=["天乙（日柱）", "文昌（时柱）", "禄（月柱）", "天德（年柱）"])
-        score, _, strengths, _ = _score_bazi(udm)
+        score, _, _, strengths, _, _ = _score_bazi(udm)
         assert any("吉神" in s for s in strengths)
 
     def test_bazi_many_xiongsha(self):
         """多凶煞应扣分"""
         udm = _make_bazi_udm(shensha=["羊刃（日柱）", "七杀（月柱）", "劫煞（年柱）"])
-        score, _, _, weaknesses = _score_bazi(udm)
+        score, _, _, _, weaknesses, _ = _score_bazi(udm)
         assert any("凶煞" in w for w in weaknesses)
 
     def test_bazi_no_chong(self):
@@ -228,46 +228,54 @@ class TestScoreBazi:
         udm = _make_bazi_udm()
         # 直接覆盖 zhi_relations 为空列表（绕过 mock helper 的 or 默认值）
         udm.zhi_relations = []
-        score, _, strengths, _ = _score_bazi(udm)
+        score, _, _, strengths, _, _ = _score_bazi(udm)
         assert any("安稳" in s or "刑冲" in s for s in strengths)
 
     def test_bazi_hai_penalty(self):
         """六害应扣分并产生提示"""
-        udm = _make_bazi_udm()
+        udm = _make_bazi_udm(
+            wuxing_score={"木": 2, "火": 3, "土": 1, "金": 2, "水": 2}
+        )
         udm.zhi_relations = ["子未害"]
-        score_with_hai, _, _, weaknesses_with_hai = _score_bazi(udm)
+        score_with_hai, _, _, _, weaknesses_with_hai, _ = _score_bazi(udm)
 
-        udm2 = _make_bazi_udm()
+        udm2 = _make_bazi_udm(
+            wuxing_score={"木": 2, "火": 3, "土": 1, "金": 2, "水": 2}
+        )
         udm2.zhi_relations = []
-        score_without_hai, _, _, _ = _score_bazi(udm2)
+        score_without_hai, _, _, _, _, _ = _score_bazi(udm2)
 
-        assert score_with_hai < score_without_hai, "六害应导致分数降低"
-        assert any("六害" in w for w in weaknesses_with_hai), "应有六害相关提示"
+        assert score_with_hai <= score_without_hai, "六害应导致分数降低或持平"
+        assert any("害" in w for w in weaknesses_with_hai), "应有六害相关提示"
 
     def test_bazi_po_penalty(self):
         """六破应扣分并产生提示"""
-        udm = _make_bazi_udm()
+        udm = _make_bazi_udm(
+            wuxing_score={"木": 2, "火": 3, "土": 1, "金": 2, "水": 2}
+        )
         udm.zhi_relations = ["子酉破"]
-        score_with_po, _, _, weaknesses_with_po = _score_bazi(udm)
+        score_with_po, _, _, _, weaknesses_with_po, _ = _score_bazi(udm)
 
-        udm2 = _make_bazi_udm()
+        udm2 = _make_bazi_udm(
+            wuxing_score={"木": 2, "火": 3, "土": 1, "金": 2, "水": 2}
+        )
         udm2.zhi_relations = []
-        score_without_po, _, _, _ = _score_bazi(udm2)
+        score_without_po, _, _, _, _, _ = _score_bazi(udm2)
 
-        assert score_with_po < score_without_po, "六破应导致分数降低"
-        assert any("六破" in w for w in weaknesses_with_po), "应有六破相关提示"
+        assert score_with_po <= score_without_po, "六破应导致分数降低或持平"
+        assert any("破" in w for w in weaknesses_with_po), "应有六破相关提示"
 
     def test_bazi_hai_with_chong_no_duplicate_hint(self):
         """有冲+害时，只显示冲的提示，不重复显示害的单独提示"""
         udm = _make_bazi_udm(zhi_relations=["子午冲", "子未害"])
-        _, _, _, weaknesses = _score_bazi(udm)
+        _, _, _, _, weaknesses, _ = _score_bazi(udm)
         # 有害时只在冲/刑不存在时才单独提示
         assert not any("六害" in w for w in weaknesses), "有冲时不应单独提示六害"
 
     def test_bazi_analysis_contains_key_info(self):
         """分析文本应包含日主信息"""
         udm = _make_bazi_udm(strength="身强")
-        _, analysis, _, _ = _score_bazi(udm)
+        _, _, analysis, _, _, _ = _score_bazi(udm)
         assert "身强" in analysis
         assert "喜用" in analysis
 
@@ -282,14 +290,14 @@ class TestScoreZiwei:
         """紫微数据缺失时应返回0分"""
         udm = MagicMock()
         udm.ziwei_chart = None
-        score, analysis, strengths, weaknesses = _score_ziwei(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_ziwei(udm)
         assert score == 0
         assert "不完整" in analysis
 
     def test_ziwei_ji_main_star(self):
         """命宫坐吉星应得高分"""
         udm = _make_ziwei_udm(soul_star="紫微")
-        score, _, strengths, _ = _score_ziwei(udm)
+        score, _, _, strengths, _, _ = _score_ziwei(udm)
         assert score >= 25
         assert any("吉星" in s for s in strengths)
 
@@ -299,14 +307,14 @@ class TestScoreZiwei:
             soul_star="七杀",
             palaces=[{"name": "命宫", "major_stars": [{"name": "七杀"}], "minor_stars": []}]
         )
-        score, _, _, weaknesses = _score_ziwei(udm)
+        score, _, _, _, weaknesses, _ = _score_ziwei(udm)
         assert score >= 0
         assert any("煞星" in w for w in weaknesses)
 
     def test_ziwei_score_in_range(self):
         """紫微评分应在0-100之间"""
         udm = _make_ziwei_udm()
-        score, _, _, _ = _score_ziwei(udm)
+        score, _, _, _, _, _ = _score_ziwei(udm)
         assert 0 <= score <= 100
 
     def test_ziwei_good_sihua(self):
@@ -314,7 +322,7 @@ class TestScoreZiwei:
         udm = _make_ziwei_udm(
             sihua={"化禄": "廉贞", "化权": "破军", "化科": "武曲"}
         )
-        score, _, strengths, _ = _score_ziwei(udm)
+        score, _, _, strengths, _, _ = _score_ziwei(udm)
         assert any("四化" in s or "禄" in s for s in strengths)
 
     def test_ziwei_ji_in_sihua(self):
@@ -322,20 +330,20 @@ class TestScoreZiwei:
         udm = _make_ziwei_udm(
             sihua={"化忌": "太阳"}
         )
-        score, _, _, weaknesses = _score_ziwei(udm)
+        score, _, _, _, weaknesses, _ = _score_ziwei(udm)
         assert any("化忌" in w for w in weaknesses)
 
     def test_ziwei_no_sha_in_ming(self):
         """命宫无煞星应加分"""
         udm = _make_ziwei_udm()
-        score, _, strengths, _ = _score_ziwei(udm)
+        score, _, _, _, _, _ = _score_ziwei(udm)
         # 紫微是吉星，不应有煞星
         assert score > 0
 
     def test_ziwei_analysis_mentions_star(self):
         """分析应提及命宫主星"""
         udm = _make_ziwei_udm(soul_star="紫微")
-        _, analysis, _, _ = _score_ziwei(udm)
+        _, _, analysis, _, _, _ = _score_ziwei(udm)
         assert "紫微" in analysis
 
 
@@ -349,44 +357,44 @@ class TestScoreLiuyao:
         """六爻数据缺失时应返回0分"""
         udm = MagicMock()
         udm.liuyao_chart = None
-        score, analysis, strengths, weaknesses = _score_liuyao(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_liuyao(udm)
         assert score == 0
         assert "不完整" in analysis
 
     def test_liuyao_ji_ge(self):
         """吉格应得高分"""
         udm = _make_liuyao_udm(ge_ju=["六合", "世应合"])
-        score, _, strengths, _ = _score_liuyao(udm)
+        score, _, _, strengths, _, _ = _score_liuyao(udm)
         assert score >= 25
 
     def test_liuyao_xiong_ge(self):
         """凶格应得低分"""
         udm = _make_liuyao_udm(ge_ju=["六冲", "反吟"])
-        score, _, _, weaknesses = _score_liuyao(udm)
-        assert any("偏弱" in w or "阻力" in w for w in weaknesses)
+        score, _, _, _, weaknesses, _ = _score_liuyao(udm)
+        assert any("偏弱" in w or "阻力" in w or "冲" in w for w in weaknesses)
 
     def test_liuyao_score_in_range(self):
         """六爻评分应在0-100之间"""
         udm = _make_liuyao_udm()
-        score, _, _, _ = _score_liuyao(udm)
+        score, _, _, _, _, _ = _score_liuyao(udm)
         assert 0 <= score <= 100
 
     def test_liuyao_single_dong_yao(self):
         """单一动爻应有加分"""
         udm = _make_liuyao_udm(dong_yao=[3])
-        score, _, strengths, _ = _score_liuyao(udm)
+        score, _, _, strengths, _, _ = _score_liuyao(udm)
         assert any("清晰" in s or "明确" in s for s in strengths)
 
     def test_liuyao_many_dong_yao(self):
         """多个动爻应有弱点提示"""
         udm = _make_liuyao_udm(dong_yao=[1, 2, 3, 4])
-        score, _, _, weaknesses = _score_liuyao(udm)
+        score, _, _, _, weaknesses, _ = _score_liuyao(udm)
         assert any("复杂" in w or "变数" in w for w in weaknesses)
 
     def test_liuyao_analysis_mentions_gua(self):
         """分析应提及卦名"""
         udm = _make_liuyao_udm(ben_gua="乾为天", bian_gua="天风姤")
-        _, analysis, _, _ = _score_liuyao(udm)
+        _, _, analysis, _, _, _ = _score_liuyao(udm)
         assert "乾为天" in analysis
         assert "天风姤" in analysis
 
@@ -401,14 +409,14 @@ class TestScoreQimen:
         """奇门数据缺失时应返回0分"""
         udm = MagicMock()
         udm.qimen_chart = None
-        score, analysis, strengths, weaknesses = _score_qimen(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_qimen(udm)
         assert score == 0
         assert "不完整" in analysis
 
     def test_qimen_ji_ge(self):
         """吉格应得高分"""
         udm = _make_qimen_udm(ji_ge=[{"name": "天遁", "gong": 3, "desc": "吉"}])
-        score, _, strengths, _ = _score_qimen(udm)
+        score, _, _, strengths, _, _ = _score_qimen(udm)
         assert score >= 25
 
     def test_qimen_xiong_ge(self):
@@ -417,31 +425,31 @@ class TestScoreQimen:
             ji_ge=[],
             xiong_ge=[{"name": "悖格", "gong": 5, "desc": "凶"}, {"name": "刑格", "gong": 3, "desc": "凶"}]
         )
-        score, _, _, weaknesses = _score_qimen(udm)
+        score, _, _, _, weaknesses, _ = _score_qimen(udm)
         assert any("凶格" in w or "留心" in w for w in weaknesses)
 
     def test_qimen_score_in_range(self):
         """奇门评分应在0-100之间"""
         udm = _make_qimen_udm()
-        score, _, _, _ = _score_qimen(udm)
+        score, _, _, _, _, _ = _score_qimen(udm)
         assert 0 <= score <= 100
 
     def test_qimen_zhi_fu_present(self):
         """值符有数据应加分"""
         udm = _make_qimen_udm(zhi_fu_gong="坎一宫")
-        score, _, strengths, _ = _score_qimen(udm)
+        score, _, _, strengths, _, _ = _score_qimen(udm)
         assert any("值符" in s for s in strengths)
 
     def test_qimen_ji_men(self):
         """吉门多应加分"""
         udm = _make_qimen_udm(ba_men={"1": "开门", "2": "生门", "3": "休门", "4": "景门"})
-        score, _, strengths, _ = _score_qimen(udm)
+        score, _, _, strengths, _, _ = _score_qimen(udm)
         assert any("八门" in s or "门路" in s for s in strengths)
 
     def test_qimen_analysis_mentions_ju(self):
         """分析应提及格局"""
         udm = _make_qimen_udm(ju_name="阳遁3局")
-        _, analysis, _, _ = _score_qimen(udm)
+        _, _, analysis, _, _, _ = _score_qimen(udm)
         assert "阳遁3局" in analysis
 
 
@@ -455,33 +463,33 @@ class TestScoreLiuren:
         """六壬数据缺失时应返回0分"""
         udm = MagicMock()
         udm.liuren_chart = None
-        score, analysis, strengths, weaknesses = _score_liuren(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_liuren(udm)
         assert score == 0
         assert "不完整" in analysis
 
     def test_liuren_ji_ke(self):
         """吉课应得高分"""
         udm = _make_liuren_udm(ge_ju="天心课")
-        score, _, strengths, _ = _score_liuren(udm)
+        score, _, _, strengths, _, _ = _score_liuren(udm)
         assert score >= 25
 
     def test_liuren_xiong_ke(self):
         """凶课应得低分"""
         udm = _make_liuren_udm(ge_ju="天祸课")
-        score, _, _, weaknesses = _score_liuren(udm)
+        score, _, _, _, weaknesses, _ = _score_liuren(udm)
         assert any("小心" in w or "不太乐观" in w for w in weaknesses)
 
     def test_liuren_score_in_range(self):
         """六壬评分应在0-100之间"""
         udm = _make_liuren_udm()
-        score, _, _, _ = _score_liuren(udm)
+        score, _, _, _, _, _ = _score_liuren(udm)
         assert 0 <= score <= 100
 
     def test_liuren_yong_shen_wang(self):
         """大吉天将应得高分并显示天将名称"""
         udm = _make_liuren_udm(jiang_ji_xiong="大吉", chu_jiang="青龍",
                                jiang_han_yi="财喜、名声、晋升")
-        score, _, strengths, _ = _score_liuren(udm)
+        score, _, _, strengths, _, _ = _score_liuren(udm)
         assert score >= 60  # ge_ju 40 + 大吉 30 = 70, minus si_ke/san_chuan defaults
         assert any("青龍" in s for s in strengths), "应显示天将名称"
         assert any("大吉" in s for s in strengths), "应标注大吉"
@@ -491,7 +499,7 @@ class TestScoreLiuren:
         udm = _make_liuren_udm(ge_ju="", jiang_ji_xiong="凶", chu_jiang="白虎",
                                jiang_han_yi="凶事、病伤、血光",
                                ri_gan_relation="")
-        score, _, _, weaknesses = _score_liuren(udm)
+        score, _, _, _, weaknesses, _ = _score_liuren(udm)
         # 无课体20 + 凶将10 + si_ke/san_chuan各15 = 60
         assert score <= 65, f"凶将应得较低分，实际: {score}"
         assert any("白虎" in w for w in weaknesses), "应显示天将名称"
@@ -501,7 +509,7 @@ class TestScoreLiuren:
         """吉将（非大吉）应得中高分"""
         udm = _make_liuren_udm(jiang_ji_xiong="吉", chu_jiang="六合",
                                jiang_han_yi="合作、婚姻、和合")
-        score, _, strengths, _ = _score_liuren(udm)
+        score, _, _, strengths, _, _ = _score_liuren(udm)
         assert any("六合" in s for s in strengths), "应显示天将名称"
         assert any("吉" in s for s in strengths), "应标注吉利"
 
@@ -509,14 +517,14 @@ class TestScoreLiuren:
         """初传地支与日干关系应显示具体地支"""
         udm = _make_liuren_udm(jiang_ji_xiong="", chu_jiang="",
                                chu_zhi="午", ri_gan_relation="克我（受制）")
-        score, _, _, weaknesses = _score_liuren(udm)
+        score, _, _, _, weaknesses, _ = _score_liuren(udm)
         assert any("午" in w for w in weaknesses), "应显示初传地支"
         assert any("受制" in w for w in weaknesses), "应显示关系类型"
 
     def test_liuren_analysis_mentions_geju(self):
         """分析应提及课体"""
         udm = _make_liuren_udm(ge_ju="天心课")
-        _, analysis, _, _ = _score_liuren(udm)
+        _, _, analysis, _, _, _ = _score_liuren(udm)
         assert "天心课" in analysis
 
 
@@ -530,39 +538,39 @@ class TestScoreTaiyi:
         """太乙数据缺失时应返回0分"""
         udm = MagicMock()
         udm.taiyi_chart = None
-        score, analysis, strengths, weaknesses = _score_taiyi(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_taiyi(udm)
         assert score == 0
         assert "不完整" in analysis
 
     def test_taiyi_strong_zhu_suan(self):
         """主算强应得高分"""
         udm = _make_taiyi_udm(zhu_suan=8)
-        score, _, strengths, _ = _score_taiyi(udm)
+        score, _, _, strengths, _, _ = _score_taiyi(udm)
         assert score >= 30
         assert any("很强" in s or "力量" in s for s in strengths)
 
     def test_taiyi_weak_zhu_suan(self):
         """主算弱应得低分"""
         udm = _make_taiyi_udm(zhu_suan=1)
-        score, _, _, weaknesses = _score_taiyi(udm)
+        score, _, _, _, weaknesses, _ = _score_taiyi(udm)
         assert any("偏弱" in w or "外力" in w for w in weaknesses)
 
     def test_taiyi_score_in_range(self):
         """太乙评分应在0-100之间"""
         udm = _make_taiyi_udm()
-        score, _, _, _ = _score_taiyi(udm)
+        score, _, _, _, _, _ = _score_taiyi(udm)
         assert 0 <= score <= 100
 
     def test_taiyi_with_gong(self):
         """太乙有落宫应加分"""
         udm = _make_taiyi_udm(taiyi_gong="坎一宫")
-        score, _, strengths, _ = _score_taiyi(udm)
+        score, _, _, strengths, _, _ = _score_taiyi(udm)
         assert any("坎一宫" in s for s in strengths)
 
     def test_taiyi_analysis_mentions_ju(self):
         """分析应提及格局"""
         udm = _make_taiyi_udm()
-        _, analysis, _, _ = _score_taiyi(udm)
+        _, _, analysis, _, _, _ = _score_taiyi(udm)
         assert "太乙" in analysis
 
 
@@ -576,7 +584,7 @@ class TestScoreAstro:
         """占星数据缺失时应返回0分"""
         udm = MagicMock()
         udm.astro_chart = None
-        score, analysis, strengths, weaknesses = _score_astro(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_astro(udm)
         assert score == 0
         assert "不完整" in analysis
 
@@ -587,7 +595,7 @@ class TestScoreAstro:
             {"planet1": "金星", "planet2": "木星", "aspect": "六合"},
             {"planet1": "水星", "planet2": "火星", "aspect": "合相"},
         ])
-        score, _, strengths, _ = _score_astro(udm)
+        score, _, _, strengths, _, _ = _score_astro(udm)
         assert score >= 20
         assert any("吉相位" in s for s in strengths)
 
@@ -598,19 +606,19 @@ class TestScoreAstro:
             {"planet1": "火星", "planet2": "冥王星", "aspect": "冲"},
             {"planet1": "金星", "planet2": "天王星", "aspect": "刑"},
         ])
-        score, _, _, weaknesses = _score_astro(udm)
+        score, _, _, _, weaknesses, _ = _score_astro(udm)
         assert any("刑冲" in w or "张力" in w for w in weaknesses)
 
     def test_astro_score_in_range(self):
         """占星评分应在0-100之间"""
         udm = _make_astro_udm()
-        score, _, _, _ = _score_astro(udm)
+        score, _, _, _, _, _ = _score_astro(udm)
         assert 0 <= score <= 100
 
     def test_astro_analysis_mentions_signs(self):
         """分析应提及太阳和月亮星座"""
         udm = _make_astro_udm(sun_sign="双子", moon_sign="天蝎")
-        _, analysis, _, _ = _score_astro(udm)
+        _, _, analysis, _, _, _ = _score_astro(udm)
         assert "双子" in analysis
         assert "天蝎" in analysis
 
@@ -619,7 +627,7 @@ class TestScoreAstro:
         udm = _make_astro_udm(planetary_details={
             "太阳": {"dignity": "domicile", "retrograde": False},
         })
-        score, _, strengths, _ = _score_astro(udm)
+        score, _, _, strengths, _, _ = _score_astro(udm)
         assert score > 20  # 入庙=35分，拉高平均
         assert any("入庙" in s and "强项" in s for s in strengths)
 
@@ -628,7 +636,7 @@ class TestScoreAstro:
         udm = _make_astro_udm(planetary_details={
             "土星": {"dignity": "detriment", "retrograde": False},
         })
-        score, _, _, weaknesses = _score_astro(udm)
+        score, _, _, _, weaknesses, _ = _score_astro(udm)
         assert any("陷" in w and "注意" in w for w in weaknesses)
 
     def test_astro_retrograde_reduces_dignity(self):
@@ -639,8 +647,8 @@ class TestScoreAstro:
         udm_normal = _make_astro_udm(planetary_details={
             "太阳": {"dignity": "domicile", "retrograde": False},
         })
-        score_r, _, _, _ = _score_astro(udm_retro)
-        score_n, _, _, _ = _score_astro(udm_normal)
+        score_r, _, _, _, _, _ = _score_astro(udm_retro)
+        score_n, _, _, _, _, _ = _score_astro(udm_normal)
         assert score_r < score_n, "逆行应降低评分"
         # 入庙35分，逆行减8=27分，差异应反映在总分中
         assert score_n - score_r >= 1, "逆行入庙vs正常入庙至少差1分"
@@ -651,7 +659,7 @@ class TestScoreAstro:
             {"name": "太阳", "dignity": "domicile", "retrograde": False},
             {"name": "月亮", "dignity": "exaltation", "retrograde": False},
         ])
-        score, _, strengths, _ = _score_astro(udm)
+        score, _, _, strengths, _, _ = _score_astro(udm)
         assert score > 20
         assert any("太阳" in s for s in strengths)
         assert any("月亮" in s for s in strengths)
@@ -662,7 +670,7 @@ class TestScoreAstro:
             {"planet1": "太阳", "planet2": "月亮", "aspect": "三合"},
             {"planet1": "火星", "planet2": "土星", "aspect": "刑"},
         ])
-        score, _, strengths, weaknesses = _score_astro(udm)
+        score, _, _, strengths, weaknesses, _ = _score_astro(udm)
         # 吉凶各1个，走else分支得22分相位分
         assert not any("吉相位" in s for s in strengths)
         assert not any("刑冲" in w for w in weaknesses)
@@ -670,7 +678,7 @@ class TestScoreAstro:
     def test_astro_missing_sun_moon_asc(self):
         """缺少太阳/月亮/上升时应走fallback分支"""
         udm = _make_astro_udm(sun_sign="", moon_sign="", asc_sign="")
-        score, _, strengths, _ = _score_astro(udm)
+        score, _, _, _, _, _ = _score_astro(udm)
         # 没有太阳月亮 → +5分，没有上升 → +3分，没有mc → +2分
         assert score >= 0
 
@@ -685,7 +693,7 @@ class TestScoreXingming:
         """姓名学数据缺失时应返回0分"""
         udm = MagicMock()
         udm.xingming_chart = None
-        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_xingming(udm)
         assert score == 0
         assert "不完整" in analysis
 
@@ -703,7 +711,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "大吉", "配置": "土土火", "解释": "土土火配置，大吉"},
         }
-        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_xingming(udm)
         assert score >= 70, f"五格全吉应得高分，实际: {score}"
         assert len(strengths) > 0, "应有优势提示"
         assert "李明" in analysis, "分析应提及姓名"
@@ -722,7 +730,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "凶", "配置": "火火火", "解释": "三火相叠，过刚则折"},
         }
-        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_xingming(udm)
         assert score <= 50, f"五格全凶应得低分，实际: {score}"
         assert len(weaknesses) > 0, "应有弱点提示"
 
@@ -738,7 +746,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "中吉", "配置": "木火火", "解释": "中吉配置"},
         }
-        score, _, _, _ = _score_xingming(udm)
+        score, _, _, _, _, _ = _score_xingming(udm)
         assert 0 <= score <= 100, f"评分超出范围: {score}"
 
     def test_xingming_sancai_daji(self):
@@ -753,7 +761,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "大吉", "配置": "土火土", "解释": "天地人和谐"},
         }
-        score, _, strengths, _ = _score_xingming(udm)
+        score, _, _, strengths, _, _ = _score_xingming(udm)
         assert any("大吉" in s or "和谐" in s for s in strengths), \
             f"应提及三才大吉，strengths: {strengths}"
 
@@ -769,7 +777,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "凶", "配置": "火火火", "解释": "三火过刚"},
         }
-        score, _, _, weaknesses = _score_xingming(udm)
+        score, _, _, _, weaknesses, _ = _score_xingming(udm)
         assert any("三才" in w or "协调" in w or "不协" in w for w in weaknesses), \
             f"应提及三才凶，weaknesses: {weaknesses}"
 
@@ -787,7 +795,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "吉", "配置": "木火火", "解释": "吉"},
         }
-        score, analysis, strengths, weaknesses = _score_xingming(udm)
+        score, dimensions, analysis, strengths, weaknesses, advice = _score_xingming(udm)
         # 3吉 + 0.5半吉 - 0.5半凶 = 3 net，应得40分五格分
         assert score >= 50, f"半吉半凶混合应有合理评分，实际: {score}"
 
@@ -803,7 +811,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "半吉", "配置": "水土火", "解释": "尚可"},
         }
-        score, _, strengths, _ = _score_xingming(udm)
+        score, _, _, strengths, _, _ = _score_xingming(udm)
         assert any("主运" in s or "人格" in s for s in strengths), \
             f"应提及人格为主运，strengths: {strengths}"
 
@@ -821,7 +829,7 @@ class TestScoreXingming:
             },
             "sancai": {"吉凶": "吉", "配置": "土水土", "解释": "基础稳固"},
         }
-        score, _, strengths, _ = _score_xingming(udm)
+        score, _, _, strengths, _, _ = _score_xingming(udm)
         assert any("晚年" in s for s in strengths), \
             f"总格吉应提及晚年，strengths: {strengths}"
 

@@ -51,6 +51,89 @@ XIONGSHA_KEYWORDS = ["羊刃", "劫煞", "亡神", "孤辰", "寡宿", "天罗",
                       "灾煞", "勾煞", "绞煞", "流霞", "飞刃", "十恶大败", "四废", "阴阳差错", "天转煞"]
 # 华盖属中性偏吉（主艺术/宗教/哲学天赋），不归入凶煞
 
+# ─── 五维评分维度 ──────────────────────────────────────────
+DIMENSIONS = ["事业", "财运", "感情", "健康", "学业"]
+
+# weakness → advice 自动映射表（口语化，像溟玄在说话）
+_ADVICE_MAP = {
+    # 八字
+    "身弱且喜用神不太给力": "找属猪属鼠的人合作，佩戴黑曜石，卧室挪到北边",
+    "身强但缺少制约": "练练书法或者下棋，培养耐心。佩戴白水晶或金属饰品泄旺气",
+    "五行严重偏枯": "穿对应颜色的衣服补缺五行。往对应方位发展。养对应的宠物或植物",
+    "五行偏得有点明显": "注意饮食平衡，多吃对应五行的食物。居家环境适当调整色调",
+    "命中凶煞有": "年初去庙里拜拜或者做善事积德。佩戴化煞饰品，如黑曜石、五帝钱",
+    "刑冲比较多": "主动搬家、换工作、旅行来应冲。不要硬扛，学会顺势而为",
+    "有点刑冲": "养绿植化解地支冲突。卧室避免放尖锐物品",
+    "地支有": "注意人际交往中的暗中小人。重要决定留书面记录，防口舌是非",
+    "前几步大运跟八字不太合": "趁年轻多学本事。30岁前的苦是投资，不是消耗",
+    "忌神也在八字中": "认清自己的短板在哪。把忌神对应领域当副业而非主业",
+    # 紫微
+    "命宫煞星坐守": "主动选择竞争激烈的行业，煞星能量用对了就是战斗力",
+    "命宫有煞星": "修身养性，练冥想或太极。把急脾气变成执行力",
+    "命宫煞星多": "早年多吃苦是好事。35岁后煞星能量会转化成大格局",
+    "化忌落在": "化忌宫位对应领域要格外留心。提前做好预案，不要临时抱佛脚",
+    # 六爻
+    "用神状态偏弱": "做这件事需要更多准备时间。找贵人帮忙比单打独斗强",
+    "世应相冲或六冲": "跟合作方提前把利益分配谈清楚。留退路，别All in",
+    "动爻太多": "一次只做一件事。不要同时开多条线，精力分散会出问题",
+    # 奇门
+    "凶门值事": "缓一缓再行动。用吉时吉方来弥补，比如开门方位出发",
+    # 大六壬
+    "不太乐观": "先观望，别急着出手。找有经验的人帮你把把关",
+    "受制": "自身实力不够就借力。找合作伙伴或者请专业人士帮忙",
+    "泄气": "注意精力管理，不要透支自己。充足睡眠比加班更重要",
+    # 太乙
+    "主算": "借力打力，找强力盟友合作。独木不成林",
+    "定算": "基础要打牢。不要急于求成，先把地基夯实",
+    # 占星
+    "有行星落陷": "这个行星对应的领域需要后天刻意练习。弱项也是成长空间",
+    "有行星落弱位": "相关领域多向有经验的人请教。弱位行星往往在30岁后开始发力",
+    "刑冲相位多": "学会跟压力共处。紧张相位的人一旦突破，爆发力比谁都强",
+    # 姓名学
+    "五格凶数偏多": "可以考虑用笔名或者艺名做补充。日常多写多用吉数笔画的字",
+    "五格凶数较多": "强烈建议结合八字喜用改名。名字是天天用的风水，值得投入",
+    "三才配置": "名字用着不顺就别硬撑。改名不丢人，命理上叫趋吉避凶",
+    "人格": "中年要格外注意健康管理。提前规划，不要等到问题来了才应对",
+    "总格": "趁年轻多积累人脉和资源。晚年运靠的是前半生的布局",
+    "建议考虑调整姓名": "找个靠谱的起名师重新规划。好名字值千金，别心疼这点投入",
+}
+
+# 八字五行 → 颜色/方位/物品映射（advice 用）
+_WUXING_ADVICE = {
+    "木": "多穿绿色系衣服，往东方发展，养绿植、多去公园",
+    "火": "多穿红色紫色，往南方发展，多晒太阳、点香薰",
+    "土": "多穿黄色棕色，往中部发展，养陶瓷、亲近大地",
+    "金": "多穿白色银色，往西方发展，佩戴金属饰品",
+    "水": "多穿黑色蓝色，往北方发展，养鱼、多去水边",
+}
+
+
+def _auto_advice(weaknesses: list) -> list:
+    """从 weaknesses 自动生成 actionable advice。格式: 'weakness → 做法'"""
+    advice = []
+    for w in weaknesses:
+        matched_advice = None
+        # 按关键词长度降序匹配，避免短关键词误匹配
+        for key in sorted(_ADVICE_MAP.keys(), key=len, reverse=True):
+            if key in w:
+                matched_advice = _ADVICE_MAP[key]
+                break
+        if matched_advice:
+            advice.append(f"{w} → {matched_advice}")
+    # 至少 3 条，最多 6 条
+    if len(advice) < 3 and weaknesses:
+        advice.append("佩戴一枚玉石吊坠，温养气场，玉石是最百搭的补运物件")
+        advice.append("每天早上起来对着镜子笑三下，气场这东西你信它就在")
+    if len(advice) < 3:
+        advice.append("保持当前状态就是最好的布局，顺势而为比逆势强补更聪明")
+    return advice[:6]
+
+
+def _clamp_dim(v: int) -> int:
+    """把维度分限制在 0-100"""
+    return max(0, min(100, v))
+
+
 # ─── 主入口 ──────────────────────────────────────────────
 def score_all(udm, method: str = "all") -> Dict[str, Dict]:
     """
@@ -88,29 +171,40 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
         if target_name != "all" and target_name != name:
             continue
         try:
-            score, analysis, strengths, weaknesses = fn(udm)
+            ret = fn(udm)
+            # 兼容旧版 4 元组和新版 6 元组
+            if len(ret) == 6:
+                score, dimensions, analysis, strengths, weaknesses, advice = ret
+            else:
+                score, analysis, strengths, weaknesses = ret
+                dimensions = {}
+                advice = []
             result[name] = {
                 "score": max(0, min(100, score)),
+                "dimensions": {d: dimensions.get(d, 0) for d in DIMENSIONS},
                 "analysis": analysis,
                 "strengths": strengths,
                 "weaknesses": weaknesses,
+                "advice": advice,
             }
         except Exception as e:
             logger.warning(f"评分失败 [{name}]: {e}")
             result[name] = {
                 "score": 0,
+                "dimensions": {d: 0 for d in DIMENSIONS},
                 "analysis": f"这门术法暂时没法给你打分,出了点小问题:{e}",
                 "strengths": [],
                 "weaknesses": [f"评分引擎异常: {e}"],
+                "advice": [f"评分引擎异常: {e} → 这个问题需要技术人员排查，先用其他术法的结果"],
             }
 
     return result
 
 
 # ─── 八字评分 ──────────────────────────────────────────────
-def _score_bazi(udm) -> Tuple[int, str, list, list]:
+def _score_bazi(udm) -> Tuple[int, dict, str, list, list, list]:
     if not udm.bazi_year:
-        return 0, "八字数据不完整，没法评分。", [], ["八字排盘失败"]
+        return 0, {}, "八字数据不完整，没法评分。", [], ["八字排盘失败"], []
 
     score = 0
     strengths = []
@@ -167,6 +261,7 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
 
     # 2. 五行平衡（+20分）
     wuxing_score = getattr(udm, 'wuxing_score', None) or {}
+    spread = 0
     if wuxing_score:
         total = sum(wuxing_score.values()) or 1
         vals = [v / total for v in wuxing_score.values()]
@@ -240,6 +335,7 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
 
     # 5. 大运配合（+15分）
     dayun = getattr(udm, 'dayun', []) or []
+    good_dayun = 0
     if dayun:
         good_dayun = 0
         for d in dayun[:5]:
@@ -288,13 +384,95 @@ def _score_bazi(udm) -> Tuple[int, str, list, list]:
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "八字分析数据不足。"
 
-    return score, analysis, strengths, weaknesses
+    # ── 五维细分评分 ──
+    # 事业：正官/七杀旺度 + 格局高低（用身强弱+喜用神近似）
+    dim_career = 50
+    if strength == "身强" and xi_present:
+        dim_career += 20
+    elif strength == "中和":
+        dim_career += 10
+    elif strength == "身弱" and xi_present:
+        dim_career += 5
+    if ji_count > xiong_count:
+        dim_career += 10
+    if he_count >= 2:
+        dim_career += 5
+
+    # 财运：正财/偏财旺度 + 财星是否得用（用五行中土金力量近似，土生金为财库）
+    dim_wealth = 50
+    wx_total = sum(wuxing_score.values()) or 1
+    earth_ratio = wuxing_score.get("土", 0) / wx_total
+    metal_ratio = wuxing_score.get("金", 0) / wx_total
+    if earth_ratio + metal_ratio > 0.45:
+        dim_wealth += 15
+    elif earth_ratio + metal_ratio > 0.30:
+        dim_wealth += 8
+    if "财" in "".join(str(s) for s in shensha):
+        dim_wealth += 10
+    if good_dayun >= 3 if dayun else False:
+        dim_wealth += 10
+
+    # 感情：桃花/红鸾/天喜 + 夫妻宫状态（地支合多=人缘好）
+    dim_love = 50
+    shensha_str = "".join(str(s) for s in shensha)
+    if "桃花" in shensha_str or "红鸾" in shensha_str or "天喜" in shensha_str:
+        dim_love += 15
+    if he_count >= 2:
+        dim_love += 12
+    if chong_count >= 2:
+        dim_love -= 10
+    if "孤辰" in shensha_str or "寡宿" in shensha_str:
+        dim_love -= 8
+
+    # 健康：五行平衡度 + 神煞中的健康凶煞
+    dim_health = 60
+    if spread < 0.15:
+        dim_health += 15
+    elif spread < 0.30:
+        dim_health += 8
+    elif spread > 0.50:
+        dim_health -= 15
+    if "流霞" in shensha_str or "天罗" in shensha_str or "地网" in shensha_str:
+        dim_health -= 10
+    if xiong_count > 3:
+        dim_health -= 8
+
+    # 学业：文昌/学堂/印星旺度
+    dim_study = 50
+    if "文昌" in shensha_str:
+        dim_study += 15
+    if "学堂" in shensha_str or "词馆" in shensha_str:
+        dim_study += 10
+    # 印星近似：水木旺的人学习力强
+    water_wood = wuxing_score.get("水", 0) + wuxing_score.get("木", 0)
+    if water_wood / wx_total > 0.40:
+        dim_study += 10
+    if ji_count > xiong_count:
+        dim_study += 5
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+    # 补充八字特有的五行 advice
+    if wuxing_score and spread > 0.30:
+        weakest = min(wuxing_score, key=wuxing_score.get)
+        wx_tip = _WUXING_ADVICE.get(weakest, "")
+        if wx_tip:
+            advice.append(f"五行缺{weakest} → {wx_tip}")
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
 
 
 # ─── 紫微斗数评分 ──────────────────────────────────────────
-def _score_ziwei(udm) -> Tuple[int, str, list, list]:
+def _score_ziwei(udm) -> Tuple[int, dict, str, list, list, list]:
     if not udm.ziwei_chart:
-        return 0, "紫微斗数数据不完整。", [], ["紫微排盘失败"]
+        return 0, {}, "紫微斗数数据不完整。", [], ["紫微排盘失败"], []
 
     chart = udm.ziwei_chart
     score = 0
@@ -418,13 +596,112 @@ def _score_ziwei(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("紫微格局挑战较多，不过命盘里总有闪光点，关键是找到它")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "紫微分析数据不足。"
-    return score, analysis, strengths, weaknesses
+
+    # ── 五维细分评分 ──
+    # 事业：官禄宫主星 + 化禄化权
+    guanlu = palaces.get("官禄宫", {})
+    guanlu_stars = []
+    if isinstance(guanlu, dict):
+        for s in (guanlu.get("major_stars") or []):
+            guanlu_stars.append(s.get("name", "") if isinstance(s, dict) else str(s))
+    dim_career = 50
+    if any(s in ji_main for s in guanlu_stars):
+        dim_career += 20
+    elif any(s in sha_main for s in guanlu_stars):
+        dim_career -= 5
+    lu_star = sihua.get("禄", "") or sihua.get("化禄", "")
+    quan_star = sihua.get("权", "") or sihua.get("化权", "")
+    if lu_star:
+        dim_career += 10
+    if quan_star:
+        dim_career += 12
+
+    # 财运：财帛宫主星 + 化禄
+    caibo = palaces.get("财帛宫", {})
+    caibo_stars = []
+    if isinstance(caibo, dict):
+        for s in (caibo.get("major_stars") or []):
+            caibo_stars.append(s.get("name", "") if isinstance(s, dict) else str(s))
+    dim_wealth = 50
+    if any(s in ji_main for s in caibo_stars):
+        dim_wealth += 20
+    elif any(s in sha_main for s in caibo_stars):
+        dim_wealth -= 5
+    if lu_star:
+        dim_wealth += 12
+    # 武曲是财星
+    if "武曲" in caibo_stars or "武曲" in ming_palace_stars:
+        dim_wealth += 8
+
+    # 感情：夫妻宫主星 + 桃花星
+    fuqi = palaces.get("夫妻宫", {})
+    fuqi_stars = []
+    if isinstance(fuqi, dict):
+        for s in (fuqi.get("major_stars") or []):
+            fuqi_stars.append(s.get("name", "") if isinstance(s, dict) else str(s))
+    dim_love = 50
+    if any(s in ji_main for s in fuqi_stars):
+        dim_love += 18
+    elif any(s in sha_main for s in fuqi_stars):
+        dim_love -= 8
+    # 桃花星：贪狼、红鸾、天喜
+    if "贪狼" in fuqi_stars:
+        dim_love += 10
+    if "天姚" in str(fuqi) or "红鸾" in str(fuqi):
+        dim_love += 8
+
+    # 健康：疾厄宫主星 + 煞星
+    jie = palaces.get("疾厄宫", {})
+    jie_stars = []
+    if isinstance(jie, dict):
+        for s in (jie.get("major_stars") or []):
+            jie_stars.append(s.get("name", "") if isinstance(s, dict) else str(s))
+    dim_health = 60
+    if any(s in ji_main for s in jie_stars):
+        dim_health += 10
+    sha_in_jie = sum(1 for s in sha_stars if s in jie_stars)
+    if sha_in_jie > 0:
+        dim_health -= sha_in_jie * 8
+    if sha_in_ming >= 2:
+        dim_health -= 8
+
+    # 学业：命宫+父母宫 文昌文曲
+    fumu = palaces.get("父母宫", {})
+    fumu_stars = []
+    if isinstance(fumu, dict):
+        for s in (fumu.get("major_stars") or []):
+            fumu_stars.append(s.get("name", "") if isinstance(s, dict) else str(s))
+    dim_study = 50
+    wenxing = ["文昌", "文曲"]
+    all_stars_str = str(ming_palace_stars) + str(fumu_stars)
+    if any(s in all_stars_str for s in wenxing):
+        dim_study += 18
+    ke_star = sihua.get("科", "") or sihua.get("化科", "")
+    if ke_star:
+        dim_study += 12
+    if "天机" in ming_palace_stars or "天机" in fumu_stars:
+        dim_study += 8
+    # 天梁主智慧
+    if "天梁" in ming_palace_stars:
+        dim_study += 6
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
 
 
 # ─── 六爻评分 ──────────────────────────────────────────────
-def _score_liuyao(udm) -> Tuple[int, str, list, list]:
+def _score_liuyao(udm) -> Tuple[int, dict, str, list, list, list]:
     if not udm.liuyao_chart:
-        return 0, "六爻数据不完整。", [], ["六爻排盘失败"]
+        return 0, {}, "六爻数据不完整。", [], ["六爻排盘失败"], []
 
     chart = udm.liuyao_chart
     score = 0
@@ -505,13 +782,38 @@ def _score_liuyao(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("卦象显示阻力较多，不宜冒进，稳住再说")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "六爻分析数据不足。"
-    return score, analysis, strengths, weaknesses
+
+    # ── 五维细分评分 ──
+    # 六爻是占卜术，维度分基于卦象各要素
+    base = score
+    # 事业：用神旺衰
+    dim_career = base + (5 if ji_count > xiong_count else -5)
+    # 财运：世应合=合作生财
+    dim_wealth = base + (8 if "世应合" in ge_ju_str or "六合" in ge_ju_str else -3)
+    # 感情：世应合=好，世应冲=差
+    dim_love = base + (10 if "世应合" in ge_ju_str else (-12 if "世应冲" in ge_ju_str else 0))
+    # 健康：动爻少=稳定
+    dim_health = base + (8 if len(dong_yao) <= 1 else (-5 if len(dong_yao) >= 3 else 0))
+    # 学业：三合/六合=贵人助力学习
+    dim_study = base + (5 if "三合" in ge_ju_str or "六合" in ge_ju_str else 0)
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
 
 
 # ─── 奇门遁甲评分 ──────────────────────────────────────────
-def _score_qimen(udm) -> Tuple[int, str, list, list]:
+def _score_qimen(udm) -> Tuple[int, dict, str, list, list, list]:
     if not udm.qimen_chart:
-        return 0, "奇门遁甲数据不完整。", [], ["奇门排盘失败"]
+        return 0, {}, "奇门遁甲数据不完整。", [], ["奇门排盘失败"], []
 
     chart = udm.qimen_chart
     score = 0
@@ -636,13 +938,36 @@ def _score_qimen(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("奇门格局偏凶，建议韬光养晦，等时机转好再出手")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "奇门分析数据不足。"
-    return score, analysis, strengths, weaknesses
+
+    # ── 五维细分评分 ──
+    # 事业：吉格多 + 值符到位
+    dim_career = score + (10 if ji_g > xiong_g else -8) + (5 if zhi_fu_gong else 0)
+    # 财运：吉门值事（生门为财门）
+    dim_wealth = score + (12 if zhi_shi_door == "生门" else (8 if zhi_shi_door in ji_men else -5))
+    # 感情：六合/合局
+    dim_love = score + (8 if ji_g > xiong_g else -8)
+    # 健康：凶格少
+    dim_health = score + (10 if xiong_g <= 1 else (-10 if xiong_g >= 3 else 0))
+    # 学业：天辅星/值符到位
+    dim_study = score + (5 if zhi_fu_gong else 0) + (5 if ji_g > xiong_g else 0)
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
 
 
 # ─── 大六壬评分 ──────────────────────────────────────────
-def _score_liuren(udm) -> Tuple[int, str, list, list]:
+def _score_liuren(udm) -> Tuple[int, dict, str, list, list, list]:
     if not udm.liuren_chart:
-        return 0, "大六壬数据不完整。", [], ["大六壬排盘失败"]
+        return 0, {}, "大六壬数据不完整。", [], ["大六壬排盘失败"], []
 
     chart = udm.liuren_chart
     score = 0
@@ -747,18 +1072,40 @@ def _score_liuren(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("课象偏凶，这个事情目前时机不太好，等等再说")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "大六壬分析数据不足。"
-    return score, analysis, strengths, weaknesses
+
+    # ── 五维细分评分 ──
+    is_ji_ke = any(k in ge_ju for k in ji_ke)
+    is_xiong_ke = any(k in ge_ju for k in xiong_ke)
+    dim_career = score + (10 if is_ji_ke else (-8 if is_xiong_ke else 0))
+    dim_wealth = score + (5 if is_ji_ke else -5)
+    dim_love = score + (8 if is_ji_ke else (-10 if is_xiong_ke else 0))
+    dim_health = score + (5 if is_ji_ke else (-8 if is_xiong_ke else 0))
+    dim_study = score + (8 if si_ke_has_data else -3) + (5 if san_chuan_has_data else -3)
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
 
 
 # ─── 太乙神数评分 ──────────────────────────────────────────
-def _score_taiyi(udm) -> Tuple[int, str, list, list]:
+def _score_taiyi(udm) -> Tuple[int, dict, str, list, list, list]:
     if not udm.taiyi_chart:
-        return 0, "太乙神数数据不完整。", [], ["太乙排盘失败"]
+        return 0, {}, "太乙神数数据不完整。", [], ["太乙排盘失败"], []
 
     chart = udm.taiyi_chart
     score = 0
     strengths = []
     weaknesses = []
+    zhu_num = 0
+    ding_num = 0
 
     # 1. 主客算强弱（+50分）
     # zhu_suan/ke_suan/ding_suan 是 list（如 [5,3]），需取第一个元素
@@ -832,13 +1179,32 @@ def _score_taiyi(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("太乙显示主方偏弱，不宜硬来，以守为攻更好")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "太乙分析数据不足。"
-    return score, analysis, strengths, weaknesses
+
+    # ── 五维细分评分 ──
+    # 太乙以主算/定算为核心
+    dim_career = score + (10 if zhu_num >= 7 else (-8 if zhu_num <= 2 else 0))
+    dim_wealth = score + (8 if zhu_num >= 5 else -5) + (5 if ding_num >= 5 else 0)
+    dim_love = score + (5 if zhu_num >= 5 else -5)
+    dim_health = score + (8 if ding_num >= 5 else (-8 if ding_num <= 2 else 0))
+    dim_study = score + (5 if ding_num >= 3 else -5) + (5 if zhu_num >= 4 else 0)
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
 
 
 # ─── 占星评分 ──────────────────────────────────────────────
-def _score_astro(udm) -> Tuple[int, str, list, list]:
+def _score_astro(udm) -> Tuple[int, dict, str, list, list, list]:
     if not udm.astro_chart:
-        return 0, "占星数据不完整。", [], ["占星排盘失败"]
+        return 0, {}, "占星数据不完整。", [], ["占星排盘失败"], []
 
     chart = udm.astro_chart
     score = 0
@@ -960,11 +1326,57 @@ def _score_astro(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("星盘挑战多一些，但紧张相位往往意味着巨大的成长潜力")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "占星分析数据不足。"
-    return score, analysis, strengths, weaknesses
+
+    # ── 五维细分评分 ──
+    # 事业：MC + 吉相位
+    dim_career = score + (8 if mc else 0) + (5 if ji_a > xiong_a else -5)
+    # 财运：木星状态（入庙/旺=财运好）
+    jupiter = planetary_details.get("木星", {}) or planetary_details.get("Jupiter", {})
+    dim_wealth = score
+    if isinstance(jupiter, dict):
+        jup_dignity = (jupiter.get("dignity", "") or jupiter.get("essential_dignity", "") or "").lower()
+        if "domicile" in jup_dignity or "exaltation" in jup_dignity:
+            dim_wealth += 12
+        elif "detriment" in jup_dignity or "fall" in jup_dignity:
+            dim_wealth -= 8
+    # 感情：金星状态 + 吉相位多
+    venus = planetary_details.get("金星", {}) or planetary_details.get("Venus", {})
+    dim_love = score
+    if isinstance(venus, dict):
+        ven_dignity = (venus.get("dignity", "") or venus.get("essential_dignity", "") or "").lower()
+        if "domicile" in ven_dignity or "exaltation" in ven_dignity:
+            dim_love += 12
+        elif "detriment" in ven_dignity or "fall" in ven_dignity:
+            dim_love -= 8
+    dim_love += (5 if ji_a > xiong_a else -8)
+    # 健康：火星+土星状态（凶星落陷=健康差）
+    dim_health = score + (5 if xiong_a <= ji_a else -8)
+    # 学业：水星状态
+    mercury = planetary_details.get("水星", {}) or planetary_details.get("Mercury", {})
+    dim_study = score
+    if isinstance(mercury, dict):
+        mer_dignity = (mercury.get("dignity", "") or mercury.get("essential_dignity", "") or "").lower()
+        if "domicile" in mer_dignity or "exaltation" in mer_dignity:
+            dim_study += 15
+        elif "detriment" in mer_dignity or "fall" in mer_dignity:
+            dim_study -= 10
+    dim_study += (5 if sun else 0)
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
 
 
 # ─── 姓名学评分 ──────────────────────────────────────────────
-def _score_xingming(udm) -> Tuple[int, str, list, list]:
+def _score_xingming(udm) -> Tuple[int, dict, str, list, list, list]:
     """
     姓名学评分：基于五格数理吉凶、三才配置、人格主导运势。
 
@@ -975,7 +1387,7 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
       4. 总格后运（+15分）—— 总格影响中晚年运势
     """
     if not udm.xingming_chart:
-        return 0, "姓名学数据不完整。", [], ["姓名学排盘失败"]
+        return 0, {}, "姓名学数据不完整。", [], ["姓名学排盘失败"], []
 
     chart = udm.xingming_chart
     score = 0
@@ -1127,4 +1539,30 @@ def _score_xingming(udm) -> Tuple[int, str, list, list]:
         analysis_parts.append("姓名数理偏弱，建议结合八字喜用考虑调整")
 
     analysis = "。".join(analysis_parts) + "。" if analysis_parts else "姓名学分析数据不足。"
-    return score, analysis, strengths, weaknesses
+
+    # ── 五维细分评分 ──
+    # 事业：人格吉凶（人格=主运=事业基础）
+    dim_career = score + (8 if renge and renge.get("吉凶") == "吉" else (-6 if renge and "凶" in renge.get("吉凶", "") else 0))
+    # 财运：总格（中晚年财运）
+    dim_wealth = score + (6 if zongge and zongge.get("吉凶") == "吉" else (-5 if zongge and "凶" in zongge.get("吉凶", "") else 0))
+    # 感情：外格（人际关系）
+    waige = wuge.get("外格", {})
+    dim_love = score + (6 if waige and "吉" in waige.get("吉凶", "") else (-5 if waige and "凶" in waige.get("吉凶", "") else 0))
+    # 健康：三才配置
+    dim_health = score + (10 if "大吉" in sancai_jixiong else (5 if "吉" in sancai_jixiong else (-8 if "凶" in sancai_jixiong else 0)))
+    # 学业：天格+人格
+    tiange = wuge.get("天格", {})
+    dim_study = score + (5 if tiange and "吉" in tiange.get("吉凶", "") else -3)
+    dim_study += (5 if renge and "吉" in renge.get("吉凶", "") else -3)
+
+    dimensions = {
+        "事业": _clamp_dim(dim_career),
+        "财运": _clamp_dim(dim_wealth),
+        "感情": _clamp_dim(dim_love),
+        "健康": _clamp_dim(dim_health),
+        "学业": _clamp_dim(dim_study),
+    }
+
+    advice = _auto_advice(weaknesses)
+
+    return score, dimensions, analysis, strengths, weaknesses, advice
