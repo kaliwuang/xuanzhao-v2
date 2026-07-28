@@ -54,6 +54,15 @@ XIONGSHA_KEYWORDS = ["羊刃", "劫煞", "亡神", "孤辰", "寡宿", "天罗",
 # ─── 五维评分维度 ──────────────────────────────────────────
 DIMENSIONS = ["事业", "财运", "感情", "健康", "学业"]
 
+# 跨术法权重矩阵（来自 knowledge/synthesis/conflict-resolution.md）
+_METHOD_WEIGHTS = {
+    "事业": {"八字": 30, "紫微斗数": 25, "占星": 20, "奇门遁甲": 10, "大六壬": 10, "太乙神数": 5, "六爻": 0, "姓名学": 5},
+    "财运": {"八字": 30, "紫微斗数": 25, "占星": 20, "奇门遁甲": 15, "大六壬": 5, "太乙神数": 0, "六爻": 5, "姓名学": 0},
+    "感情": {"八字": 25, "紫微斗数": 30, "占星": 25, "奇门遁甲": 5, "大六壬": 5, "太乙神数": 0, "六爻": 10, "姓名学": 0},
+    "健康": {"八字": 35, "紫微斗数": 25, "占星": 20, "奇门遁甲": 5, "大六壬": 5, "太乙神数": 0, "六爻": 5, "姓名学": 5},
+    "学业": {"八字": 30, "紫微斗数": 30, "占星": 20, "奇门遁甲": 5, "大六壬": 5, "太乙神数": 0, "六爻": 5, "姓名学": 5},
+}
+
 # weakness → advice 自动映射表（口语化，像溟玄在说话）
 _ADVICE_MAP = {
     # 八字
@@ -205,44 +214,61 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
             cv = CrossValidator(udm)
             cv_result = cv.validate()
 
-            # 按维度汇总各术法打分
-            dim_scores = {d: [] for d in DIMENSIONS}
-            for method_data in result.values():
-                dims = method_data.get("dimensions", {})
-                for d in DIMENSIONS:
-                    if dims.get(d, 0) > 0:
-                        dim_scores[d].append(dims[d])
+            # 按维度汇总各术法打分（用权重矩阵加权）
+            dim_weighted = {}
+            for d in DIMENSIONS:
+                weights = _METHOD_WEIGHTS.get(d, {})
+                weighted_sum = 0
+                total_weight = 0
+                method_details = []
+                for name, data in result.items():
+                    if name.startswith("_"):
+                        continue
+                    w = weights.get(name, 5)  # 未列名的术法默认权重5
+                    v = data.get("dimensions", {}).get(d, 0)
+                    if v > 0 and w > 0:
+                        weighted_sum += v * w
+                        total_weight += w
+                        method_details.append((name, v, w))
+                if total_weight > 0:
+                    dim_weighted[d] = {
+                        "weighted_avg": round(weighted_sum / total_weight),
+                        "method_details": method_details,
+                    }
 
-            # 计算跨术法共识分（多术法一致 → 高分；冲突 → 降分）
+            # 计算跨术法共识分（加权平均 + 一致性调整）
             consensus_dims = {}
             cv_consensus = cv_result.get("consensus", [])
             cv_conflicts = cv_result.get("conflicts", [])
 
             for d in DIMENSIONS:
-                scores = dim_scores[d]
-                if not scores:
+                dw = dim_weighted.get(d)
+                if not dw:
                     consensus_dims[d] = {"score": 0, "agreement": "无数据", "methods": 0}
                     continue
-                avg = sum(scores) / len(scores)
+                weighted_avg = dw["weighted_avg"]
+                details = dw["method_details"]
+                scores = [v for _, v, _ in details]
                 spread = max(scores) - min(scores) if len(scores) > 1 else 0
                 # 一致性判断
                 if spread <= 10:
                     agreement = "高度一致"
-                    adjusted = min(100, int(avg + 5))
+                    adjusted = min(100, weighted_avg + 5)
                 elif spread <= 25:
                     agreement = "基本一致"
-                    adjusted = int(avg)
+                    adjusted = weighted_avg
                 elif spread <= 40:
                     agreement = "有分歧"
-                    adjusted = max(0, int(avg - 5))
+                    adjusted = max(0, weighted_avg - 5)
                 else:
                     agreement = "严重分歧"
-                    adjusted = max(0, int(avg - 10))
+                    adjusted = max(0, weighted_avg - 10)
                 consensus_dims[d] = {
-                    "score": adjusted,
+                    "score": round(adjusted),
                     "agreement": agreement,
-                    "methods": len(scores),
+                    "methods": len(details),
                     "range": f"{min(scores)}-{max(scores)}",
+                    "top_method": max(details, key=lambda x: x[1] * x[2])[0] if details else "",
                 }
 
             # 生成跨术法摘要
@@ -296,21 +322,25 @@ def _clean(text: str) -> str:
 def _generate_mingxuan_verdict(scores: dict, udm) -> dict:
     """溟玄风格终审：把8术法分数汇总成一段断言式总判"""
 
-    # 收集五维分数
-    dim_totals = {d: [] for d in DIMENSIONS}
-    for name, data in scores.items():
-        if name.startswith("_"):
-            continue
-        dims = data.get("dimensions", {})
-        for d in DIMENSIONS:
-            v = dims.get(d, 0)
-            if v > 0:
-                dim_totals[d].append(v)
+    # 优先用交叉校验的加权分（如果有）
+    cv = scores.get("_cross_validation", {})
+    cv_dims = cv.get("dimensions", {})
 
     dim_avg = {}
     for d in DIMENSIONS:
-        vals = dim_totals[d]
-        dim_avg[d] = round(sum(vals) / len(vals)) if vals else 0
+        if d in cv_dims and cv_dims[d].get("score", 0) > 0:
+            # 用交叉校验的加权分
+            dim_avg[d] = cv_dims[d]["score"]
+        else:
+            # fallback: 简单平均
+            vals = []
+            for name, data in scores.items():
+                if name.startswith("_"):
+                    continue
+                v = data.get("dimensions", {}).get(d, 0)
+                if v > 0:
+                    vals.append(v)
+            dim_avg[d] = round(sum(vals) / len(vals)) if vals else 0
 
     # 找最强/最弱维度
     sorted_dims = sorted(dim_avg.items(), key=lambda x: x[1], reverse=True)
@@ -373,14 +403,30 @@ def _generate_mingxuan_verdict(scores: dict, udm) -> dict:
         xi_list = xi_yong.get("xi", [])
         if xi_list:
             xi_parts.append(f"喜{'/'.join(xi_list)}")
-    # 最弱维度
+    # 最弱维度 + 权威术法
     if worst_dim[1] < 60:
-        xi_parts.append(f"{worst_dim[0]}是短板 得留心")
+        worst_info = cv_dims.get(worst_dim[0], {})
+        top = worst_info.get("top_method", "")
+        if top:
+            xi_parts.append(f"{worst_dim[0]}是短板({top}最准) 得留心")
+        else:
+            xi_parts.append(f"{worst_dim[0]}是短板 得留心")
+    # 最强维度 + 权威术法
+    if best_dim[1] >= 70:
+        best_info = cv_dims.get(best_dim[0], {})
+        top = best_info.get("top_method", "")
+        if top:
+            xi_parts.append(f"{best_dim[0]}最亮({top}说了算)")
+        else:
+            xi_parts.append(f"{best_dim[0]}最亮")
     # 冲突检测
-    cv = scores.get("_cross_validation", {})
     conflicts = cv.get("conflict_count", 0)
     if conflicts > 5:
         xi_parts.append(f"{conflicts}处跨术法信号打架 不能只看一个术法")
+    # 一致性提醒
+    disagree_dims = [d for d, v in cv_dims.items() if v.get("agreement") in ("有分歧", "严重分歧")]
+    if disagree_dims:
+        xi_parts.append(f"{'、'.join(disagree_dims)}方面术法意见不一 需综合看")
     # 挑2个最突出的 strength
     for s in all_strengths[:2]:
         cleaned = _clean(s)
