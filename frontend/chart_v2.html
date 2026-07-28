@@ -204,8 +204,18 @@ body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;backg
           <div class="score-num" id="scoreNum">--</div>
         </div>
         <div class="score-grade" id="scoreGrade"></div>
-        <div class="score-summary" id="scoreSummary"></div>
       </div>
+      <!-- 五维评分 -->
+      <div id="dimBars" style="margin:16px 0"></div>
+      <!-- 溟玄终审 -->
+      <div id="mxVerdict" style="margin:16px 0;padding:12px;background:var(--bg2);border-radius:8px;display:none"></div>
+      <!-- 行动建议 -->
+      <div id="adviceList" style="margin:12px 0;display:none"></div>
+      <!-- 跨术法共识 -->
+      <div id="cvSummary" style="margin:12px 0;font-size:.85rem;color:var(--text2);display:none"></div>
+      <!-- 各术法详情 -->
+      <div id="scoreSummary"></div>
+    </div>
     </div>
   </div>
   <div class="card">
@@ -262,7 +272,7 @@ $('#notesText').addEventListener('input',e=>localStorage.setItem(nKey,e.target.v
 // Fetch data
 function loadChart(birth,loc,gender,name){
   const chartUrl=`/api/chart?birth=${encodeURIComponent(birth)}&location=${encodeURIComponent(loc)}&gender=${encodeURIComponent(gender)}&name=${encodeURIComponent(name||'')}`;
-  const scoreUrl=`/api/bazi/score?birth=${encodeURIComponent(birth)}&location=${encodeURIComponent(loc)}&gender=${encodeURIComponent(gender)}`;
+  const scoreUrl=`/api/score?birth=${encodeURIComponent(birth)}&location=${encodeURIComponent(loc)}&gender=${encodeURIComponent(gender)}&method=all`;
   fetch(chartUrl).then(r=>r.json()).then(chart=>{
     render(chart,null);
     // Load score separately
@@ -515,42 +525,108 @@ function renderGong(bz){
   $('#gongInfo').innerHTML=html||'暂无命宫数据';
 }
 
-function renderScore(score){
-  if(!score||score.error){
+function renderScore(data){
+  if(!data||data.error){
     $('#scoreSummary').innerHTML='<span style="color:var(--text3)">暂无评分数据</span>';
     return;
   }
-  const total=score.total_score||0;
-  const grade=score.grade||'';
-  const summary=score.summary||'';
-  const details=score.details||[];
+  const scores=data.scores||data;
+  // 溟玄终审
+  const mx=scores._mingxuan||{};
+  const total=mx.overall_score||0;
   // Animate ring
   const circumference=2*Math.PI*52;
   const offset=circumference*(1-total/100);
   $('#scoreArc').style.strokeDashoffset=offset;
   $('#scoreNum').textContent=total;
-  $('#scoreGrade').textContent=grade;
-  // Color based on score
+  $('#scoreGrade').textContent=total>=80?'上等格局':total>=65?'中上格局':total>=50?'中平格局':'需后天努力';
   const color=total>=80?'#2e8b57':total>=60?'#b8860b':'#d43050';
   $('#scoreArc').style.stroke=color;
   $('#scoreNum').style.color=color;
-  // Summary
-  $('#scoreSummary').innerHTML=summary?`<p>${esc(summary)}</p>`:'';
-  // Details
-  if(details.length){
-    $('#interpretations').innerHTML=details.map(d=>{
-      const pct=d.max?Math.round(d.score/d.max*100):0;
-      return `<div class="interp-item">
-        <div class="interp-head">
-          <span class="interp-icon">${d.icon||'📊'}</span>
-          <span class="interp-title">${esc(d.title)}</span>
-          <span class="interp-score">${d.score}/${d.max}</span>
-        </div>
-        <div class="interp-bar"><div class="interp-bar-fill" style="width:${pct}%;background:${pct>=70?'#2e8b57':pct>=50?'#b8860b':'#d43050'}"></div></div>
-        <div class="interp-text">${esc(d.text)}</div>
-      </div>`;
+
+  // 五维评分条
+  const cv=scores._cross_validation||{};
+  const dims=cv.dimensions||{};
+  const dimNames=['事业','财运','感情','健康','学业'];
+  let dimHtml='';
+  for(const d of dimNames){
+    const info=dims[d]||{};
+    const v=info.score||0;
+    const agree=info.agreement||'';
+    const top=info.top_method||'';
+    const pct=v;
+    const barColor=v>=70?'#2e8b57':v>=50?'#b8860b':'#d43050';
+    dimHtml+=`<div style="margin:6px 0">
+      <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:2px">
+        <span>${d}${top?` <span style="color:var(--text3);font-size:.75rem">(${top})</span>`:''}</span>
+        <span style="font-weight:700;color:${barColor}">${v}</span>
+      </div>
+      <div style="height:6px;background:var(--bg2);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .8s"></div>
+      </div>
+      ${agree?`<div style="font-size:.75rem;color:var(--text3);margin-top:1px">${agree}</div>`:''}
+    </div>`;
+  }
+  $('#dimBars').innerHTML=dimHtml;
+
+  // 溟玄终审
+  if(mx.verdict){
+    const mxEl=$('#mxVerdict');
+    mxEl.style.display='block';
+    const lines=mx.verdict.split('\\n').filter(l=>l.trim());
+    mxEl.innerHTML=lines.map(l=>{
+      const t=l.trim();
+      if(t.startsWith('【观】')) return `<div style="font-weight:700;color:var(--accent);margin-bottom:8px">${esc(t)}</div>`;
+      if(t.startsWith('【析】')) return `<div style="margin-bottom:8px;color:var(--text1)">${esc(t)}</div>`;
+      if(t.startsWith('【判】')) return `<div style="color:var(--text2)">${esc(t)}</div>`;
+      return `<div>${esc(t)}</div>`;
     }).join('');
   }
+
+  // 行动建议
+  const allAdvice=[];
+  for(const[name,methodData] of Object.entries(scores)){
+    if(name.startsWith('_')) continue;
+    for(const a of(methodData.advice||[])){
+      if(!allAdvice.includes(a)) allAdvice.push(a);
+    }
+  }
+  if(allAdvice.length){
+    const advEl=$('#adviceList');
+    advEl.style.display='block';
+    advEl.innerHTML=`<div style="font-weight:600;margin-bottom:6px">💡 行动建议</div>`+
+      allAdvice.slice(0,6).map(a=>`<div style="margin:4px 0;padding:6px 10px;background:var(--bg2);border-radius:6px;font-size:.85rem">• ${esc(a)}</div>`).join('');
+  }
+
+  // 跨术法共识
+  if(cv.summary&&cv.summary.length){
+    const cvEl=$('#cvSummary');
+    cvEl.style.display='block';
+    cvEl.innerHTML=cv.summary.map(s=>`<div>📊 ${esc(s)}</div>`).join('');
+  }
+
+  // 各术法详情折叠
+  let detailsHtml='';
+  for(const[name,methodData] of Object.entries(scores)){
+    if(name.startsWith('_')) continue;
+    const s=methodData.score||0;
+    const dims=methodData.dimensions||{};
+    const strengths=methodData.strengths||[];
+    const weaknesses=methodData.weaknesses||[];
+    const analysis=methodData.analysis||'';
+    const top3=dims?Object.entries(dims).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}${v}`).join(' '):'';
+    detailsHtml+=`<div class="interp-item">
+      <div class="interp-head">
+        <span class="interp-title">${esc(name)}</span>
+        <span class="interp-score">${s}/100</span>
+      </div>
+      <div style="font-size:.8rem;color:var(--text2);margin:4px 0">${top3}</div>
+      <div class="interp-text">${esc(analysis)}</div>
+      ${strengths.length?`<div style="font-size:.8rem;color:#2e8b57;margin-top:4px">✓ ${strengths.slice(0,2).map(esc).join(' / ')}</div>`:''}
+      ${weaknesses.length?`<div style="font-size:.8rem;color:#d43050;margin-top:2px">✗ ${weaknesses.slice(0,2).map(esc).join(' / ')}</div>`:''}
+    </div>`;
+  }
+  if(detailsHtml) $('#interpretations').innerHTML=detailsHtml;
 }
 </script>
 </body>
