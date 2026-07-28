@@ -198,6 +198,76 @@ def score_all(udm, method: str = "all") -> Dict[str, Dict]:
                 "advice": [f"评分引擎异常: {e} → 这个问题需要技术人员排查，先用其他术法的结果"],
             }
 
+    # ── P1: 跨术法交叉校验 ──────────────────────────────────
+    if target_name == "all" and len(result) >= 2:
+        try:
+            from engine.cross_validator import CrossValidator
+            cv = CrossValidator(udm)
+            cv_result = cv.validate()
+
+            # 按维度汇总各术法打分
+            dim_scores = {d: [] for d in DIMENSIONS}
+            for method_data in result.values():
+                dims = method_data.get("dimensions", {})
+                for d in DIMENSIONS:
+                    if dims.get(d, 0) > 0:
+                        dim_scores[d].append(dims[d])
+
+            # 计算跨术法共识分（多术法一致 → 高分；冲突 → 降分）
+            consensus_dims = {}
+            cv_consensus = cv_result.get("consensus", [])
+            cv_conflicts = cv_result.get("conflicts", [])
+
+            for d in DIMENSIONS:
+                scores = dim_scores[d]
+                if not scores:
+                    consensus_dims[d] = {"score": 0, "agreement": "无数据", "methods": 0}
+                    continue
+                avg = sum(scores) / len(scores)
+                spread = max(scores) - min(scores) if len(scores) > 1 else 0
+                # 一致性判断
+                if spread <= 10:
+                    agreement = "高度一致"
+                    adjusted = min(100, int(avg + 5))
+                elif spread <= 25:
+                    agreement = "基本一致"
+                    adjusted = int(avg)
+                elif spread <= 40:
+                    agreement = "有分歧"
+                    adjusted = max(0, int(avg - 5))
+                else:
+                    agreement = "严重分歧"
+                    adjusted = max(0, int(avg - 10))
+                consensus_dims[d] = {
+                    "score": adjusted,
+                    "agreement": agreement,
+                    "methods": len(scores),
+                    "range": f"{min(scores)}-{max(scores)}",
+                }
+
+            # 生成跨术法摘要
+            agreements = [d for d, v in consensus_dims.items() if v["agreement"] in ("高度一致", "基本一致")]
+            disagreements = [d for d, v in consensus_dims.items() if v["agreement"] in ("有分歧", "严重分歧")]
+
+            cross_summary = []
+            if agreements:
+                cross_summary.append(f"{'、'.join(agreements)}方面多术法共识，可信度高")
+            if disagreements:
+                cross_summary.append(f"{'、'.join(disagreements)}方面术法之间有分歧，需综合判断")
+            if cv_conflicts:
+                cross_summary.append(f"检测到{len(cv_conflicts)}处跨术法冲突，详见交叉验证报告")
+
+            result["_cross_validation"] = {
+                "dimensions": consensus_dims,
+                "overall_confidence": str(cv_result.get("overall_confidence", "")),
+                "method_count": len(result),
+                "summary": cross_summary,
+                "conflict_count": len(cv_conflicts),
+                "consensus_count": len(cv_consensus),
+            }
+        except Exception as e:
+            logger.debug(f"跨术法交叉校验异常(不影响评分): {e}")
+
     return result
 
 
